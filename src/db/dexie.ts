@@ -74,12 +74,17 @@ export function saveSettings(settings: Partial<AppSettings>): AppSettings {
 // Initial Seed for new users so the app opens with rich contextual content
 export async function seedInitialDataIfNeeded() {
   const count = await db.readings.count();
-  if (count > 0) return;
+  const sampleReadingId = 'seed_thoughtful_relationship_01';
+  const existingSeed = await db.readings.get(sampleReadingId);
+
+  // Existing user-created readings are never touched. The former bundled sample
+  // is migrated once in place so returning users also receive the new default.
+  if (count > 0 && !existingSeed) return;
+  if (existingSeed && !existingSeed.topic.includes('体贴的男朋友')) return;
 
   const now = Date.now();
-  const sampleReadingId = 'seed_thoughtful_relationship_01';
 
-  const initialVocabs: VocabularyItem[] = [
+  let initialVocabs: VocabularyItem[] = [
     {
       id: 'vocab_genuine',
       term: 'genuine',
@@ -88,7 +93,7 @@ export async function seedInitialDataIfNeeded() {
       partOfSpeech: 'adjective',
       meaningZh: '真诚的；真实的',
       definitionEn: 'Real, honest and sincere rather than fake or pretended.',
-      example: 'She showed genuine concern for her friend during a difficult week.',
+      example: 'The warm welcome at the pop-up book corner felt completely genuine.',
       collocations: ['genuine interest', 'genuine concern', 'genuine smile', 'genuine feeling'],
       sourceReadingId: sampleReadingId,
       status: 'Learning',
@@ -107,7 +112,7 @@ export async function seedInitialDataIfNeeded() {
       partOfSpeech: 'adjective',
       meaningZh: '体贴的；考虑周到的',
       definitionEn: 'Careful not to cause inconvenience or hurt to others; thoughtful.',
-      example: 'It was very considerate of Leo to remember her favorite chamomile tea.',
+      example: 'It was considerate of the shop owner to lend umbrellas to visitors.',
       collocations: ['considerate behavior', 'very considerate of', 'kind and considerate'],
       sourceReadingId: sampleReadingId,
       status: 'New',
@@ -125,7 +130,7 @@ export async function seedInitialDataIfNeeded() {
       partOfSpeech: 'noun phrase',
       meaningZh: '专注；专心致志的注意',
       definitionEn: 'Complete attention without any distractions.',
-      example: 'When Maya spoke about her art project, he gave her his undivided attention.',
+      example: 'The volunteer gave the lost visitor her undivided attention.',
       collocations: ['give undivided attention', 'receive undivided attention', 'demand undivided attention'],
       sourceReadingId: sampleReadingId,
       status: 'New',
@@ -143,7 +148,7 @@ export async function seedInitialDataIfNeeded() {
       partOfSpeech: 'adjective',
       meaningZh: '扎根的；牢固建立的',
       definitionEn: 'Deeply established, firmly based or grounded in something.',
-      example: 'Their partnership was rooted in mutual respect and unhurried trust.',
+      example: 'The neighborhood tradition was rooted in kindness and trust.',
       collocations: ['rooted in', 'deeply rooted', 'firmly rooted'],
       sourceReadingId: sampleReadingId,
       status: 'New',
@@ -161,7 +166,7 @@ export async function seedInitialDataIfNeeded() {
       partOfSpeech: 'verb',
       meaningZh: '犹豫；踌躇',
       definitionEn: 'To pause before saying or doing something, often due to doubt or uncertainty.',
-      example: 'She did not hesitate to ask for honest guidance when facing a critical choice.',
+      example: 'Maya did not hesitate to join the unexpected gathering.',
       collocations: ['hesitate to do something', 'hesitate for a moment', 'without hesitating'],
       sourceReadingId: sampleReadingId,
       status: 'New',
@@ -173,14 +178,35 @@ export async function seedInitialDataIfNeeded() {
     }
   ];
 
+  if (existingSeed) {
+    const storedVocabs = await db.vocabulary.bulkGet(initialVocabs.map(vocab => vocab.id));
+    initialVocabs = initialVocabs.map((vocab, index) => {
+      const stored = storedVocabs[index];
+      if (!stored) return vocab;
+      return {
+        ...vocab,
+        status: stored.status,
+        createdAt: stored.createdAt,
+        nextReviewDate: stored.nextReviewDate,
+        lastReviewedAt: stored.lastReviewedAt,
+        reviewCount: stored.reviewCount,
+        currentInterval: stored.currentInterval,
+        lastRating: stored.lastRating,
+        translations: stored.translations,
+      };
+    });
+  }
+
   const sampleReading: ReadingRecord = {
     id: sampleReadingId,
-    title: 'A Thoughtful Relationship',
-    content: `Maya had had a demanding afternoon at the studio, with deadlines pressing closely and rain tapping softly against the tall glass windows. When Leo arrived at the cafe, he did not immediately rush into conversation about his own busy day. Instead, his concern was genuine, and their calm bond felt firmly rooted in quiet empathy.
+    title: 'Rainy Day Surprises',
+    content: `On a rainy Saturday, Maya hurried toward her favorite neighborhood bookshop, hoping to stay dry and finish a novel. When she arrived, the door was locked and a handwritten sign pointed visitors to the café next door. She hesitated, certain the afternoon had been ruined.
 
-As Maya unpacked her sketches and began explaining what felt unresolved in her design, Leo set his phone aside and gave her his undivided attention. There was no pressure to perform or offer quick, shallow solutions. Because he was naturally considerate, he simply listened, asking gentle questions whenever she hesitated. For Maya, having a companion who listened with genuine curiosity turned an exhausting day into an evening of quiet reassurance.`,
-    topic: '体贴的男朋友 (A thoughtful boyfriend)',
-    input: '体贴的男朋友',
+Inside, however, the bookshop team had created a surprise reading corner. Lamps glowed beside the windows, strangers shared tables, and the owner offered everyone a warm drink. A considerate volunteer found Maya a dry seat and gave her his undivided attention while she explained which book she had been searching for.
+
+A few minutes later, someone discovered a copy on the exchange shelf. Maya opened it and found a cheerful note from its previous reader. The message was simple but genuine: “Rainy days sometimes lead us somewhere better.” By evening, the room was full of laughter. What began as a disappointing change of plans became a small community memory, rooted in kindness.`,
+    topic: '雨天里的小惊喜',
+    input: '雨天里的小惊喜',
     cefrLevel: 'B1',
     readingType: 'story',
     length: 'medium',
@@ -188,31 +214,31 @@ As Maya unpacked her sketches and began explaining what felt unresolved in her d
     rewritePractice: [
       {
         id: 'rw_01',
-        originalSentence: 'He listened carefully when she spoke about her artwork.',
+        originalSentence: 'The volunteer listened carefully while Maya explained what she needed.',
         target: 'undivided attention',
-        referenceAnswer: 'He gave her his undivided attention when she spoke about her artwork.'
+        referenceAnswer: 'The volunteer gave Maya his undivided attention while she explained what she needed.'
       },
       {
         id: 'rw_02',
-        originalSentence: 'His caring attitude was real and not fake at all.',
+        originalSentence: 'The welcome at the reading corner felt warm and sincere.',
         target: 'genuine',
-        referenceAnswer: 'His concern was genuine and completely sincere.'
+        referenceAnswer: 'The welcome at the reading corner felt warm and genuine.'
       },
       {
         id: 'rw_03',
-        originalSentence: 'Their friendship was firmly based on mutual respect.',
+        originalSentence: 'The neighborhood tradition was firmly based on kindness.',
         target: 'rooted',
-        referenceAnswer: 'Their relationship was rooted in mutual respect.'
+        referenceAnswer: 'The neighborhood tradition was rooted in kindness.'
       },
       {
         id: 'rw_04',
-        originalSentence: 'He was very thoughtful and brought her favorite tea.',
+        originalSentence: 'The shop owner thoughtfully provided umbrellas for visitors.',
         target: 'considerate',
-        referenceAnswer: 'Because he was considerate, he brought her favorite tea.'
+        referenceAnswer: 'It was considerate of the shop owner to provide umbrellas for visitors.'
       }
     ],
     humanised: true,
-    createdAt: now,
+    createdAt: existingSeed?.createdAt || now,
     updatedAt: now
   };
 
