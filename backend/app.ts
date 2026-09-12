@@ -144,6 +144,60 @@ function safeParseJson<T = any>(rawText: string | undefined): T {
   return JSON.parse(cleaned.trim());
 }
 
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function extractDialogueSpeakerSequence(text: string): string[] {
+  const speakerPattern = '[A-Z][A-Za-z0-9_-]*(?:\\s+[A-Z][A-Za-z0-9_-]*){0,2}';
+  const lineRegex = new RegExp(`^\\s*(${speakerPattern})\\s*[:：]`, 'gm');
+  const speakers: string[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = lineRegex.exec(text)) !== null) {
+    const speaker = match[1].trim();
+    if (!['note', 'step', 'tip', 'warning'].includes(speaker.toLowerCase())) {
+      speakers.push(speaker);
+    }
+  }
+
+  return speakers;
+}
+
+function normalizeDialogueTranslation(translatedText: string, speakerSequence: string[]): string {
+  let normalized = translatedText
+    .replace(/\r\n?/g, '\n')
+    .replace(/\\n/g, '\n')
+    .trim();
+
+  const uniqueSpeakers = [...new Set(speakerSequence)].filter(Boolean);
+  if (uniqueSpeakers.length === 0 || !normalized) return normalized;
+
+  const speakerPattern = uniqueSpeakers
+    .sort((a, b) => b.length - a.length)
+    .map(escapeRegex)
+    .join('|');
+  const markerRegex = new RegExp(
+    `(^|[\\s。！？!?；;”"'）)])(${speakerPattern})\\s*[:：]\\s*`,
+    'gmi'
+  );
+
+  normalized = normalized.replace(markerRegex, (_match, boundary: string, speaker: string) => {
+    const punctuation = boundary && !/\\s/.test(boundary) ? boundary : '';
+    return `${punctuation}\n\n${speaker}: `;
+  });
+  normalized = normalized.replace(/^\s+/, '').replace(/\n{3,}/g, '\n\n').trim();
+
+  // Gemini occasionally drops the first label but keeps all following labels.
+  // Restore it so the client can render the first turn like the source dialogue.
+  const startsWithSpeaker = new RegExp(`^(?:${speakerPattern})\\s*[:：]`, 'i').test(normalized);
+  if (!startsWithSpeaker && speakerSequence[0]) {
+    normalized = `${speakerSequence[0]}: ${normalized}`;
+  }
+
+  return normalized;
+}
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', hasGeminiKey: !!process.env.GEMINI_API_KEY?.trim() });
 });
@@ -532,6 +586,19 @@ app.post('/api/reading/translate', async (req, res) => {
     };
 
     const targetLangName = languageNames[targetLanguage] || targetLanguage;
+    const dialogueSpeakerSequence = readingType === 'dialogue'
+      ? extractDialogueSpeakerSequence(text)
+      : [];
+    const dialogueOutputContract = readingType === 'dialogue'
+      ? `
+STRICT DIALOGUE OUTPUT CONTRACT:
+   - translatedContent must remain a dialogue script, never a prose paragraph.
+   - Keep every speaker name unchanged and put every turn on its own line in exactly this form: SpeakerName: translated speech
+   - Separate consecutive turns with a blank line (two newline characters in the JSON string).
+   - Never merge one speaker's words with another speaker's words.
+   - Never omit a speaker label, including the very first turn.
+   - Original speaker sequence: ${JSON.stringify(dialogueSpeakerSequence)}`
+      : '';
 
     const systemInstruction = `You are a master bilingual literary translator, lexicographer, and native stylistics expert.
 Your mission is to provide an exquisitely NATURAL, HUMAN-LIKE ("humanised") translation of an English reading, as well as its accompanying selected vocabulary and rewrite practice exercises, into ${targetLangName}.
@@ -551,7 +618,8 @@ CRITICAL GUIDELINES FOR HUMANISATION:
 4. Practice Exercise Translations:
    - For every sentence rewrite exercise, provide a natural translation of the original sentence in ${targetLangName}.
 5. Structural Fidelity:
-   - Preserve paragraphs and line breaks matching the original source text.`;
+   - Preserve paragraphs and line breaks matching the original source text.
+${dialogueOutputContract}`;
 
     const prompt = `Please translate this entire English learning unit into ${targetLangName}:
 
@@ -646,7 +714,9 @@ Return JSON with translated title, translatedContent, vocabularyTranslations, an
 
     return res.json({
       title: parsed.title || title,
-      translatedContent: parsed.translatedContent || '',
+      translatedContent: readingType === 'dialogue'
+        ? normalizeDialogueTranslation(parsed.translatedContent || '', dialogueSpeakerSequence)
+        : parsed.translatedContent || '',
       language: targetLanguage,
       languageName: targetLangName,
       humanised: true,

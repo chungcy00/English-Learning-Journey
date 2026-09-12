@@ -47,46 +47,77 @@ interface DialogueTurn {
   speech: string;
 }
 
+const NON_SPEAKER_LABELS = new Set([
+  'note', 'ps', 'p.s', 'step', 'tip', 'warning',
+]);
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // Helper to parse dialogue turns from text (handles line-by-line, single-paragraph merged dialogues, and scene notes)
-function parseDialogueTurns(text: string): DialogueTurn[] {
-  const inlineSpeakerRegex = /(?:^|\s+)([A-Z][a-zA-Z0-9_\s]{1,15}|[\u4e00-\u9fa5]{2,6})\s*[:：]\s*/g;
+function parseDialogueTurns(text: string, knownSpeakers: string[] = []): DialogueTurn[] {
+  const normalizedText = text
+    .replace(/\r\n?/g, '\n')
+    .replace(/\\n/g, '\n')
+    .trim();
+
+  if (!normalizedText) return [];
+
+  // Prefer names from the English source when parsing a translation. The generic
+  // fallback also supports localized names, while avoiding the old greedy `\s`
+  // pattern that could swallow several turns into one speaker name.
+  const knownPattern = [...new Set(knownSpeakers.filter(Boolean))]
+    .sort((a, b) => b.length - a.length)
+    .map(escapeRegex)
+    .join('|');
+  const genericSpeakerPattern = '[A-Z][A-Za-z0-9_-]*(?:\\s+[A-Z][A-Za-z0-9_-]*){0,2}|[\\u4e00-\\u9fff]{2,8}';
+  const speakerPattern = knownPattern
+    ? `(?:${knownPattern})`
+    : `(?:${genericSpeakerPattern})`;
+  // A model may remove line breaks, so punctuation is also accepted as a turn boundary.
+  const inlineSpeakerRegex = new RegExp(
+    `(^|[\\s。！？!?；;”"'）)])(${speakerPattern})\\s*[:：]\\s*`,
+    'gm'
+  );
   const matches: Array<{ speaker: string; index: number; contentStart: number }> = [];
   let m: RegExpExecArray | null;
 
-  while ((m = inlineSpeakerRegex.exec(text)) !== null) {
-    const candidate = m[1].trim();
-    if (!['note', 'ps', 'p.s', 'step', 'tip', 'warning'].includes(candidate.toLowerCase())) {
+  while ((m = inlineSpeakerRegex.exec(normalizedText)) !== null) {
+    const candidate = m[2].trim();
+    if (!NON_SPEAKER_LABELS.has(candidate.toLowerCase())) {
       matches.push({
         speaker: candidate,
-        index: m.index,
+        index: m.index + m[1].length,
         contentStart: inlineSpeakerRegex.lastIndex,
       });
     }
   }
 
-  // If text has embedded speakers in one or few lines
-  if (matches.length >= 2) {
+  // One match is enough: it still preserves a valid single-turn dialogue and any
+  // leading text whose first speaker label was omitted by the translation model.
+  if (matches.length >= 1) {
     const turns: DialogueTurn[] = [];
     const firstMatch = matches[0];
     if (firstMatch.index > 0) {
-      const intro = text.substring(0, firstMatch.index).trim();
+      const intro = normalizedText.substring(0, firstMatch.index).trim();
       if (intro) turns.push({ speaker: null, speech: intro });
     }
     for (let i = 0; i < matches.length; i++) {
       const current = matches[i];
-      const nextStart = i + 1 < matches.length ? matches[i + 1].index : text.length;
-      const speech = text.substring(current.contentStart, nextStart).trim();
+      const nextStart = i + 1 < matches.length ? matches[i + 1].index : normalizedText.length;
+      const speech = normalizedText.substring(current.contentStart, nextStart).trim();
       turns.push({ speaker: current.speaker, speech });
     }
     return turns;
   }
 
   // Otherwise split by line breaks and check line starts
-  const rawLines = text.split(/\r?\n+/).map(l => l.trim()).filter(Boolean);
-  const speakerLineRegex = /^([A-Z][a-zA-Z0-9_\s]{1,15}|[\u4e00-\u9fa5]{2,6})\s*[:：]\s*(.*)$/;
+  const rawLines = normalizedText.split(/\n+/).map(l => l.trim()).filter(Boolean);
+  const speakerLineRegex = new RegExp(`^(${speakerPattern})\\s*[:：]\\s*(.*)$`);
   return rawLines.map(line => {
     const lineMatch = line.match(speakerLineRegex);
-    if (lineMatch && !['note', 'tip', 'step', 'warning'].includes(lineMatch[1].toLowerCase())) {
+    if (lineMatch && !NON_SPEAKER_LABELS.has(lineMatch[1].toLowerCase())) {
       return { speaker: lineMatch[1].trim(), speech: lineMatch[2].trim() };
     }
     return { speaker: null, speech: line };
@@ -351,7 +382,19 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
   // Render translated dialogue turns
   const renderTranslatedDialogue = (translatedText: string) => {
-    const turns = parseDialogueTurns(translatedText);
+    const originalSpokenTurns = dialogueTurns.filter(turn => turn.speaker !== null);
+    const knownSpeakers = originalSpokenTurns.map(turn => turn.speaker as string);
+    const parsedTurns = parseDialogueTurns(translatedText, knownSpeakers);
+
+    // Some translations omit only the first `Speaker:` label. If the remaining
+    // turn count still aligns with the source, restore that label for display.
+    const turns = parsedTurns.map((turn, index) => {
+      if (!turn.speaker && parsedTurns.length === originalSpokenTurns.length) {
+        return { ...turn, speaker: originalSpokenTurns[index]?.speaker || null };
+      }
+      return turn;
+    });
+
     return (
       <div className="space-y-3 sm:space-y-4">
         {turns.map((turn, tIdx) => {
@@ -371,8 +414,10 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             );
           }
 
-          const matchedOriginalTurn = dialogueTurns[tIdx];
-          const speakerKey = matchedOriginalTurn?.speaker || turn.speaker;
+          const sourceSpeaker = knownSpeakers.find(
+            speaker => speaker.toLowerCase() === turn.speaker?.toLowerCase()
+          );
+          const speakerKey = sourceSpeaker || turn.speaker;
           const styleIdx = speakerMap.get(speakerKey) ?? (tIdx % SPEAKER_STYLES.length);
           const style = SPEAKER_STYLES[styleIdx];
           const initial = turn.speaker.charAt(0).toUpperCase();
