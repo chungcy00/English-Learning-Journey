@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Plus, Trash2, X, Sparkles, Loader2 } from 'lucide-react';
 import { VocabularyItem } from '../types';
 import { explainVocabularyTerm } from '../services/api';
@@ -24,6 +24,44 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
   const [list, setList] = useState<VocabularyItem[]>(currentVocabList);
   const [newTerm, setNewTerm] = useState('');
   const [isLookingUp, setIsLookingUp] = useState(false);
+  const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
+
+  const readingSuggestions = useMemo(() => {
+    const query = newTerm.trim().toLowerCase();
+    if (!query) return [];
+
+    const tokens = readingContent.match(/[A-Za-z]+(?:['’-][A-Za-z]+)*/g) || [];
+    const candidates: string[] = [];
+    const seen = new Set<string>();
+
+    for (let size = 1; size <= 4; size++) {
+      for (let index = 0; index <= tokens.length - size; index++) {
+        const candidate = tokens.slice(index, index + size).join(' ');
+        const normalized = candidate.toLowerCase();
+        if (
+          normalized.includes(query) &&
+          !seen.has(normalized) &&
+          !list.some((item) => item.term.toLowerCase() === normalized)
+        ) {
+          seen.add(normalized);
+          candidates.push(candidate);
+        }
+      }
+    }
+
+    return candidates
+      .sort((a, b) => {
+        const aNormalized = a.toLowerCase();
+        const bNormalized = b.toLowerCase();
+        const aRank = aNormalized === query ? 0 : aNormalized.startsWith(query) ? 1 : 2;
+        const bRank = bNormalized === query ? 0 : bNormalized.startsWith(query) ? 1 : 2;
+        if (aRank !== bRank) return aRank - bRank;
+        const wordCountDifference = a.split(' ').length - b.split(' ').length;
+        return wordCountDifference || a.length - b.length;
+      })
+      .slice(0, 8);
+  }, [newTerm, readingContent, list]);
 
   if (!isOpen) return null;
 
@@ -64,6 +102,8 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
 
       setList(prev => [...prev, newItem]);
       setNewTerm('');
+      setIsSuggestionOpen(false);
+      setActiveSuggestionIndex(-1);
     } catch (err) {
       console.error(err);
     } finally {
@@ -98,15 +138,87 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
         </div>
 
         {/* Add Input Bar */}
-        <div className="py-4 border-b border-[#D4CCBC] flex items-center gap-2">
-          <input
-            type="text"
-            value={newTerm}
-            onChange={(e) => setNewTerm(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAddNewTerm()}
-            placeholder="输入单词或词组 (如 thoughtful, rooted in)..."
-            className="flex-1 px-3 py-2 text-sm bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm focus:outline-none focus:border-[#73785E] font-ui text-[#292B25]"
-          />
+        <div className="py-4 border-b border-[#D4CCBC] flex items-start gap-2">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={newTerm}
+              onChange={(e) => {
+                setNewTerm(e.target.value);
+                setIsSuggestionOpen(true);
+                setActiveSuggestionIndex(-1);
+              }}
+              onFocus={() => setIsSuggestionOpen(true)}
+              onBlur={() => setTimeout(() => setIsSuggestionOpen(false), 120)}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowDown' && readingSuggestions.length > 0) {
+                  e.preventDefault();
+                  setIsSuggestionOpen(true);
+                  setActiveSuggestionIndex((current) =>
+                    current >= readingSuggestions.length - 1 ? 0 : current + 1
+                  );
+                } else if (e.key === 'ArrowUp' && readingSuggestions.length > 0) {
+                  e.preventDefault();
+                  setIsSuggestionOpen(true);
+                  setActiveSuggestionIndex((current) =>
+                    current <= 0 ? readingSuggestions.length - 1 : current - 1
+                  );
+                } else if (e.key === 'Escape') {
+                  setIsSuggestionOpen(false);
+                  setActiveSuggestionIndex(-1);
+                } else if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (isSuggestionOpen && activeSuggestionIndex >= 0) {
+                    setNewTerm(readingSuggestions[activeSuggestionIndex]);
+                    setIsSuggestionOpen(false);
+                    setActiveSuggestionIndex(-1);
+                  } else {
+                    handleAddNewTerm();
+                  }
+                }
+              }}
+              placeholder="输入单词或词组 (如 thoughtful, rooted in)..."
+              role="combobox"
+              aria-expanded={isSuggestionOpen && readingSuggestions.length > 0}
+              aria-autocomplete="list"
+              className="w-full px-3 py-2 text-sm bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm focus:outline-none focus:border-[#73785E] font-ui text-[#292B25]"
+            />
+
+            {isSuggestionOpen && readingSuggestions.length > 0 && (
+              <div
+                role="listbox"
+                className="absolute z-30 left-0 right-0 top-full mt-1 max-h-56 overflow-y-auto bg-[#FAF7F2] border border-[#D4CCBC] rounded-sm shadow-lg"
+              >
+                <p className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider text-[#717265] font-ui">
+                  来自当前短文
+                </p>
+                {readingSuggestions.map((suggestion, index) => (
+                  <button
+                    key={suggestion.toLowerCase()}
+                    type="button"
+                    role="option"
+                    aria-selected={activeSuggestionIndex === index}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setNewTerm(suggestion);
+                      setIsSuggestionOpen(false);
+                      setActiveSuggestionIndex(-1);
+                    }}
+                    className={`w-full px-3 py-2 text-left border-t border-[#D4CCBC]/50 transition-colors ${
+                      activeSuggestionIndex === index
+                        ? 'bg-[#E5DED0] text-[#292B25]'
+                        : 'text-[#5F654D] hover:bg-[#E5DED0]/60'
+                    }`}
+                  >
+                    <span className="font-editorial text-base font-semibold">{suggestion}</span>
+                    <span className="ml-2 text-[10px] font-ui text-[#717265]">
+                      {suggestion.includes(' ') ? '短语' : '单词'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <button
             onClick={handleAddNewTerm}
             disabled={!newTerm.trim() || isLookingUp}

@@ -381,6 +381,7 @@ export default function App() {
         {activeTab === 'wordbook' && (
           <WordbookView
             vocabularyList={vocabularies}
+            readings={readings}
             onDeleteVocab={handleDeleteVocab}
             onUpdateStatus={handleUpdateStatus}
             onGenerateFromWordbook={handleGenerateFromWordbook}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Search,
   CheckSquare,
@@ -13,7 +13,7 @@ import {
   Languages,
   Loader2
 } from 'lucide-react';
-import { VocabularyItem, VocabStatus, CEFRLevel, ReadingType, ReadingLength } from '../types';
+import { VocabularyItem, VocabStatus, CEFRLevel, ReadingType, ReadingLength, ReadingRecord } from '../types';
 import { WordDetailModal } from '../components/WordDetailModal';
 import {
   SUPPORTED_LANGUAGES,
@@ -25,6 +25,7 @@ import { translateVocabularies } from '../services/api';
 
 interface WordbookViewProps {
   vocabularyList: VocabularyItem[];
+  readings: ReadingRecord[];
   onDeleteVocab: (id: string) => void;
   onUpdateStatus: (id: string, status: VocabStatus) => void;
   onGenerateFromWordbook: (params: {
@@ -41,6 +42,7 @@ interface WordbookViewProps {
 
 export const WordbookView: React.FC<WordbookViewProps> = ({
   vocabularyList,
+  readings,
   onDeleteVocab,
   onUpdateStatus,
   onGenerateFromWordbook,
@@ -54,6 +56,8 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   const [selectedTerms, setSelectedTerms] = useState<string[]>([]);
   const [detailVocab, setDetailVocab] = useState<VocabularyItem | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
 
   // Auto-translate vocabulary items for the selected target language if needed
   useEffect(() => {
@@ -104,13 +108,61 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
   const filterOptions = ['All', 'New', 'Learning', 'Difficult', 'Mastered'];
 
+  const readingById = useMemo(
+    () => new Map(readings.map((reading) => [reading.id, reading])),
+    [readings]
+  );
+
+  const searchSuggestions = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return [];
+
+    return vocabularyList
+      .map((item) => {
+        const source = item.sourceReadingId ? readingById.get(item.sourceReadingId) : undefined;
+        const localized = getLocalizedVocabMeaning(item, targetLanguage);
+        const searchableSource = source
+          ? `${source.title} ${source.topic} ${source.input} ${source.content}`.toLowerCase()
+          : '';
+        const normalizedTerm = item.term.toLowerCase();
+        const matchesDetails = [item.meaningZh, localized, item.definitionEn]
+          .some((value) => value.toLowerCase().includes(query));
+        const matchesSource = searchableSource.includes(query);
+
+        if (!normalizedTerm.includes(query) && !matchesDetails && !matchesSource) return null;
+
+        const rank = normalizedTerm === query
+          ? 0
+          : normalizedTerm.startsWith(query)
+            ? 1
+            : normalizedTerm.includes(query)
+              ? 2
+              : matchesDetails
+                ? 3
+                : 4;
+
+        return { item, source, rank };
+      })
+      .filter((result): result is NonNullable<typeof result> => result !== null)
+      .sort((a, b) => a.rank - b.rank || a.item.term.localeCompare(b.item.term))
+      .slice(0, 8);
+  }, [search, vocabularyList, readingById, targetLanguage]);
+
   const filtered = vocabularyList.filter((item) => {
     const localized = getLocalizedVocabMeaning(item, targetLanguage);
+    const source = item.sourceReadingId ? readingById.get(item.sourceReadingId) : undefined;
+    const normalizedSearch = search.toLowerCase();
     const matchesSearch =
-      item.term.toLowerCase().includes(search.toLowerCase()) ||
-      item.meaningZh.toLowerCase().includes(search.toLowerCase()) ||
-      localized.toLowerCase().includes(search.toLowerCase()) ||
-      item.definitionEn.toLowerCase().includes(search.toLowerCase());
+      item.term.toLowerCase().includes(normalizedSearch) ||
+      item.meaningZh.toLowerCase().includes(normalizedSearch) ||
+      localized.toLowerCase().includes(normalizedSearch) ||
+      item.definitionEn.toLowerCase().includes(normalizedSearch) ||
+      !!source && (
+        source.title.toLowerCase().includes(normalizedSearch) ||
+        source.topic.toLowerCase().includes(normalizedSearch) ||
+        source.input.toLowerCase().includes(normalizedSearch) ||
+        source.content.toLowerCase().includes(normalizedSearch)
+      );
 
     const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
 
@@ -193,10 +245,80 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setIsSuggestionOpen(true);
+                setActiveSuggestionIndex(-1);
+              }}
+              onFocus={() => setIsSuggestionOpen(true)}
+              onBlur={() => setTimeout(() => setIsSuggestionOpen(false), 120)}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowDown' && searchSuggestions.length > 0) {
+                  e.preventDefault();
+                  setIsSuggestionOpen(true);
+                  setActiveSuggestionIndex((current) =>
+                    current >= searchSuggestions.length - 1 ? 0 : current + 1
+                  );
+                } else if (e.key === 'ArrowUp' && searchSuggestions.length > 0) {
+                  e.preventDefault();
+                  setIsSuggestionOpen(true);
+                  setActiveSuggestionIndex((current) =>
+                    current <= 0 ? searchSuggestions.length - 1 : current - 1
+                  );
+                } else if (e.key === 'Escape') {
+                  setIsSuggestionOpen(false);
+                  setActiveSuggestionIndex(-1);
+                } else if (e.key === 'Enter' && activeSuggestionIndex >= 0) {
+                  e.preventDefault();
+                  setSearch(searchSuggestions[activeSuggestionIndex].item.term);
+                  setIsSuggestionOpen(false);
+                  setActiveSuggestionIndex(-1);
+                }
+              }}
               placeholder={getI18nText(targetLanguage, 'searchPlaceholder').replace('{lang}', currentLangObj.native)}
+              role="combobox"
+              aria-expanded={isSuggestionOpen && searchSuggestions.length > 0}
+              aria-autocomplete="list"
               className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm focus:outline-none focus:border-[#73785E] font-ui text-[#292B25]"
             />
+
+            {isSuggestionOpen && searchSuggestions.length > 0 && (
+              <div
+                role="listbox"
+                className="absolute z-30 left-0 right-0 top-full mt-1 max-h-72 overflow-y-auto bg-[#FAF7F2] border border-[#D4CCBC] rounded-sm shadow-lg"
+              >
+                <p className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider text-[#717265] font-ui">
+                  匹配生词与来源短文
+                </p>
+                {searchSuggestions.map(({ item, source }, index) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    role="option"
+                    aria-selected={activeSuggestionIndex === index}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setSearch(item.term);
+                      setIsSuggestionOpen(false);
+                      setActiveSuggestionIndex(-1);
+                    }}
+                    className={`w-full px-3 py-2 text-left border-t border-[#D4CCBC]/50 transition-colors ${
+                      activeSuggestionIndex === index
+                        ? 'bg-[#E5DED0]'
+                        : 'hover:bg-[#E5DED0]/60'
+                    }`}
+                  >
+                    <span className="block font-editorial text-base font-semibold text-[#5F654D]">
+                      {item.term}
+                    </span>
+                    <span className="block text-[11px] font-ui text-[#717265] truncate">
+                      {getLocalizedVocabMeaning(item, targetLanguage)}
+                      {source ? ` · 来源：${source.title}` : ''}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Language Selector */}
