@@ -76,13 +76,15 @@ const MALE_NAME_HINTS = new Set([
 ]);
 
 const FEMALE_VOICE_HINTS = [
-  'samantha', 'karen', 'victoria', 'moira', 'tessa', 'ava', 'allison', 'susan',
-  'zira', 'female', 'fiona', 'serena', 'veena',
+  'google uk english female', 'samantha', 'flo', 'sandy', 'shelley', 'ava',
+  'allison', 'aria', 'jenny', 'michelle', 'sonia', 'libby', 'karen', 'tessa',
+  'moira', 'victoria', 'zira', 'fiona', 'serena', 'veena', 'female',
 ];
 
 const MALE_VOICE_HINTS = [
-  'daniel', 'alex', 'david', 'mark', 'fred', 'aaron', 'arthur', 'albert',
-  'ralph', 'bruce', 'tom', 'male', 'gordon',
+  'google uk english male', 'eddy', 'reed', 'rocko', 'alex', 'daniel', 'guy',
+  'ryan', 'eric', 'christopher', 'david', 'mark', 'aaron', 'arthur', 'fred',
+  'albert', 'ralph', 'bruce', 'tom', 'gordon', 'male',
 ];
 
 function escapeRegex(value: string): string {
@@ -102,8 +104,7 @@ function inferSpeakerGender(speaker: string, speakerIndex: number): VoiceGender 
 
 function pickEnglishVoice(
   availableVoices: SpeechSynthesisVoice[],
-  gender: VoiceGender,
-  speakerIndex: number
+  gender: VoiceGender
 ): SpeechSynthesisVoice | undefined {
   const englishVoices = availableVoices.filter(voice =>
     voice.lang.toLowerCase().startsWith('en')
@@ -111,47 +112,45 @@ function pickEnglishVoice(
   if (englishVoices.length === 0) return undefined;
 
   const genderHints = gender === 'female' ? FEMALE_VOICE_HINTS : MALE_VOICE_HINTS;
-  const genderMatches = englishVoices.filter(voice => {
-    const voiceName = voice.name.toLowerCase();
-    return genderHints.some(hint => voiceName.includes(hint));
-  });
-
-  if (genderMatches.length > 0) {
-    return genderMatches[speakerIndex % genderMatches.length];
+  for (const hint of genderHints) {
+    const match = englishVoices.find(voice => voice.name.toLowerCase().includes(hint));
+    if (match) return match;
   }
 
-  return englishVoices[speakerIndex % englishVoices.length];
+  // Let the browser use the same natural default voice as vocabulary playback
+  // rather than choosing an arbitrary low-quality installed voice.
+  return undefined;
 }
 
-function splitSpeechText(text: string): string[] {
-  const cleanText = text
+function cleanSpeechText(text: string): string {
+  return text
     .replace(/^\s*["“”']|["“”']\s*$/g, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function splitNarrationText(text: string): string[] {
+  const cleanText = text
+    .replace(/\r\n?/g, '\n')
+    .trim();
   if (!cleanText) return [];
 
-  const sentences = cleanText.match(/[^.!?]+[.!?]+["”']?|[^.!?]+$/g) || [cleanText];
   const chunks: string[] = [];
+  const paragraphs = cleanText.split(/\n+/).map(cleanSpeechText).filter(Boolean);
 
-  for (const sentence of sentences) {
-    const trimmed = sentence.trim();
-    if (trimmed.length <= 220) {
-      chunks.push(trimmed);
-      continue;
-    }
-
-    const clauses = trimmed.match(/[^,;:]+[,;:]?|[^,;:]+$/g) || [trimmed];
-    let current = '';
-    for (const clause of clauses) {
-      const candidate = `${current} ${clause.trim()}`.trim();
-      if (candidate.length > 220 && current) {
-        chunks.push(current);
-        current = clause.trim();
+  for (const paragraph of paragraphs) {
+    const sentences = paragraph.match(/[^.!?]+[.!?]+["”']?|[^.!?]+$/g) || [paragraph];
+    let currentChunk = '';
+    for (const sentence of sentences) {
+      const candidate = `${currentChunk} ${sentence.trim()}`.trim();
+      if (candidate.length > 520 && currentChunk) {
+        chunks.push(currentChunk);
+        currentChunk = sentence.trim();
       } else {
-        current = candidate;
+        currentChunk = candidate;
       }
     }
-    if (current) chunks.push(current);
+    if (currentChunk) chunks.push(currentChunk);
   }
 
   return chunks;
@@ -330,12 +329,11 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           profile => profile.name.toLowerCase() === turn.speaker?.toLowerCase()
         );
         const gender = speakerProfile?.gender || inferSpeakerGender(turn.speaker, speakerIndex);
-        splitSpeechText(turn.speech).forEach(text => {
-          queue.push({ text, gender, speakerIndex, turnIndex });
-        });
+        const speech = cleanSpeechText(turn.speech);
+        if (speech) queue.push({ text: speech, gender, speakerIndex, turnIndex });
       });
     } else {
-      splitSpeechText(reading.content).forEach(text => {
+      splitNarrationText(reading.content).forEach(text => {
         queue.push({ text, gender: 'female', speakerIndex: 0, turnIndex: null });
       });
     }
@@ -346,47 +344,66 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     speechRunRef.current = runId;
     setIsSpeaking(true);
 
-    const speakNext = (queueIndex: number) => {
-      if (speechRunRef.current !== runId) return;
-      if (queueIndex >= queue.length) {
-        setIsSpeaking(false);
-        setActiveSpeechTurn(null);
-        return;
-      }
-
-      const item = queue[queueIndex];
-      const utterance = new SpeechSynthesisUtterance(item.text);
-      utterance.lang = 'en-US';
-      utterance.voice = pickEnglishVoice(voices, item.gender, item.speakerIndex) || null;
-      utterance.volume = 1;
-      utterance.rate = /[!?]$/.test(item.text) ? 0.94 : 0.91;
-      utterance.pitch = item.gender === 'female' ? 1.06 : 0.92;
-      setActiveSpeechTurn(item.turnIndex);
-
-      utterance.onend = () => {
+    const beginPlayback = (resolvedVoices: SpeechSynthesisVoice[]) => {
+      const speakNext = (queueIndex: number) => {
         if (speechRunRef.current !== runId) return;
-        const nextItem = queue[queueIndex + 1];
-        const changedSpeaker = nextItem && nextItem.speakerIndex !== item.speakerIndex;
-        const pauseMs = changedSpeaker ? 320 : 150;
-        speechPauseTimerRef.current = window.setTimeout(
-          () => speakNext(queueIndex + 1),
-          pauseMs
-        );
-      };
-      utterance.onerror = (event) => {
-        if (speechRunRef.current !== runId || ['canceled', 'interrupted'].includes(event.error)) {
+        if (queueIndex >= queue.length) {
+          setIsSpeaking(false);
+          setActiveSpeechTurn(null);
           return;
         }
-        speechPauseTimerRef.current = window.setTimeout(
-          () => speakNext(queueIndex + 1),
-          100
-        );
+
+        const item = queue[queueIndex];
+        const utterance = new SpeechSynthesisUtterance(item.text);
+        const selectedVoice = isDetectedDialogue
+          ? pickEnglishVoice(resolvedVoices, item.gender)
+          : undefined;
+        utterance.lang = 'en-US';
+        utterance.voice = selectedVoice || null;
+        utterance.volume = 1;
+        // Match vocabulary playback. A real male/female voice keeps its native
+        // pitch; only use a subtle fallback shift if no matching voice is installed.
+        utterance.rate = 0.9;
+        utterance.pitch = selectedVoice ? 1 : item.gender === 'female' ? 1.03 : 0.97;
+        setActiveSpeechTurn(item.turnIndex);
+
+        utterance.onend = () => {
+          if (speechRunRef.current !== runId) return;
+          const nextItem = queue[queueIndex + 1];
+          const changedSpeaker = nextItem && nextItem.speakerIndex !== item.speakerIndex;
+          const pauseMs = changedSpeaker ? 240 : 120;
+          speechPauseTimerRef.current = window.setTimeout(
+            () => speakNext(queueIndex + 1),
+            pauseMs
+          );
+        };
+        utterance.onerror = (event) => {
+          if (speechRunRef.current !== runId || ['canceled', 'interrupted'].includes(event.error)) {
+            return;
+          }
+          speechPauseTimerRef.current = window.setTimeout(
+            () => speakNext(queueIndex + 1),
+            100
+          );
+        };
+
+        window.speechSynthesis.speak(utterance);
       };
 
-      window.speechSynthesis.speak(utterance);
+      speakNext(0);
     };
 
-    speakNext(0);
+    if (voices.length > 0) {
+      beginPlayback(voices);
+    } else {
+      // Chrome can expose voices shortly after page load. Waiting once prevents
+      // the first playback from assigning the same default voice to every role.
+      speechPauseTimerRef.current = window.setTimeout(() => {
+        if (speechRunRef.current === runId) {
+          beginPlayback(window.speechSynthesis.getVoices());
+        }
+      }, 180);
+    }
   };
 
   useEffect(() => {
