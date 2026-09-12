@@ -869,15 +869,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   <span className="font-ui text-xs text-[#717265]">
                     Topic: {reading.topic}
                   </span>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-ui px-2 py-0.5 rounded-xs bg-[#292B25]/5 text-[#292B25] font-medium">
-                    English 原文
-                  </span>
-                  {isDetectedDialogue && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-ui px-2 py-0.5 rounded-xs bg-[#5F654D]/10 text-[#5F654D] font-medium">
-                      <MessageSquare className="w-3 h-3" />
-                      情境对话
-                    </span>
-                  )}
                 </div>
                 <h1 className="font-editorial text-xl sm:text-2xl font-semibold text-[#292B25] tracking-tight leading-tight">
                   {reading.title}
@@ -1048,12 +1039,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 <span className="font-ui text-xs text-[#717265]">
                   Topic: {reading.topic}
                 </span>
-                {isDetectedDialogue && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-ui px-2 py-0.5 rounded-xs bg-[#5F654D]/10 text-[#5F654D] font-medium">
-                    <MessageSquare className="w-3 h-3" />
-                    情境对话
-                  </span>
-                )}
               </div>
               <h1 className="font-editorial text-2xl sm:text-3xl font-semibold text-[#292B25] tracking-tight leading-tight">
                 {reading.title}
