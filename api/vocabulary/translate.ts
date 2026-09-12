@@ -1,7 +1,7 @@
 // Vercel Function for POST /api/vocabulary/translate.
 export default async function handler(req: any, res: any) {
   try {
-    const { default: app } = await import('../../backend/app');
+    const { default: app } = await import('../../backend/app.js');
     req.url = '/api/vocabulary/translate';
     await new Promise<void>((resolve, reject) => {
       res.once('finish', resolve);
