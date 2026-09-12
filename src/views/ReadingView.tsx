@@ -913,6 +913,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         isOpen={isEditVocabOpen}
         onClose={() => setIsEditVocabOpen(false)}
         currentVocabList={reading.selectedVocabulary}
+        readingId={reading.id}
         readingContent={reading.content}
         onSave={onUpdateReadingVocabulary}
         targetLanguage={targetLanguage}

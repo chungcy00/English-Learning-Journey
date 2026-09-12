@@ -8,6 +8,7 @@ interface EditVocabularyModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentVocabList: VocabularyItem[];
+  readingId: string;
   readingContent: string;
   onSave: (updatedList: VocabularyItem[]) => void;
   targetLanguage?: string;
@@ -17,6 +18,7 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
   isOpen,
   onClose,
   currentVocabList,
+  readingId,
   readingContent,
   onSave,
   targetLanguage = 'zh-CN',
@@ -92,6 +94,7 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
         definitionEn: details.definitionEn || `The word or phrase "${term}".`,
         example: details.example || `She practiced using "${term}" in this passage.`,
         collocations: details.collocations || [],
+        sourceReadingId: readingId,
         status: 'New',
         createdAt: now,
         updatedAt: now,
