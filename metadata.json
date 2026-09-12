@@ -1,0 +1,6 @@
+{
+  "name": "AI 英语短文与词汇学习",
+  "description": "情境式 AI 英语短文生成、自动 Humanise、单词本复习与句子改写练习",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

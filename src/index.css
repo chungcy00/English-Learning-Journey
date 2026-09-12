@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-primary: #F2EEE4;
+    --bg-alt: #E5DED0;
+    --text-primary: #292B25;
+    --text-secondary: #717265;
+    --accent-primary: #73785E;
+    --accent-vocab: #5F654D;
+    --accent-secondary: #A5AA91;
+    --accent-warm: #B49379;
+    --border-subtle: #D4CCBC;
+  }
+
+  body {
+    font-family: "Inter", "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+  }
+}
+
+.font-editorial {
+  font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+}
+
+.font-ui {
+  font-family: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+/* Vocabulary highlight specific style as required in PRD #14 */
+.vocab-highlight {
+  color: #5F654D;
+  text-decoration-line: underline;
+  text-decoration-color: #73785E;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  background-color: rgba(115, 120, 94, 0.08);
+  padding: 1px 4px;
+  border-radius: 2px;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer;
+}
+
+.vocab-highlight:hover {
+  background-color: rgba(115, 120, 94, 0.16);
+  color: #292B25;
+}
+
