@@ -1,2 +1,4 @@
+import app from '../server';
+
 // Vercel Function for GET /api/health.
-export { default } from '../server';
+export default app;

@@ -764,10 +764,9 @@ async function startServer() {
   });
 }
 
-// Vercel imports this Express app from the endpoint files in api/ and manages
-// the HTTP listener itself. Keep starting a normal server everywhere else so
-// `npm run dev` and `npm start` continue to work locally.
-if (!process.env.VERCEL) {
+// Only the local npm scripts set this flag. Serverless platforms import the
+// Express app without opening a port, regardless of their system env settings.
+if (process.env.RUN_LOCAL_SERVER === 'true') {
   startServer();
 }
 

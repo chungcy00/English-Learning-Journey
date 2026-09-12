@@ -1,2 +1,4 @@
+import app from '../../server';
+
 // Vercel Function for POST /api/reading/translate.
-export { default } from '../../server';
+export default app;
