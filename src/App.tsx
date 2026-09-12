@@ -176,6 +176,9 @@ export default function App() {
         ...currentReading,
         content: revised.reading || currentReading.content,
         readingType: revised.readingType || currentReading.readingType,
+        speakers: revised.speakers && revised.speakers.length > 0
+          ? revised.speakers
+          : currentReading.speakers,
         selectedVocabulary:
           revised.vocabulary && revised.vocabulary.length > 0
             ? (revised.vocabulary as VocabularyItem[])

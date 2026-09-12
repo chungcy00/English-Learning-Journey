@@ -20,6 +20,7 @@ function fallbackGenerateReading(req: GenerationRequest): {
   readingType: 'story' | 'non-story' | 'dialogue';
   cefrLevel: CEFRLevel;
   humanised: boolean;
+  speakers?: Array<{ name: string; gender: 'male' | 'female' }>;
   reading: string;
   vocabulary: Omit<VocabularyItem, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'nextReviewDate' | 'reviewCount' | 'currentInterval'>[];
   rewritePractice: Omit<RewritePracticeItem, 'id'>[];
@@ -33,6 +34,10 @@ function fallbackGenerateReading(req: GenerationRequest): {
       readingType: 'dialogue',
       cefrLevel: req.cefrLevel,
       humanised: true,
+      speakers: [
+        { name: 'Lena', gender: 'female' },
+        { name: 'Kai', gender: 'male' },
+      ],
       reading: `Lena: You remembered my presentation was this morning. That was truly thoughtful of you.
 
 Kai: I noticed you seemed a bit anxious when we chatted yesterday. How did the discussion actually unfold?
@@ -303,6 +308,16 @@ export async function generateReadingWithPipeline(
     input: request.input || '',
     cefrLevel: (resultData.cefrLevel as CEFRLevel) || request.cefrLevel,
     readingType: (resultData.readingType as any) || (request.readingType === 'random' ? 'story' : request.readingType),
+    speakers: Array.isArray(resultData.speakers)
+      ? resultData.speakers
+          .map((speaker: any) => ({
+            name: String(speaker?.name || '').trim(),
+            gender: String(speaker?.gender || '').toLowerCase(),
+          }))
+          .filter((speaker: any) =>
+            speaker.name && (speaker.gender === 'male' || speaker.gender === 'female')
+          )
+      : undefined,
     length: request.length,
     selectedVocabulary: vocabularyItems,
     rewritePractice: rewriteItems,
@@ -489,4 +504,3 @@ export async function translateVocabularies(
     return {};
   }
 }
-

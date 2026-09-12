@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles,
   Download,
@@ -9,6 +9,7 @@ import {
   Check,
   ChevronDown,
   Volume2,
+  Square,
   BookOpen,
   MessageSquare,
   AlignLeft,
@@ -47,12 +48,113 @@ interface DialogueTurn {
   speech: string;
 }
 
+type VoiceGender = 'male' | 'female';
+
+interface SpeechQueueItem {
+  text: string;
+  gender: VoiceGender;
+  speakerIndex: number;
+  turnIndex: number | null;
+}
+
 const NON_SPEAKER_LABELS = new Set([
   'note', 'ps', 'p.s', 'step', 'tip', 'warning',
 ]);
 
+const FEMALE_NAME_HINTS = new Set([
+  'alice', 'anna', 'ava', 'bella', 'chloe', 'claire', 'diana', 'ella', 'emma',
+  'emily', 'grace', 'hannah', 'jane', 'jessica', 'julia', 'kate', 'laura',
+  'lena', 'lily', 'linda', 'lucy', 'maya', 'mia', 'nina', 'olivia', 'rachel',
+  'sarah', 'sophia', 'sophie', 'susan', 'woman', 'girl', 'mother', 'mom',
+]);
+
+const MALE_NAME_HINTS = new Set([
+  'adam', 'alex', 'andrew', 'ben', 'charles', 'chris', 'daniel', 'david',
+  'edward', 'ethan', 'george', 'henry', 'jack', 'james', 'john', 'kai', 'leo',
+  'liam', 'mark', 'marcus', 'michael', 'mike', 'noah', 'oliver', 'peter',
+  'ryan', 'sam', 'thomas', 'tom', 'man', 'boy', 'father', 'dad',
+]);
+
+const FEMALE_VOICE_HINTS = [
+  'samantha', 'karen', 'victoria', 'moira', 'tessa', 'ava', 'allison', 'susan',
+  'zira', 'female', 'fiona', 'serena', 'veena',
+];
+
+const MALE_VOICE_HINTS = [
+  'daniel', 'alex', 'david', 'mark', 'fred', 'aaron', 'arthur', 'albert',
+  'ralph', 'bruce', 'tom', 'male', 'gordon',
+];
+
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function inferSpeakerGender(speaker: string, speakerIndex: number): VoiceGender {
+  const normalized = speaker.toLowerCase().replace(/[^a-z\s]/g, ' ').trim();
+  const words = normalized.split(/\s+/).filter(Boolean);
+
+  if (words.some(word => FEMALE_NAME_HINTS.has(word))) return 'female';
+  if (words.some(word => MALE_NAME_HINTS.has(word))) return 'male';
+
+  // Keep unknown character voices distinct and stable throughout the dialogue.
+  return speakerIndex % 2 === 0 ? 'male' : 'female';
+}
+
+function pickEnglishVoice(
+  availableVoices: SpeechSynthesisVoice[],
+  gender: VoiceGender,
+  speakerIndex: number
+): SpeechSynthesisVoice | undefined {
+  const englishVoices = availableVoices.filter(voice =>
+    voice.lang.toLowerCase().startsWith('en')
+  );
+  if (englishVoices.length === 0) return undefined;
+
+  const genderHints = gender === 'female' ? FEMALE_VOICE_HINTS : MALE_VOICE_HINTS;
+  const genderMatches = englishVoices.filter(voice => {
+    const voiceName = voice.name.toLowerCase();
+    return genderHints.some(hint => voiceName.includes(hint));
+  });
+
+  if (genderMatches.length > 0) {
+    return genderMatches[speakerIndex % genderMatches.length];
+  }
+
+  return englishVoices[speakerIndex % englishVoices.length];
+}
+
+function splitSpeechText(text: string): string[] {
+  const cleanText = text
+    .replace(/^\s*["“”']|["“”']\s*$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!cleanText) return [];
+
+  const sentences = cleanText.match(/[^.!?]+[.!?]+["”']?|[^.!?]+$/g) || [cleanText];
+  const chunks: string[] = [];
+
+  for (const sentence of sentences) {
+    const trimmed = sentence.trim();
+    if (trimmed.length <= 220) {
+      chunks.push(trimmed);
+      continue;
+    }
+
+    const clauses = trimmed.match(/[^,;:]+[,;:]?|[^,;:]+$/g) || [trimmed];
+    let current = '';
+    for (const clause of clauses) {
+      const candidate = `${current} ${clause.trim()}`.trim();
+      if (candidate.length > 220 && current) {
+        chunks.push(current);
+        current = clause.trim();
+      } else {
+        current = candidate;
+      }
+    }
+    if (current) chunks.push(current);
+  }
+
+  return chunks;
 }
 
 // Helper to parse dialogue turns from text (handles line-by-line, single-paragraph merged dialogues, and scene notes)
@@ -165,6 +267,139 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [translationError, setTranslationError] = useState<string | null>(null);
   const [copiedTranslation, setCopiedTranslation] = useState<boolean>(false);
+  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+  const [activeSpeechTurn, setActiveSpeechTurn] = useState<number | null>(null);
+  const [speechVoices, setSpeechVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const speechRunRef = useRef(0);
+  const speechPauseTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!('speechSynthesis' in window)) return;
+
+    const loadVoices = () => setSpeechVoices(window.speechSynthesis.getVoices());
+    loadVoices();
+    window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+
+    return () => {
+      window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
+    };
+  }, []);
+
+  const stopReadingAloud = () => {
+    speechRunRef.current += 1;
+    if (speechPauseTimerRef.current !== null) {
+      window.clearTimeout(speechPauseTimerRef.current);
+      speechPauseTimerRef.current = null;
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeaking(false);
+    setActiveSpeechTurn(null);
+  };
+
+  const startReadingAloud = () => {
+    if (!('speechSynthesis' in window)) {
+      console.warn('当前浏览器不支持英文朗读，请使用最新版 Chrome、Safari 或 Edge。');
+      return;
+    }
+
+    if (isSpeaking) {
+      stopReadingAloud();
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const voices = speechVoices.length > 0
+      ? speechVoices
+      : window.speechSynthesis.getVoices();
+    const queue: SpeechQueueItem[] = [];
+
+    if (isDetectedDialogue) {
+      const speakerOrder = new Map<string, number>();
+      dialogueTurns.forEach((turn, turnIndex) => {
+        if (!turn.speaker || ['setting', 'scene', 'note'].includes(turn.speaker.toLowerCase())) {
+          return;
+        }
+
+        if (!speakerOrder.has(turn.speaker)) {
+          speakerOrder.set(turn.speaker, speakerOrder.size);
+        }
+        const speakerIndex = speakerOrder.get(turn.speaker) || 0;
+        const speakerProfile = reading.speakers?.find(
+          profile => profile.name.toLowerCase() === turn.speaker?.toLowerCase()
+        );
+        const gender = speakerProfile?.gender || inferSpeakerGender(turn.speaker, speakerIndex);
+        splitSpeechText(turn.speech).forEach(text => {
+          queue.push({ text, gender, speakerIndex, turnIndex });
+        });
+      });
+    } else {
+      splitSpeechText(reading.content).forEach(text => {
+        queue.push({ text, gender: 'female', speakerIndex: 0, turnIndex: null });
+      });
+    }
+
+    if (queue.length === 0) return;
+
+    const runId = speechRunRef.current + 1;
+    speechRunRef.current = runId;
+    setIsSpeaking(true);
+
+    const speakNext = (queueIndex: number) => {
+      if (speechRunRef.current !== runId) return;
+      if (queueIndex >= queue.length) {
+        setIsSpeaking(false);
+        setActiveSpeechTurn(null);
+        return;
+      }
+
+      const item = queue[queueIndex];
+      const utterance = new SpeechSynthesisUtterance(item.text);
+      utterance.lang = 'en-US';
+      utterance.voice = pickEnglishVoice(voices, item.gender, item.speakerIndex) || null;
+      utterance.volume = 1;
+      utterance.rate = /[!?]$/.test(item.text) ? 0.94 : 0.91;
+      utterance.pitch = item.gender === 'female' ? 1.06 : 0.92;
+      setActiveSpeechTurn(item.turnIndex);
+
+      utterance.onend = () => {
+        if (speechRunRef.current !== runId) return;
+        const nextItem = queue[queueIndex + 1];
+        const changedSpeaker = nextItem && nextItem.speakerIndex !== item.speakerIndex;
+        const pauseMs = changedSpeaker ? 320 : 150;
+        speechPauseTimerRef.current = window.setTimeout(
+          () => speakNext(queueIndex + 1),
+          pauseMs
+        );
+      };
+      utterance.onerror = (event) => {
+        if (speechRunRef.current !== runId || ['canceled', 'interrupted'].includes(event.error)) {
+          return;
+        }
+        speechPauseTimerRef.current = window.setTimeout(
+          () => speakNext(queueIndex + 1),
+          100
+        );
+      };
+
+      window.speechSynthesis.speak(utterance);
+    };
+
+    speakNext(0);
+  };
+
+  useEffect(() => {
+    return () => {
+      speechRunRef.current += 1;
+      if (speechPauseTimerRef.current !== null) {
+        window.clearTimeout(speechPauseTimerRef.current);
+      }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [reading.id, reading.content]);
 
   useEffect(() => {
     if (propTargetLanguage && propTargetLanguage !== targetLanguage) {
@@ -340,7 +575,11 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           return (
             <div
               key={tIdx}
-              className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-sm bg-[#FAF7F2]/80 hover:bg-[#FAF7F2] border border-[#D4CCBC]/50 transition-colors"
+              className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-sm bg-[#FAF7F2]/80 hover:bg-[#FAF7F2] border transition-all ${
+                isSpeaking && activeSpeechTurn === tIdx
+                  ? 'border-[#73785E] ring-2 ring-[#73785E]/20 shadow-sm'
+                  : 'border-[#D4CCBC]/50'
+              }`}
             >
               {/* Speaker Avatar & Name */}
               <div className="flex-shrink-0 flex flex-col items-center pt-0.5 w-16 sm:w-20 text-center">
@@ -470,6 +709,27 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       targetLanguage
     });
   };
+
+  const renderReadAloudButton = () => (
+    <button
+      type="button"
+      onClick={startReadingAloud}
+      aria-pressed={isSpeaking}
+      title={isSpeaking ? '停止英文朗读' : isDetectedDialogue ? '按角色声线朗读英文对话' : '朗读英文短文'}
+      className={`flex items-center gap-1.5 px-2.5 py-1.5 border text-xs font-ui rounded-sm transition-colors ${
+        isSpeaking
+          ? 'bg-[#5F654D] text-[#FAF7F2] border-[#5F654D] shadow-xs'
+          : 'bg-[#F2EEE4] text-[#5F654D] hover:bg-[#E5DED0] border-[#5F654D]/40'
+      }`}
+    >
+      {isSpeaking ? (
+        <Square className="w-3.5 h-3.5 fill-current" />
+      ) : (
+        <Volume2 className="w-3.5 h-3.5" />
+      )}
+      <span>{isSpeaking ? '停止朗读' : isDetectedDialogue ? '角色朗读' : '英文朗读'}</span>
+    </button>
+  );
 
   return (
     <div className={`${showTranslation ? 'max-w-7xl' : 'max-w-4xl'} mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8 transition-all`}>
@@ -607,35 +867,39 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 </h1>
               </div>
 
-              {/* Dialogue vs Paragraph Toggle */}
-              {isDetectedDialogue && (
-                <div className="flex items-center gap-1 bg-[#E5DED0]/70 p-1 rounded-sm text-xs font-ui self-start sm:self-auto border border-[#D4CCBC]/50">
-                  <button
-                    type="button"
-                    onClick={() => setFormatMode('dialogue')}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-xs transition-colors ${
-                      formatMode === 'dialogue'
-                        ? 'bg-[#F2EEE4] text-[#292B25] font-semibold shadow-xs'
-                        : 'text-[#717265] hover:text-[#292B25]'
-                    }`}
-                  >
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    <span>剧本</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormatMode('paragraph')}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-xs transition-colors ${
-                      formatMode === 'paragraph'
-                        ? 'bg-[#F2EEE4] text-[#292B25] font-semibold shadow-xs'
-                        : 'text-[#717265] hover:text-[#292B25]'
-                    }`}
-                  >
-                    <AlignLeft className="w-3.5 h-3.5" />
-                    <span>段落</span>
-                  </button>
-                </div>
-              )}
+              <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                {renderReadAloudButton()}
+
+                {/* Dialogue vs Paragraph Toggle */}
+                {isDetectedDialogue && (
+                  <div className="flex items-center gap-1 bg-[#E5DED0]/70 p-1 rounded-sm text-xs font-ui border border-[#D4CCBC]/50">
+                    <button
+                      type="button"
+                      onClick={() => setFormatMode('dialogue')}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-xs transition-colors ${
+                        formatMode === 'dialogue'
+                          ? 'bg-[#F2EEE4] text-[#292B25] font-semibold shadow-xs'
+                          : 'text-[#717265] hover:text-[#292B25]'
+                      }`}
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>剧本</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormatMode('paragraph')}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-xs transition-colors ${
+                        formatMode === 'paragraph'
+                          ? 'bg-[#F2EEE4] text-[#292B25] font-semibold shadow-xs'
+                          : 'text-[#717265] hover:text-[#292B25]'
+                      }`}
+                    >
+                      <AlignLeft className="w-3.5 h-3.5" />
+                      <span>段落</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </header>
 
             {/* Content with highlighted vocabulary */}
@@ -779,7 +1043,9 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
               </h1>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+              {renderReadAloudButton()}
+
               <button
                 type="button"
                 onClick={() => setShowTranslation(true)}

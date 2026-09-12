@@ -235,7 +235,7 @@ app.post('/api/reading/generate', async (req, res) => {
     const typeGuidance = {
       story: 'Must be a narrative story with characters, relatable situation, emotional development, natural pacing. Avoid cliche fables.',
       'non-story': 'Must be an expository, opinion, lifestyle, or practical reflection article (daily life, relationships, workplace, social skills). Do NOT turn it into a character story.',
-      dialogue: 'CRITICAL: Must be formatted strictly line-by-line as a realistic spoken dialogue script. Every speaker turn MUST be on its own line separated by newlines, starting with the character name followed by a colon (e.g. Lena: "..." \\n\\n Kai: "..."). Do NOT lump dialogue turns together into a continuous block of text or a narrative paragraph.'
+      dialogue: 'CRITICAL: Must be formatted strictly line-by-line as a realistic spoken dialogue script. Every speaker turn MUST be on its own line separated by newlines, starting with the character name followed by a colon (e.g. Lena: "..." \\n\\n Kai: "..."). Do NOT lump dialogue turns together into a continuous block of text or a narrative paragraph. Also return each character in the speakers array with the correct male or female voice gender.'
     }[chosenType] || 'Natural narrative';
 
     const systemInstruction = `You are a master English educator and editor.
@@ -277,6 +277,18 @@ Please generate the complete structured JSON response adhering strictly to the s
             cefrLevel: { type: Type.STRING, description: 'The verified CEFR level' },
             humanised: { type: Type.BOOLEAN, description: 'Always true as the text has undergone the humanise pipeline' },
             reading: { type: Type.STRING, description: 'The full humanised text' },
+            speakers: {
+              type: Type.ARRAY,
+              description: 'For dialogue only: each unique speaker and voice gender. Return an empty array for other reading types.',
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING, description: 'Speaker name exactly as written before the colon' },
+                  gender: { type: Type.STRING, description: 'male or female' }
+                },
+                required: ['name', 'gender']
+              }
+            },
             vocabulary: {
               type: Type.ARRAY,
               items: {
@@ -345,6 +357,7 @@ app.post('/api/reading/rewrite', async (req, res) => {
 Rewrite the given reading based on the requested modification: "${instruction}".
 ${keepCurrentVocabulary ? `IMPORTANT: You MUST naturally retain these key target vocabulary words/phrases: ${currentVocabulary.join(', ')}.` : ''}
 Execute the Automatic Humanise pipeline: eliminate robotic transitions, enhance sentence rhythm, and preserve authentic context.
+If the resulting reading is a dialogue, return every unique character in the speakers array and label the voice gender as male or female.
 Output the complete structured JSON response matching the schema.`;
 
     const prompt = `Current Reading:
@@ -371,6 +384,18 @@ Generate the updated reading, updated vocabulary details, and refreshed rewrite 
             cefrLevel: { type: Type.STRING },
             humanised: { type: Type.BOOLEAN },
             reading: { type: Type.STRING },
+            speakers: {
+              type: Type.ARRAY,
+              description: 'For dialogue only: unique speakers with male or female voice gender; otherwise an empty array.',
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING },
+                  gender: { type: Type.STRING, description: 'male or female' }
+                },
+                required: ['name', 'gender']
+              }
+            },
             vocabulary: {
               type: Type.ARRAY,
               items: {

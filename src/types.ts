@@ -63,6 +63,11 @@ export interface ReadingTranslation {
   updatedAt: number;
 }
 
+export interface DialogueSpeaker {
+  name: string;
+  gender: 'male' | 'female';
+}
+
 export interface ReadingRecord {
   id: string;
   title: string;
@@ -71,6 +76,7 @@ export interface ReadingRecord {
   input: string;
   cefrLevel: CEFRLevel;
   readingType: 'story' | 'non-story' | 'dialogue';
+  speakers?: DialogueSpeaker[];
   length: ReadingLength;
   selectedVocabulary: VocabularyItem[];
   rewritePractice: RewritePracticeItem[];
@@ -123,6 +129,7 @@ export interface RewriteReadingResponse {
   readingType?: ReadingType;
   cefrLevel?: CEFRLevel;
   humanised?: boolean;
+  speakers?: DialogueSpeaker[];
   vocabulary?: VocabularyItem[];
   rewritePractice?: RewritePracticeItem[];
 }
