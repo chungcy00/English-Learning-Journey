@@ -27,7 +27,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [vocabCount, setVocabCount] = useState<number>(settings.vocabularyCount);
 
   const quickPrompts = [
-    { label: '体贴的男朋友', desc: '中文主题' },
+    { label: '雨天里的小惊喜', desc: '中文主题' },
     { label: '如何委婉拒绝别人', desc: '中文实用' },
     { label: 'Small talk at work', desc: '职场对话' },
     { label: 'genuine, considerate, rooted, undivided attention', desc: '指定多词' },
@@ -73,7 +73,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             rows={3}
-            placeholder="输入英文单词 (如 genuine)、词组 (undivided attention)、多个生词 (genuine, considerate, rooted)、中文主题 (体贴的男朋友) 或任意学习想法..."
+            placeholder="输入英文单词 (如 genuine)、词组 (undivided attention)、多个生词 (genuine, considerate, rooted)、中文主题 (雨天里的小惊喜) 或任意学习想法..."
             className="w-full bg-transparent resize-none border-none outline-none font-editorial text-lg sm:text-xl text-[#292B25] placeholder:text-[#A5AA91] placeholder:font-ui placeholder:text-sm leading-relaxed"
           />
 
@@ -106,12 +106,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         {/* Reading Generation Settings (PRD Section 10) */}
         <div className="bg-[#E5DED0]/30 border border-[#D4CCBC] rounded-sm p-5 space-y-5">
-          <div className="flex items-center justify-between border-b border-[#D4CCBC]/60 pb-2.5">
+          <div className="flex items-center border-b border-[#D4CCBC]/60 pb-2.5">
             <span className="font-ui text-xs uppercase tracking-wider text-[#717265] font-semibold">
               短文定制参数 (Generation Settings)
-            </span>
-            <span className="text-[11px] text-[#717265] font-ui italic">
-              自动保留 CEFR 难度与生词语境
             </span>
           </div>
 
