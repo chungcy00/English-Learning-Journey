@@ -764,4 +764,11 @@ async function startServer() {
   });
 }
 
-startServer();
+// Vercel imports this Express app from api/[...path].ts and manages the
+// HTTP listener itself. Keep starting a normal server everywhere else so
+// `npm run dev` and `npm start` continue to work locally.
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;
