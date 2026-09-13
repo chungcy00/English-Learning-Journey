@@ -1,4 +1,5 @@
 import React from 'react';
+import { AppUpdateManager } from './AppUpdateManager';
 
 export const Footer: React.FC = () => {
   return (
@@ -10,6 +11,7 @@ export const Footer: React.FC = () => {
         <p className="font-ui text-[11px] text-[#717265] max-w-2xl mx-auto leading-relaxed">
           This material was created with AI assistance and reviewed and edited by a human. For personal learning use only. Redistribution, resale, republication, or commercial reuse is prohibited without prior written permission.
         </p>
+        <AppUpdateManager />
       </div>
     </footer>
   );

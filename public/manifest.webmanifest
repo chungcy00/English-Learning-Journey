@@ -1,6 +1,7 @@
 {
   "name": "Mine English",
   "short_name": "Mine English",
+  "id": "/",
   "description": "情境式 AI 英语短文、词汇与复习工具",
   "start_url": "/",
   "scope": "/",
