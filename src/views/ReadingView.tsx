@@ -34,8 +34,8 @@ import {
   NARRATION_SPEECH_RATE,
   SpeechGender,
   getAvailableSpeechVoices,
-  inferSpeakerGender,
-  selectDialogueVoice,
+  resolveSpeakerGender,
+  selectDialogueVoicePair,
   selectVocabularyVoice,
   stopEnglishSpeech,
 } from '../utils/speech';
@@ -279,7 +279,11 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         const speakerProfile = reading.speakers?.find(
           profile => profile.name.toLowerCase().trim() === speakerKey
         );
-        const gender = speakerProfile?.gender || inferSpeakerGender(turn.speaker, speakerIndex);
+        const gender = resolveSpeakerGender(
+          turn.speaker,
+          speakerIndex,
+          speakerProfile?.gender
+        );
         const speech = cleanSpeechText(turn.speech);
         if (speech) queue.push({ text: speech, gender, speakerKey, speakerIndex, turnIndex });
       });
@@ -302,6 +306,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     setIsSpeaking(true);
 
     const beginPlayback = (resolvedVoices: SpeechSynthesisVoice[]) => {
+      const dialogueVoices = selectDialogueVoicePair(resolvedVoices);
+
       // Resolve each character's voice once for the whole reading. This avoids
       // browsers changing voices between turns and makes role boundaries clear.
       const speakerVoices = new Map<string, SpeechSynthesisVoice | undefined>();
@@ -310,14 +316,14 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           if (!speakerVoices.has(item.speakerKey)) {
             speakerVoices.set(
               item.speakerKey,
-              selectDialogueVoice(resolvedVoices, item.gender)
+              dialogueVoices[item.gender]
             );
           }
         });
       }
 
-      const maleVoice = selectDialogueVoice(resolvedVoices, 'male');
-      const femaleVoice = selectDialogueVoice(resolvedVoices, 'female');
+      const maleVoice = dialogueVoices.male;
+      const femaleVoice = dialogueVoices.female;
       const hasDistinctGenderVoices = !!maleVoice && !!femaleVoice &&
         maleVoice.voiceURI !== femaleVoice.voiceURI;
 

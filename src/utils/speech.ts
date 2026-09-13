@@ -1,5 +1,10 @@
 export type SpeechGender = 'male' | 'female';
 
+export interface DialogueVoicePair {
+  male?: SpeechSynthesisVoice;
+  female?: SpeechSynthesisVoice;
+}
+
 export const WORD_SPEECH_RATE = 0.78;
 export const NARRATION_SPEECH_RATE = 0.8;
 export const DIALOGUE_SPEECH_RATE = 0.82;
@@ -49,11 +54,20 @@ function findVoiceByHints(
 ): SpeechSynthesisVoice | undefined {
   for (const hint of hints) {
     const voice = voices
-      .filter(candidate => candidate.name.toLowerCase().includes(hint))
+      .filter(candidate => voiceNameMatchesHint(candidate.name, hint))
       .sort((a, b) => voiceQualityScore(b) - voiceQualityScore(a))[0];
     if (voice) return voice;
   }
   return undefined;
+}
+
+function voiceNameMatchesHint(voiceName: string, hint: string): boolean {
+  const normalizedName = voiceName.toLowerCase();
+  if (hint === 'male' || hint === 'female') {
+    // A substring check makes "female" accidentally match "male".
+    return new RegExp(`(^|[^a-z])${hint}([^a-z]|$)`).test(normalizedName);
+  }
+  return normalizedName.includes(hint);
 }
 
 function voiceQualityScore(voice: SpeechSynthesisVoice): number {
@@ -70,7 +84,7 @@ export function getAvailableSpeechVoices(): SpeechSynthesisVoice[] {
   return window.speechSynthesis.getVoices();
 }
 
-export function inferSpeakerGender(speaker: string, speakerIndex: number): SpeechGender {
+function inferKnownSpeakerGender(speaker: string): SpeechGender | null {
   const words = speaker
     .toLowerCase()
     .replace(/[^a-z\s]/g, ' ')
@@ -80,7 +94,24 @@ export function inferSpeakerGender(speaker: string, speakerIndex: number): Speec
 
   if (words.some(word => FEMALE_NAME_HINTS.has(word))) return 'female';
   if (words.some(word => MALE_NAME_HINTS.has(word))) return 'male';
+  return null;
+}
+
+export function inferSpeakerGender(speaker: string, speakerIndex: number): SpeechGender {
+  const knownGender = inferKnownSpeakerGender(speaker);
+  if (knownGender) return knownGender;
   return speakerIndex % 2 === 0 ? 'male' : 'female';
+}
+
+export function resolveSpeakerGender(
+  speaker: string,
+  speakerIndex: number,
+  storedGender?: SpeechGender
+): SpeechGender {
+  // Old history records can be missing speaker metadata or contain an incorrect
+  // AI-assigned gender. A clearly recognised name such as Anna or Tom wins.
+  return inferKnownSpeakerGender(speaker) || storedGender ||
+    (speakerIndex % 2 === 0 ? 'male' : 'female');
 }
 
 export function selectDialogueVoice(
@@ -106,6 +137,26 @@ export function selectDialogueVoice(
 
   const femaleFallback = qualitySorted.find(voice => voice.default) || qualitySorted[0];
   return qualitySorted.find(voice => voice.voiceURI !== femaleFallback?.voiceURI) || femaleFallback;
+}
+
+export function selectDialogueVoicePair(
+  voices: SpeechSynthesisVoice[]
+): DialogueVoicePair {
+  const englishVoices = getEnglishVoices(voices);
+  const female = selectDialogueVoice(englishVoices, 'female');
+  let male = selectDialogueVoice(englishVoices, 'male');
+
+  // If the first pass still resolves both genders to one source, force a
+  // different English source whenever the device has another one available.
+  if (male && female && male.voiceURI === female.voiceURI) {
+    const alternatives = englishVoices.filter(voice => voice.voiceURI !== female.voiceURI);
+    male = findVoiceByHints(alternatives, MALE_VOICE_HINTS) ||
+      [...alternatives].sort(
+        (a, b) => voiceQualityScore(b) - voiceQualityScore(a) || a.name.localeCompare(b.name)
+      )[0] || male;
+  }
+
+  return { male, female };
 }
 
 export function selectVocabularyVoice(
