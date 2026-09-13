@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Bookmark, RotateCcw, Smartphone, Sparkles } from 'lucide-react';
+import { BookOpen, Bookmark, History, RotateCcw, Smartphone, Sparkles } from 'lucide-react';
 import { NavTab } from './Navbar';
 
 interface InstalledAppBottomNavProps {
@@ -18,6 +18,7 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
   const tabs = [
     { id: 'home' as NavTab, label: '生成', icon: Sparkles },
     { id: 'reading' as NavTab, label: '阅读', icon: BookOpen, disabled: !hasCurrentReading },
+    { id: 'history' as NavTab, label: '历史', icon: History },
     { id: 'wordbook' as NavTab, label: '生词本', icon: Bookmark },
     { id: 'review' as NavTab, label: '复习', icon: RotateCcw, badge: reviewDueCount },
     { id: 'update' as NavTab, label: '更新', icon: Smartphone },
@@ -28,7 +29,7 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
       aria-label="软件主导航"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-[#D4CCBC] bg-[#FAF7F2]/95 backdrop-blur-md shadow-[0_-4px_18px_rgba(41,43,37,0.08)]"
     >
-      <div className="mx-auto grid max-w-3xl grid-cols-5 px-2 pt-1.5 pb-[calc(0.4rem+env(safe-area-inset-bottom))]">
+      <div className="mx-auto grid max-w-3xl grid-cols-6 px-1 pt-1.5 pb-[calc(0.4rem+env(safe-area-inset-bottom))]">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;

@@ -7,7 +7,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar, NavTab } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ProcessingModal } from './components/ProcessingModal';
-import { ReadingHistoryModal } from './components/ReadingHistoryModal';
 import { AppInstallPrompt } from './components/AppInstallPrompt';
 import { InstalledAppBottomNav } from './components/InstalledAppBottomNav';
 import { HomeView } from './views/HomeView';
@@ -15,6 +14,7 @@ import { ReadingView } from './views/ReadingView';
 import { WordbookView } from './views/WordbookView';
 import { ReviewView } from './views/ReviewView';
 import { AppUpdateView } from './views/AppUpdateView';
+import { ReadingHistoryView } from './views/ReadingHistoryView';
 import { isMobileOrTablet, isStandaloneApp } from './utils/pwa';
 
 import {
@@ -64,7 +64,6 @@ export default function App() {
   const [isRewriting, setIsRewriting] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isInstalledApp, setIsInstalledApp] = useState(
     () => isStandaloneApp() && isMobileOrTablet()
   );
@@ -398,7 +397,7 @@ export default function App() {
             onUpdateReadingVocabulary={handleUpdateReadingVocabulary}
             onUpdateReading={handleUpdateReading}
             onRewrite={handleRewrite}
-            onOpenHistory={() => setIsHistoryOpen(true)}
+            onOpenHistory={() => setActiveTab('history')}
             isRewriting={isRewriting}
             targetLanguage={settings.targetLanguage || 'zh-CN'}
             onLanguageChange={handleLanguageChange}
@@ -433,6 +432,17 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'history' && (
+          <ReadingHistoryView
+            readings={readings}
+            onSelectReading={(reading) => {
+              setCurrentReading(reading);
+              setActiveTab('reading');
+            }}
+            onDeleteReading={handleDeleteReading}
+          />
+        )}
+
         {activeTab === 'update' && isInstalledApp && <AppUpdateView />}
       </main>
 
@@ -440,18 +450,6 @@ export default function App() {
       <ProcessingModal
         isOpen={isGenerating || isRewriting}
         status={processingStatus}
-      />
-
-      {/* Reading History Modal */}
-      <ReadingHistoryModal
-        isOpen={isHistoryOpen}
-        onClose={() => setIsHistoryOpen(false)}
-        readings={readings}
-        onSelectReading={(reading) => {
-          setCurrentReading(reading);
-          setActiveTab('reading');
-        }}
-        onDeleteReading={handleDeleteReading}
       />
 
       {/* Mobile browsers offer installation; update controls only exist inside the installed app. */}
