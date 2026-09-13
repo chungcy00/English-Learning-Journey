@@ -8,10 +8,13 @@ import { Navbar, NavTab } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ProcessingModal } from './components/ProcessingModal';
 import { ReadingHistoryModal } from './components/ReadingHistoryModal';
+import { AppInstallPrompt } from './components/AppInstallPrompt';
 import { HomeView } from './views/HomeView';
 import { ReadingView } from './views/ReadingView';
 import { WordbookView } from './views/WordbookView';
 import { ReviewView } from './views/ReviewView';
+import { AppUpdateView } from './views/AppUpdateView';
+import { isStandaloneApp } from './utils/pwa';
 
 import {
   ReadingRecord,
@@ -60,6 +63,11 @@ export default function App() {
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isInstalledApp, setIsInstalledApp] = useState(false);
+
+  useEffect(() => {
+    setIsInstalledApp(isStandaloneApp());
+  }, []);
 
   // Load initial data
   const loadData = useCallback(async () => {
@@ -345,6 +353,7 @@ export default function App() {
         reviewDueCount={dueVocabularies.length}
         hasCurrentReading={!!currentReading}
         targetLanguage={settings.targetLanguage || 'zh-CN'}
+        isInstalledApp={isInstalledApp}
       />
 
       {/* Main Content Router */}
@@ -415,6 +424,8 @@ export default function App() {
             onBatchUpdateVocabularies={handleBatchUpdateVocabularies}
           />
         )}
+
+        {activeTab === 'update' && isInstalledApp && <AppUpdateView />}
       </main>
 
       {/* Pipeline Status Modal */}
@@ -434,6 +445,9 @@ export default function App() {
         }}
         onDeleteReading={handleDeleteReading}
       />
+
+      {/* Mobile browsers offer installation; update controls only exist inside the installed app. */}
+      {!isInstalledApp && <AppInstallPrompt />}
 
       {/* Copyright Footer */}
       <Footer />

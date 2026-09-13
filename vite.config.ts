@@ -32,6 +32,12 @@ self.addEventListener('message', (event) => {
     event.source?.postMessage({ type: 'APP_VERSION', version: APP_VERSION });
   }
 });
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith(fetch(event.request));
+  }
+});
 `,
       });
     },
