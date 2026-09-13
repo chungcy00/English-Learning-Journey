@@ -148,6 +148,89 @@ function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+const DIALOGUE_FEMALE_NAMES = ['Anna', 'Sarah', 'Emma', 'Maya'] as const;
+const DIALOGUE_MALE_NAMES = ['Tom', 'Mark', 'Daniel', 'Leo'] as const;
+const DIALOGUE_NAME_GENDER = new Map<string, 'female' | 'male'>([
+  ...DIALOGUE_FEMALE_NAMES.map(name => [name.toLowerCase(), 'female'] as const),
+  ...DIALOGUE_MALE_NAMES.map(name => [name.toLowerCase(), 'male'] as const),
+]);
+
+export function enforceDialogueCast<T extends Record<string, any>>(
+  result: T,
+  forceDialogue = false
+): T {
+  const isDialogue = forceDialogue || String(result.readingType || '').toLowerCase() === 'dialogue';
+  if (!isDialogue || typeof result.reading !== 'string') return result;
+
+  const uniqueSpeakers = [...new Set(extractDialogueSpeakerSequence(result.reading))];
+  if (uniqueSpeakers.length === 0) return result;
+
+  const suppliedProfiles = Array.isArray(result.speakers) ? result.speakers : [];
+  const suppliedGender = new Map<string, 'female' | 'male'>();
+  suppliedProfiles.forEach((profile: any) => {
+    const name = String(profile?.name || '').trim().toLowerCase();
+    const gender = String(profile?.gender || '').trim().toLowerCase();
+    if (name && (gender === 'female' || gender === 'male')) {
+      suppliedGender.set(name, gender);
+    }
+  });
+
+  const genders = uniqueSpeakers.map((speaker, index) =>
+    DIALOGUE_NAME_GENDER.get(speaker.toLowerCase()) ||
+    suppliedGender.get(speaker.toLowerCase()) ||
+    (index % 2 === 0 ? 'female' : 'male')
+  );
+
+  // Generated dialogue uses one female and one male role. If the model returns
+  // duplicate gender metadata, correct the second role deterministically.
+  if (uniqueSpeakers.length === 2 && genders[0] === genders[1]) {
+    genders[1] = genders[0] === 'female' ? 'male' : 'female';
+  }
+
+  const usedNames = new Set<string>();
+  let femaleIndex = 0;
+  let maleIndex = 0;
+  const renamedProfiles = uniqueSpeakers.map((speaker, index) => {
+    const gender = genders[index];
+    const allowedNames = gender === 'female' ? DIALOGUE_FEMALE_NAMES : DIALOGUE_MALE_NAMES;
+    const currentName = allowedNames.find(name => name.toLowerCase() === speaker.toLowerCase());
+    let name = currentName;
+
+    if (!name || usedNames.has(name.toLowerCase())) {
+      const startIndex = gender === 'female' ? femaleIndex : maleIndex;
+      name = allowedNames.find((candidate, offset) =>
+        offset >= startIndex && !usedNames.has(candidate.toLowerCase())
+      ) || allowedNames.find(candidate => !usedNames.has(candidate.toLowerCase())) || allowedNames[0];
+    }
+
+    usedNames.add(name.toLowerCase());
+    if (gender === 'female') femaleIndex = Math.min(femaleIndex + 1, DIALOGUE_FEMALE_NAMES.length - 1);
+    else maleIndex = Math.min(maleIndex + 1, DIALOGUE_MALE_NAMES.length - 1);
+    return { originalName: speaker, name, gender };
+  });
+
+  let reading = result.reading;
+  renamedProfiles.forEach(({ originalName, name }) => {
+    const escapedOriginal = escapeRegex(originalName);
+    reading = reading.replace(
+      new RegExp(`(^\\s*)${escapedOriginal}(\\s*:)`, 'gmi'),
+      (_match: string, boundary: string, colon: string) => `${boundary}${name}${colon}`
+    );
+    if (originalName !== name) {
+      // Replace capitalised direct address/name mentions without changing an
+      // ordinary lowercase word such as the verb "mark".
+      reading = reading.replace(new RegExp(`\\b${escapedOriginal}\\b`, 'g'), name);
+    }
+  });
+
+  return {
+    ...result,
+    readingType: 'dialogue',
+    reading,
+    speakers: renamedProfiles.map(({ name, gender }) => ({ name, gender })),
+  };
+}
+
 function extractDialogueSpeakerSequence(text: string): string[] {
   const speakerPattern = '[A-Z][A-Za-z0-9_-]*(?:\\s+[A-Z][A-Za-z0-9_-]*){0,2}';
   const lineRegex = new RegExp(`^\\s*(${speakerPattern})\\s*[:：]`, 'gm');
@@ -235,7 +318,7 @@ app.post('/api/reading/generate', async (req, res) => {
     const typeGuidance = {
       story: 'Must be a narrative story with characters, relatable situation, emotional development, natural pacing. Avoid cliche fables.',
       'non-story': 'Must be an expository, opinion, lifestyle, or practical reflection article (daily life, relationships, workplace, social skills). Do NOT turn it into a character story.',
-      dialogue: 'CRITICAL: Must be formatted strictly line-by-line as a realistic spoken dialogue script. Every speaker turn MUST be on its own line separated by newlines, starting with the character name followed by a colon (e.g. Lena: "..." \\n\\n Kai: "..."). Do NOT lump dialogue turns together into a continuous block of text or a narrative paragraph. Also return each character in the speakers array with the correct male or female voice gender.'
+      dialogue: `CRITICAL: Must be formatted strictly line-by-line as a realistic spoken dialogue script. Use exactly two speakers: one female chosen only from ${DIALOGUE_FEMALE_NAMES.join(', ')}, and one male chosen only from ${DIALOGUE_MALE_NAMES.join(', ')}. Every turn MUST start with that exact character name followed by a colon and be separated by newlines. Do NOT use gender-neutral names, do NOT introduce additional speakers, and do NOT turn the dialogue into a narrative paragraph. Return the exact two names in the speakers array with female or male gender.`
     }[chosenType] || 'Natural narrative';
 
     const systemInstruction = `You are a master English educator and editor.
@@ -328,7 +411,7 @@ Please generate the complete structured JSON response adhering strictly to the s
     });
 
     const parsed = safeParseJson(response.text);
-    return res.json(parsed);
+    return res.json(enforceDialogueCast(parsed, chosenType === 'dialogue'));
   } catch (error: any) {
     console.error('Reading generation error:', error);
     return res.status(500).json({ error: error.message || 'Failed to generate reading' });
@@ -348,7 +431,7 @@ app.post('/api/reading/rewrite', async (req, res) => {
       moreConversational: 'Inject natural colloquial cadences, spoken rhythms, and authentic interpersonal warmth.',
       story: 'Convert the content into a narrative story format with real human characters.',
       'non-story': 'Convert into an insightful reflective/expository non-story essay.',
-      dialogue: 'Convert into a realistic spoken dialogue formatted strictly line-by-line with speaker turns (e.g. Lena: "..." \\n\\n Kai: "..."). Each turn MUST be on its own line. Do NOT write as a continuous paragraph.'
+      dialogue: `Convert into a realistic spoken dialogue with exactly two speakers: one female chosen only from ${DIALOGUE_FEMALE_NAMES.join(', ')}, and one male chosen only from ${DIALOGUE_MALE_NAMES.join(', ')}. Put every turn on its own line using the exact character name followed by a colon. Do not use gender-neutral names or additional speakers.`
     };
 
     const instruction = modeInstructions[mode] || 'Rewrite with enhanced natural rhythm and style.';
@@ -357,7 +440,7 @@ app.post('/api/reading/rewrite', async (req, res) => {
 Rewrite the given reading based on the requested modification: "${instruction}".
 ${keepCurrentVocabulary ? `IMPORTANT: You MUST naturally retain these key target vocabulary words/phrases: ${currentVocabulary.join(', ')}.` : ''}
 Execute the Automatic Humanise pipeline: eliminate robotic transitions, enhance sentence rhythm, and preserve authentic context.
-If the resulting reading is a dialogue, return every unique character in the speakers array and label the voice gender as male or female.
+If the resulting reading is a dialogue, use exactly one female name from ${DIALOGUE_FEMALE_NAMES.join(', ')} and one male name from ${DIALOGUE_MALE_NAMES.join(', ')}, and return both in the speakers array with their fixed gender.
 Output the complete structured JSON response matching the schema.`;
 
     const prompt = `Current Reading:
@@ -432,7 +515,7 @@ Generate the updated reading, updated vocabulary details, and refreshed rewrite 
     });
 
     const parsed = safeParseJson(response.text);
-    return res.json(parsed);
+    return res.json(enforceDialogueCast(parsed, mode === 'dialogue'));
   } catch (error: any) {
     console.error('Reading rewrite error:', error);
     return res.status(500).json({ error: error.message || 'Failed to rewrite reading' });

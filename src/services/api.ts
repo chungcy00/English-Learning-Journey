@@ -35,18 +35,18 @@ function fallbackGenerateReading(req: GenerationRequest): {
       cefrLevel: req.cefrLevel,
       humanised: true,
       speakers: [
-        { name: 'Lena', gender: 'female' },
-        { name: 'Kai', gender: 'male' },
+        { name: 'Anna', gender: 'female' },
+        { name: 'Tom', gender: 'male' },
       ],
-      reading: `Lena: You remembered my presentation was this morning. That was truly thoughtful of you.
+      reading: `Anna: You remembered my presentation was this morning. That was truly thoughtful of you.
 
-Kai: I noticed you seemed a bit anxious when we chatted yesterday. How did the discussion actually unfold?
+Tom: I noticed you seemed a bit anxious when we chatted yesterday. How did the discussion actually unfold?
 
-Lena: Much better than I anticipated. The team listened attentively, and our manager gave his undivided attention throughout the proposal.
+Anna: Much better than I anticipated. The team listened attentively, and our manager gave his undivided attention throughout the proposal.
 
-Kai: That must have felt reassuring. When communication is rooted in mutual respect, hard work rarely goes unnoticed.
+Tom: That must have felt reassuring. When communication is rooted in mutual respect, hard work rarely goes unnoticed.
 
-Lena: Exactly. Instead of criticizing small oversights, they offered considerate feedback. I didn't hesitate to share my unvarnished perspective.`,
+Anna: Exactly. Instead of criticizing small oversights, they offered considerate feedback. I didn't hesitate to share my unvarnished perspective.`,
       vocabulary: [
         {
           term: 'undivided attention',
