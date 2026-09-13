@@ -281,8 +281,141 @@ function normalizeDialogueTranslation(translatedText: string, speakerSequence: s
   return normalized;
 }
 
+const DIALOGUE_TTS_MODELS = [
+  'gemini-2.5-flash-preview-tts',
+  'gemini-3.1-flash-tts-preview',
+] as const;
+
+const DIALOGUE_TTS_VOICES: Record<'female' | 'male', string> = {
+  // These are fixed, documented voice genders. A dialogue turn is synthesized
+  // independently so the model can never assign the other character's voice.
+  female: 'Kore',
+  male: 'Orus',
+};
+
+export function wrapPcmAsWav(pcm: Buffer, sampleRate = 24000): Buffer {
+  // Gemini GenerateContent TTS returns mono, signed 16-bit little-endian PCM.
+  // Browsers need the small RIFF/WAVE header in order to play it reliably.
+  if (pcm.length >= 12 && pcm.toString('ascii', 0, 4) === 'RIFF') return pcm;
+
+  const header = Buffer.alloc(44);
+  const channels = 1;
+  const bitsPerSample = 16;
+  const bytesPerSample = bitsPerSample / 8;
+  const byteRate = sampleRate * channels * bytesPerSample;
+
+  header.write('RIFF', 0);
+  header.writeUInt32LE(36 + pcm.length, 4);
+  header.write('WAVE', 8);
+  header.write('fmt ', 12);
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20);
+  header.writeUInt16LE(channels, 22);
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE(byteRate, 28);
+  header.writeUInt16LE(channels * bytesPerSample, 32);
+  header.writeUInt16LE(bitsPerSample, 34);
+  header.write('data', 36);
+  header.writeUInt32LE(pcm.length, 40);
+  return Buffer.concat([header, pcm]);
+}
+
+function buildDialogueTurnTtsPrompt(text: string, gender: 'female' | 'male'): string {
+  const profile = gender === 'female'
+    ? 'an adult woman with a clearly feminine, warm, natural voice'
+    : 'an adult man with a clearly masculine, warm, natural voice';
+
+  return `Synthesize speech for the English dialogue turn below.
+
+Audio profile: ${profile}.
+Director's notes: Speak conversationally, with natural emotion and intonation. Use a relaxed, slightly slow learning pace. Do not sound like an announcement or a robot. Preserve every word exactly. Do not read these instructions aloud.
+
+<TRANSCRIPT>
+${text}
+</TRANSCRIPT>`;
+}
+
+async function generateDialogueTurnAudio(text: string, gender: 'female' | 'male') {
+  let lastError: any = null;
+
+  for (const model of DIALOGUE_TTS_MODELS) {
+    // TTS can very occasionally return no audio. Retry the same voice once
+    // before moving to the second supported TTS model.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const response = await getGeminiClient().models.generateContent({
+          model,
+          contents: buildDialogueTurnTtsPrompt(text, gender),
+          config: {
+            responseModalities: ['AUDIO'],
+            speechConfig: {
+              languageCode: 'en-US',
+              voiceConfig: {
+                prebuiltVoiceConfig: {
+                  voiceName: DIALOGUE_TTS_VOICES[gender],
+                },
+              },
+            },
+          },
+        });
+
+        const audioPart = response.candidates?.[0]?.content?.parts?.find(
+          part => !!part.inlineData?.data
+        );
+        const audioData = audioPart?.inlineData?.data;
+        if (!audioData) throw new Error(`No audio returned from ${model}`);
+
+        return {
+          wav: wrapPcmAsWav(Buffer.from(audioData, 'base64')),
+          model,
+          voice: DIALOGUE_TTS_VOICES[gender],
+        };
+      } catch (error: any) {
+        lastError = error;
+        console.warn(
+          `[Dialogue TTS] ${model} ${gender} attempt ${attempt + 1} failed:`,
+          error?.message || error
+        );
+      }
+    }
+  }
+
+  throw lastError || new Error('Dialogue speech generation failed');
+}
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', hasGeminiKey: !!process.env.GEMINI_API_KEY?.trim() });
+});
+
+// Dialogue turns use server-generated audio instead of Web Speech voices.
+// This guarantees that old and new records both use the configured gender.
+app.post('/api/speech/dialogue-turn', async (req, res) => {
+  try {
+    const text = String(req.body?.text || '').replace(/\s+/g, ' ').trim();
+    const gender = String(req.body?.gender || '').toLowerCase();
+
+    if (!text) return res.status(400).json({ error: 'Dialogue text is required' });
+    if (text.length > 1800) {
+      return res.status(400).json({ error: 'Dialogue turn is too long' });
+    }
+    if (gender !== 'female' && gender !== 'male') {
+      return res.status(400).json({ error: 'Dialogue gender must be female or male' });
+    }
+
+    const audio = await generateDialogueTurnAudio(text, gender);
+    res.setHeader('Content-Type', 'audio/wav');
+    res.setHeader('Content-Length', String(audio.wav.length));
+    res.setHeader('Cache-Control', 'private, max-age=86400');
+    res.setHeader('X-Dialogue-Gender', gender);
+    res.setHeader('X-Dialogue-Voice', audio.voice);
+    res.setHeader('X-Dialogue-TTS-Model', audio.model);
+    return res.status(200).send(audio.wav);
+  } catch (error: any) {
+    console.error('Dialogue TTS error:', error);
+    return res.status(500).json({
+      error: error?.message || 'Dialogue speech generation failed',
+    });
+  }
 });
 
 // 1. Reading Generation Pipeline with Automatic Humanise & Structured Output

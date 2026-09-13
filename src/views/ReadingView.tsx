@@ -22,7 +22,7 @@ import { WordDetailModal } from '../components/WordDetailModal';
 import { EditVocabularyModal } from '../components/EditVocabularyModal';
 import { RewritePracticeCard } from '../components/RewritePracticeCard';
 import { generateReadingPDF } from '../services/pdfGenerator';
-import { translateReading } from '../services/api';
+import { generateDialogueTurnSpeech, translateReading } from '../services/api';
 import {
   SUPPORTED_LANGUAGES,
   getI18nText,
@@ -30,12 +30,10 @@ import {
   getLocalizedExampleTranslation,
 } from '../utils/i18n';
 import {
-  DIALOGUE_SPEECH_RATE,
   NARRATION_SPEECH_RATE,
   SpeechGender,
   getAvailableSpeechVoices,
   resolveSpeakerGender,
-  selectDialogueVoicePair,
   selectVocabularyVoice,
   stopEnglishSpeech,
 } from '../utils/speech';
@@ -219,10 +217,17 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const [translationError, setTranslationError] = useState<string | null>(null);
   const [copiedTranslation, setCopiedTranslation] = useState<boolean>(false);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+  const [isPreparingSpeech, setIsPreparingSpeech] = useState<boolean>(false);
+  const [speechError, setSpeechError] = useState<string | null>(null);
   const [activeSpeechTurn, setActiveSpeechTurn] = useState<number | null>(null);
   const [speechVoices, setSpeechVoices] = useState<SpeechSynthesisVoice[]>([]);
   const speechRunRef = useRef(0);
   const speechPauseTimerRef = useRef<number | null>(null);
+  const speechAbortRef = useRef<AbortController | null>(null);
+  const dialogueAudioRef = useRef<HTMLAudioElement | null>(null);
+  const dialogueAudioUrlRef = useRef<string | null>(null);
+  const finishDialogueAudioRef = useRef<(() => void) | null>(null);
+  const finishSpeechPauseRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (!('speechSynthesis' in window)) return;
@@ -238,26 +243,44 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
   const stopReadingAloud = () => {
     speechRunRef.current += 1;
+    speechAbortRef.current?.abort();
+    speechAbortRef.current = null;
     if (speechPauseTimerRef.current !== null) {
       window.clearTimeout(speechPauseTimerRef.current);
       speechPauseTimerRef.current = null;
     }
+    finishSpeechPauseRef.current?.();
+    finishSpeechPauseRef.current = null;
+    if (dialogueAudioRef.current) {
+      dialogueAudioRef.current.pause();
+      dialogueAudioRef.current.removeAttribute('src');
+      dialogueAudioRef.current.load();
+      dialogueAudioRef.current = null;
+    }
+    finishDialogueAudioRef.current?.();
+    finishDialogueAudioRef.current = null;
+    if (dialogueAudioUrlRef.current) {
+      URL.revokeObjectURL(dialogueAudioUrlRef.current);
+      dialogueAudioUrlRef.current = null;
+    }
     stopEnglishSpeech();
     setIsSpeaking(false);
+    setIsPreparingSpeech(false);
     setActiveSpeechTurn(null);
   };
 
-  const startReadingAloud = () => {
-    if (!('speechSynthesis' in window)) {
+  const startReadingAloud = async () => {
+    if (!isDetectedDialogue && !('speechSynthesis' in window)) {
       console.warn('当前浏览器不支持英文朗读，请使用最新版 Chrome、Safari 或 Edge。');
       return;
     }
 
-    if (isSpeaking) {
+    if (isSpeaking || isPreparingSpeech) {
       stopReadingAloud();
       return;
     }
 
+    setSpeechError(null);
     stopEnglishSpeech();
     const voices = speechVoices.length > 0
       ? speechVoices
@@ -303,30 +326,115 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
     const runId = speechRunRef.current + 1;
     speechRunRef.current = runId;
+
+    if (isDetectedDialogue) {
+      const controller = new AbortController();
+      speechAbortRef.current = controller;
+      setIsPreparingSpeech(true);
+
+      // Preload one turn ahead while the current role is speaking. Each turn is
+      // generated with a single fixed-gender voice, so even legacy readings can
+      // never swap or collapse the male/female character voices.
+      const pendingAudio = new Map<number, Promise<Blob>>();
+      const loadTurn = (index: number) => {
+        const existing = pendingAudio.get(index);
+        if (existing) return existing;
+        const item = queue[index];
+        const request = generateDialogueTurnSpeech(item.text, item.gender, controller.signal);
+        pendingAudio.set(index, request);
+        return request;
+      };
+
+      const waitForPause = (milliseconds: number) => new Promise<void>((resolve) => {
+        finishSpeechPauseRef.current = resolve;
+        speechPauseTimerRef.current = window.setTimeout(() => {
+          speechPauseTimerRef.current = null;
+          finishSpeechPauseRef.current = null;
+          resolve();
+        }, milliseconds);
+      });
+
+      const playAudioBlob = async (blob: Blob) => {
+        const objectUrl = URL.createObjectURL(blob);
+        dialogueAudioUrlRef.current = objectUrl;
+        const audio = new Audio(objectUrl);
+        dialogueAudioRef.current = audio;
+        audio.preload = 'auto';
+        audio.playbackRate = 1;
+
+        try {
+          await new Promise<void>((resolve, reject) => {
+            let settled = false;
+            const finish = () => {
+              if (settled) return;
+              settled = true;
+              finishDialogueAudioRef.current = null;
+              resolve();
+            };
+            const fail = () => {
+              if (settled) return;
+              settled = true;
+              finishDialogueAudioRef.current = null;
+              reject(new Error('角色语音音频无法播放'));
+            };
+            finishDialogueAudioRef.current = finish;
+            audio.onended = finish;
+            audio.onerror = fail;
+            audio.play().catch(fail);
+          });
+        } finally {
+          if (dialogueAudioRef.current === audio) dialogueAudioRef.current = null;
+          if (dialogueAudioUrlRef.current === objectUrl) dialogueAudioUrlRef.current = null;
+          URL.revokeObjectURL(objectUrl);
+        }
+      };
+
+      try {
+        // Generate the first turn before entering the speaking state. The UI
+        // shows “正在准备” so a slow network is not mistaken for a broken button.
+        await loadTurn(0);
+        if (speechRunRef.current !== runId) return;
+        setIsPreparingSpeech(false);
+        setIsSpeaking(true);
+
+        for (let index = 0; index < queue.length; index++) {
+          if (speechRunRef.current !== runId) return;
+          const item = queue[index];
+          const blob = await loadTurn(index);
+          if (speechRunRef.current !== runId) return;
+
+          if (index + 1 < queue.length) loadTurn(index + 1);
+          setActiveSpeechTurn(item.turnIndex);
+          await playAudioBlob(blob);
+
+          if (speechRunRef.current !== runId) return;
+          const nextItem = queue[index + 1];
+          if (nextItem) {
+            await waitForPause(nextItem.speakerIndex !== item.speakerIndex ? 420 : 170);
+          }
+        }
+
+        if (speechRunRef.current === runId) {
+          setIsSpeaking(false);
+          setActiveSpeechTurn(null);
+        }
+      } catch (error: any) {
+        if (error?.name !== 'AbortError' && speechRunRef.current === runId) {
+          console.error('Dialogue speech failed:', error);
+          setSpeechError(error?.message || '角色语音生成失败，请稍后重试');
+          setIsPreparingSpeech(false);
+          setIsSpeaking(false);
+          setActiveSpeechTurn(null);
+        }
+      } finally {
+        if (speechAbortRef.current === controller) speechAbortRef.current = null;
+      }
+      return;
+    }
+
     setIsSpeaking(true);
 
     const beginPlayback = (resolvedVoices: SpeechSynthesisVoice[]) => {
-      const dialogueVoices = selectDialogueVoicePair(resolvedVoices);
-
-      // Resolve each character's voice once for the whole reading. This avoids
-      // browsers changing voices between turns and makes role boundaries clear.
-      const speakerVoices = new Map<string, SpeechSynthesisVoice | undefined>();
-      if (isDetectedDialogue) {
-        queue.forEach(item => {
-          if (!speakerVoices.has(item.speakerKey)) {
-            speakerVoices.set(
-              item.speakerKey,
-              dialogueVoices[item.gender]
-            );
-          }
-        });
-      }
-
-      const maleVoice = dialogueVoices.male;
-      const femaleVoice = dialogueVoices.female;
-      const hasDistinctGenderVoices = !!maleVoice && !!femaleVoice &&
-        maleVoice.voiceURI !== femaleVoice.voiceURI;
-
       const speakNext = (queueIndex: number) => {
         if (speechRunRef.current !== runId) return;
         if (queueIndex >= queue.length) {
@@ -337,16 +445,12 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
         const item = queue[queueIndex];
         const utterance = new SpeechSynthesisUtterance(item.text);
-        const selectedVoice = isDetectedDialogue
-          ? speakerVoices.get(item.speakerKey)
-          : selectVocabularyVoice(resolvedVoices);
+        const selectedVoice = selectVocabularyVoice(resolvedVoices);
         utterance.lang = 'en-US';
         utterance.voice = selectedVoice || null;
         utterance.volume = 1;
-        utterance.rate = isDetectedDialogue ? DIALOGUE_SPEECH_RATE : NARRATION_SPEECH_RATE;
-        utterance.pitch = isDetectedDialogue && !hasDistinctGenderVoices
-          ? item.gender === 'female' ? 1.06 : 0.94
-          : 1;
+        utterance.rate = NARRATION_SPEECH_RATE;
+        utterance.pitch = 1;
         setActiveSpeechTurn(item.turnIndex);
 
         utterance.onend = () => {
@@ -391,9 +495,14 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   useEffect(() => {
     return () => {
       speechRunRef.current += 1;
+      speechAbortRef.current?.abort();
       if (speechPauseTimerRef.current !== null) {
         window.clearTimeout(speechPauseTimerRef.current);
       }
+      finishSpeechPauseRef.current?.();
+      finishDialogueAudioRef.current?.();
+      dialogueAudioRef.current?.pause();
+      if (dialogueAudioUrlRef.current) URL.revokeObjectURL(dialogueAudioUrlRef.current);
       stopEnglishSpeech();
     };
   }, [reading.id, reading.content]);
@@ -707,26 +816,45 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     });
   };
 
-  const renderReadAloudButton = () => (
-    <button
-      type="button"
-      onClick={startReadingAloud}
-      aria-pressed={isSpeaking}
-      title={isSpeaking ? '停止英文朗读' : isDetectedDialogue ? '按角色声线朗读英文对话' : '朗读英文短文'}
-      className={`flex items-center gap-1.5 px-2.5 py-1.5 border text-xs font-ui rounded-sm transition-colors ${
-        isSpeaking
-          ? 'bg-[#5F654D] text-[#FAF7F2] border-[#5F654D] shadow-xs'
-          : 'bg-[#F2EEE4] text-[#5F654D] hover:bg-[#E5DED0] border-[#5F654D]/40'
-      }`}
-    >
-      {isSpeaking ? (
-        <Square className="w-3.5 h-3.5 fill-current" />
-      ) : (
-        <Volume2 className="w-3.5 h-3.5" />
-      )}
-      <span>{isSpeaking ? '停止朗读' : isDetectedDialogue ? '角色朗读' : '英文朗读'}</span>
-    </button>
-  );
+  const renderReadAloudButton = () => {
+    const isSpeechActive = isSpeaking || isPreparingSpeech;
+    return (
+      <div className="flex flex-col items-start gap-1">
+        <button
+          type="button"
+          onClick={startReadingAloud}
+          aria-pressed={isSpeaking}
+          aria-busy={isPreparingSpeech}
+          title={isSpeechActive ? '停止英文朗读' : isDetectedDialogue ? '按固定男女声朗读英文对话' : '朗读英文短文'}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 border text-xs font-ui rounded-sm transition-colors ${
+            isSpeechActive
+              ? 'bg-[#5F654D] text-[#FAF7F2] border-[#5F654D] shadow-xs'
+              : 'bg-[#F2EEE4] text-[#5F654D] hover:bg-[#E5DED0] border-[#5F654D]/40'
+          }`}
+        >
+          {isSpeaking ? (
+            <Square className="w-3.5 h-3.5 fill-current" />
+          ) : isPreparingSpeech ? (
+            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Volume2 className="w-3.5 h-3.5" />
+          )}
+          <span>
+            {isSpeaking
+              ? '停止朗读'
+              : isPreparingSpeech
+                ? '正在准备角色语音'
+                : isDetectedDialogue ? '角色朗读' : '英文朗读'}
+          </span>
+        </button>
+        {speechError ? (
+          <span className="max-w-56 text-[10px] leading-snug text-red-700 font-ui" role="alert">
+            {speechError}
+          </span>
+        ) : null}
+      </div>
+    );
+  };
 
   return (
     <div className={`${showTranslation ? 'max-w-7xl' : 'max-w-4xl'} mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8 transition-all`}>

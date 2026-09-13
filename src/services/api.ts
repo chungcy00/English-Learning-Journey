@@ -14,6 +14,36 @@ export interface GenerationProgressCallback {
   (status: 'Generating reading...' | 'Humanising language...' | 'Checking level and vocabulary...' | 'Ready'): void;
 }
 
+const dialogueSpeechCache = new Map<string, Blob>();
+
+export async function generateDialogueTurnSpeech(
+  text: string,
+  gender: 'female' | 'male',
+  signal?: AbortSignal
+): Promise<Blob> {
+  const normalizedText = text.replace(/\s+/g, ' ').trim();
+  const cacheKey = `${gender}:${normalizedText}`;
+  const cached = dialogueSpeechCache.get(cacheKey);
+  if (cached) return cached;
+
+  const res = await fetch('/api/speech/dialogue-turn', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: normalizedText, gender }),
+    signal,
+  });
+
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({}));
+    throw new Error(errorBody.error || `角色语音生成失败 (HTTP ${res.status})`);
+  }
+
+  const audio = await res.blob();
+  if (!audio.size) throw new Error('角色语音生成结果为空');
+  dialogueSpeechCache.set(cacheKey, audio);
+  return audio;
+}
+
 // Resilient Client-side Generation Fallback if server API is unavailable
 function fallbackGenerateReading(req: GenerationRequest): {
   title: string;
