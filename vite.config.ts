@@ -2,6 +2,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, Plugin} from 'vite';
+import { APP_VERSION } from './src/version';
 
 function appUpdateServiceWorker(): Plugin {
   return {
@@ -10,11 +11,12 @@ function appUpdateServiceWorker(): Plugin {
     generateBundle() {
       // A unique worker version on every Vercel build lets installed mobile and
       // tablet PWAs reliably detect that a new deployment is available.
-      const appVersion = new Date().toISOString();
+      const appBuildId = `${APP_VERSION}-${new Date().toISOString()}`;
       this.emitFile({
         type: 'asset',
         fileName: 'sw.js',
-        source: `const APP_VERSION = ${JSON.stringify(appVersion)};
+        source: `const APP_VERSION = ${JSON.stringify(APP_VERSION)};
+const APP_BUILD_ID = ${JSON.stringify(appBuildId)};
 
 self.addEventListener('install', () => {
   // Updates stay in the waiting state until the user taps "立即更新".
@@ -29,7 +31,7 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
   if (event.data?.type === 'GET_VERSION') {
-    event.source?.postMessage({ type: 'APP_VERSION', version: APP_VERSION });
+    event.source?.postMessage({ type: 'APP_VERSION', version: APP_VERSION, buildId: APP_BUILD_ID });
   }
 });
 

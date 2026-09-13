@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Download, Loader2, RefreshCw, ShieldCheck } from 'lucide-react';
+import { APP_VERSION, CURRENT_RELEASE_NOTES, VERSION_HISTORY_COUNT } from '../version';
 
 type UpdateStatus = 'checking' | 'current' | 'available' | 'updating' | 'error';
 
@@ -125,8 +126,8 @@ export const AppUpdateView: React.FC = () => {
 
   const statusContent = {
     checking: { icon: Loader2, title: '正在检测软件版本', detail: '正在连接服务器检查更新。' },
-    current: { icon: CheckCircle2, title: '当前已是最新版本', detail: 'Mine English 软件无需更新。' },
-    available: { icon: Download, title: '发现新版本', detail: '新版本已经准备好，可以立即更新。' },
+    current: { icon: CheckCircle2, title: '当前已是最新版本', detail: `Mine English ${APP_VERSION} 无需更新。` },
+    available: { icon: Download, title: '发现新版本', detail: `当前安装版本为 ${APP_VERSION}，新版本已经准备好。` },
     updating: { icon: Loader2, title: '正在更新软件', detail: '完成后将自动重新打开，请稍候。' },
     error: { icon: RefreshCw, title: '暂时无法检查更新', detail: '请检查网络连接后重试。' },
   }[status];
@@ -138,6 +139,9 @@ export const AppUpdateView: React.FC = () => {
         <div className="flex items-center gap-2 text-[#73785E] mb-2">
           <ShieldCheck className="w-5 h-5" />
           <span className="font-ui text-xs uppercase tracking-wider font-semibold">Installed App</span>
+          <span className="font-ui text-xs px-2 py-0.5 rounded-full bg-[#73785E]/15 text-[#5F654D] font-semibold">
+            {APP_VERSION}
+          </span>
         </div>
         <h1 className="font-editorial text-3xl sm:text-4xl font-semibold text-[#292B25]">
           软件检测与更新
@@ -160,6 +164,25 @@ export const AppUpdateView: React.FC = () => {
             <p className="font-ui text-xs text-[#717265] mt-3 leading-relaxed">
               更新软件不会删除生词本、短文记录或复习进度。
             </p>
+
+            <div className="mt-5 pt-4 border-t border-[#D4CCBC]/70">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="font-ui text-sm font-semibold text-[#292B25]">
+                  {APP_VERSION} 更新内容
+                </h3>
+                <span className="font-ui text-[10px] text-[#717265]">
+                  共 {VERSION_HISTORY_COUNT} 个版本
+                </span>
+              </div>
+              <ul className="mt-2 space-y-1.5">
+                {CURRENT_RELEASE_NOTES.map((note) => (
+                  <li key={note} className="font-ui text-xs leading-relaxed text-[#717265] flex gap-2">
+                    <span className="text-[#73785E]" aria-hidden="true">•</span>
+                    <span>{note}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
             <div className="flex flex-wrap gap-2 mt-5">
               {status === 'available' ? (
