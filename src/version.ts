@@ -1,8 +1,8 @@
-export const APP_VERSION = 'V2.3.2';
+export const APP_VERSION = 'V2.3.3';
 
-export const VERSION_HISTORY_COUNT = 10;
+export const VERSION_HISTORY_COUNT = 11;
 
 export const CURRENT_RELEASE_NOTES = [
-  '修正对话 PDF 的角色排版与译文遗漏问题',
-  'PDF 的词汇与重点表达改为双栏布局',
+  '修正 PDF Part 2 双栏右侧内容被截断的问题',
+  '长单词、释义与搭配会在卡片内自动换行',
 ];

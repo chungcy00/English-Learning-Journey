@@ -77,8 +77,12 @@ export function generateReadingPDF(reading: ReadingRecord, options?: {
   // Add a unique ID to ensure we can target it if needed, but we pass the element directly to html2pdf
   container.id = 'pdf-container';
   
-  // Set fixed width for standard A4 portrait proportions
-  container.style.width = '800px';
+  // A4 usable width at 96 DPI after html2pdf's 0.6-inch margins is about
+  // 679px. Keep the source canvas slightly narrower so the second column and
+  // its borders never extend beyond the printable area.
+  container.style.width = '660px';
+  container.style.maxWidth = '660px';
+  container.style.overflow = 'hidden';
   container.style.backgroundColor = '#FFFFFF';
   container.style.color = '#292B25';
   container.style.fontFamily = '"Cormorant Garamond", Georgia, "Times New Roman", serif';
@@ -190,10 +194,10 @@ export function generateReadingPDF(reading: ReadingRecord, options?: {
     .pdf-dialogue-list { display: block; }
     .pdf-dialogue-turn { display: flex; align-items: flex-start; gap: 14px; margin: 0 0 12px; break-inside: avoid; page-break-inside: avoid; }
     .pdf-dialogue-speaker { width: 86px; flex: 0 0 86px; padding-top: 2px; color: #5F654D; font: 700 13px/1.5 system-ui, -apple-system, sans-serif; text-transform: uppercase; }
-    .pdf-dialogue-speech { flex: 1 1 auto; min-width: 0; font-size: 16px; line-height: 1.6; }
+    .pdf-dialogue-speech { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; font-size: 16px; line-height: 1.6; }
     .pdf-dialogue-translation .pdf-dialogue-speech { color: #5F654D; font: 14px/1.7 system-ui, -apple-system, sans-serif; }
     .pdf-vocabulary-grid { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px 3%; }
-    .pdf-vocabulary-grid > div { width: 48.5%; margin-bottom: 0 !important; break-inside: avoid; page-break-inside: avoid; }
+    .pdf-vocabulary-grid > div { width: 48.5%; min-width: 0; overflow-wrap: anywhere; margin-bottom: 0 !important; break-inside: avoid; page-break-inside: avoid; }
   `;
   container.prepend(style);
 
