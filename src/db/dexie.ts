@@ -19,12 +19,21 @@ export interface UserNote {
   updatedAt: number;
 }
 
+export interface DialogueAudioRecord {
+  id: string;
+  audio: Blob;
+  mimeType: string;
+  createdAt: number;
+  lastPlayedAt: number;
+}
+
 export class EnglishLearningDatabase extends Dexie {
   readings!: Table<ReadingRecord, string>;
   vocabulary!: Table<VocabularyItem, string>;
   reviews!: Table<ReviewLog, number>;
   rewriteRecords!: Table<RewriteRecord, number>;
   notes!: Table<UserNote, number>;
+  dialogueAudio!: Table<DialogueAudioRecord, string>;
 
   constructor() {
     super('EnglishLearningDB');
@@ -34,6 +43,14 @@ export class EnglishLearningDatabase extends Dexie {
       reviews: '++id, vocabularyId, reviewedAt, rating',
       rewriteRecords: '++id, readingId, target, createdAt',
       notes: '++id, targetId, createdAt'
+    });
+    this.version(2).stores({
+      readings: 'id, createdAt, topic, cefrLevel, readingType',
+      vocabulary: 'id, term, status, nextReviewDate, createdAt, updatedAt',
+      reviews: '++id, vocabularyId, reviewedAt, rating',
+      rewriteRecords: '++id, readingId, target, createdAt',
+      notes: '++id, targetId, createdAt',
+      dialogueAudio: 'id, createdAt, lastPlayedAt'
     });
   }
 }

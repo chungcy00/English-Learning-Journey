@@ -22,7 +22,11 @@ import { WordDetailModal } from '../components/WordDetailModal';
 import { EditVocabularyModal } from '../components/EditVocabularyModal';
 import { RewritePracticeCard } from '../components/RewritePracticeCard';
 import { generateReadingPDF } from '../services/pdfGenerator';
-import { generateDialogueSpeech, translateReading } from '../services/api';
+import {
+  generateDialogueSpeech,
+  rememberCompletedDialogueSpeech,
+  translateReading,
+} from '../services/api';
 import {
   SUPPORTED_LANGUAGES,
   getI18nText,
@@ -30,10 +34,12 @@ import {
   getLocalizedExampleTranslation,
 } from '../utils/i18n';
 import {
+  DIALOGUE_SPEECH_RATE,
   NARRATION_SPEECH_RATE,
   SpeechGender,
   getAvailableSpeechVoices,
   resolveSpeakerGender,
+  selectDialogueVoicePair,
   selectVocabularyVoice,
   stopEnglishSpeech,
 } from '../utils/speech';
@@ -219,6 +225,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [isPreparingSpeech, setIsPreparingSpeech] = useState<boolean>(false);
   const [speechError, setSpeechError] = useState<string | null>(null);
+  const [speechNotice, setSpeechNotice] = useState<string | null>(null);
   const [activeSpeechTurn, setActiveSpeechTurn] = useState<number | null>(null);
   const [speechVoices, setSpeechVoices] = useState<SpeechSynthesisVoice[]>([]);
   const speechRunRef = useRef(0);
@@ -278,6 +285,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     }
 
     setSpeechError(null);
+    setSpeechNotice(null);
     stopEnglishSpeech();
     const voices = speechVoices.length > 0
       ? speechVoices
@@ -360,6 +368,89 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     const runId = speechRunRef.current + 1;
     speechRunRef.current = runId;
 
+    const beginBrowserPlayback = (
+      resolvedVoices: SpeechSynthesisVoice[],
+      useDialogueVoices: boolean
+    ) => {
+      const dialogueVoicePair = useDialogueVoices
+        ? selectDialogueVoicePair(resolvedVoices)
+        : null;
+      const hasDistinctRoleVoices = Boolean(
+        dialogueVoicePair?.female &&
+        dialogueVoicePair?.male &&
+        dialogueVoicePair.female.voiceURI !== dialogueVoicePair.male.voiceURI
+      );
+
+      const speakNext = (queueIndex: number) => {
+        if (speechRunRef.current !== runId) return;
+        if (queueIndex >= queue.length) {
+          setIsSpeaking(false);
+          setActiveSpeechTurn(null);
+          return;
+        }
+
+        const item = queue[queueIndex];
+        const utterance = new SpeechSynthesisUtterance(item.text);
+        const selectedVoice = useDialogueVoices
+          ? dialogueVoicePair?.[item.gender] || selectVocabularyVoice(resolvedVoices)
+          : selectVocabularyVoice(resolvedVoices);
+        utterance.lang = 'en-US';
+        utterance.voice = selectedVoice || null;
+        utterance.volume = 1;
+        utterance.rate = useDialogueVoices ? DIALOGUE_SPEECH_RATE : NARRATION_SPEECH_RATE;
+        // Some free device engines expose only one English voice. A restrained
+        // pitch difference keeps the two roles audible even in that last-resort case.
+        utterance.pitch = useDialogueVoices && !hasDistinctRoleVoices
+          ? item.gender === 'male' ? 0.82 : 1.12
+          : 1;
+        setActiveSpeechTurn(item.turnIndex);
+
+        utterance.onend = () => {
+          if (speechRunRef.current !== runId) return;
+          const nextItem = queue[queueIndex + 1];
+          const changedSpeaker = nextItem && nextItem.speakerIndex !== item.speakerIndex;
+          const pauseMs = changedSpeaker ? 520 : 180;
+          speechPauseTimerRef.current = window.setTimeout(
+            () => speakNext(queueIndex + 1),
+            pauseMs
+          );
+        };
+        utterance.onerror = (event) => {
+          if (speechRunRef.current !== runId || ['canceled', 'interrupted'].includes(event.error)) {
+            return;
+          }
+          speechPauseTimerRef.current = window.setTimeout(
+            () => speakNext(queueIndex + 1),
+            100
+          );
+        };
+
+        window.speechSynthesis.speak(utterance);
+      };
+
+      speakNext(0);
+    };
+
+    const startFreeDeviceFallback = () => {
+      if (!('speechSynthesis' in window)) return false;
+      setIsPreparingSpeech(false);
+      setIsSpeaking(true);
+      setSpeechError(null);
+      setSpeechNotice('免费云端语音额度暂不可用，已自动切换为设备语音。');
+
+      const availableVoices = getAvailableSpeechVoices();
+      if (availableVoices.length > 0) {
+        beginBrowserPlayback(availableVoices, true);
+      } else {
+        speechPauseTimerRef.current = window.setTimeout(() => {
+          if (speechRunRef.current === runId) {
+            beginBrowserPlayback(getAvailableSpeechVoices(), true);
+          }
+        }, 180);
+      }
+      return true;
+    };
+
     if (isDetectedDialogue) {
       const controller = new AbortController();
       speechAbortRef.current = controller;
@@ -414,6 +505,10 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
         setActiveSpeechTurn(null);
         await playAudioBlob(dialogueAudio);
+        void rememberCompletedDialogueSpeech(
+          queue.map(item => ({ text: item.text, gender: item.gender })),
+          dialogueAudio
+        );
 
         if (speechRunRef.current === runId) {
           setIsSpeaking(false);
@@ -422,10 +517,12 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       } catch (error: any) {
         if (error?.name !== 'AbortError' && speechRunRef.current === runId) {
           console.error('Dialogue speech failed:', error);
-          setSpeechError(error?.message || '角色语音生成失败，请稍后重试');
-          setIsPreparingSpeech(false);
-          setIsSpeaking(false);
-          setActiveSpeechTurn(null);
+          if (!startFreeDeviceFallback()) {
+            setSpeechError(error?.message || '当前设备暂时无法朗读角色语音');
+            setIsPreparingSpeech(false);
+            setIsSpeaking(false);
+            setActiveSpeechTurn(null);
+          }
         }
       } finally {
         if (speechAbortRef.current === controller) speechAbortRef.current = null;
@@ -435,59 +532,14 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
     setIsSpeaking(true);
 
-    const beginPlayback = (resolvedVoices: SpeechSynthesisVoice[]) => {
-      const speakNext = (queueIndex: number) => {
-        if (speechRunRef.current !== runId) return;
-        if (queueIndex >= queue.length) {
-          setIsSpeaking(false);
-          setActiveSpeechTurn(null);
-          return;
-        }
-
-        const item = queue[queueIndex];
-        const utterance = new SpeechSynthesisUtterance(item.text);
-        const selectedVoice = selectVocabularyVoice(resolvedVoices);
-        utterance.lang = 'en-US';
-        utterance.voice = selectedVoice || null;
-        utterance.volume = 1;
-        utterance.rate = NARRATION_SPEECH_RATE;
-        utterance.pitch = 1;
-        setActiveSpeechTurn(item.turnIndex);
-
-        utterance.onend = () => {
-          if (speechRunRef.current !== runId) return;
-          const nextItem = queue[queueIndex + 1];
-          const changedSpeaker = nextItem && nextItem.speakerIndex !== item.speakerIndex;
-          const pauseMs = changedSpeaker ? 400 : 160;
-          speechPauseTimerRef.current = window.setTimeout(
-            () => speakNext(queueIndex + 1),
-            pauseMs
-          );
-        };
-        utterance.onerror = (event) => {
-          if (speechRunRef.current !== runId || ['canceled', 'interrupted'].includes(event.error)) {
-            return;
-          }
-          speechPauseTimerRef.current = window.setTimeout(
-            () => speakNext(queueIndex + 1),
-            100
-          );
-        };
-
-        window.speechSynthesis.speak(utterance);
-      };
-
-      speakNext(0);
-    };
-
     if (voices.length > 0) {
-      beginPlayback(voices);
+      beginBrowserPlayback(voices, false);
     } else {
       // Chrome can expose voices shortly after page load. Waiting once prevents
       // the first playback from assigning the same default voice to every role.
       speechPauseTimerRef.current = window.setTimeout(() => {
         if (speechRunRef.current === runId) {
-          beginPlayback(getAvailableSpeechVoices());
+          beginBrowserPlayback(getAvailableSpeechVoices(), false);
         }
       }, 180);
     }
@@ -850,6 +902,11 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         {speechError ? (
           <span className="max-w-56 text-[10px] leading-snug text-red-700 font-ui" role="alert">
             {speechError}
+          </span>
+        ) : null}
+        {speechNotice ? (
+          <span className="max-w-64 text-[10px] leading-snug text-[#5F654D] font-ui" role="status">
+            {speechNotice}
           </span>
         ) : null}
       </div>

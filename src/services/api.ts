@@ -9,6 +9,7 @@ import {
   CEFRLevel,
   ReadingTranslation
 } from '../types';
+import { db } from '../db/dexie';
 
 export interface GenerationProgressCallback {
   (status: 'Generating reading...' | 'Humanising language...' | 'Checking level and vocabulary...' | 'Ready'): void;
@@ -22,7 +23,20 @@ interface DialogueSpeechTurn {
 const DIALOGUE_SPEECH_CACHE_NAME = 'mine-dialogue-speech-v2';
 const dialogueSpeechMemoryCache = new Map<string, Blob>();
 
-async function getDialogueSpeechCacheUrl(cacheSource: string): Promise<string> {
+function normalizeDialogueSpeechTurns(turns: DialogueSpeechTurn[]): DialogueSpeechTurn[] {
+  return turns
+    .map(turn => ({
+      text: turn.text.replace(/\s+/g, ' ').trim(),
+      gender: turn.gender,
+    }))
+    .filter(turn => turn.text);
+}
+
+function getDialogueSpeechCacheSource(turns: DialogueSpeechTurn[]): string {
+  return JSON.stringify({ version: 2, turns: normalizeDialogueSpeechTurns(turns) });
+}
+
+async function getDialogueSpeechCacheId(cacheSource: string): Promise<string> {
   let hash: string;
   if (globalThis.crypto?.subtle) {
     const digest = await globalThis.crypto.subtle.digest(
@@ -38,24 +52,88 @@ async function getDialogueSpeechCacheUrl(cacheSource: string): Promise<string> {
     }
     hash = `${(fallbackHash >>> 0).toString(16)}-${cacheSource.length}`;
   }
-  return `${window.location.origin}/__mine-dialogue-audio-cache__/${hash}`;
+  return hash;
+}
+
+function getDialogueSpeechCacheUrl(cacheId: string): string {
+  return `${window.location.origin}/__mine-dialogue-audio-cache__/${cacheId}`;
+}
+
+async function saveDialogueSpeechCache(cacheSource: string, audio: Blob): Promise<void> {
+  dialogueSpeechMemoryCache.set(cacheSource, audio);
+  const cacheId = await getDialogueSpeechCacheId(cacheSource);
+  const now = Date.now();
+
+  // IndexedDB keeps the generated audio with the user's reading data and is
+  // more reliable for returning visits than relying on the HTTP cache alone.
+  try {
+    const existing = await db.dialogueAudio.get(cacheId);
+    await db.dialogueAudio.put({
+      id: cacheId,
+      audio,
+      mimeType: audio.type || existing?.mimeType || 'audio/mpeg',
+      createdAt: existing?.createdAt || now,
+      lastPlayedAt: now,
+    });
+  } catch (error) {
+    console.warn('Dialogue audio IndexedDB write failed:', error);
+  }
+
+  if ('caches' in window) {
+    try {
+      const cache = await window.caches.open(DIALOGUE_SPEECH_CACHE_NAME);
+      await cache.put(
+        getDialogueSpeechCacheUrl(cacheId),
+        new Response(audio, { headers: { 'Content-Type': audio.type || 'audio/mpeg' } })
+      );
+    } catch (error) {
+      console.warn('Dialogue audio cache write failed:', error);
+    }
+  }
+}
+
+export async function rememberCompletedDialogueSpeech(
+  turns: DialogueSpeechTurn[],
+  audio: Blob
+): Promise<void> {
+  const cacheSource = getDialogueSpeechCacheSource(turns);
+  await saveDialogueSpeechCache(cacheSource, audio);
+
+  // Ask the browser not to evict downloaded voices under storage pressure.
+  // This is best-effort: browsers may decline, but playback still works.
+  try {
+    if (navigator.storage?.persist) await navigator.storage.persist();
+  } catch (error) {
+    console.warn('Persistent audio storage request failed:', error);
+  }
 }
 
 export async function generateDialogueSpeech(
   turns: DialogueSpeechTurn[],
   signal?: AbortSignal
 ): Promise<Blob> {
-  const normalizedTurns = turns
-    .map(turn => ({
-      text: turn.text.replace(/\s+/g, ' ').trim(),
-      gender: turn.gender,
-    }))
-    .filter(turn => turn.text);
-  const cacheSource = JSON.stringify({ version: 2, turns: normalizedTurns });
+  const normalizedTurns = normalizeDialogueSpeechTurns(turns);
+  const cacheSource = getDialogueSpeechCacheSource(normalizedTurns);
   const memoryCached = dialogueSpeechMemoryCache.get(cacheSource);
   if (memoryCached) return memoryCached;
 
-  const cacheUrl = await getDialogueSpeechCacheUrl(cacheSource);
+  const cacheId = await getDialogueSpeechCacheId(cacheSource);
+
+  try {
+    const storedAudio = await db.dialogueAudio.get(cacheId);
+    if (storedAudio?.audio?.size) {
+      const cachedAudio = storedAudio.audio.type
+        ? storedAudio.audio
+        : storedAudio.audio.slice(0, storedAudio.audio.size, storedAudio.mimeType || 'audio/mpeg');
+      dialogueSpeechMemoryCache.set(cacheSource, cachedAudio);
+      void db.dialogueAudio.update(cacheId, { lastPlayedAt: Date.now() });
+      return cachedAudio;
+    }
+  } catch (error) {
+    console.warn('Dialogue audio IndexedDB read failed:', error);
+  }
+
+  const cacheUrl = getDialogueSpeechCacheUrl(cacheId);
   if ('caches' in window) {
     try {
       const cache = await window.caches.open(DIALOGUE_SPEECH_CACHE_NAME);
@@ -64,6 +142,7 @@ export async function generateDialogueSpeech(
         const cachedAudio = await cachedResponse.blob();
         if (cachedAudio.size) {
           dialogueSpeechMemoryCache.set(cacheSource, cachedAudio);
+          void saveDialogueSpeechCache(cacheSource, cachedAudio);
           return cachedAudio;
         }
       }
@@ -93,19 +172,7 @@ export async function generateDialogueSpeech(
 
   const audio = await res.blob();
   if (!audio.size) throw new Error('角色语音生成结果为空');
-  dialogueSpeechMemoryCache.set(cacheSource, audio);
-
-  if ('caches' in window) {
-    try {
-      const cache = await window.caches.open(DIALOGUE_SPEECH_CACHE_NAME);
-      await cache.put(
-        cacheUrl,
-        new Response(audio, { headers: { 'Content-Type': audio.type || 'audio/mpeg' } })
-      );
-    } catch (error) {
-      console.warn('Dialogue audio cache write failed:', error);
-    }
-  }
+  await saveDialogueSpeechCache(cacheSource, audio);
 
   return audio;
 }
