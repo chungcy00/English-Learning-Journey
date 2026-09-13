@@ -1,9 +1,8 @@
-export const APP_VERSION = 'V2.3';
+export const APP_VERSION = 'V2.3.1';
 
-export const VERSION_HISTORY_COUNT = 8;
+export const VERSION_HISTORY_COUNT = 9;
 
 export const CURRENT_RELEASE_NOTES = [
-  '新增独立的阅读历史记录导航页面',
-  '网页顶部与手机、平板安装版底部均可直接进入历史记录',
-  '保留历史搜索、打开短文和删除记录功能',
+  '网页版将历史记录调整为最后一个导航入口',
+  '手机与平板安装版将历史记录放在软件更新前',
 ];

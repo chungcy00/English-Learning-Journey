@@ -18,9 +18,9 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
   const tabs = [
     { id: 'home' as NavTab, label: '生成', icon: Sparkles },
     { id: 'reading' as NavTab, label: '阅读', icon: BookOpen, disabled: !hasCurrentReading },
-    { id: 'history' as NavTab, label: '历史', icon: History },
     { id: 'wordbook' as NavTab, label: '生词本', icon: Bookmark },
     { id: 'review' as NavTab, label: '复习', icon: RotateCcw, badge: reviewDueCount },
+    { id: 'history' as NavTab, label: '历史', icon: History },
     { id: 'update' as NavTab, label: '更新', icon: Smartphone },
   ];
 
