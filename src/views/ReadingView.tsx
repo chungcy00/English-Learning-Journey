@@ -24,7 +24,7 @@ import { RewritePracticeCard } from '../components/RewritePracticeCard';
 import { generateReadingPDF } from '../services/pdfGenerator';
 import {
   generateDialogueSpeech,
-  queueDialogueSpeechCloudRetry,
+  queueDialogueSpeechGeminiRetry,
   rememberCompletedDialogueSpeech,
   translateReading,
 } from '../services/api';
@@ -437,8 +437,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       setIsPreparingSpeech(false);
       setIsSpeaking(true);
       setSpeechError(null);
-      setSpeechNotice('免费云端语音额度暂不可用，已自动切换为设备语音。');
-      void queueDialogueSpeechCloudRetry(
+      setSpeechNotice('Gemini 免费语音额度暂不可用，已自动切换为设备语音。');
+      void queueDialogueSpeechGeminiRetry(
         queue.map(item => ({ text: item.text, gender: item.gender }))
       );
 

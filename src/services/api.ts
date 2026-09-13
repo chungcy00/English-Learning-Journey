@@ -92,7 +92,7 @@ async function clearPendingDialogueSpeechRetry(cacheSource: string): Promise<voi
   }
 }
 
-export async function queueDialogueSpeechCloudRetry(
+export async function queueDialogueSpeechGeminiRetry(
   turns: DialogueSpeechTurn[]
 ): Promise<void> {
   const normalizedTurns = normalizeDialogueSpeechTurns(turns);
@@ -109,7 +109,7 @@ export async function refreshPendingDialogueSpeech(): Promise<void> {
   const pending = readPendingDialogueSpeechRetries();
   if (pending.length === 0) return;
 
-  // Retry only a few items once per page load to protect all free provider quotas.
+  // Retry only a few items once per page load to protect the free Gemini quota.
   // A browser reload creates a fresh module and therefore performs a fresh retry.
   const retryItems = pending.slice(0, 3);
 
@@ -117,7 +117,7 @@ export async function refreshPendingDialogueSpeech(): Promise<void> {
     try {
       await generateDialogueSpeech(item.turns);
     } catch (error) {
-      console.info('Background dialogue cloud speech retry remains pending:', error);
+      console.info('Background dialogue Gemini speech retry remains pending:', error);
     }
   }
 }
