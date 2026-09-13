@@ -22,7 +22,7 @@ import { WordDetailModal } from '../components/WordDetailModal';
 import { EditVocabularyModal } from '../components/EditVocabularyModal';
 import { RewritePracticeCard } from '../components/RewritePracticeCard';
 import { generateReadingPDF } from '../services/pdfGenerator';
-import { generateDialogueTurnSpeech, translateReading } from '../services/api';
+import { generateDialogueSpeech, translateReading } from '../services/api';
 import {
   SUPPORTED_LANGUAGES,
   getI18nText,
@@ -227,7 +227,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const dialogueAudioRef = useRef<HTMLAudioElement | null>(null);
   const dialogueAudioUrlRef = useRef<string | null>(null);
   const finishDialogueAudioRef = useRef<(() => void) | null>(null);
-  const finishSpeechPauseRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (!('speechSynthesis' in window)) return;
@@ -249,8 +248,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       window.clearTimeout(speechPauseTimerRef.current);
       speechPauseTimerRef.current = null;
     }
-    finishSpeechPauseRef.current?.();
-    finishSpeechPauseRef.current = null;
     if (dialogueAudioRef.current) {
       dialogueAudioRef.current.pause();
       dialogueAudioRef.current.removeAttribute('src');
@@ -368,28 +365,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       speechAbortRef.current = controller;
       setIsPreparingSpeech(true);
 
-      // Preload one turn ahead while the current role is speaking. Each turn is
-      // generated with a single fixed-gender voice, so even legacy readings can
-      // never swap or collapse the male/female character voices.
-      const pendingAudio = new Map<number, Promise<Blob>>();
-      const loadTurn = (index: number) => {
-        const existing = pendingAudio.get(index);
-        if (existing) return existing;
-        const item = queue[index];
-        const request = generateDialogueTurnSpeech(item.text, item.gender, controller.signal);
-        pendingAudio.set(index, request);
-        return request;
-      };
-
-      const waitForPause = (milliseconds: number) => new Promise<void>((resolve) => {
-        finishSpeechPauseRef.current = resolve;
-        speechPauseTimerRef.current = window.setTimeout(() => {
-          speechPauseTimerRef.current = null;
-          finishSpeechPauseRef.current = null;
-          resolve();
-        }, milliseconds);
-      });
-
       const playAudioBlob = async (blob: Blob) => {
         const objectUrl = URL.createObjectURL(blob);
         dialogueAudioUrlRef.current = objectUrl;
@@ -426,29 +401,19 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       };
 
       try {
-        // Generate the first turn before entering the speaking state. The UI
-        // shows “正在准备” so a slow network is not mistaken for a broken button.
-        await loadTurn(0);
+        // One multi-speaker request generates the complete conversation. This
+        // preserves fixed Kore/Orus voices without consuming one API request per
+        // sentence, and the resulting audio is reused by the device cache.
+        const dialogueAudio = await generateDialogueSpeech(
+          queue.map(item => ({ text: item.text, gender: item.gender })),
+          controller.signal
+        );
         if (speechRunRef.current !== runId) return;
         setIsPreparingSpeech(false);
         setIsSpeaking(true);
 
-        for (let index = 0; index < queue.length; index++) {
-          if (speechRunRef.current !== runId) return;
-          const item = queue[index];
-          const blob = await loadTurn(index);
-          if (speechRunRef.current !== runId) return;
-
-          if (index + 1 < queue.length) loadTurn(index + 1);
-          setActiveSpeechTurn(item.turnIndex);
-          await playAudioBlob(blob);
-
-          if (speechRunRef.current !== runId) return;
-          const nextItem = queue[index + 1];
-          if (nextItem) {
-            await waitForPause(nextItem.speakerIndex !== item.speakerIndex ? 420 : 170);
-          }
-        }
+        setActiveSpeechTurn(null);
+        await playAudioBlob(dialogueAudio);
 
         if (speechRunRef.current === runId) {
           setIsSpeaking(false);
@@ -535,7 +500,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       if (speechPauseTimerRef.current !== null) {
         window.clearTimeout(speechPauseTimerRef.current);
       }
-      finishSpeechPauseRef.current?.();
       finishDialogueAudioRef.current?.();
       dialogueAudioRef.current?.pause();
       if (dialogueAudioUrlRef.current) URL.revokeObjectURL(dialogueAudioUrlRef.current);

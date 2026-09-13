@@ -14,33 +14,99 @@ export interface GenerationProgressCallback {
   (status: 'Generating reading...' | 'Humanising language...' | 'Checking level and vocabulary...' | 'Ready'): void;
 }
 
-const dialogueSpeechCache = new Map<string, Blob>();
+interface DialogueSpeechTurn {
+  text: string;
+  gender: 'female' | 'male';
+}
 
-export async function generateDialogueTurnSpeech(
-  text: string,
-  gender: 'female' | 'male',
+const DIALOGUE_SPEECH_CACHE_NAME = 'mine-dialogue-speech-v2';
+const dialogueSpeechMemoryCache = new Map<string, Blob>();
+
+async function getDialogueSpeechCacheUrl(cacheSource: string): Promise<string> {
+  let hash: string;
+  if (globalThis.crypto?.subtle) {
+    const digest = await globalThis.crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(cacheSource)
+    );
+    hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+  } else {
+    let fallbackHash = 2166136261;
+    for (let index = 0; index < cacheSource.length; index++) {
+      fallbackHash ^= cacheSource.charCodeAt(index);
+      fallbackHash = Math.imul(fallbackHash, 16777619);
+    }
+    hash = `${(fallbackHash >>> 0).toString(16)}-${cacheSource.length}`;
+  }
+  return `${window.location.origin}/__mine-dialogue-audio-cache__/${hash}`;
+}
+
+export async function generateDialogueSpeech(
+  turns: DialogueSpeechTurn[],
   signal?: AbortSignal
 ): Promise<Blob> {
-  const normalizedText = text.replace(/\s+/g, ' ').trim();
-  const cacheKey = `${gender}:${normalizedText}`;
-  const cached = dialogueSpeechCache.get(cacheKey);
-  if (cached) return cached;
+  const normalizedTurns = turns
+    .map(turn => ({
+      text: turn.text.replace(/\s+/g, ' ').trim(),
+      gender: turn.gender,
+    }))
+    .filter(turn => turn.text);
+  const cacheSource = JSON.stringify({ version: 2, turns: normalizedTurns });
+  const memoryCached = dialogueSpeechMemoryCache.get(cacheSource);
+  if (memoryCached) return memoryCached;
 
-  const res = await fetch('/api/speech/dialogue-turn', {
+  const cacheUrl = await getDialogueSpeechCacheUrl(cacheSource);
+  if ('caches' in window) {
+    try {
+      const cache = await window.caches.open(DIALOGUE_SPEECH_CACHE_NAME);
+      const cachedResponse = await cache.match(cacheUrl);
+      if (cachedResponse) {
+        const cachedAudio = await cachedResponse.blob();
+        if (cachedAudio.size) {
+          dialogueSpeechMemoryCache.set(cacheSource, cachedAudio);
+          return cachedAudio;
+        }
+      }
+    } catch (error) {
+      console.warn('Dialogue audio cache read failed:', error);
+    }
+  }
+
+  const res = await fetch('/api/speech/dialogue', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: normalizedText, gender }),
+    body: JSON.stringify({ turns: normalizedTurns }),
     signal,
   });
 
   if (!res.ok) {
     const errorBody = await res.json().catch(() => ({}));
-    throw new Error(errorBody.error || `角色语音生成失败 (HTTP ${res.status})`);
+    const serverMessage = typeof errorBody?.error === 'string' &&
+      errorBody.error.length <= 160 && !errorBody.error.trim().startsWith('{')
+      ? errorBody.error
+      : null;
+    const message = res.status === 429
+      ? '角色语音服务暂时繁忙，请约一分钟后重试。'
+      : serverMessage || `角色语音暂时无法生成，请稍后重试（HTTP ${res.status}）。`;
+    throw new Error(message);
   }
 
   const audio = await res.blob();
   if (!audio.size) throw new Error('角色语音生成结果为空');
-  dialogueSpeechCache.set(cacheKey, audio);
+  dialogueSpeechMemoryCache.set(cacheSource, audio);
+
+  if ('caches' in window) {
+    try {
+      const cache = await window.caches.open(DIALOGUE_SPEECH_CACHE_NAME);
+      await cache.put(
+        cacheUrl,
+        new Response(audio, { headers: { 'Content-Type': audio.type || 'audio/mpeg' } })
+      );
+    } catch (error) {
+      console.warn('Dialogue audio cache write failed:', error);
+    }
+  }
+
   return audio;
 }
 
