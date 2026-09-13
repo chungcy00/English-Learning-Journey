@@ -8,6 +8,7 @@ import {
   getI18nText,
 } from '../utils/i18n';
 import { translateVocabularies } from '../services/api';
+import { speakEnglishTerm } from '../utils/speech';
 
 interface ReviewViewProps {
   dueVocabularies: VocabularyItem[];
@@ -100,12 +101,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   };
 
   const playVoice = (term: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(term);
-      u.lang = 'en-US';
-      window.speechSynthesis.speak(u);
-    }
+    speakEnglishTerm(term);
   };
 
   const currentLangObj =

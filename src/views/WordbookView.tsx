@@ -22,6 +22,8 @@ import {
   getI18nText,
 } from '../utils/i18n';
 import { translateVocabularies } from '../services/api';
+import { getVocabularySearchRank } from '../utils/englishSearch';
+import { speakEnglishTerm } from '../utils/speech';
 
 interface WordbookViewProps {
   vocabularyList: VocabularyItem[];
@@ -38,6 +40,8 @@ interface WordbookViewProps {
   targetLanguage: string;
   onLanguageChange: (lang: string) => void;
   onBatchUpdateVocabularies: (updatedVocabs: VocabularyItem[]) => void;
+  currentCefr: CEFRLevel;
+  onCefrChange: (level: CEFRLevel) => void;
 }
 
 export const WordbookView: React.FC<WordbookViewProps> = ({
@@ -50,6 +54,8 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   targetLanguage,
   onLanguageChange,
   onBatchUpdateVocabularies,
+  currentCefr,
+  onCefrChange,
 }) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -102,7 +108,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   }, [targetLanguage, vocabularyList]);
 
   // Generation parameters when generating from Wordbook (PRD Section 20)
-  const [cefr, setCefr] = useState<CEFRLevel>('B1');
   const [readingType, setReadingType] = useState<ReadingType>('story');
   const [length, setLength] = useState<ReadingLength>('medium');
 
@@ -114,7 +119,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   );
 
   const searchSuggestions = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = search.trim();
     if (!query) return [];
 
     return vocabularyList
@@ -122,52 +127,60 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         const source = item.sourceReadingId ? readingById.get(item.sourceReadingId) : undefined;
         const localized = getLocalizedVocabMeaning(item, targetLanguage);
         const searchableSource = source
-          ? `${source.title} ${source.topic} ${source.input} ${source.content}`.toLowerCase()
+          ? `${source.title} ${source.topic} ${source.input} ${source.content}`
           : '';
-        const normalizedTerm = item.term.toLowerCase();
-        const matchesDetails = [item.meaningZh, localized, item.definitionEn]
-          .some((value) => value.toLowerCase().includes(query));
-        const matchesSource = searchableSource.includes(query);
-
-        if (!normalizedTerm.includes(query) && !matchesDetails && !matchesSource) return null;
-
-        const rank = normalizedTerm === query
-          ? 0
-          : normalizedTerm.startsWith(query)
-            ? 1
-            : normalizedTerm.includes(query)
-              ? 2
-              : matchesDetails
-                ? 3
-                : 4;
+        const rank = getVocabularySearchRank({
+          term: item.term,
+          definitionEn: item.definitionEn,
+          meanings: [item.meaningZh, localized],
+          sourceText: searchableSource,
+        }, query);
+        if (rank === null) return null;
 
         return { item, source, rank };
       })
       .filter((result): result is NonNullable<typeof result> => result !== null)
-      .sort((a, b) => a.rank - b.rank || a.item.term.localeCompare(b.item.term))
+      .sort((a, b) =>
+        a.rank - b.rank ||
+        Number(b.source?.cefrLevel === currentCefr) - Number(a.source?.cefrLevel === currentCefr) ||
+        a.item.term.localeCompare(b.item.term, 'en')
+      )
       .slice(0, 8);
-  }, [search, vocabularyList, readingById, targetLanguage]);
+  }, [search, vocabularyList, readingById, targetLanguage, currentCefr]);
 
-  const filtered = vocabularyList.filter((item) => {
-    const localized = getLocalizedVocabMeaning(item, targetLanguage);
-    const source = item.sourceReadingId ? readingById.get(item.sourceReadingId) : undefined;
-    const normalizedSearch = search.toLowerCase();
-    const matchesSearch =
-      item.term.toLowerCase().includes(normalizedSearch) ||
-      item.meaningZh.toLowerCase().includes(normalizedSearch) ||
-      localized.toLowerCase().includes(normalizedSearch) ||
-      item.definitionEn.toLowerCase().includes(normalizedSearch) ||
-      !!source && (
-        source.title.toLowerCase().includes(normalizedSearch) ||
-        source.topic.toLowerCase().includes(normalizedSearch) ||
-        source.input.toLowerCase().includes(normalizedSearch) ||
-        source.content.toLowerCase().includes(normalizedSearch)
-      );
-
-    const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
+  const filtered = useMemo(() => {
+    const query = search.trim();
+    return vocabularyList
+      .map((item) => {
+        const source = item.sourceReadingId ? readingById.get(item.sourceReadingId) : undefined;
+        const localized = getLocalizedVocabMeaning(item, targetLanguage);
+        const sourceText = source
+          ? `${source.title} ${source.topic} ${source.input} ${source.content}`
+          : '';
+        const searchRank = query
+          ? getVocabularySearchRank({
+              term: item.term,
+              definitionEn: item.definitionEn,
+              meanings: [item.meaningZh, localized],
+              sourceText,
+            }, query)
+          : 0;
+        return { item, source, searchRank };
+      })
+      .filter(({ item, searchRank }) =>
+        searchRank !== null && (statusFilter === 'All' || item.status === statusFilter)
+      )
+      .sort((a, b) => {
+        if (query && a.searchRank !== b.searchRank) {
+          return (a.searchRank as number) - (b.searchRank as number);
+        }
+        const cefrDifference =
+          Number(b.source?.cefrLevel === currentCefr) - Number(a.source?.cefrLevel === currentCefr);
+        return cefrDifference || b.item.updatedAt - a.item.updatedAt ||
+          a.item.term.localeCompare(b.item.term, 'en');
+      })
+      .map(({ item }) => item);
+  }, [vocabularyList, readingById, targetLanguage, search, statusFilter, currentCefr]);
 
   const toggleSelect = (term: string) => {
     setSelectedTerms((prev) =>
@@ -188,7 +201,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
     if (selectedTerms.length === 0 || isGenerating) return;
     onGenerateFromWordbook({
       selectedTerms,
-      cefrLevel: cefr,
+      cefrLevel: currentCefr,
       readingType,
       length,
     });
@@ -196,12 +209,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
   const playVoice = (term: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(term);
-      u.lang = 'en-US';
-      window.speechSynthesis.speak(u);
-    }
+    speakEnglishTerm(term);
   };
 
   const getStatusColor = (status: VocabStatus) => {
@@ -399,8 +407,8 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
             <div className="flex items-center gap-1.5 text-xs font-ui text-[#292B25]">
               <span>CEFR:</span>
               <select
-                value={cefr}
-                onChange={(e) => setCefr(e.target.value as CEFRLevel)}
+                value={currentCefr}
+                onChange={(e) => onCefrChange(e.target.value as CEFRLevel)}
                 className="px-2 py-1 text-xs bg-[#F2EEE4] border border-[#D4CCBC] rounded-xs"
               >
                 <option value="A2">A2</option>

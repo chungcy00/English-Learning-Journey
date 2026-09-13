@@ -1,0 +1,18 @@
+{
+  "name": "Mine English",
+  "short_name": "Mine English",
+  "description": "情境式 AI 英语短文、词汇与复习工具",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F2EEE4",
+  "theme_color": "#73785E",
+  "icons": [
+    {
+      "src": "/site-icon.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -321,6 +321,12 @@ export default function App() {
     await saveSettings(newSettings);
   };
 
+  const handleCefrChange = (cefr: CEFRLevel) => {
+    const newSettings = { ...settings, cefr };
+    setAppSettings(newSettings);
+    saveSettings(newSettings);
+  };
+
   // 12. Handle Batch Update Vocabularies
   const handleBatchUpdateVocabularies = async (updatedVocabs: VocabularyItem[]) => {
     for (const v of updatedVocabs) {
@@ -363,6 +369,7 @@ export default function App() {
             settings={settings}
             onGenerate={handleGenerateReading}
             isLoading={isGenerating}
+            onCefrChange={handleCefrChange}
           />
         )}
 
@@ -392,6 +399,8 @@ export default function App() {
             targetLanguage={settings.targetLanguage || 'zh-CN'}
             onLanguageChange={handleLanguageChange}
             onBatchUpdateVocabularies={handleBatchUpdateVocabularies}
+            currentCefr={settings.cefr}
+            onCefrChange={handleCefrChange}
           />
         )}
 

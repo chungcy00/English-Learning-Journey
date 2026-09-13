@@ -29,6 +29,16 @@ import {
   getLocalizedVocabMeaning,
   getLocalizedExampleTranslation,
 } from '../utils/i18n';
+import {
+  DIALOGUE_SPEECH_RATE,
+  NARRATION_SPEECH_RATE,
+  SpeechGender,
+  getAvailableSpeechVoices,
+  inferSpeakerGender,
+  selectDialogueVoice,
+  selectVocabularyVoice,
+  stopEnglishSpeech,
+} from '../utils/speech';
 
 interface ReadingViewProps {
   reading: ReadingRecord;
@@ -48,11 +58,9 @@ interface DialogueTurn {
   speech: string;
 }
 
-type VoiceGender = 'male' | 'female';
-
 interface SpeechQueueItem {
   text: string;
-  gender: VoiceGender;
+  gender: SpeechGender;
   speakerIndex: number;
   turnIndex: number | null;
 }
@@ -61,65 +69,8 @@ const NON_SPEAKER_LABELS = new Set([
   'note', 'ps', 'p.s', 'step', 'tip', 'warning',
 ]);
 
-const FEMALE_NAME_HINTS = new Set([
-  'alice', 'anna', 'ava', 'bella', 'chloe', 'claire', 'diana', 'ella', 'emma',
-  'emily', 'grace', 'hannah', 'jane', 'jessica', 'julia', 'kate', 'laura',
-  'lena', 'lily', 'linda', 'lucy', 'maya', 'mia', 'nina', 'olivia', 'rachel',
-  'sarah', 'sophia', 'sophie', 'susan', 'woman', 'girl', 'mother', 'mom',
-]);
-
-const MALE_NAME_HINTS = new Set([
-  'adam', 'alex', 'andrew', 'ben', 'charles', 'chris', 'daniel', 'david',
-  'edward', 'ethan', 'george', 'henry', 'jack', 'james', 'john', 'kai', 'leo',
-  'liam', 'mark', 'marcus', 'michael', 'mike', 'noah', 'oliver', 'peter',
-  'ryan', 'sam', 'thomas', 'tom', 'man', 'boy', 'father', 'dad',
-]);
-
-const FEMALE_VOICE_HINTS = [
-  'google uk english female', 'samantha', 'flo', 'sandy', 'shelley', 'ava',
-  'allison', 'aria', 'jenny', 'michelle', 'sonia', 'libby', 'karen', 'tessa',
-  'moira', 'victoria', 'zira', 'fiona', 'serena', 'veena', 'female',
-];
-
-const MALE_VOICE_HINTS = [
-  'google uk english male', 'eddy', 'reed', 'rocko', 'alex', 'daniel', 'guy',
-  'ryan', 'eric', 'christopher', 'david', 'mark', 'aaron', 'arthur', 'fred',
-  'albert', 'ralph', 'bruce', 'tom', 'gordon', 'male',
-];
-
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function inferSpeakerGender(speaker: string, speakerIndex: number): VoiceGender {
-  const normalized = speaker.toLowerCase().replace(/[^a-z\s]/g, ' ').trim();
-  const words = normalized.split(/\s+/).filter(Boolean);
-
-  if (words.some(word => FEMALE_NAME_HINTS.has(word))) return 'female';
-  if (words.some(word => MALE_NAME_HINTS.has(word))) return 'male';
-
-  // Keep unknown character voices distinct and stable throughout the dialogue.
-  return speakerIndex % 2 === 0 ? 'male' : 'female';
-}
-
-function pickEnglishVoice(
-  availableVoices: SpeechSynthesisVoice[],
-  gender: VoiceGender
-): SpeechSynthesisVoice | undefined {
-  const englishVoices = availableVoices.filter(voice =>
-    voice.lang.toLowerCase().startsWith('en')
-  );
-  if (englishVoices.length === 0) return undefined;
-
-  const genderHints = gender === 'female' ? FEMALE_VOICE_HINTS : MALE_VOICE_HINTS;
-  for (const hint of genderHints) {
-    const match = englishVoices.find(voice => voice.name.toLowerCase().includes(hint));
-    if (match) return match;
-  }
-
-  // Let the browser use the same natural default voice as vocabulary playback
-  // rather than choosing an arbitrary low-quality installed voice.
-  return undefined;
 }
 
 function cleanSpeechText(text: string): string {
@@ -275,7 +226,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   useEffect(() => {
     if (!('speechSynthesis' in window)) return;
 
-    const loadVoices = () => setSpeechVoices(window.speechSynthesis.getVoices());
+    const loadVoices = () => setSpeechVoices(getAvailableSpeechVoices());
     loadVoices();
     window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
 
@@ -290,9 +241,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       window.clearTimeout(speechPauseTimerRef.current);
       speechPauseTimerRef.current = null;
     }
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
+    stopEnglishSpeech();
     setIsSpeaking(false);
     setActiveSpeechTurn(null);
   };
@@ -308,10 +257,10 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       return;
     }
 
-    window.speechSynthesis.cancel();
+    stopEnglishSpeech();
     const voices = speechVoices.length > 0
       ? speechVoices
-      : window.speechSynthesis.getVoices();
+      : getAvailableSpeechVoices();
     const queue: SpeechQueueItem[] = [];
 
     if (isDetectedDialogue) {
@@ -356,14 +305,12 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         const item = queue[queueIndex];
         const utterance = new SpeechSynthesisUtterance(item.text);
         const selectedVoice = isDetectedDialogue
-          ? pickEnglishVoice(resolvedVoices, item.gender)
-          : undefined;
+          ? selectDialogueVoice(resolvedVoices, item.gender)
+          : selectVocabularyVoice(resolvedVoices);
         utterance.lang = 'en-US';
         utterance.voice = selectedVoice || null;
         utterance.volume = 1;
-        // Match vocabulary playback. A real male/female voice keeps its native
-        // pitch; only use a subtle fallback shift if no matching voice is installed.
-        utterance.rate = 0.9;
+        utterance.rate = isDetectedDialogue ? DIALOGUE_SPEECH_RATE : NARRATION_SPEECH_RATE;
         utterance.pitch = selectedVoice ? 1 : item.gender === 'female' ? 1.03 : 0.97;
         setActiveSpeechTurn(item.turnIndex);
 
@@ -371,7 +318,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           if (speechRunRef.current !== runId) return;
           const nextItem = queue[queueIndex + 1];
           const changedSpeaker = nextItem && nextItem.speakerIndex !== item.speakerIndex;
-          const pauseMs = changedSpeaker ? 240 : 120;
+          const pauseMs = changedSpeaker ? 340 : 160;
           speechPauseTimerRef.current = window.setTimeout(
             () => speakNext(queueIndex + 1),
             pauseMs
@@ -400,7 +347,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       // the first playback from assigning the same default voice to every role.
       speechPauseTimerRef.current = window.setTimeout(() => {
         if (speechRunRef.current === runId) {
-          beginPlayback(window.speechSynthesis.getVoices());
+          beginPlayback(getAvailableSpeechVoices());
         }
       }, 180);
     }
@@ -412,9 +359,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       if (speechPauseTimerRef.current !== null) {
         window.clearTimeout(speechPauseTimerRef.current);
       }
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      stopEnglishSpeech();
     };
   }, [reading.id, reading.content]);
 

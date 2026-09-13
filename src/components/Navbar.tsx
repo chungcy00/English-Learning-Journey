@@ -35,12 +35,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() => setActiveTab('home')}
           className="flex items-center gap-3 text-left focus:outline-none group"
         >
-          <div className="w-8 h-8 rounded-sm bg-[#73785E] text-[#F2EEE4] flex items-center justify-center font-editorial text-lg font-bold">
-            R
-          </div>
+          <img
+            src="/site-icon.png"
+            alt=""
+            aria-hidden="true"
+            className="w-10 h-10 object-contain flex-shrink-0"
+          />
           <div>
             <h1 className="font-editorial text-xl sm:text-2xl font-semibold text-[#292B25] tracking-tight group-hover:text-[#5F654D] transition-colors">
-              Rainey English
+              Mine English
             </h1>
             <p className="text-[11px] text-[#717265] tracking-wide uppercase font-ui">
               Humanised Contextual Reader

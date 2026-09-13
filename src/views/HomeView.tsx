@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Sparkles, ArrowRight, BookOpen, Layers, Check } from 'lucide-react';
 import { CEFRLevel, ReadingType, ReadingLength, AppSettings } from '../types';
 
@@ -13,18 +13,26 @@ interface HomeViewProps {
     specifiedVocabulary?: string[];
   }) => void;
   isLoading: boolean;
+  onCefrChange?: (level: CEFRLevel) => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
   settings,
   onGenerate,
   isLoading,
+  onCefrChange,
 }) => {
   const [input, setInput] = useState('');
   const [cefr, setCefr] = useState<CEFRLevel>(settings.cefr);
   const [type, setType] = useState<ReadingType>(settings.defaultReadingType);
   const [length, setLength] = useState<ReadingLength>(settings.defaultLength);
   const [vocabCount, setVocabCount] = useState<number>(settings.vocabularyCount);
+
+  // Settings load asynchronously from local storage. Keep the visible level in
+  // sync so Wordbook ranking and the generation form always use the same CEFR.
+  useEffect(() => {
+    setCefr(settings.cefr);
+  }, [settings.cefr]);
 
   const quickPrompts = [
     { label: '雨天里的小惊喜', desc: '中文主题' },
@@ -123,7 +131,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <button
                     key={level}
                     type="button"
-                    onClick={() => setCefr(level)}
+                    onClick={() => {
+                      setCefr(level);
+                      onCefrChange?.(level);
+                    }}
                     className={`py-1.5 text-xs font-ui font-semibold rounded-xs border transition-colors ${
                       cefr === level
                         ? 'bg-[#73785E] text-[#F2EEE4] border-[#73785E]'

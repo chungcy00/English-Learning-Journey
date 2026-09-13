@@ -6,6 +6,7 @@ import {
   getLocalizedVocabMeaning,
   getLocalizedExampleTranslation,
 } from '../utils/i18n';
+import { speakEnglishTerm } from '../utils/speech';
 
 interface WordDetailModalProps {
   vocab: VocabularyItem | null;
@@ -29,13 +30,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
   if (!isOpen || !vocab) return null;
 
   const playPronunciation = () => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(vocab.term);
-      utterance.lang = 'en-US';
-      utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
-    }
+    speakEnglishTerm(vocab.term);
   };
 
   const localizedMeaning = getLocalizedVocabMeaning(vocab, targetLanguage, currentTranslation);
@@ -169,4 +164,3 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
     </div>
   );
 };
-

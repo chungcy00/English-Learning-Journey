@@ -3,6 +3,12 @@ import { Plus, Trash2, X, Sparkles, Loader2 } from 'lucide-react';
 import { VocabularyItem } from '../types';
 import { explainVocabularyTerm } from '../services/api';
 import { getLocalizedVocabMeaning } from '../utils/i18n';
+import {
+  extractEnglishWords,
+  getEnglishTermMatchRank,
+  isEnglishTermQuery,
+  normalizeEnglishTerm,
+} from '../utils/englishSearch';
 
 interface EditVocabularyModalProps {
   isOpen: boolean;
@@ -30,37 +36,51 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
 
   const readingSuggestions = useMemo(() => {
-    const query = newTerm.trim().toLowerCase();
-    if (!query) return [];
+    const query = normalizeEnglishTerm(newTerm);
+    if (!query || !isEnglishTermQuery(query)) return [];
 
-    const tokens = readingContent.match(/[A-Za-z]+(?:['’-][A-Za-z]+)*/g) || [];
-    const candidates: string[] = [];
-    const seen = new Set<string>();
+    const existingTerms = new Set(list.map(item => normalizeEnglishTerm(item.term)));
+    const candidates = new Map<string, string>();
+    const addCandidate = (candidate: string) => {
+      const normalized = normalizeEnglishTerm(candidate);
+      if (
+        normalized &&
+        !existingTerms.has(normalized) &&
+        getEnglishTermMatchRank(normalized, query) !== null &&
+        !candidates.has(normalized)
+      ) {
+        candidates.set(normalized, candidate);
+      }
+    };
 
-    for (let size = 1; size <= 4; size++) {
-      for (let index = 0; index <= tokens.length - size; index++) {
-        const candidate = tokens.slice(index, index + size).join(' ');
-        const normalized = candidate.toLowerCase();
-        if (
-          normalized.includes(query) &&
-          !seen.has(normalized) &&
-          !list.some((item) => item.term.toLowerCase() === normalized)
-        ) {
-          seen.add(normalized);
-          candidates.push(candidate);
+    extractEnglishWords(readingContent).forEach(addCandidate);
+    list.flatMap(item => item.collocations || []).forEach(addCandidate);
+
+    // Multi-word input may autocomplete a phrase from the same source sentence.
+    // Single-word input only returns real words/collocations, not arbitrary n-grams.
+    if (query.includes(' ')) {
+      const queryWordCount = query.split(' ').length;
+      const sentenceTokens = readingContent
+        .split(/[.!?\n]+/)
+        .map(extractEnglishWords)
+        .filter(tokens => tokens.length > 0);
+
+      for (const tokens of sentenceTokens) {
+        for (let size = queryWordCount; size <= Math.min(4, queryWordCount + 2); size++) {
+          for (let index = 0; index <= tokens.length - size; index++) {
+            addCandidate(tokens.slice(index, index + size).join(' '));
+          }
         }
       }
     }
 
-    return candidates
+    return [...candidates.values()]
       .sort((a, b) => {
-        const aNormalized = a.toLowerCase();
-        const bNormalized = b.toLowerCase();
-        const aRank = aNormalized === query ? 0 : aNormalized.startsWith(query) ? 1 : 2;
-        const bRank = bNormalized === query ? 0 : bNormalized.startsWith(query) ? 1 : 2;
+        const aRank = getEnglishTermMatchRank(a, query) ?? 9;
+        const bRank = getEnglishTermMatchRank(b, query) ?? 9;
         if (aRank !== bRank) return aRank - bRank;
         const wordCountDifference = a.split(' ').length - b.split(' ').length;
-        return wordCountDifference || a.length - b.length;
+        return wordCountDifference || a.localeCompare(b, 'en');
       })
       .slice(0, 8);
   }, [newTerm, readingContent, list]);
