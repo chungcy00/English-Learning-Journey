@@ -61,6 +61,7 @@ interface DialogueTurn {
 interface SpeechQueueItem {
   text: string;
   gender: SpeechGender;
+  speakerKey: string;
   speakerIndex: number;
   turnIndex: number | null;
 }
@@ -270,20 +271,27 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           return;
         }
 
-        if (!speakerOrder.has(turn.speaker)) {
-          speakerOrder.set(turn.speaker, speakerOrder.size);
+        const speakerKey = turn.speaker.toLowerCase().trim();
+        if (!speakerOrder.has(speakerKey)) {
+          speakerOrder.set(speakerKey, speakerOrder.size);
         }
-        const speakerIndex = speakerOrder.get(turn.speaker) || 0;
+        const speakerIndex = speakerOrder.get(speakerKey) || 0;
         const speakerProfile = reading.speakers?.find(
-          profile => profile.name.toLowerCase() === turn.speaker?.toLowerCase()
+          profile => profile.name.toLowerCase().trim() === speakerKey
         );
         const gender = speakerProfile?.gender || inferSpeakerGender(turn.speaker, speakerIndex);
         const speech = cleanSpeechText(turn.speech);
-        if (speech) queue.push({ text: speech, gender, speakerIndex, turnIndex });
+        if (speech) queue.push({ text: speech, gender, speakerKey, speakerIndex, turnIndex });
       });
     } else {
       splitNarrationText(reading.content).forEach(text => {
-        queue.push({ text, gender: 'female', speakerIndex: 0, turnIndex: null });
+        queue.push({
+          text,
+          gender: 'female',
+          speakerKey: 'narrator',
+          speakerIndex: 0,
+          turnIndex: null,
+        });
       });
     }
 
@@ -294,6 +302,25 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     setIsSpeaking(true);
 
     const beginPlayback = (resolvedVoices: SpeechSynthesisVoice[]) => {
+      // Resolve each character's voice once for the whole reading. This avoids
+      // browsers changing voices between turns and makes role boundaries clear.
+      const speakerVoices = new Map<string, SpeechSynthesisVoice | undefined>();
+      if (isDetectedDialogue) {
+        queue.forEach(item => {
+          if (!speakerVoices.has(item.speakerKey)) {
+            speakerVoices.set(
+              item.speakerKey,
+              selectDialogueVoice(resolvedVoices, item.gender)
+            );
+          }
+        });
+      }
+
+      const maleVoice = selectDialogueVoice(resolvedVoices, 'male');
+      const femaleVoice = selectDialogueVoice(resolvedVoices, 'female');
+      const hasDistinctGenderVoices = !!maleVoice && !!femaleVoice &&
+        maleVoice.voiceURI !== femaleVoice.voiceURI;
+
       const speakNext = (queueIndex: number) => {
         if (speechRunRef.current !== runId) return;
         if (queueIndex >= queue.length) {
@@ -305,20 +332,22 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         const item = queue[queueIndex];
         const utterance = new SpeechSynthesisUtterance(item.text);
         const selectedVoice = isDetectedDialogue
-          ? selectDialogueVoice(resolvedVoices, item.gender)
+          ? speakerVoices.get(item.speakerKey)
           : selectVocabularyVoice(resolvedVoices);
         utterance.lang = 'en-US';
         utterance.voice = selectedVoice || null;
         utterance.volume = 1;
         utterance.rate = isDetectedDialogue ? DIALOGUE_SPEECH_RATE : NARRATION_SPEECH_RATE;
-        utterance.pitch = selectedVoice ? 1 : item.gender === 'female' ? 1.03 : 0.97;
+        utterance.pitch = isDetectedDialogue && !hasDistinctGenderVoices
+          ? item.gender === 'female' ? 1.06 : 0.94
+          : 1;
         setActiveSpeechTurn(item.turnIndex);
 
         utterance.onend = () => {
           if (speechRunRef.current !== runId) return;
           const nextItem = queue[queueIndex + 1];
           const changedSpeaker = nextItem && nextItem.speakerIndex !== item.speakerIndex;
-          const pauseMs = changedSpeaker ? 340 : 160;
+          const pauseMs = changedSpeaker ? 400 : 160;
           speechPauseTimerRef.current = window.setTimeout(
             () => speakNext(queueIndex + 1),
             pauseMs
