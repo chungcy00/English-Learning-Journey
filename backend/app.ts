@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from '@google/genai';
+import { TextToSpeechClient } from '@google-cloud/text-to-speech';
 
 dotenv.config();
 
@@ -9,6 +10,7 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 
 let ai: GoogleGenAI | null = null;
+let googleCloudTts: TextToSpeechClient | null = null;
 
 // Initialize Gemini lazily so a missing Vercel secret produces a clear JSON
 // response instead of falling back to unavailable Google Cloud credentials.
@@ -339,7 +341,14 @@ ${transcript}
 </TRANSCRIPT>`;
 }
 
-async function generateDialogueAudio(turns: DialogueTtsTurn[]) {
+interface DialogueAudioResult {
+  buffer: Buffer;
+  mimeType: string;
+  provider: 'gemini' | 'google-cloud' | 'azure';
+  voices: string;
+}
+
+async function generateGeminiDialogueAudio(turns: DialogueTtsTurn[]): Promise<DialogueAudioResult> {
   const hasFemale = turns.some(turn => turn.gender === 'female');
   const hasMale = turns.some(turn => turn.gender === 'male');
   const speakerConfig = hasFemale && hasMale
@@ -369,6 +378,8 @@ async function generateDialogueAudio(turns: DialogueTtsTurn[]) {
   return {
     buffer: Buffer.from(audioData, 'base64'),
     mimeType: interaction.output_audio?.mime_type || 'audio/mp3',
+    provider: 'gemini',
+    voices: `${DIALOGUE_TTS_VOICES.female},${DIALOGUE_TTS_VOICES.male}`,
   };
 }
 
@@ -379,8 +390,232 @@ function isDialogueTtsQuotaError(error: any): boolean {
     message.includes('Quota exceeded');
 }
 
+const GOOGLE_CLOUD_TTS_VOICES: Record<'female' | 'male', string> = {
+  female: 'en-US-Standard-C',
+  male: 'en-US-Standard-D',
+};
+
+function getGoogleCloudTtsClient(): TextToSpeechClient | null {
+  const credentialsValue = process.env.GOOGLE_CLOUD_TTS_CREDENTIALS_JSON?.trim();
+  const credentialsBase64 = process.env.GOOGLE_CLOUD_TTS_CREDENTIALS_BASE64?.trim();
+  const applicationCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim();
+  if (!credentialsValue && !credentialsBase64 && !applicationCredentials) return null;
+  if (googleCloudTts) return googleCloudTts;
+
+  if (applicationCredentials && !credentialsValue && !credentialsBase64) {
+    googleCloudTts = new TextToSpeechClient();
+    return googleCloudTts;
+  }
+
+  const rawCredentials = credentialsValue || Buffer.from(credentialsBase64!, 'base64').toString('utf8');
+  const credentials = JSON.parse(rawCredentials);
+  if (typeof credentials.private_key === 'string') {
+    credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
+  }
+  googleCloudTts = new TextToSpeechClient({
+    credentials,
+    projectId: credentials.project_id,
+  });
+  return googleCloudTts;
+}
+
+function extractLinear16Pcm(wav: Buffer): Buffer {
+  if (wav.length < 12 || wav.toString('ascii', 0, 4) !== 'RIFF') return wav;
+  let offset = 12;
+  while (offset + 8 <= wav.length) {
+    const chunkId = wav.toString('ascii', offset, offset + 4);
+    const chunkSize = wav.readUInt32LE(offset + 4);
+    const dataStart = offset + 8;
+    if (chunkId === 'data') return wav.subarray(dataStart, Math.min(dataStart + chunkSize, wav.length));
+    offset = dataStart + chunkSize + (chunkSize % 2);
+  }
+  throw new Error('GOOGLE_TTS_INVALID_WAV');
+}
+
+async function generateGoogleCloudDialogueAudio(
+  turns: DialogueTtsTurn[]
+): Promise<DialogueAudioResult> {
+  const client = getGoogleCloudTtsClient();
+  if (!client) throw new Error('GOOGLE_CLOUD_TTS_NOT_CONFIGURED');
+
+  const sampleRate = 24000;
+  const pause = Buffer.alloc(Math.round(sampleRate * 2 * 0.42));
+  const turnPcm: Buffer[] = new Array(turns.length);
+
+  // Cloud TTS accepts one voice per synchronous request. Generate each turn
+  // with its fixed role voice, then join lossless PCM so the browser receives
+  // one complete conversation and can cache it as a single file.
+  let nextTurnIndex = 0;
+  const worker = async () => {
+    while (nextTurnIndex < turns.length) {
+      const index = nextTurnIndex++;
+      const turn = turns[index];
+      const [response] = await client.synthesizeSpeech({
+        input: { text: turn.text },
+        voice: {
+          languageCode: 'en-US',
+          name: GOOGLE_CLOUD_TTS_VOICES[turn.gender],
+        },
+        audioConfig: {
+          audioEncoding: 'LINEAR16',
+          sampleRateHertz: sampleRate,
+          speakingRate: 0.9,
+        },
+      });
+      if (!response.audioContent) throw new Error('GOOGLE_TTS_EMPTY_AUDIO');
+      const wav = typeof response.audioContent === 'string'
+        ? Buffer.from(response.audioContent, 'base64')
+        : Buffer.from(response.audioContent);
+      turnPcm[index] = extractLinear16Pcm(wav);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(4, turns.length) }, () => worker())
+  );
+
+  const pcmParts = turnPcm.flatMap((pcm, index) =>
+    index < turnPcm.length - 1 ? [pcm, pause] : [pcm]
+  );
+
+  return {
+    buffer: wrapPcmAsWav(Buffer.concat(pcmParts), sampleRate),
+    mimeType: 'audio/wav',
+    provider: 'google-cloud',
+    voices: `${GOOGLE_CLOUD_TTS_VOICES.female},${GOOGLE_CLOUD_TTS_VOICES.male}`,
+  };
+}
+
+const AZURE_TTS_VOICES: Record<'female' | 'male', string> = {
+  female: 'en-US-JennyNeural',
+  male: 'en-US-GuyNeural',
+};
+
+function escapeSsml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function buildAzureDialogueSsml(turns: DialogueTtsTurn[]): string {
+  const voices = turns.map((turn, index) => {
+    const pause = index < turns.length - 1 ? '<break time="420ms"/>' : '';
+    return `<voice name="${AZURE_TTS_VOICES[turn.gender]}"><prosody rate="-10%">${escapeSsml(turn.text)}</prosody>${pause}</voice>`;
+  }).join('');
+  return `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">${voices}</speak>`;
+}
+
+async function generateAzureDialogueAudio(turns: DialogueTtsTurn[]): Promise<DialogueAudioResult> {
+  const key = process.env.AZURE_SPEECH_KEY?.trim();
+  const region = process.env.AZURE_SPEECH_REGION?.trim().toLowerCase();
+  if (!key || !region) throw new Error('AZURE_SPEECH_NOT_CONFIGURED');
+  if (!/^[a-z0-9-]+$/.test(region)) throw new Error('AZURE_SPEECH_INVALID_REGION');
+
+  const response = await fetch(
+    `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`,
+    {
+      method: 'POST',
+      headers: {
+        'Ocp-Apim-Subscription-Key': key,
+        'Content-Type': 'application/ssml+xml',
+        'X-Microsoft-OutputFormat': 'audio-24khz-48kbitrate-mono-mp3',
+        'User-Agent': 'Mine-English',
+      },
+      body: buildAzureDialogueSsml(turns),
+    }
+  );
+  if (!response.ok) {
+    const error: any = new Error(`AZURE_SPEECH_HTTP_${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
+  const audio = Buffer.from(await response.arrayBuffer());
+  if (!audio.length) throw new Error('AZURE_SPEECH_EMPTY_AUDIO');
+
+  return {
+    buffer: audio,
+    mimeType: response.headers.get('content-type') || 'audio/mpeg',
+    provider: 'azure',
+    voices: `${AZURE_TTS_VOICES.female},${AZURE_TTS_VOICES.male}`,
+  };
+}
+
+function isGoogleCloudTtsConfigured(): boolean {
+  return Boolean(
+    process.env.GOOGLE_CLOUD_TTS_CREDENTIALS_JSON?.trim() ||
+    process.env.GOOGLE_CLOUD_TTS_CREDENTIALS_BASE64?.trim() ||
+    process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim()
+  );
+}
+
+function isAzureSpeechConfigured(): boolean {
+  return Boolean(
+    process.env.AZURE_SPEECH_KEY?.trim() && process.env.AZURE_SPEECH_REGION?.trim()
+  );
+}
+
+async function generateDialogueAudio(turns: DialogueTtsTurn[]): Promise<DialogueAudioResult> {
+  const providers: Array<{
+    name: DialogueAudioResult['provider'];
+    configured: boolean;
+    generate: () => Promise<DialogueAudioResult>;
+  }> = [
+    {
+      name: 'gemini',
+      configured: Boolean(process.env.GEMINI_API_KEY?.trim()),
+      generate: () => generateGeminiDialogueAudio(turns),
+    },
+    {
+      name: 'azure',
+      configured: isAzureSpeechConfigured(),
+      generate: () => generateAzureDialogueAudio(turns),
+    },
+    {
+      name: 'google-cloud',
+      configured: isGoogleCloudTtsConfigured(),
+      generate: () => generateGoogleCloudDialogueAudio(turns),
+    },
+  ];
+
+  const configuredProviders = providers.filter(provider => provider.configured);
+  if (configuredProviders.length === 0) throw new Error('NO_CLOUD_TTS_CONFIGURED');
+
+  const failures: Array<{ provider: string; quota: boolean }> = [];
+  for (const provider of configuredProviders) {
+    try {
+      const result = await provider.generate();
+      if (failures.length > 0) {
+        console.log(`[Dialogue TTS] ${provider.name} succeeded after ${failures.length} fallback(s)`);
+      }
+      return result;
+    } catch (error) {
+      const quota = isDialogueTtsQuotaError(error);
+      failures.push({ provider: provider.name, quota });
+      console.warn(`[Dialogue TTS] ${provider.name} failed${quota ? ' (quota)' : ''}:`, error);
+    }
+  }
+
+  const error: any = new Error(
+    failures.every(failure => failure.quota)
+      ? 'ALL_CLOUD_TTS_QUOTA_EXHAUSTED'
+      : 'ALL_CLOUD_TTS_PROVIDERS_FAILED'
+  );
+  error.status = failures.every(failure => failure.quota) ? 429 : 502;
+  throw error;
+}
+
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', hasGeminiKey: !!process.env.GEMINI_API_KEY?.trim() });
+  res.json({
+    status: 'ok',
+    hasGeminiKey: Boolean(process.env.GEMINI_API_KEY?.trim()),
+    speechProviders: {
+      gemini: Boolean(process.env.GEMINI_API_KEY?.trim()),
+      googleCloud: isGoogleCloudTtsConfigured(),
+      azure: isAzureSpeechConfigured(),
+    },
+  });
 });
 
 // Generate the whole dialogue in one request. This keeps fixed male/female
@@ -413,8 +648,9 @@ app.post('/api/speech/dialogue', async (req, res) => {
     res.setHeader('Content-Length', String(audio.buffer.length));
     res.setHeader('Cache-Control', 'private, max-age=86400');
     res.setHeader('X-Dialogue-Genders', genders);
-    res.setHeader('X-Dialogue-Voices', `${DIALOGUE_TTS_VOICES.female},${DIALOGUE_TTS_VOICES.male}`);
-    res.setHeader('X-Dialogue-TTS-Model', DIALOGUE_TTS_MODEL);
+    res.setHeader('X-Dialogue-Voices', audio.voices);
+    res.setHeader('X-Dialogue-TTS-Provider', audio.provider);
+    if (audio.provider === 'gemini') res.setHeader('X-Dialogue-TTS-Model', DIALOGUE_TTS_MODEL);
     return res.status(200).send(audio.buffer);
   } catch (error: any) {
     console.error('Dialogue TTS error:', error);
@@ -425,10 +661,10 @@ app.post('/api/speech/dialogue', async (req, res) => {
         error: '角色语音服务暂时繁忙，请约一分钟后重试。',
       });
     }
-    if (String(error?.message || '').includes('GEMINI_API_KEY')) {
+    if (String(error?.message || '').includes('NO_CLOUD_TTS_CONFIGURED')) {
       return res.status(503).json({
         code: 'TTS_NOT_CONFIGURED',
-        error: '角色语音服务尚未配置，请联系网站管理员。',
+        error: '云端角色语音尚未配置，已改用设备语音。',
       });
     }
     return res.status(500).json({

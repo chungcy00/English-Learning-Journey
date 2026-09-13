@@ -43,6 +43,7 @@ import {
 
 import {
   generateReadingWithPipeline,
+  refreshPendingDialogueSpeech,
   rewriteReadingWithPipeline,
 } from './services/api';
 
@@ -67,6 +68,9 @@ export default function App() {
 
   useEffect(() => {
     setIsInstalledApp(isStandaloneApp());
+    // If a previous visit had to use free browser speech, quietly retry the
+    // configured cloud free tiers once on this fresh visit and cache success.
+    void refreshPendingDialogueSpeech();
   }, []);
 
   // Load initial data
