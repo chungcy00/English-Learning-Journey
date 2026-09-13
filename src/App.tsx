@@ -9,12 +9,13 @@ import { Footer } from './components/Footer';
 import { ProcessingModal } from './components/ProcessingModal';
 import { ReadingHistoryModal } from './components/ReadingHistoryModal';
 import { AppInstallPrompt } from './components/AppInstallPrompt';
+import { InstalledAppBottomNav } from './components/InstalledAppBottomNav';
 import { HomeView } from './views/HomeView';
 import { ReadingView } from './views/ReadingView';
 import { WordbookView } from './views/WordbookView';
 import { ReviewView } from './views/ReviewView';
 import { AppUpdateView } from './views/AppUpdateView';
-import { isStandaloneApp } from './utils/pwa';
+import { isMobileOrTablet, isStandaloneApp } from './utils/pwa';
 
 import {
   ReadingRecord,
@@ -64,10 +65,12 @@ export default function App() {
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [isInstalledApp, setIsInstalledApp] = useState(false);
+  const [isInstalledApp, setIsInstalledApp] = useState(
+    () => isStandaloneApp() && isMobileOrTablet()
+  );
 
   useEffect(() => {
-    setIsInstalledApp(isStandaloneApp());
+    setIsInstalledApp(isStandaloneApp() && isMobileOrTablet());
     // If a previous visit had to use free browser speech, quietly retry
     // Gemini once on this fresh visit and cache a successful result.
     void refreshPendingDialogueSpeech();
@@ -350,18 +353,19 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F2EEE4] text-[#292B25] selection:bg-[#73785E]/20">
-      {/* Navigation */}
-      <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        reviewDueCount={dueVocabularies.length}
-        hasCurrentReading={!!currentReading}
-        targetLanguage={settings.targetLanguage || 'zh-CN'}
-        isInstalledApp={isInstalledApp}
-      />
+      {/* Web navigation; installed phone/tablet software uses the bottom tabs. */}
+      {!isInstalledApp && (
+        <Navbar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          reviewDueCount={dueVocabularies.length}
+          hasCurrentReading={!!currentReading}
+          targetLanguage={settings.targetLanguage || 'zh-CN'}
+        />
+      )}
 
       {/* Main Content Router */}
-      <main className="flex-1">
+      <main className={`flex-1 ${isInstalledApp ? 'pb-[calc(5rem+env(safe-area-inset-bottom))]' : ''}`}>
         {errorMessage && (
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4">
             <div className="bg-[#FAF3F0] border border-[#D98E7B]/40 text-[#7D3220] px-4 py-3 rounded-sm text-sm font-ui flex items-center justify-between shadow-xs">
@@ -453,8 +457,17 @@ export default function App() {
       {/* Mobile browsers offer installation; update controls only exist inside the installed app. */}
       {!isInstalledApp && <AppInstallPrompt />}
 
-      {/* Copyright Footer */}
-      <Footer />
+      {/* Browser copyright only; installed phone/tablet software stays app-like. */}
+      {!isInstalledApp && <Footer />}
+
+      {isInstalledApp && (
+        <InstalledAppBottomNav
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          reviewDueCount={dueVocabularies.length}
+          hasCurrentReading={!!currentReading}
+        />
+      )}
     </div>
   );
 }
