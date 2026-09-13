@@ -289,7 +289,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
     if (isDetectedDialogue) {
       const speakerOrder = new Map<string, number>();
-      dialogueTurns.forEach((turn, turnIndex) => {
+      dialogueTurns.forEach((turn) => {
         if (!turn.speaker || ['setting', 'scene', 'note'].includes(turn.speaker.toLowerCase())) {
           return;
         }
@@ -298,15 +298,51 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         if (!speakerOrder.has(speakerKey)) {
           speakerOrder.set(speakerKey, speakerOrder.size);
         }
-        const speakerIndex = speakerOrder.get(speakerKey) || 0;
+      });
+
+      const speakerGenders = new Map<string, SpeechGender>();
+      speakerOrder.forEach((speakerIndex, speakerKey) => {
+        const representativeTurn = dialogueTurns.find(
+          turn => turn.speaker?.toLowerCase().trim() === speakerKey
+        );
         const speakerProfile = reading.speakers?.find(
           profile => profile.name.toLowerCase().trim() === speakerKey
         );
-        const gender = resolveSpeakerGender(
-          turn.speaker,
-          speakerIndex,
-          speakerProfile?.gender
+        speakerGenders.set(
+          speakerKey,
+          resolveSpeakerGender(
+            representativeTurn?.speaker || speakerKey,
+            speakerIndex,
+            speakerProfile?.gender
+          )
         );
+      });
+
+      // Historical AI records sometimes stored both character profiles as the
+      // same gender. If no contrast remains after known-name correction, force
+      // alternating female/male roles in stable speaker order.
+      const resolvedGenders = new Set(speakerGenders.values());
+      if (speakerOrder.size >= 2 && resolvedGenders.size === 1) {
+        const firstGender = speakerGenders.values().next().value as SpeechGender;
+        speakerOrder.forEach((speakerIndex, speakerKey) => {
+          speakerGenders.set(
+            speakerKey,
+            speakerIndex % 2 === 0
+              ? firstGender
+              : firstGender === 'female' ? 'male' : 'female'
+          );
+        });
+      }
+
+      dialogueTurns.forEach((turn, turnIndex) => {
+        if (!turn.speaker || ['setting', 'scene', 'note'].includes(turn.speaker.toLowerCase())) {
+          return;
+        }
+
+        const speakerKey = turn.speaker.toLowerCase().trim();
+        const speakerIndex = speakerOrder.get(speakerKey) || 0;
+        const gender = speakerGenders.get(speakerKey) ||
+          (speakerIndex % 2 === 0 ? 'female' : 'male');
         const speech = cleanSpeechText(turn.speech);
         if (speech) queue.push({ text: speech, gender, speakerKey, speakerIndex, turnIndex });
       });
