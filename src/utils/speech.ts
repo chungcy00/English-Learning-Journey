@@ -10,29 +10,44 @@ export const NARRATION_SPEECH_RATE = 0.8;
 export const DIALOGUE_SPEECH_RATE = 0.82;
 
 const FEMALE_NAME_HINTS = new Set([
-  'alice', 'anna', 'ava', 'bella', 'chloe', 'claire', 'diana', 'ella', 'emma',
-  'emily', 'grace', 'hannah', 'jane', 'jessica', 'julia', 'kate', 'laura',
-  'lena', 'lily', 'linda', 'lucy', 'maya', 'mia', 'nina', 'olivia', 'rachel',
-  'sarah', 'sophia', 'sophie', 'susan', 'woman', 'girl', 'mother', 'mom',
+  'abigail', 'alice', 'amanda', 'amy', 'anna', 'ava', 'bella', 'beth', 'brooke',
+  'camila', 'caroline', 'catherine', 'charlotte', 'chloe', 'christine', 'claire',
+  'clara', 'daisy', 'diana', 'elena', 'elizabeth', 'ella', 'ellen', 'emma',
+  'emily', 'evelyn', 'gabriella', 'grace', 'hannah', 'helen', 'iris', 'isabella',
+  'jane', 'jasmine', 'jennifer', 'jessica', 'joanna', 'josephine', 'joy', 'julia',
+  'julie', 'kate', 'katie', 'laura', 'leah', 'lena', 'lily', 'linda', 'lisa',
+  'louise', 'madison', 'margaret', 'maria', 'marie', 'maya', 'megan', 'melissa',
+  'mia', 'monica', 'natalie', 'nicole', 'nina', 'olivia', 'paula', 'rachel',
+  'rebecca', 'rose', 'ruby', 'sabrina', 'sally', 'sarah', 'sophia', 'sophie',
+  'stella', 'stephanie', 'susan', 'tina', 'vanessa', 'violet', 'wendy',
+  'woman', 'girl', 'mother', 'mom',
 ]);
 
 const MALE_NAME_HINTS = new Set([
-  'adam', 'alex', 'andrew', 'ben', 'charles', 'chris', 'daniel', 'david',
-  'edward', 'ethan', 'george', 'henry', 'jack', 'james', 'john', 'kai', 'leo',
-  'liam', 'mark', 'marcus', 'michael', 'mike', 'noah', 'oliver', 'peter',
-  'ryan', 'sam', 'thomas', 'tom', 'man', 'boy', 'father', 'dad',
+  'adam', 'andrew', 'anthony', 'ben', 'brian', 'bruce', 'carl', 'charles',
+  'connor', 'daniel', 'david', 'derek', 'donald', 'douglas', 'dylan', 'edward',
+  'ethan', 'frank', 'george', 'harry', 'henry', 'hugo', 'ian', 'jack', 'james',
+  'jason', 'jeff', 'jeremy', 'john', 'joseph', 'kevin', 'lawrence', 'leo',
+  'liam', 'luke', 'marcus', 'mark', 'martin', 'matthew', 'michael', 'mike',
+  'nathan', 'nicholas', 'noah', 'oliver', 'oscar', 'patrick', 'paul', 'peter',
+  'philip', 'richard', 'robert', 'roger', 'ryan', 'sean', 'simon', 'stephen',
+  'steven', 'thomas', 'tim', 'tom', 'victor', 'william',
+  'man', 'boy', 'father', 'dad',
 ]);
 
 const FEMALE_VOICE_HINTS = [
-  'google uk english female', 'samantha', 'flo', 'sandy', 'shelley', 'ava',
+  'google uk english female', 'google us english', 'samantha', 'flo', 'sandy', 'shelley', 'ava',
   'allison', 'aria', 'jenny', 'michelle', 'sonia', 'libby', 'karen', 'tessa',
-  'moira', 'victoria', 'zira', 'fiona', 'serena', 'veena', 'female',
+  'moira', 'victoria', 'zira', 'fiona', 'serena', 'veena', 'nicky', 'zoe',
+  'kathy', 'susan', 'female',
 ];
 
 const MALE_VOICE_HINTS = [
-  'google uk english male', 'eddy', 'reed', 'rocko', 'alex', 'daniel', 'guy',
-  'ryan', 'eric', 'christopher', 'david', 'mark', 'aaron', 'arthur', 'fred',
-  'albert', 'ralph', 'bruce', 'tom', 'gordon', 'male',
+  'google uk english male', 'daniel', 'alex', 'aaron', 'arthur', 'oliver',
+  'andrew', 'brian', 'guy', 'david', 'ryan', 'eric', 'christopher', 'mark',
+  'eddy', 'reed', 'rocko', 'fred',
+  'albert', 'ralph', 'bruce', 'tom', 'gordon', 'evan',
+  'nathan', 'oliver', 'roger', 'stefan', 'steffan', 'male',
 ];
 
 const NOVELTY_VOICE_HINTS = [
@@ -63,11 +78,21 @@ function findVoiceByHints(
 
 function voiceNameMatchesHint(voiceName: string, hint: string): boolean {
   const normalizedName = voiceName.toLowerCase();
-  if (hint === 'male' || hint === 'female') {
-    // A substring check makes "female" accidentally match "male".
-    return new RegExp(`(^|[^a-z])${hint}([^a-z]|$)`).test(normalizedName);
-  }
-  return normalizedName.includes(hint);
+  if (hint.includes(' ')) return normalizedName.includes(hint);
+
+  // Match single names and gender labels as complete tokens. This prevents
+  // "female" matching "male" and names such as "Tom" matching "Custom".
+  const escapedHint = hint.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^a-z])${escapedHint}([^a-z]|$)`).test(normalizedName);
+}
+
+function classifyVoiceGender(voice: SpeechSynthesisVoice): SpeechGender | null {
+  const name = voice.name.toLowerCase();
+  if (/(^|[^a-z])female([^a-z]|$)/.test(name)) return 'female';
+  if (/(^|[^a-z])male([^a-z]|$)/.test(name)) return 'male';
+  if (FEMALE_VOICE_HINTS.some(hint => voiceNameMatchesHint(name, hint))) return 'female';
+  if (MALE_VOICE_HINTS.some(hint => voiceNameMatchesHint(name, hint))) return 'male';
+  return null;
 }
 
 function voiceQualityScore(voice: SpeechSynthesisVoice): number {
@@ -119,24 +144,21 @@ export function selectDialogueVoice(
   gender: SpeechGender
 ): SpeechSynthesisVoice | undefined {
   const englishVoices = getEnglishVoices(voices);
+  const confirmedGenderVoices = englishVoices.filter(
+    voice => classifyVoiceGender(voice) === gender
+  );
   const matchedVoice = findVoiceByHints(
-    englishVoices,
+    confirmedGenderVoices,
     gender === 'female' ? FEMALE_VOICE_HINTS : MALE_VOICE_HINTS
   );
   if (matchedVoice) return matchedVoice;
 
-  // Voice gender is not exposed by the Web Speech API. When a browser uses
-  // unfamiliar voice names, choose two deterministic, distinct English voices
-  // if possible instead of silently assigning the same default to both roles.
-  const qualitySorted = [...englishVoices].sort(
+  // Never assign an unverified or opposite-gender voice to a role. If the
+  // device exposes no confirmed voice for that gender, ReadingView keeps the
+  // browser default and applies an explicit pitch fallback instead.
+  return [...confirmedGenderVoices].sort(
     (a, b) => voiceQualityScore(b) - voiceQualityScore(a) || a.name.localeCompare(b.name)
-  );
-  if (gender === 'female') {
-    return qualitySorted.find(voice => voice.default) || qualitySorted[0];
-  }
-
-  const femaleFallback = qualitySorted.find(voice => voice.default) || qualitySorted[0];
-  return qualitySorted.find(voice => voice.voiceURI !== femaleFallback?.voiceURI) || femaleFallback;
+  )[0];
 }
 
 export function selectDialogueVoicePair(
@@ -149,11 +171,13 @@ export function selectDialogueVoicePair(
   // If the first pass still resolves both genders to one source, force a
   // different English source whenever the device has another one available.
   if (male && female && male.voiceURI === female.voiceURI) {
-    const alternatives = englishVoices.filter(voice => voice.voiceURI !== female.voiceURI);
+    const alternatives = englishVoices.filter(
+      voice => voice.voiceURI !== female.voiceURI && classifyVoiceGender(voice) === 'male'
+    );
     male = findVoiceByHints(alternatives, MALE_VOICE_HINTS) ||
       [...alternatives].sort(
         (a, b) => voiceQualityScore(b) - voiceQualityScore(a) || a.name.localeCompare(b.name)
-      )[0] || male;
+      )[0];
   }
 
   return { male, female };
