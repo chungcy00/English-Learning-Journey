@@ -16,6 +16,7 @@ export interface VocabularyItem {
   example: string;
   collocations: string[];
   sourceReadingId?: string;
+  sourceCefrLevel?: CEFRLevel;
   status: VocabStatus;
   createdAt: number;
   updatedAt: number;

@@ -23,6 +23,7 @@ import {
 } from '../utils/i18n';
 import { translateVocabularies } from '../services/api';
 import { getVocabularySearchRank } from '../utils/englishSearch';
+import { compareWordbookEntries } from '../utils/wordbookSort';
 import { speakEnglishTerm } from '../utils/speech';
 
 interface WordbookViewProps {
@@ -142,8 +143,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
       .filter((result): result is NonNullable<typeof result> => result !== null)
       .sort((a, b) =>
         a.rank - b.rank ||
-        Number(b.source?.cefrLevel === currentCefr) - Number(a.source?.cefrLevel === currentCefr) ||
-        a.item.term.localeCompare(b.item.term, 'en')
+        compareWordbookEntries(a.item, b.item, currentCefr, readingById)
       )
       .slice(0, 8);
   }, [search, vocabularyList, readingById, targetLanguage, currentCefr]);
@@ -174,10 +174,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         if (query && a.searchRank !== b.searchRank) {
           return (a.searchRank as number) - (b.searchRank as number);
         }
-        const cefrDifference =
-          Number(b.source?.cefrLevel === currentCefr) - Number(a.source?.cefrLevel === currentCefr);
-        return cefrDifference || b.item.updatedAt - a.item.updatedAt ||
-          a.item.term.localeCompare(b.item.term, 'en');
+        return compareWordbookEntries(a.item, b.item, currentCefr, readingById);
       })
       .map(({ item }) => item);
   }, [vocabularyList, readingById, targetLanguage, search, statusFilter, currentCefr]);
@@ -235,15 +232,12 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
           <h1 className="font-editorial text-3xl font-semibold text-[#292B25]">
             {getI18nText(targetLanguage, 'wordbookTitle')}
           </h1>
-          <p className="text-xs text-[#717265] font-ui flex items-center gap-2 mt-1">
-            <span>{getI18nText(targetLanguage, 'wordbookSub').replace('{count}', vocabularyList.length.toString())}</span>
-            {isTranslating && (
-              <span className="inline-flex items-center gap-1 text-[11px] text-[#5F654D] animate-pulse">
-                <Loader2 className="w-3 h-3 animate-spin" />
-                {getI18nText(targetLanguage, 'syncingWordbook').replace('{lang}', currentLangObj.native)}
-              </span>
-            )}
-          </p>
+          {isTranslating && (
+            <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-ui text-[#5F654D] animate-pulse">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              {getI18nText(targetLanguage, 'syncingWordbook').replace('{lang}', currentLangObj.native)}
+            </span>
+          )}
         </div>
 
         {/* Search Bar & Target Language Picker */}
@@ -474,7 +468,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                 className="group cursor-pointer p-4 bg-[#F2EEE4] hover:bg-[#E5DED0]/40 border border-[#D4CCBC] rounded-sm transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
                 {/* Checkbox & Term Info */}
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 min-w-0 flex-1">
                   <button
                     type="button"
                     onClick={(e) => {
@@ -490,8 +484,8 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                     )}
                   </button>
 
-                  <div>
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-editorial text-xl font-semibold text-[#5F654D] group-hover:text-[#292B25] transition-colors">
                         {vocab.term}
                       </h3>
@@ -502,9 +496,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                       >
                         <Volume2 className="w-3.5 h-3.5" />
                       </button>
-                      <span className="text-xs text-[#717265] font-ui">
-                        {vocab.phonetic}
-                      </span>
                       <span className="text-[11px] font-ui italic text-[#717265]">
                         [{vocab.partOfSpeech}]
                       </span>
@@ -519,7 +510,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                       )}
                     </p>
 
-                    <p className="font-editorial text-base text-[#717265] italic line-clamp-1 mt-0.5">
+                    <p className="font-editorial text-lg sm:text-xl leading-relaxed text-[#717265] italic break-words mt-1">
                       "{vocab.example}"
                     </p>
                     {getLocalizedExampleTranslation(vocab, targetLanguage) && (

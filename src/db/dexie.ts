@@ -404,7 +404,15 @@ export async function saveReading(reading: ReadingRecord): Promise<string> {
 }
 
 export async function deleteReading(id: string): Promise<void> {
-  return db.readings.delete(id);
+  await db.transaction('rw', db.readings, db.vocabulary, async () => {
+    const source = await db.readings.get(id);
+    if (source) {
+      await db.vocabulary.filter((vocab) =>
+        vocab.sourceReadingId === id && !vocab.sourceCefrLevel
+      ).modify({ sourceCefrLevel: source.cefrLevel });
+    }
+    await db.readings.delete(id);
+  });
 }
 
 export async function getAllVocabularies(): Promise<VocabularyItem[]> {
@@ -412,7 +420,10 @@ export async function getAllVocabularies(): Promise<VocabularyItem[]> {
 }
 
 export async function saveVocabulary(vocab: VocabularyItem): Promise<string> {
-  return db.vocabulary.put(vocab);
+  const source = !vocab.sourceCefrLevel && vocab.sourceReadingId
+    ? await db.readings.get(vocab.sourceReadingId)
+    : undefined;
+  return db.vocabulary.put(source ? { ...vocab, sourceCefrLevel: source.cefrLevel } : vocab);
 }
 
 export async function deleteVocabulary(id: string): Promise<void> {

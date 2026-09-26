@@ -315,8 +315,12 @@ export default function App() {
   // 9. Delete Reading
   const handleDeleteReading = async (readingId: string) => {
     await deleteReading(readingId);
-    const updated = await getAllReadings();
+    const [updated, updatedVocabulary] = await Promise.all([
+      getAllReadings(),
+      getAllVocabularies(),
+    ]);
     setReadings(updated);
+    setVocabularies(updatedVocabulary);
     if (currentReading?.id === readingId) {
       setCurrentReading(updated[0] || null);
     }
