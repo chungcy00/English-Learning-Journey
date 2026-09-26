@@ -922,11 +922,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       {/* Top Controls Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#D4CCBC]">
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Low key status badge (PRD Section 12) */}
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-xs bg-[#73785E]/10 border border-[#73785E]/20 text-[11px] font-ui text-[#5F654D] font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#73785E]"></span>
-            Humanised
-          </span>
           <span className="text-xs font-ui font-semibold px-2 py-0.5 bg-[#E5DED0] text-[#717265] rounded-xs uppercase">
             {reading.cefrLevel}
           </span>
@@ -1034,11 +1029,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           <article className="bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm p-6 sm:p-8 shadow-xs flex flex-col">
             <header className="mb-6 pb-4 border-b border-[#D4CCBC]/50 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-ui text-xs text-[#717265]">
-                    Topic: {reading.topic}
-                  </span>
-                </div>
                 <h1 className="font-editorial text-xl sm:text-2xl font-semibold text-[#292B25] tracking-tight leading-tight">
                   {reading.title}
                 </h1>
@@ -1204,11 +1194,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         <article className="bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm p-6 sm:p-10 shadow-xs">
           <header className="mb-6 pb-4 border-b border-[#D4CCBC]/50 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-ui text-xs text-[#717265]">
-                  Topic: {reading.topic}
-                </span>
-              </div>
               <h1 className="font-editorial text-2xl sm:text-3xl font-semibold text-[#292B25] tracking-tight leading-tight">
                 {reading.title}
               </h1>
@@ -1338,7 +1323,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                     {localizedMeaning}
                   </p>
 
-                  <p className="font-editorial text-sm text-[#717265] line-clamp-2 italic">
+                  <p className="font-editorial text-base sm:text-lg leading-relaxed text-[#717265] line-clamp-2 italic">
                     "{vocab.example}"
                   </p>
                   {localizedExample && (
