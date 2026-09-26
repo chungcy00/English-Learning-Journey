@@ -13,9 +13,7 @@ import {
   BookOpen,
   MessageSquare,
   AlignLeft,
-  Languages,
-  Copy,
-  X
+  Copy
 } from 'lucide-react';
 import { ReadingRecord, VocabularyItem, RewritePracticeItem, ReadingTranslation } from '../types';
 import { WordDetailModal } from '../components/WordDetailModal';
@@ -218,7 +216,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   );
 
   // Translation state ("短文我需要旁边有个翻译，根据用户需求可以选择不同语言，翻译的也要humanise")
-  const [showTranslation, setShowTranslation] = useState<boolean>(true);
   const [targetLanguage, setTargetLanguage] = useState<string>(propTargetLanguage);
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [translationError, setTranslationError] = useState<string | null>(null);
@@ -918,7 +915,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   };
 
   return (
-    <div className={`${showTranslation ? 'max-w-7xl' : 'max-w-4xl'} mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8 transition-all`}>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8 transition-all">
       {/* Top Controls Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#D4CCBC]">
         <div className="flex items-center gap-2 flex-wrap">
@@ -929,22 +926,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             {reading.readingType}
           </span>
 
-          {/* Translation Toggle & Quick Language Pill */}
-          <button
-            onClick={() => setShowTranslation(!showTranslation)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xs border text-xs font-ui transition-colors ${
-              showTranslation
-                ? 'bg-[#5F654D] text-[#FAF7F2] border-[#5F654D] shadow-xs'
-                : 'bg-[#F2EEE4] text-[#717265] border-[#D4CCBC] hover:text-[#292B25] hover:bg-[#E5DED0]'
-            }`}
-            title={showTranslation ? '收起对照翻译' : '展开旁边对照翻译'}
-          >
-            <Languages className="w-3.5 h-3.5" />
-            <span>{showTranslation ? '对照翻译已开启' : '对照翻译'}</span>
-            <span className="opacity-80">
-              {SUPPORTED_LANGUAGES.find((l) => l.code === targetLanguage)?.flag}
-            </span>
-          </button>
         </div>
 
         {/* Action Buttons: Edit Vocab, Rewrite, PDF, History */}
@@ -1023,8 +1004,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       </div>
 
       {/* Main Reading Area: Side-by-side Bilingual Layout */}
-      {showTranslation ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           {/* Left Column: English Reading Card */}
           <article className="bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm p-6 sm:p-8 shadow-xs flex flex-col">
             <header className="mb-6 pb-4 border-b border-[#D4CCBC]/50 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -1081,15 +1061,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           <article className="bg-[#FAF7F2] border border-[#D4CCBC] rounded-sm p-6 sm:p-8 shadow-xs flex flex-col relative">
             <header className="mb-6 pb-4 border-b border-[#D4CCBC]/50 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-ui px-2 py-0.5 rounded-xs bg-[#5F654D]/10 text-[#5F654D] font-medium">
-                    <Sparkles className="w-3 h-3" />
-                    自然语感译文 (Humanised)
-                  </span>
-                  <span className="text-xs font-ui text-[#717265]">
-                    {SUPPORTED_LANGUAGES.find((l) => l.code === targetLanguage)?.native || targetLanguage}
-                  </span>
-                </div>
                 <h2 className="font-ui text-lg sm:text-xl font-semibold text-[#292B25] tracking-tight leading-tight">
                   {currentTranslation?.title || (isTranslating ? '正在生成自然译文...' : reading.title)}
                 </h2>
@@ -1139,16 +1110,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                     <Copy className="w-3.5 h-3.5" />
                   )}
                 </button>
-
-                {/* Hide Button */}
-                <button
-                  type="button"
-                  onClick={() => setShowTranslation(false)}
-                  title="收起对照翻译"
-                  className="p-1.5 text-[#717265] hover:text-[#292B25] hover:bg-[#E5DED0] border border-[#D4CCBC] rounded-sm transition-colors"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
               </div>
             </header>
 
@@ -1188,67 +1149,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
               )}
             </div>
           </article>
-        </div>
-      ) : (
-        /* Translation is closed: Single Column View */
-        <article className="bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm p-6 sm:p-10 shadow-xs">
-          <header className="mb-6 pb-4 border-b border-[#D4CCBC]/50 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <h1 className="font-editorial text-2xl sm:text-3xl font-semibold text-[#292B25] tracking-tight leading-tight">
-                {reading.title}
-              </h1>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
-              {renderReadAloudButton()}
-
-              <button
-                type="button"
-                onClick={() => setShowTranslation(true)}
-                className="flex items-center gap-1.5 px-3 py-1 bg-[#FAF7F2] text-[#5F654D] hover:bg-[#E5DED0] border border-[#5F654D]/40 text-xs font-ui rounded-xs transition-colors"
-              >
-                <Languages className="w-3.5 h-3.5" />
-                <span>展开对照翻译</span>
-              </button>
-
-              {isDetectedDialogue && (
-                <div className="flex items-center gap-1 bg-[#E5DED0]/70 p-1 rounded-sm text-xs font-ui self-start sm:self-auto border border-[#D4CCBC]/50">
-                  <button
-                    type="button"
-                    onClick={() => setFormatMode('dialogue')}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-xs transition-colors ${
-                      formatMode === 'dialogue'
-                        ? 'bg-[#F2EEE4] text-[#292B25] font-semibold shadow-xs'
-                        : 'text-[#717265] hover:text-[#292B25]'
-                    }`}
-                  >
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    <span>对话剧本</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormatMode('paragraph')}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-xs transition-colors ${
-                      formatMode === 'paragraph'
-                        ? 'bg-[#F2EEE4] text-[#292B25] font-semibold shadow-xs'
-                        : 'text-[#717265] hover:text-[#292B25]'
-                    }`}
-                  >
-                    <AlignLeft className="w-3.5 h-3.5" />
-                    <span>段落格式</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </header>
-
-          <div className="prose max-w-none text-[#292B25]">
-            {formatMode === 'dialogue' && isDetectedDialogue
-              ? renderDialogueContent()
-              : renderParagraphContent()}
-          </div>
-        </article>
-      )}
+      </div>
 
       {/* Vocabulary Section (PRD Section 13 & 16) */}
       <section className="space-y-4">

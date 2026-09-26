@@ -1,8 +1,8 @@
-export const APP_VERSION = 'V2.3.4';
+export const APP_VERSION = 'V2.3.5';
 
-export const VERSION_HISTORY_COUNT = 12;
+export const VERSION_HISTORY_COUNT = 13;
 
 export const CURRENT_RELEASE_NOTES = [
-  '阅读页不再显示用户输入的主题和顶部 Humanised 状态标签',
-  '放大精选生词与短语中的英文例句字体',
+  '精简品牌、译文卡片和阅读页的重复说明与操作按钮',
+  '强化改写练习的目标词汇提示并移除重复提示语',
 ];

@@ -46,9 +46,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             <h1 className="font-editorial text-xl sm:text-2xl font-semibold text-[#292B25] tracking-tight group-hover:text-[#5F654D] transition-colors">
               Mine English
             </h1>
-            <p className="text-[11px] text-[#717265] tracking-wide uppercase font-ui">
-              Humanised Contextual Reader
-            </p>
           </div>
         </button>
 

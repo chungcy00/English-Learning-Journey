@@ -82,10 +82,10 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
         </div>
 
         <div className="shrink-0 text-right">
-          <span className="text-[11px] font-ui text-[#717265] block">
+          <span className="text-sm font-ui font-semibold text-[#5F654D] block mb-1">
             {getI18nText(targetLanguage, 'targetLabel')}:
           </span>
-          <span className="inline-block font-editorial font-semibold text-sm px-2.5 py-0.5 bg-[#F2EEE4] text-[#5F654D] border border-[#D4CCBC] rounded-sm">
+          <span className="inline-block font-editorial font-bold text-base px-3 py-1 bg-[#F2EEE4] text-[#5F654D] border border-[#D4CCBC] rounded-sm">
             {item.target}
           </span>
         </div>
@@ -93,9 +93,6 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
 
       {/* Answer Input */}
       <div className="mt-4">
-        <label className="text-xs font-ui text-[#717265] block mb-1.5">
-          {getI18nText(targetLanguage, 'rewritePromptPrefix')} ("{item.target}"):
-        </label>
         <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
@@ -229,4 +226,3 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
     </div>
   );
 };
-
