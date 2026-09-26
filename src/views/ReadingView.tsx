@@ -220,6 +220,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [translationError, setTranslationError] = useState<string | null>(null);
   const [copiedTranslation, setCopiedTranslation] = useState<boolean>(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [isPreparingSpeech, setIsPreparingSpeech] = useState<boolean>(false);
   const [speechError, setSpeechError] = useState<string | null>(null);
@@ -859,14 +861,23 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     ));
   };
 
-  const handleDownloadPDF = () => {
-    generateReadingPDF(reading, {
+  const handleDownloadPDF = async () => {
+    if (isExportingPdf) return;
+    setIsExportingPdf(true);
+    setPdfError(null);
+    try {
+      await generateReadingPDF(reading, {
       showTranslation: true,
       currentTranslation,
       vocabTranslations: currentTranslation?.vocabularyTranslations,
       exerciseTranslations: currentTranslation?.exerciseTranslations,
       targetLanguage
-    });
+      });
+    } catch {
+      setPdfError('PDF 导出失败，请重试。');
+    } finally {
+      setIsExportingPdf(false);
+    }
   };
 
   const renderReadAloudButton = () => {
@@ -985,10 +996,11 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           {/* Generate PDF Button */}
           <button
             onClick={handleDownloadPDF}
+            disabled={isExportingPdf}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-[#73785E] text-[#F2EEE4] hover:bg-[#73785E]/90 text-xs font-ui rounded-sm transition-colors shadow-xs"
           >
             <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Generate PDF</span>
+            <span className="hidden sm:inline">{isExportingPdf ? '正在导出…' : 'Generate PDF'}</span>
             <span className="sm:hidden">PDF</span>
           </button>
 
@@ -1004,6 +1016,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       </div>
 
       {/* Main Reading Area: Side-by-side Bilingual Layout */}
+      {pdfError && <p role="alert" className="text-sm font-ui text-red-700">{pdfError}</p>}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           {/* Left Column: English Reading Card */}
           <article className="bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm p-6 sm:p-8 shadow-xs flex flex-col">

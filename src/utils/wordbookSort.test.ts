@@ -2,11 +2,20 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { CEFRLevel, ReadingRecord, VocabularyItem } from '../types';
 import { getVocabularySearchRank } from './englishSearch';
-import { compareWordbookEntries } from './wordbookSort';
+import { compareWordbookEntries, isVocabularyAtLevel } from './wordbookSort';
 
 const entry = (term: string, sourceCefrLevel?: CEFRLevel, updatedAt = 0) => ({
   id: term, term, sourceCefrLevel, updatedAt,
 } as VocabularyItem);
+
+test('default view excludes other and unknown levels; explicit additions apply only to chosen levels', () => {
+  const added = { ...entry('break the ice', 'B2'), wordbookLevels: ['B1'] as CEFRLevel[] };
+  assert.equal(isVocabularyAtLevel(entry('advanced', 'C1'), 'B1', new Map()), false);
+  assert.equal(isVocabularyAtLevel(entry('unknown'), 'B1', new Map()), false);
+  assert.equal(isVocabularyAtLevel(added, 'B1', new Map()), true);
+  assert.equal(isVocabularyAtLevel(added, 'A2', new Map()), false);
+  assert.equal(isVocabularyAtLevel(added, 'B2', new Map()), true);
+});
 
 test('each selected CEFR level comes first, regardless of update time', () => {
   const levels: CEFRLevel[] = ['A2', 'B1', 'B2', 'C1'];

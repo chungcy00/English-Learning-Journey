@@ -76,11 +76,6 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({
                   <span className="font-ui text-xs capitalize text-[#717265]">
                     {item.readingType}
                   </span>
-                  {item.humanised ? (
-                    <span className="rounded-xs bg-[#73785E]/10 px-1.5 py-0.5 font-ui text-[10px] text-[#5F654D]">
-                      Humanised
-                    </span>
-                  ) : null}
                 </div>
 
                 <h2 className="font-editorial text-lg font-semibold leading-tight text-[#292B25] transition-colors group-hover:text-[#5F654D] sm:text-xl">

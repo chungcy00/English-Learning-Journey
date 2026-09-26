@@ -1,4 +1,3 @@
-import html2pdf from 'html2pdf.js';
 import { ReadingRecord, ReadingTranslation } from '../types';
 
 const escapeHtml = (value: unknown) => String(value ?? '')
@@ -66,13 +65,15 @@ function renderParagraphs(text: string, translated = false): string {
   `).join('');
 }
 
-export function generateReadingPDF(reading: ReadingRecord, options?: {
+interface ReadingPdfOptions {
   showTranslation: boolean;
   currentTranslation?: ReadingTranslation;
   vocabTranslations?: Record<string, { meaning: string; exampleTranslation?: string }>;
-  exerciseTranslations?: Record<string, string>;
+  exerciseTranslations?: Record<string, string | { originalSentenceMeaning: string; promptHint?: string }>;
   targetLanguage?: string;
-}) {
+}
+
+export function createReadingPDFContainer(reading: ReadingRecord, options?: ReadingPdfOptions) {
   const container = document.createElement('div');
   // Add a unique ID to ensure we can target it if needed, but we pass the element directly to html2pdf
   container.id = 'pdf-container';
@@ -136,20 +137,26 @@ export function generateReadingPDF(reading: ReadingRecord, options?: {
   });
 
   let exerciseHtml = '';
+  let answersHtml = '';
   reading.rewritePractice?.forEach((ex, i) => {
-    const trans = options?.showTranslation && options?.exerciseTranslations?.[ex.id] 
-      ? `<div style="margin-top: 4px; font-size: 13px; color: #5F654D; font-family: system-ui, -apple-system, sans-serif;">${options.exerciseTranslations[ex.id]}</div>` 
+    const translation = options?.exerciseTranslations?.[ex.id] || options?.exerciseTranslations?.[String(i)];
+    const meaning = typeof translation === 'string' ? translation : translation?.originalSentenceMeaning;
+    const trans = options?.showTranslation && meaning
+      ? `<div style="margin-top: 4px; font-size: 13px; color: #5F654D; font-family: system-ui, -apple-system, sans-serif;">${escapeHtml(meaning)}</div>`
       : '';
       
     exerciseHtml += `
       <div style="margin-bottom: 32px; page-break-inside: avoid;">
-        <div style="font-size: 16px; margin-bottom: 4px;">${i + 1}. Original: "${ex.originalSentence}"</div>
+        <div style="font-size: 16px; margin-bottom: 4px;">${i + 1}. Original: "${escapeHtml(ex.originalSentence)}"</div>
         ${trans}
-        <div style="font-size: 15px; font-weight: bold; color: #73785E; margin-top: 12px; margin-bottom: 24px;">Rewrite using "${ex.target}":</div>
+        <div style="font-size: 15px; font-weight: bold; color: #73785E; margin-top: 12px; margin-bottom: 24px;">Rewrite using "${escapeHtml(ex.target)}":</div>
         <div style="border-bottom: 1px solid #B49379; height: 30px; margin-bottom: 16px;"></div>
-        <div style="font-size: 14px; color: #717265; font-family: system-ui, -apple-system, sans-serif;">Reference Answer: ${ex.referenceAnswer}</div>
       </div>
     `;
+    answersHtml += `<div class="pdf-reference-answer" style="margin-bottom: 22px; break-inside: avoid; page-break-inside: avoid;">
+      <div style="font-size: 15px; font-weight: bold; color: #73785E; margin-bottom: 6px;">${i + 1}. ${escapeHtml(ex.target)}</div>
+      <p style="margin: 0; font-size: 15px; line-height: 1.6;">${escapeHtml(ex.referenceAnswer)}</p>
+    </div>`;
   });
 
   const languageLabel = options?.showTranslation && options?.targetLanguage ? ` | Target Language: ${options.targetLanguage}` : '';
@@ -181,12 +188,16 @@ export function generateReadingPDF(reading: ReadingRecord, options?: {
       <p style="font-size: 14px; color: #717265; margin-bottom: 32px; font-family: system-ui, -apple-system, sans-serif;">Rewrite each sentence using the designated target word or phrase to express the idea naturally.</p>
       ${exerciseHtml}
     </div>
+    ${answersHtml ? `<section class="pdf-reference-answers" style="page-break-before: always; break-before: page;">
+      <h2 style="font-size: 20px; font-weight: bold; color: #73785E; margin-bottom: 24px; font-family: system-ui, -apple-system, sans-serif;">Reference Answers</h2>
+      ${answersHtml}
+    </section>` : ''}
   `;
 
   const style = document.createElement('style');
   style.textContent = `
     #pdf-container { box-sizing: border-box; }
-    #pdf-container * { box-sizing: border-box; }
+    #pdf-container * { box-sizing: border-box; overflow-wrap: anywhere; }
     .pdf-reading-paragraph { margin: 0 0 16px; font-size: 16px; line-height: 1.65; }
     .pdf-complete-translation { margin-top: 26px; padding-top: 18px; border-top: 1px solid #D4CCBC; }
     .pdf-complete-translation h3 { margin: 0 0 14px; color: #73785E; font: 700 14px/1.4 system-ui, -apple-system, sans-serif; }
@@ -200,7 +211,14 @@ export function generateReadingPDF(reading: ReadingRecord, options?: {
     .pdf-vocabulary-grid > div { width: 48.5%; min-width: 0; overflow-wrap: anywhere; margin-bottom: 0 !important; break-inside: avoid; page-break-inside: avoid; }
   `;
   container.prepend(style);
+  return container;
+}
 
+export async function generateReadingPDF(reading: ReadingRecord, options?: ReadingPdfOptions) {
+  const { default: html2pdf } = await import('html2pdf.js');
+  await document.fonts.ready;
+  const container = createReadingPDFContainer(reading, options);
+  const title = reading.title || 'Reading Practice';
   // Use html2pdf
   const opt = {
     margin:       0.6,
@@ -211,5 +229,5 @@ export function generateReadingPDF(reading: ReadingRecord, options?: {
     pagebreak:    { mode: ['css', 'legacy'] }
   };
 
-  html2pdf().set(opt).from(container).save();
+  return html2pdf().set(opt).from(container).save();
 }

@@ -69,9 +69,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-semibold text-[#292B25] tracking-tight">
           What do you want to learn?
         </h1>
-        <p className="font-ui text-sm sm:text-base text-[#717265] max-w-xl mx-auto leading-relaxed">
-          输入任何中英文单词、词组、学习主题或多个词汇，AI 将自动生成自然、地道的情境阅读。
-        </p>
       </div>
 
       {/* Main Input Form */}

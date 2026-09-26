@@ -119,9 +119,6 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
           <h1 className="font-editorial text-3xl sm:text-4xl font-semibold text-[#292B25]">
             {getI18nText(targetLanguage, 'reviewTitle')}
           </h1>
-          <p className="text-xs font-ui text-[#717265] mt-1">
-            {getI18nText(targetLanguage, 'reviewSub')}
-          </p>
         </div>
 
         {/* Target Language Selector */}

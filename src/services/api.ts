@@ -667,7 +667,7 @@ export async function evaluateRewriteAnswer(params: {
   }
 }
 
-export async function explainVocabularyTerm(term: string, context?: string, targetLanguage?: string): Promise<Partial<VocabularyItem>> {
+export async function explainVocabularyTerm(term: string, context?: string, targetLanguage?: string, requireDetails = false): Promise<Partial<VocabularyItem>> {
   try {
     const res = await fetch('/api/vocabulary/explain', {
       method: 'POST',
@@ -677,7 +677,9 @@ export async function explainVocabularyTerm(term: string, context?: string, targ
     if (res.ok) {
       return await res.json();
     }
+    if (requireDetails) throw new Error('词条查询暂不可用，请稍后重试');
   } catch (err) {
+    if (requireDetails) throw err;
     console.warn('Vocab explain failed, returning basic details:', err);
   }
 

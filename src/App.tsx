@@ -16,6 +16,7 @@ import { ReviewView } from './views/ReviewView';
 import { AppUpdateView } from './views/AppUpdateView';
 import { ReadingHistoryView } from './views/ReadingHistoryView';
 import { isMobileOrTablet, isStandaloneApp } from './utils/pwa';
+import { normalizeEnglishTerm } from './utils/englishSearch';
 
 import {
   ReadingRecord,
@@ -421,6 +422,14 @@ export default function App() {
             onBatchUpdateVocabularies={handleBatchUpdateVocabularies}
             currentCefr={settings.cefr}
             onCefrChange={handleCefrChange}
+            onSaveVocab={async (vocab) => {
+              const existing = vocabularies.find(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(vocab.term));
+              await saveVocabulary(existing ? {
+                ...existing,
+                wordbookLevels: [...new Set([...(existing.wordbookLevels || []), ...(vocab.wordbookLevels || [])])],
+              } : vocab);
+              await loadData();
+            }}
           />
         )}
 

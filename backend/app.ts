@@ -1,12 +1,25 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from '@google/genai';
+import { validateApiBody } from './requestValidation.js';
 
 dotenv.config();
 
 const app = express();
 
-app.use(express.json({ limit: '10mb' }));
+app.disable('x-powered-by');
+app.use(express.json({ limit: '256kb' }));
+app.use('/api', (req, res, next) => {
+  if (req.method !== 'POST') return next();
+  const problem = validateApiBody(req.body);
+  if (problem) return res.status(400).json({ error: problem });
+  next();
+});
+app.use((error: any, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (error?.type === 'entity.too.large') return res.status(413).json({ error: '请求内容过长，请缩短后重试' });
+  if (error?.type === 'entity.parse.failed') return res.status(400).json({ error: 'JSON 格式不正确' });
+  next(error);
+});
 
 let ai: GoogleGenAI | null = null;
 
@@ -581,7 +594,7 @@ Please generate the complete structured JSON response adhering strictly to the s
     return res.json(enforceDialogueCast(parsed, chosenType === 'dialogue'));
   } catch (error: any) {
     console.error('Reading generation error:', error);
-    return res.status(500).json({ error: error.message || 'Failed to generate reading' });
+    return res.status(500).json({ error: '短文生成失败，请稍后重试' });
   }
 });
 
@@ -685,7 +698,7 @@ Generate the updated reading, updated vocabulary details, and refreshed rewrite 
     return res.json(enforceDialogueCast(parsed, mode === 'dialogue'));
   } catch (error: any) {
     console.error('Reading rewrite error:', error);
-    return res.status(500).json({ error: error.message || 'Failed to rewrite reading' });
+    return res.status(500).json({ error: '短文改写失败，请稍后重试' });
   }
 });
 
@@ -781,7 +794,7 @@ Evaluate the student's answer and output structured JSON.`;
     return res.json(parsed);
   } catch (error: any) {
     console.error('Rewrite evaluation error:', error);
-    return res.status(500).json({ error: error.message || 'Failed to evaluate answer' });
+    return res.status(500).json({ error: '答案评估失败，请稍后重试' });
   }
 });
 
@@ -828,7 +841,7 @@ Provide IPA pronunciation, part of speech, authentic Chinese definition (or spec
     return res.json(parsed);
   } catch (error: any) {
     console.error('Vocabulary explanation error:', error);
-    return res.status(500).json({ error: error.message || 'Failed to explain term' });
+    return res.status(500).json({ error: '词条查询失败，请稍后重试' });
   }
 });
 
@@ -964,7 +977,7 @@ Return JSON with translated title, translatedContent, vocabularyTranslations, an
     const parsed = safeParseJson(response.text);
 
     // Build lookup maps for rapid frontend access
-    const vocabMap: Record<string, { meaning: string; exampleTranslation?: string }> = {};
+    const vocabMap: Record<string, { meaning: string; exampleTranslation?: string }> = Object.create(null);
     if (Array.isArray(parsed.vocabularyTranslations)) {
       for (const item of parsed.vocabularyTranslations) {
         if (item.id) {
@@ -976,7 +989,7 @@ Return JSON with translated title, translatedContent, vocabularyTranslations, an
       }
     }
 
-    const exerciseMap: Record<string, { originalSentenceMeaning: string }> = {};
+    const exerciseMap: Record<string, { originalSentenceMeaning: string }> = Object.create(null);
     if (Array.isArray(parsed.exerciseTranslations)) {
       for (let i = 0; i < parsed.exerciseTranslations.length; i++) {
         const item = parsed.exerciseTranslations[i];
@@ -1001,7 +1014,7 @@ Return JSON with translated title, translatedContent, vocabularyTranslations, an
     });
   } catch (error: any) {
     console.error('Translation error:', error);
-    return res.status(500).json({ error: error.message || 'Translation failed' });
+    return res.status(500).json({ error: '翻译失败，请稍后重试' });
   }
 });
 
@@ -1074,7 +1087,7 @@ Return a JSON object containing an array "translations" where each item has "id"
     });
 
     const parsed = safeParseJson(response.text);
-    const resultMap: Record<string, { meaning: string; exampleTranslation?: string }> = {};
+    const resultMap: Record<string, { meaning: string; exampleTranslation?: string }> = Object.create(null);
     if (Array.isArray(parsed.translations)) {
       for (const item of parsed.translations) {
         if (item.id) {
@@ -1095,7 +1108,7 @@ Return a JSON object containing an array "translations" where each item has "id"
     return res.json({ translations: resultMap });
   } catch (error: any) {
     console.error('Batch vocabulary translation error:', error);
-    return res.status(500).json({ error: error.message || 'Vocabulary translation failed' });
+    return res.status(500).json({ error: '词汇翻译失败，请稍后重试' });
   }
 });
 

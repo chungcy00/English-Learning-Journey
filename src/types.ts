@@ -17,6 +17,7 @@ export interface VocabularyItem {
   collocations: string[];
   sourceReadingId?: string;
   sourceCefrLevel?: CEFRLevel;
+  wordbookLevels?: CEFRLevel[];
   status: VocabStatus;
   createdAt: number;
   updatedAt: number;

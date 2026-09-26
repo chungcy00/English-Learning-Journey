@@ -10,8 +10,8 @@ export default async function handler(req: any, res: any) {
     });
   } catch (error) {
     if (!res.headersSent) {
-      const message = error instanceof Error ? error.message : String(error);
-      res.status(500).json({ error: `Backend startup failed: ${message}` });
+      console.error('Backend startup failed:', error);
+      res.status(500).json({ error: '服务暂不可用，请稍后重试' });
     }
   }
 }

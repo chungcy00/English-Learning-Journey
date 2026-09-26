@@ -21,9 +21,9 @@ import {
   getLocalizedExampleTranslation,
   getI18nText,
 } from '../utils/i18n';
-import { translateVocabularies } from '../services/api';
-import { getVocabularySearchRank } from '../utils/englishSearch';
-import { compareWordbookEntries } from '../utils/wordbookSort';
+import { explainVocabularyTerm, translateVocabularies } from '../services/api';
+import { getVocabularySearchRank, isEnglishTermQuery, normalizeEnglishTerm } from '../utils/englishSearch';
+import { compareWordbookEntries, isVocabularyAtLevel } from '../utils/wordbookSort';
 import { speakEnglishTerm } from '../utils/speech';
 
 interface WordbookViewProps {
@@ -43,6 +43,7 @@ interface WordbookViewProps {
   onBatchUpdateVocabularies: (updatedVocabs: VocabularyItem[]) => void;
   currentCefr: CEFRLevel;
   onCefrChange: (level: CEFRLevel) => void;
+  onSaveVocab: (vocab: VocabularyItem) => Promise<void>;
 }
 
 export const WordbookView: React.FC<WordbookViewProps> = ({
@@ -57,6 +58,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   onBatchUpdateVocabularies,
   currentCefr,
   onCefrChange,
+  onSaveVocab,
 }) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -65,6 +67,41 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   const [isTranslating, setIsTranslating] = useState(false);
   const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
+  const [isAdding, setIsAdding] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+
+  useEffect(() => { setSelectedTerms([]); }, [currentCefr]);
+
+  const addToCurrentLevel = async (existing?: VocabularyItem) => {
+    if (isAdding) return;
+    const term = normalizeEnglishTerm(search);
+    if (!existing && (!isEnglishTermQuery(term) || term.length > 160)) return;
+    const level = currentCefr;
+    setIsAdding(true);
+    setAddError(null);
+    try {
+      const details = existing || await explainVocabularyTerm(term, undefined, targetLanguage, true);
+      const now = Date.now();
+      const item: VocabularyItem = existing || {
+        id: `vocab_custom_${crypto.randomUUID()}`,
+        term: details.term || term,
+        type: details.type || (term.includes(' ') ? 'phrase' : 'word'),
+        phonetic: details.phonetic || '',
+        partOfSpeech: details.partOfSpeech || (term.includes(' ') ? 'phrase' : 'word'),
+        meaningZh: details.meaningZh || '', definitionEn: details.definitionEn || '',
+        example: details.example || '', collocations: details.collocations || [],
+        status: 'New', createdAt: now, updatedAt: now, nextReviewDate: now,
+        reviewCount: 0, currentInterval: 0,
+      };
+      await onSaveVocab({ ...item, wordbookLevels: [...new Set([...(item.wordbookLevels || []), level])] });
+      setSearch('');
+      setIsSuggestionOpen(false);
+    } catch {
+      setAddError('添加失败，请稍后重试。');
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   // Auto-translate vocabulary items for the selected target language if needed
   useEffect(() => {
@@ -168,7 +205,8 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         return { item, source, searchRank };
       })
       .filter(({ item, searchRank }) =>
-        searchRank !== null && (statusFilter === 'All' || item.status === statusFilter)
+        searchRank !== null && (statusFilter === 'All' || item.status === statusFilter) &&
+        (!!query || isVocabularyAtLevel(item, currentCefr, readingById))
       )
       .sort((a, b) => {
         if (query && a.searchRank !== b.searchRank) {
@@ -342,6 +380,19 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         </div>
       </div>
 
+      {search.trim() && (
+        <div className="flex flex-wrap items-center gap-3 text-sm font-ui text-[#5F654D]">
+          <span>搜索所有程度的词条，可添加到 {currentCefr}</span>
+          {isEnglishTermQuery(search) && search.trim().length <= 160 && !vocabularyList.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(search)) && (
+            <button type="button" disabled={isAdding} onClick={() => addToCurrentLevel()}
+              className="border border-[#D4CCBC] rounded-sm px-3 py-1.5 disabled:opacity-50">
+              {isAdding ? '正在添加…' : `添加 “${search.trim()}”`}
+            </button>
+          )}
+        </div>
+      )}
+      {addError && <p role="alert" className="text-sm text-red-700">{addError}</p>}
+
       {/* Filter Tabs & Multi-select Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1.5">
@@ -455,7 +506,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         {filtered.length === 0 ? (
           <div className="text-center py-12 bg-[#E5DED0]/20 border border-[#D4CCBC] rounded-sm">
             <p className="font-ui text-sm text-[#717265]">
-              生词本暂无词汇，或没有符合当前筛选的条目
+              当前程度 {currentCefr} 下暂无符合筛选的词条，可通过搜索自定义添加。
             </p>
           </div>
         ) : (
@@ -499,6 +550,13 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                       <span className="text-[11px] font-ui italic text-[#717265]">
                         [{vocab.partOfSpeech}]
                       </span>
+                      {search.trim() && !isVocabularyAtLevel(vocab, currentCefr, readingById) && (
+                        <button type="button" disabled={isAdding}
+                          onClick={(e) => { e.stopPropagation(); void addToCurrentLevel(vocab); }}
+                          className="text-xs font-ui border border-[#D4CCBC] rounded-sm px-2 py-1 disabled:opacity-50">
+                          添加到 {currentCefr}
+                        </button>
+                      )}
                     </div>
 
                     <p className="text-sm font-ui font-medium text-[#292B25] mt-1 flex items-center gap-1.5 flex-wrap">
