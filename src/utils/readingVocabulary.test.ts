@@ -41,4 +41,5 @@ test('search suggestions come from current reading without arbitrary phrase spli
   assert.ok(results.includes('break'));
   assert.ok(!results.includes('a break'));
   assert.deepEqual(readingTermSuggestions(reading.content, ['take a break'], 'genuine'), []);
+  assert.ok(readingTermSuggestions('We can grab a coffee after work.', ['grab a coffee'], 'grab').includes('grab a coffee'));
 });

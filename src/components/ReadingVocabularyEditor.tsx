@@ -1,21 +1,36 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { ReadingRecord, VocabularyItem } from '../types';
 import { explainVocabularyTerm } from '../services/api';
-import { isEnglishTermQuery, normalizeEnglishTerm } from '../utils/englishSearch';
+import { containsEnglishExpression, isEnglishTermQuery, normalizeEnglishTerm, readingTermSuggestions } from '../utils/englishSearch';
 import { replaceReadingTerm } from '../utils/readingVocabulary';
+import { isVocabularyAtLevel } from '../utils/wordbookSort';
 
 export const ReadingVocabularyEditor: React.FC<{
-  reading: ReadingRecord; targetLanguage: string; onSave: (reading: ReadingRecord) => Promise<void>;
-}> = ({ reading, targetLanguage, onSave }) => {
+  reading: ReadingRecord;
+  knownVocabulary: VocabularyItem[];
+  targetLanguage: string;
+  onSave: (reading: ReadingRecord) => Promise<void>;
+}> = ({ reading, knownVocabulary, targetLanguage, onSave }) => {
   const [query, setQuery] = useState('');
   const [candidate, setCandidate] = useState<VocabularyItem | null>(null);
   const [replaceId, setReplaceId] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const limit = reading.vocabularyCount || reading.selectedVocabulary.length;
   const full = reading.selectedVocabulary.length >= limit;
   useEffect(() => { setCandidate(null); setReplaceId(''); setError(''); setQuery(''); }, [reading.id, reading.content, reading.cefrLevel]);
+
+  const selectedTerms = reading.selectedVocabulary.map(item => item.term);
+  const confirmedSameLevelTerms = knownVocabulary
+    .filter(item => containsEnglishExpression(reading.content, item.term) && isVocabularyAtLevel(item, reading.cefrLevel, new Map([[reading.id, reading]])))
+    .map(item => item.term);
+  const suggestions = useMemo(
+    () => readingTermSuggestions(reading.content, [...selectedTerms, ...confirmedSameLevelTerms], query),
+    [reading.content, query, selectedTerms.join('|'), confirmedSameLevelTerms.join('|')]
+  );
 
   const lookup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +45,7 @@ export const ReadingVocabularyEditor: React.FC<{
       setCandidate({ ...details, id: crypto.randomUUID(), term: details.term || term, type: details.type || 'word',
         phonetic: details.phonetic || '', partOfSpeech: details.partOfSpeech || '', meaningZh: details.meaningZh || '', definitionEn: details.definitionEn || '', example: details.example || '', collocations: details.collocations || [],
         sourceReadingId: reading.id, sourceCefrLevel: reading.cefrLevel, status: 'New', createdAt: now, updatedAt: now, nextReviewDate: now, reviewCount: 0, currentInterval: 0 });
+      setIsSuggestionOpen(false);
     } catch (err) { setError(err instanceof Error ? err.message : '查询失败，请重试。'); }
     finally { setBusy(false); }
   };
@@ -43,12 +59,36 @@ export const ReadingVocabularyEditor: React.FC<{
     finally { setBusy(false); }
   };
   return <div className="space-y-3 font-ui text-sm">
-    <form onSubmit={lookup} className="flex flex-wrap gap-2 items-center">
+    <form onSubmit={lookup} className="flex flex-wrap gap-2 items-start">
+      <div className="relative min-w-0 flex-1 basis-56">
       <input aria-label="搜索当前短文的精选词汇" placeholder="搜索文中的单词、短语或习语…" maxLength={160} value={query} disabled={busy}
-        onChange={e => { setQuery(e.target.value); setCandidate(null); setError(''); setMessage(''); }}
-        className="min-w-0 flex-1 basis-56 px-3 py-2 border border-[#D4CCBC] rounded-sm bg-transparent" />
+        role="combobox" aria-autocomplete="list" aria-expanded={isSuggestionOpen && suggestions.length > 0}
+        onFocus={() => setIsSuggestionOpen(true)}
+        onBlur={() => setIsSuggestionOpen(false)}
+        onKeyDown={e => {
+          if (e.key === 'ArrowDown' && suggestions.length > 0) { e.preventDefault(); setIsSuggestionOpen(true); setActiveSuggestionIndex(index => index >= suggestions.length - 1 ? 0 : index + 1); }
+          else if (e.key === 'ArrowUp' && suggestions.length > 0) { e.preventDefault(); setIsSuggestionOpen(true); setActiveSuggestionIndex(index => index <= 0 ? suggestions.length - 1 : index - 1); }
+          else if (e.key === 'Escape') { setIsSuggestionOpen(false); setActiveSuggestionIndex(-1); }
+          else if (e.key === 'Enter' && activeSuggestionIndex >= 0) { e.preventDefault(); setQuery(suggestions[activeSuggestionIndex]); setIsSuggestionOpen(false); setActiveSuggestionIndex(-1); }
+        }}
+        onChange={e => { setQuery(e.target.value); setCandidate(null); setError(''); setMessage(''); setIsSuggestionOpen(true); setActiveSuggestionIndex(-1); }}
+        className="w-full min-w-0 px-3 py-2 border border-[#D4CCBC] rounded-sm bg-transparent" />
+      {isSuggestionOpen && suggestions.length > 0 && <div role="listbox" className="absolute z-30 left-0 right-0 top-full mt-1 max-h-64 overflow-y-auto bg-[#FAF7F2] border border-[#D4CCBC] rounded-sm shadow-lg">
+        <p className="px-3 py-2 text-[10px] uppercase tracking-wider text-[#717265]">当前短文候选 · 保存前验证 {reading.cefrLevel}</p>
+        {suggestions.map((term, index) => {
+          const known = [...reading.selectedVocabulary, ...knownVocabulary].find(item => normalizeEnglishTerm(item.term) === term);
+          const alreadySelected = reading.selectedVocabulary.some(item => normalizeEnglishTerm(item.term) === term);
+          return <button key={term} type="button" role="option" aria-selected={activeSuggestionIndex === index}
+            onMouseDown={e => { e.preventDefault(); setQuery(term); setCandidate(null); setError(''); setMessage(''); setIsSuggestionOpen(false); setActiveSuggestionIndex(-1); }}
+            className={`w-full px-3 py-2 text-left border-t border-[#D4CCBC]/50 ${activeSuggestionIndex === index ? 'bg-[#E5DED0]' : 'hover:bg-[#E5DED0]/60'}`}>
+            <span className="font-editorial text-base font-semibold text-[#5F654D]">{term}</span>
+            <span className="ml-2 text-[11px] text-[#717265]">{alreadySelected ? `已选 · ${reading.cefrLevel}` : known ? `已确认 · ${reading.cefrLevel} · ${known.type}` : `点击后验证 ${reading.cefrLevel}`}</span>
+          </button>;
+        })}
+      </div>}
+      </div>
       <button disabled={busy || !isEnglishTermQuery(query)} className="px-3 py-2 bg-[#73785E] text-white rounded-sm disabled:opacity-50">{busy ? '处理中…' : '查找'}</button>
-      <span className="text-[#5F654D]">{reading.cefrLevel} · {reading.selectedVocabulary.length}/{limit}</span>
+      <span className="py-2 text-[#5F654D]">{reading.cefrLevel} · {reading.selectedVocabulary.length}/{limit}</span>
     </form>
     {candidate && <div className="p-3 border border-[#D4CCBC] rounded-sm space-y-2">
       <p><strong className="font-editorial text-xl">{candidate.term}</strong> · {candidate.partOfSpeech} · {candidate.cefrLevel}</p>

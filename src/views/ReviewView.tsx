@@ -11,7 +11,6 @@ import { translateVocabularies } from '../services/api';
 import { speakEnglishTerm } from '../utils/speech';
 
 interface ReviewViewProps {
-  dueVocabularies: VocabularyItem[];
   allVocabularies: VocabularyItem[];
   onRate: (vocabId: string, rating: ReviewRating) => void;
   onRefresh: () => void;
@@ -21,7 +20,6 @@ interface ReviewViewProps {
 }
 
 export const ReviewView: React.FC<ReviewViewProps> = ({
-  dueVocabularies,
   allVocabularies,
   onRate,
   onRefresh,
@@ -32,20 +30,14 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isRevealed, setIsRevealed] = useState(false);
   const [sessionCompleted, setSessionCompleted] = useState(false);
-  const [reviewMode, setReviewMode] = useState<'all' | 'due'>('all');
   const [reviewList, setReviewList] = useState<VocabularyItem[]>(allVocabularies);
   const [isTranslatingCurrent, setIsTranslatingCurrent] = useState(false);
 
   // Keep this session's order stable. Rating moves an item's due date forward;
   // replacing the list with the shortened due list here would skip the next card.
   useEffect(() => {
-    const latest = new Map(allVocabularies.map(item => [item.id, item]));
-    setReviewList(previous => reviewMode === 'all'
-      ? allVocabularies
-      : previous.length === 0
-        ? allVocabularies.filter(item => item.nextReviewDate <= Date.now())
-        : previous.filter(item => latest.has(item.id)).map(item => latest.get(item.id)!));
-  }, [allVocabularies, reviewMode]);
+    setReviewList(allVocabularies);
+  }, [allVocabularies]);
 
   useEffect(() => {
     setCurrentIndex(index => Math.max(0, Math.min(index, Math.max(0, reviewList.length - 1))));
@@ -89,9 +81,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
     };
   }, [currentVocab?.id, targetLanguage]);
 
-  // Allow reviewing all words if no words are strictly due
   const handleStartReviewAll = () => {
-    setReviewMode('all');
     setReviewList(allVocabularies);
     setCurrentIndex(0);
     setIsRevealed(false);
@@ -99,7 +89,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   };
 
   const handleRefreshReviews = () => {
-    setReviewList(reviewMode === 'all' ? allVocabularies : allVocabularies.filter(item => item.nextReviewDate <= Date.now()));
+    setReviewList(allVocabularies);
     setCurrentIndex(0);
     setIsRevealed(false);
     setSessionCompleted(false);
@@ -159,15 +149,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
         </div>
       </div>
 
-      <div className="flex gap-2 font-ui text-sm" aria-label="复习范围">
-        {(['all', 'due'] as const).map(mode => <button key={mode} aria-pressed={reviewMode === mode}
-          className={`px-3 py-2 border border-[#D4CCBC] rounded-sm ${reviewMode === mode ? 'bg-[#73785E] text-white' : ''}`}
-          onClick={() => { setReviewMode(mode); setReviewList(mode === 'all' ? allVocabularies : dueVocabularies); setCurrentIndex(0); setIsRevealed(false); setSessionCompleted(false); }}>
-          {mode === 'all' ? `全部词条 (${allVocabularies.length})` : `今日到期 (${dueVocabularies.length})`}
-        </button>)}
-      </div>
-
-      {/* When finished or no due words */}
+      {/* When finished or the wordbook is empty */}
       {sessionCompleted || reviewList.length === 0 ? (
         <div className="bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm p-8 text-center space-y-4 shadow-xs">
           <div className="w-12 h-12 mx-auto rounded-full bg-[#E5DED0] flex items-center justify-center text-[#73785E]">
@@ -178,7 +160,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
             {allVocabularies.length === 0 ? '生词本还没有词条' : '本轮复习已完成！'}
           </h2>
           <p className="text-xs font-ui text-[#717265] max-w-md mx-auto">
-            {allVocabularies.length === 0 ? '在阅读页或生词本添加单词、短语或习语后，即可在这里复习。' : '可切换范围或开始新一轮复习。'}
+            {allVocabularies.length === 0 ? '在阅读页或生词本添加单词、短语或习语后，即可在这里复习。' : '可以开始新一轮全部词条复习。'}
           </p>
 
           <div className="pt-4 flex flex-wrap justify-center gap-3">
@@ -203,7 +185,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
         <div className="space-y-6">
           {/* Progress Indicator */}
           <div className="flex items-center justify-between text-xs font-ui text-[#717265]">
-            <span>{reviewMode === 'all' ? '全部词条' : '今日到期'}：{reviewList.length} 项</span>
+            <span>全部词条：{reviewList.length} 项</span>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {

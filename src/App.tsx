@@ -372,6 +372,7 @@ export default function App() {
         {activeTab === 'reading' && currentReading && (
           <ReadingView
             reading={currentReading}
+            knownVocabulary={vocabularies}
             wordbookVocabIds={wordbookVocabIds}
             onToggleWordbook={handleToggleWordbook}
             onUpdateReading={handleUpdateReading}
@@ -420,7 +421,6 @@ export default function App() {
 
         {activeTab === 'review' && (
           <ReviewView
-            dueVocabularies={dueVocabularies}
             allVocabularies={vocabularies}
             onRate={handleRateReview}
             onRefresh={loadData}

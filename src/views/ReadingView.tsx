@@ -44,6 +44,7 @@ import {
 
 interface ReadingViewProps {
   reading: ReadingRecord;
+  knownVocabulary: VocabularyItem[];
   wordbookVocabIds: Set<string>;
   onToggleWordbook: (vocab: VocabularyItem) => void;
   onUpdateReading?: (updatedReading: ReadingRecord) => void;
@@ -188,6 +189,7 @@ const SPEAKER_STYLES = [
 
 export const ReadingView: React.FC<ReadingViewProps> = ({
   reading,
+  knownVocabulary,
   wordbookVocabIds,
   onToggleWordbook,
   onUpdateReading,
@@ -1183,7 +1185,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           </div>
         </div>
 
-        <ReadingVocabularyEditor key={reading.id} reading={reading} targetLanguage={targetLanguage} onSave={onUpdateVocabulary} />
+        <ReadingVocabularyEditor key={reading.id} reading={reading} knownVocabulary={knownVocabulary} targetLanguage={targetLanguage} onSave={onUpdateVocabulary} />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {reading.selectedVocabulary.map((vocab) => {
             const inWordbook = wordbookVocabIds.has(vocab.term.toLowerCase());

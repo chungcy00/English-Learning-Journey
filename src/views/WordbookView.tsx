@@ -172,9 +172,12 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   const searchSuggestions = useMemo(() => {
     const query = search.trim();
     if (!query || !currentReading) return [];
-    return readingTermSuggestions(currentReading.content, currentReading.selectedVocabulary.map(v => v.term), query)
+    const savedCurrentTerms = vocabularyList
+      .filter(item => containsEnglishExpression(currentReading.content, item.term) && isVocabularyAtLevel(item, currentReading.cefrLevel, readingById))
+      .map(item => item.term);
+    return readingTermSuggestions(currentReading.content, [...currentReading.selectedVocabulary.map(v => v.term), ...savedCurrentTerms], query)
       .map(term => ({ term, item: currentReading.selectedVocabulary.find(v => normalizeEnglishTerm(v.term) === term) || vocabularyList.find(v => normalizeEnglishTerm(v.term) === term) }));
-  }, [search, vocabularyList, currentReading]);
+  }, [search, vocabularyList, currentReading, readingById]);
 
   const filtered = useMemo(() => {
     const query = search.trim();
@@ -341,7 +344,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                       {term}
                     </span>
                     <span className="block text-[11px] font-ui text-[#717265] truncate">
-                      {item ? getLocalizedVocabMeaning(item, targetLanguage) : '添加时获取语境释义'}
+                      {item ? `${vocabularyList.some(saved => saved.id === item.id) ? '已在生词本 · ' : ''}${getLocalizedVocabMeaning(item, targetLanguage)} · ${item.type}` : `点击后验证 ${currentReading?.cefrLevel || currentCefr}`}
                     </span>
                   </button>
                 ))}

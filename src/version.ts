@@ -1,9 +1,9 @@
-export const APP_VERSION = 'V2.3.9';
+export const APP_VERSION = 'V2.3.10';
 
-export const VERSION_HISTORY_COUNT = 17;
+export const VERSION_HISTORY_COUNT = 18;
 
 export const CURRENT_RELEASE_NOTES = [
-  '阅读页按 CEFR 和数量上限查找、替换词汇并同步生词本',
-  '生词本仅添加当前短文中的单词、完整短语或习语',
-  '复习默认显示全部已添加词条，可切换今日到期',
+  '阅读搜索输入时显示当前短文候选，支持键盘和点击选择',
+  '候选词保存前仍按原文语境与所选 CEFR 严格验证',
+  '生词本保留已收藏词条回显，复习页仅显示全部词条',
 ];
