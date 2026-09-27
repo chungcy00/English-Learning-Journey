@@ -1,11 +1,11 @@
 # AI 额度保护部署说明
 
-代码已实现跨实例统一额度检查；**没有连接共享 Redis 时，AI 接口返回 503 并停止调用模型**。本地文件修改不代表线上已经启用，请先配置、验证，再发布。
+代码已实现跨实例统一额度检查；**没有连接共享 Redis 时，AI 接口返回 503 并停止调用模型**。2026-09-27 已完成 Vercel 生产部署和真实 Redis 扣记联调，见文末记录。
 
 ## 免费配置
 
 1. 在 Upstash 创建 **Free** Redis 数据库并连接当前 Vercel 项目。选择免费计划，不启用自动付费升级。套餐以 [官方价格页](https://upstash.com/pricing/redis) 为准。
-   - 已于 2026-09-27 创建 `English-learning`（Free，N. Virginia，Eviction 关闭），并将 Redis URL/token、随机 salt 与下表五项额度作为 Secret 保存到当前 Vercel 项目的 Production / Preview；实际部署联调待验证。
+   - 已于 2026-09-27 创建 `English-learning`（Free，N. Virginia，Eviction 关闭），并将 Redis URL/token、随机 salt 与下表五项额度作为 Secret 保存到当前 Vercel 项目的 Production / Preview；生产联调已通过，未开通付费计划。
 2. 在 Vercel 项目服务端环境变量设置 `UPSTASH_REDIS_REST_URL`、`UPSTASH_REDIS_REST_TOKEN`；也兼容 `KV_REST_API_URL`、`KV_REST_API_TOKEN`。使用可写 token，不是只读 token。不要发到聊天，不要加 `VITE_` 前缀，不要提交 `.env`。
 3. 生成一个至少 32 字符的随机密钥作为 `AI_RATE_LIMIT_SALT`。例如在自己终端运行 `openssl rand -hex 32`，把结果仅存入环境变量。所有生产实例使用相同的数据库、salt 和限额设置。salt 要保持稳定，随意更换会重置 IP 身份。
 4. 配置下表变量，重新部署。先在预览环境验证；预览如使用同一数据库，会与生产共享额度。不要删除生产计数器或变更存储前缀来恢复额度。
@@ -42,3 +42,10 @@
 - `node --import tsx --test backend/*.test.ts src/utils/wordbookSort.test.ts`
 - 测试环境将全站上限设为 `0`，所有 AI 路由应返回 429 且无供应商请求；移除 Redis token 应返回 503。
 - 核对 Vercel 环境变量及实际预览/生产响应后才能宣称线上限额生效。不要为测试清空生产计数。
+
+### 2026-09-27 生产联调记录
+
+- V2.3.8 应用提交 `38b4159` 的 Vercel 部署 `CBk49DujMtLAfEQyV3Z5LwtvEWUW` 显示 Ready，已关联正式域名 `english-learning-journey-two.vercel.app`。
+- 在正式站搜索并添加 `break the ice`：返回真实释义、例句和 `idiom` 类型，今日复习从 13 项增加至 14 项，进入复习页后首卡为该习语。
+- 通过 Upstash CLI 只读 `HGETALL mine-english:{ai-quota}:v1:global:day`：调用前无记录，调用后 `count=1`，确认请求经过共享 Redis 预扣。未清空计数，未耗尽生产额度进行压力测试。
+- 上限拒绝、并发原子性、各 IP 和语音子额度由 17 项本地回归测试验证；生产仅执行上述一次真实调用，不把本地模拟测试描述为线上压力测试。
