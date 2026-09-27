@@ -232,9 +232,9 @@ export async function generateDialogueSpeech(
       errorBody.error.length <= 160 && !errorBody.error.trim().startsWith('{')
       ? errorBody.error
       : null;
-    const message = res.status === 429
+    const message = serverMessage || (res.status === 429
       ? '角色语音服务暂时繁忙，请约一分钟后重试。'
-      : serverMessage || `角色语音暂时无法生成，请稍后重试（HTTP ${res.status}）。`;
+      : `角色语音暂时无法生成，请稍后重试（HTTP ${res.status}）。`);
     throw new Error(message);
   }
 
@@ -509,7 +509,9 @@ export async function generateReadingWithPipeline(
   const vocabularyItems: VocabularyItem[] = (resultData.vocabulary || []).map((v: any, index: number) => ({
     id: `vocab_${readingId}_${index}`,
     term: v.term,
-    type: (v.type === 'phrase' || v.term.includes(' ')) ? 'phrase' : 'word',
+    type: v.type === 'idiom' ? 'idiom' : (v.type === 'phrase' || v.term.includes(' ')) ? 'phrase' : 'word',
+    cefrLevel: v.cefrLevel,
+    sourceCefrLevel: request.cefrLevel,
     phonetic: v.phonetic || '',
     partOfSpeech: v.partOfSpeech || 'noun',
     meaningZh: v.meaningZh || '',
@@ -552,6 +554,7 @@ export async function generateReadingWithPipeline(
       : undefined,
     length: request.length,
     selectedVocabulary: vocabularyItems,
+    vocabularyCount: request.vocabularyCount,
     rewritePractice: rewriteItems,
     humanised: true,
     createdAt: now,
@@ -583,7 +586,19 @@ export async function rewriteReadingWithPipeline(
   const resultData = await res.json();
 
   onProgress?.('Ready');
-  return resultData;
+  const now = Date.now();
+  return {
+    ...resultData,
+    vocabulary: resultData.vocabulary.map((v: any, index: number) => ({
+      ...v, id: `vocab_${request.readingId}_${now}_${index}`,
+      sourceReadingId: request.readingId, sourceCefrLevel: request.cefrLevel,
+      status: 'New', createdAt: now, updatedAt: now, nextReviewDate: now,
+      reviewCount: 0, currentInterval: 0,
+    })),
+    rewritePractice: resultData.rewritePractice.map((r: any, index: number) => ({
+      ...r, id: `rw_${request.readingId}_${now}_${index}`,
+    })),
+  };
 }
 
 export async function evaluateRewriteAnswer(params: {
@@ -603,7 +618,12 @@ export async function evaluateRewriteAnswer(params: {
     if (res.ok) {
       return await res.json();
     }
+    if (res.status === 429 || res.status === 503) {
+      const body = await res.json().catch(() => ({}));
+      throw Object.assign(new Error(body.error || 'AI 评估暂不可用，请稍后重试'), { quotaBlocked: true });
+    }
   } catch (err) {
+    if ((err as any)?.quotaBlocked) throw err;
     console.warn('Backend evaluation call failed, using intelligent client evaluator:', err);
   }
 
@@ -677,7 +697,10 @@ export async function explainVocabularyTerm(term: string, context?: string, targ
     if (res.ok) {
       return await res.json();
     }
-    if (requireDetails) throw new Error('词条查询暂不可用，请稍后重试');
+    if (requireDetails) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || '词条查询暂不可用，请稍后重试');
+    }
   } catch (err) {
     if (requireDetails) throw err;
     console.warn('Vocab explain failed, returning basic details:', err);

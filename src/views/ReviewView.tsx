@@ -35,10 +35,14 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   const [reviewList, setReviewList] = useState<VocabularyItem[]>(dueVocabularies);
   const [isTranslatingCurrent, setIsTranslatingCurrent] = useState(false);
 
-  // Sync reviewList when dueVocabularies updates
+  // Keep this session's order stable. Rating moves an item's due date forward;
+  // replacing the list with the shortened due list here would skip the next card.
   useEffect(() => {
-    setReviewList(dueVocabularies);
-  }, [dueVocabularies]);
+    const latest = new Map(allVocabularies.map(item => [item.id, item]));
+    setReviewList(previous => previous.length === 0
+      ? allVocabularies.filter(item => item.nextReviewDate <= Date.now())
+      : previous.map(item => latest.get(item.id) || item));
+  }, [allVocabularies]);
 
   const currentVocab = reviewList[currentIndex];
 
@@ -84,6 +88,14 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
     setCurrentIndex(0);
     setIsRevealed(false);
     setSessionCompleted(false);
+  };
+
+  const handleRefreshReviews = () => {
+    setReviewList(allVocabularies.filter(item => item.nextReviewDate <= Date.now()));
+    setCurrentIndex(0);
+    setIsRevealed(false);
+    setSessionCompleted(false);
+    onRefresh();
   };
 
   const handleRating = (rating: ReviewRating) => {
@@ -163,7 +175,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
               </button>
             )}
             <button
-              onClick={onRefresh}
+              onClick={handleRefreshReviews}
               className="px-4 py-2 bg-[#E5DED0] text-[#292B25] border border-[#D4CCBC] font-ui text-xs rounded-sm hover:bg-[#E5DED0]/80 transition-colors"
             >
               刷新复习状态

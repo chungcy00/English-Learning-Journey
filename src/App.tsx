@@ -183,12 +183,15 @@ export default function App() {
           cefrLevel: currentReading.cefrLevel,
           keepVocabulary: keepVocab,
           currentVocabulary: currentVocabTerms,
+          vocabularyCount: currentReading.vocabularyCount || currentReading.selectedVocabulary.length,
         },
         (status) => setProcessingStatus(status)
       );
 
       const updatedRecord: ReadingRecord = {
         ...currentReading,
+        vocabularyCount: currentReading.vocabularyCount || currentReading.selectedVocabulary.length,
+        translations: undefined,
         content: revised.reading || currentReading.content,
         readingType: revised.readingType || currentReading.readingType,
         speakers: revised.speakers && revised.speakers.length > 0
@@ -243,32 +246,6 @@ export default function App() {
 
     const updated = await getAllVocabularies();
     setVocabularies(updated);
-  };
-
-  // 4. Update Reading Vocabulary (PRD Section 15)
-  const handleUpdateReadingVocabulary = async (updatedVocabs: VocabularyItem[]) => {
-    if (!currentReading) return;
-
-    const updatedReading: ReadingRecord = {
-      ...currentReading,
-      selectedVocabulary: updatedVocabs,
-      updatedAt: Date.now(),
-    };
-
-    await saveReading(updatedReading);
-    setCurrentReading(updatedReading);
-
-    // Save any new words into vocabulary table
-    for (const v of updatedVocabs) {
-      await saveVocabulary(v);
-    }
-
-    const [allR, allV] = await Promise.all([
-      getAllReadings(),
-      getAllVocabularies(),
-    ]);
-    setReadings(allR);
-    setVocabularies(allV);
   };
 
   // 5. Delete Vocabulary from Wordbook
@@ -399,7 +376,6 @@ export default function App() {
             reading={currentReading}
             wordbookVocabIds={wordbookVocabIds}
             onToggleWordbook={handleToggleWordbook}
-            onUpdateReadingVocabulary={handleUpdateReadingVocabulary}
             onUpdateReading={handleUpdateReading}
             onRewrite={handleRewrite}
             onOpenHistory={() => setActiveTab('history')}
@@ -426,10 +402,13 @@ export default function App() {
               const existing = vocabularies.find(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(vocab.term));
               await saveVocabulary(existing ? {
                 ...existing,
+                updatedAt: vocab.updatedAt,
+                nextReviewDate: Math.min(existing.nextReviewDate, vocab.nextReviewDate),
                 wordbookLevels: [...new Set([...(existing.wordbookLevels || []), ...(vocab.wordbookLevels || [])])],
               } : vocab);
               await loadData();
             }}
+            onOpenReview={() => setActiveTab('review')}
           />
         )}
 

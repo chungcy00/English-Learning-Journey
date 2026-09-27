@@ -4,7 +4,7 @@ import { normalizeEnglishTerm } from './englishSearch';
 const englishCollator = new Intl.Collator('en', { sensitivity: 'base', numeric: true });
 
 export function isVocabularyAtLevel(item: VocabularyItem, level: CEFRLevel, readings: ReadonlyMap<string, ReadingRecord>): boolean {
-  const sourceLevel = item.sourceCefrLevel ||
+  const sourceLevel = item.cefrLevel || item.sourceCefrLevel ||
     (item.sourceReadingId ? readings.get(item.sourceReadingId)?.cefrLevel : undefined);
   return sourceLevel === level || !!item.wordbookLevels?.includes(level);
 }

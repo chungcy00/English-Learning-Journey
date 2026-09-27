@@ -22,7 +22,7 @@ import {
   getI18nText,
 } from '../utils/i18n';
 import { explainVocabularyTerm, translateVocabularies } from '../services/api';
-import { getVocabularySearchRank, isEnglishTermQuery, normalizeEnglishTerm } from '../utils/englishSearch';
+import { getEnglishTermMatchRank, isEnglishTermQuery, normalizeEnglishTerm } from '../utils/englishSearch';
 import { compareWordbookEntries, isVocabularyAtLevel } from '../utils/wordbookSort';
 import { speakEnglishTerm } from '../utils/speech';
 
@@ -44,6 +44,7 @@ interface WordbookViewProps {
   currentCefr: CEFRLevel;
   onCefrChange: (level: CEFRLevel) => void;
   onSaveVocab: (vocab: VocabularyItem) => Promise<void>;
+  onOpenReview: () => void;
 }
 
 export const WordbookView: React.FC<WordbookViewProps> = ({
@@ -59,6 +60,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   currentCefr,
   onCefrChange,
   onSaveVocab,
+  onOpenReview,
 }) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -69,6 +71,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [isAdding, setIsAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const [addedTerm, setAddedTerm] = useState<string | null>(null);
 
   useEffect(() => { setSelectedTerms([]); }, [currentCefr]);
 
@@ -79,6 +82,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
     const level = currentCefr;
     setIsAdding(true);
     setAddError(null);
+    setAddedTerm(null);
     try {
       const details = existing || await explainVocabularyTerm(term, undefined, targetLanguage, true);
       const now = Date.now();
@@ -93,11 +97,14 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         status: 'New', createdAt: now, updatedAt: now, nextReviewDate: now,
         reviewCount: 0, currentInterval: 0,
       };
-      await onSaveVocab({ ...item, wordbookLevels: [...new Set([...(item.wordbookLevels || []), level])] });
+      await onSaveVocab({ ...item, updatedAt: now, nextReviewDate: now,
+        wordbookLevels: [...new Set([...(item.wordbookLevels || []), level])] });
+      setAddedTerm(item.term);
+      setStatusFilter('All');
       setSearch('');
       setIsSuggestionOpen(false);
-    } catch {
-      setAddError('添加失败，请稍后重试。');
+    } catch (error) {
+      setAddError(error instanceof Error ? error.message : '添加失败，请稍后重试。');
     } finally {
       setIsAdding(false);
     }
@@ -163,16 +170,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
     return vocabularyList
       .map((item) => {
         const source = item.sourceReadingId ? readingById.get(item.sourceReadingId) : undefined;
-        const localized = getLocalizedVocabMeaning(item, targetLanguage);
-        const searchableSource = source
-          ? `${source.title} ${source.topic} ${source.input} ${source.content}`
-          : '';
-        const rank = getVocabularySearchRank({
-          term: item.term,
-          definitionEn: item.definitionEn,
-          meanings: [item.meaningZh, localized],
-          sourceText: searchableSource,
-        }, query);
+        const rank = getEnglishTermMatchRank(item.term, query);
         if (rank === null) return null;
 
         return { item, source, rank };
@@ -190,17 +188,8 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
     return vocabularyList
       .map((item) => {
         const source = item.sourceReadingId ? readingById.get(item.sourceReadingId) : undefined;
-        const localized = getLocalizedVocabMeaning(item, targetLanguage);
-        const sourceText = source
-          ? `${source.title} ${source.topic} ${source.input} ${source.content}`
-          : '';
         const searchRank = query
-          ? getVocabularySearchRank({
-              term: item.term,
-              definitionEn: item.definitionEn,
-              meanings: [item.meaningZh, localized],
-              sourceText,
-            }, query)
+          ? getEnglishTermMatchRank(item.term, query)
           : 0;
         return { item, source, searchRank };
       })
@@ -287,6 +276,8 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
+                setAddError(null);
+                setAddedTerm(null);
                 setIsSuggestionOpen(true);
                 setActiveSuggestionIndex(-1);
               }}
@@ -313,9 +304,13 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                   setSearch(searchSuggestions[activeSuggestionIndex].item.term);
                   setIsSuggestionOpen(false);
                   setActiveSuggestionIndex(-1);
+                } else if (e.key === 'Enter' && isEnglishTermQuery(search)) {
+                  e.preventDefault();
+                  void addToCurrentLevel(vocabularyList.find(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(search)));
                 }
               }}
-              placeholder={getI18nText(targetLanguage, 'searchPlaceholder').replace('{lang}', currentLangObj.native)}
+              placeholder="搜索并添加英文单词、短语或习语…"
+              aria-label="搜索英文单词、短语或习语"
               role="combobox"
               aria-expanded={isSuggestionOpen && searchSuggestions.length > 0}
               aria-autocomplete="list"
@@ -328,7 +323,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                 className="absolute z-30 left-0 right-0 top-full mt-1 max-h-72 overflow-y-auto bg-[#FAF7F2] border border-[#D4CCBC] rounded-sm shadow-lg"
               >
                 <p className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider text-[#717265] font-ui">
-                  匹配生词与来源短文
+                  英文单词、短语与习语
                 </p>
                 {searchSuggestions.map(({ item, source }, index) => (
                   <button
@@ -382,7 +377,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
       {search.trim() && (
         <div className="flex flex-wrap items-center gap-3 text-sm font-ui text-[#5F654D]">
-          <span>搜索所有程度的词条，可添加到 {currentCefr}</span>
+          <span>{isEnglishTermQuery(search) ? `搜索英文单词、短语或习语；添加后进入今日复习` : '请输入英文单词、短语或习语，例如 genuine、take a break、break the ice'}</span>
           {isEnglishTermQuery(search) && search.trim().length <= 160 && !vocabularyList.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(search)) && (
             <button type="button" disabled={isAdding} onClick={() => addToCurrentLevel()}
               className="border border-[#D4CCBC] rounded-sm px-3 py-1.5 disabled:opacity-50">
@@ -392,6 +387,12 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         </div>
       )}
       {addError && <p role="alert" className="text-sm text-red-700">{addError}</p>}
+      {addedTerm && (
+        <div role="status" className="flex flex-wrap items-center gap-3 text-sm font-ui text-[#5F654D]">
+          <span>已添加 “{addedTerm}”，已加入今日复习。</span>
+          <button type="button" onClick={onOpenReview} className="underline font-semibold">去复习</button>
+        </div>
+      )}
 
       {/* Filter Tabs & Multi-select Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -550,11 +551,11 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                       <span className="text-[11px] font-ui italic text-[#717265]">
                         [{vocab.partOfSpeech}]
                       </span>
-                      {search.trim() && !isVocabularyAtLevel(vocab, currentCefr, readingById) && (
+                      {search.trim() && (
                         <button type="button" disabled={isAdding}
                           onClick={(e) => { e.stopPropagation(); void addToCurrentLevel(vocab); }}
                           className="text-xs font-ui border border-[#D4CCBC] rounded-sm px-2 py-1 disabled:opacity-50">
-                          添加到 {currentCefr}
+                          {isVocabularyAtLevel(vocab, currentCefr, readingById) ? '加入今日复习' : `添加到 ${currentCefr}`}
                         </button>
                       )}
                     </div>

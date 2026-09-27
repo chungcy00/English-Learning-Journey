@@ -8,7 +8,8 @@ export type RewriteRating = 'Excellent' | 'Very Good' | 'Good' | 'Needs Improvem
 export interface VocabularyItem {
   id: string;
   term: string;
-  type: 'word' | 'phrase';
+  type: 'word' | 'phrase' | 'idiom';
+  cefrLevel?: CEFRLevel;
   phonetic: string;
   partOfSpeech: string;
   meaningZh: string;
@@ -81,6 +82,7 @@ export interface ReadingRecord {
   speakers?: DialogueSpeaker[];
   length: ReadingLength;
   selectedVocabulary: VocabularyItem[];
+  vocabularyCount?: number;
   rewritePractice: RewritePracticeItem[];
   humanised: boolean;
   translations?: Record<string, ReadingTranslation>;
@@ -119,6 +121,7 @@ export interface RewriteReadingRequest {
   readingId?: string;
   reading: string;
   currentVocabulary?: string[];
+  vocabularyCount?: number;
   mode: 'easier' | 'harder' | 'shorter' | 'longer' | 'moreConversational' | 'story' | 'non-story' | 'dialogue';
   keepCurrentVocabulary?: boolean;
   keepVocabulary?: boolean;

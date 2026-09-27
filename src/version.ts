@@ -1,9 +1,9 @@
-export const APP_VERSION = 'V2.3.7';
+export const APP_VERSION = 'V2.3.8';
 
-export const VERSION_HISTORY_COUNT = 15;
+export const VERSION_HISTORY_COUNT = 16;
 
 export const CURRENT_RELEASE_NOTES = [
-  '生词本默认仅显示当前 CEFR，支持搜索其他程度并自定义添加',
-  '精简首页、历史与复习说明，PDF 参考答案移至文末独立页',
-  '修复 PDF 文本转义、接口输入校验和已知依赖漏洞',
+  '精选词汇按所选 CEFR 与数量校验，保留完整单词、短语和习语',
+  '生词本搜索添加完整英文表达，添加后直接进入今日复习',
+  '新增全站及每 IP 的 AI 额度保护与语音子限额',
 ];

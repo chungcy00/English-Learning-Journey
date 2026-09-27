@@ -20,6 +20,12 @@ export function validateApiBody(body: unknown): string | null {
   for (const key of ['specifiedVocabulary', 'currentVocabulary', 'vocabulary', 'vocabularies', 'rewriteExercises', 'turns']) {
     if (data[key] !== undefined && !Array.isArray(data[key])) return '列表字段格式不正确';
   }
+  for (const key of ['specifiedVocabulary', 'currentVocabulary']) {
+    if (Array.isArray(data[key]) && data[key].some(item => typeof item !== 'string' || item.length > 160)) return '词条列表格式不正确';
+  }
+  for (const key of ['keepVocabulary', 'keepCurrentVocabulary']) {
+    if (data[key] !== undefined && typeof data[key] !== 'boolean') return '选项格式不正确';
+  }
   const enums: Record<string, unknown[]> = {
     cefrLevel: ['A2', 'B1', 'B2', 'C1'],
     readingType: ['story', 'non-story', 'dialogue', 'random'],
@@ -30,7 +36,7 @@ export function validateApiBody(body: unknown): string | null {
     if (data[key] !== undefined && !allowed.includes(data[key])) return '选项不受支持';
   }
   if (data.vocabularyCount !== undefined &&
-      (!Number.isInteger(data.vocabularyCount) || Number(data.vocabularyCount) < 1 || Number(data.vocabularyCount) > 100)) return '词汇数量不正确';
+      (!Number.isInteger(data.vocabularyCount) || Number(data.vocabularyCount) < 1 || Number(data.vocabularyCount) > 20)) return '词汇数量不正确（最多 20 个）';
   if (typeof data.term === 'string' && (!data.term.trim() || data.term.length > 160)) return '词条应为 1–160 个字符';
   return null;
 }

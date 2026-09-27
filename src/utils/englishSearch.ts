@@ -1,4 +1,5 @@
-const ENGLISH_TERM_PATTERN = /^[a-z]+(?:['’-][a-z]+)*(?:\s+[a-z]+(?:['’-][a-z]+)*)*$/i;
+// Keep whole expressions intact, including idioms such as "so far, so good".
+const ENGLISH_TERM_PATTERN = /^[a-z]+(?:['’-][a-z]+)*(?:(?:\s+|,\s*)[a-z]+(?:['’-][a-z]+)*)*[.!?]?$/i;
 
 export interface VocabularySearchFields {
   term: string;

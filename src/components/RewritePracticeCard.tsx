@@ -25,12 +25,14 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
   const [evaluation, setEvaluation] = useState<RewriteEvaluation | undefined>(item.evaluation);
   const [loading, setLoading] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const localizedOriginalMeaning = getLocalizedExerciseMeaning(item, index, targetLanguage, currentTranslation);
 
   const handleCheck = async () => {
     if (!answer.trim() || loading) return;
     setLoading(true);
+    setError(null);
     try {
       const evalResult = await evaluateRewriteAnswer({
         originalSentence: item.originalSentence,
@@ -44,6 +46,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
       onAnswerChecked?.(item.id, answer.trim(), evalResult);
     } catch (err) {
       console.error(err);
+      setError(err instanceof Error ? err.message : '评估暂不可用，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -65,6 +68,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
 
   return (
     <div className="bg-[#E5DED0]/40 border border-[#D4CCBC] rounded-sm p-5 sm:p-6 transition-all">
+      {error && <p role="alert" className="font-ui text-sm text-red-700 mb-3">{error}</p>}
       {/* Question Header */}
       <div className="flex items-start justify-between gap-4 mb-3">
         <div>

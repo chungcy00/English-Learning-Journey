@@ -17,6 +17,12 @@ test('default view excludes other and unknown levels; explicit additions apply o
   assert.equal(isVocabularyAtLevel(added, 'B2', new Map()), true);
 });
 
+test('assessed vocabulary level takes precedence over the source passage level', () => {
+  const item = { ...entry('advanced sense', 'B1'), cefrLevel: 'C1' as CEFRLevel };
+  assert.equal(isVocabularyAtLevel(item, 'B1', new Map()), false);
+  assert.equal(isVocabularyAtLevel(item, 'C1', new Map()), true);
+});
+
 test('each selected CEFR level comes first, regardless of update time', () => {
   const levels: CEFRLevel[] = ['A2', 'B1', 'B2', 'C1'];
   const entries = levels.map((level, index) => entry(`term ${index}`, level, index));

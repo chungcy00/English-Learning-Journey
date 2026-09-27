@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles,
   Download,
-  Edit3,
   RefreshCw,
   History,
   Bookmark,
@@ -17,7 +16,6 @@ import {
 } from 'lucide-react';
 import { ReadingRecord, VocabularyItem, RewritePracticeItem, ReadingTranslation } from '../types';
 import { WordDetailModal } from '../components/WordDetailModal';
-import { EditVocabularyModal } from '../components/EditVocabularyModal';
 import { RewritePracticeCard } from '../components/RewritePracticeCard';
 import { generateReadingPDF } from '../services/pdfGenerator';
 import {
@@ -47,7 +45,6 @@ interface ReadingViewProps {
   reading: ReadingRecord;
   wordbookVocabIds: Set<string>;
   onToggleWordbook: (vocab: VocabularyItem) => void;
-  onUpdateReadingVocabulary: (updatedVocabs: VocabularyItem[]) => void;
   onUpdateReading?: (updatedReading: ReadingRecord) => void;
   onRewrite: (mode: string, keepVocab: boolean) => void;
   onOpenHistory: () => void;
@@ -191,7 +188,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   reading,
   wordbookVocabIds,
   onToggleWordbook,
-  onUpdateReadingVocabulary,
   onUpdateReading,
   onRewrite,
   onOpenHistory,
@@ -201,7 +197,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 }) => {
   const [selectedVocab, setSelectedVocab] = useState<VocabularyItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isEditVocabOpen, setIsEditVocabOpen] = useState(false);
   const [isRewriteMenuOpen, setIsRewriteMenuOpen] = useState(false);
   const [keepVocab, setKeepVocab] = useState(true);
 
@@ -939,16 +934,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
         </div>
 
-        {/* Action Buttons: Edit Vocab, Rewrite, PDF, History */}
+        {/* Action Buttons: Rewrite, PDF, History */}
         <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={() => setIsEditVocabOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F2EEE4] text-[#717265] hover:text-[#292B25] hover:bg-[#E5DED0] border border-[#D4CCBC] text-xs font-ui rounded-sm transition-colors"
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Edit Vocabulary</span>
-            <span className="sm:hidden">词汇</span>
-          </button>
 
           {/* Rewrite Dropdown (PRD Section 21) */}
           <div className="relative">
@@ -1183,12 +1170,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
               {getI18nText(targetLanguage, 'vocabSectionSub')}
             </p>
           </div>
-          <button
-            onClick={() => setIsEditVocabOpen(true)}
-            className="text-xs font-ui text-[#73785E] hover:underline"
-          >
-            {getI18nText(targetLanguage, 'adjustVocab')}
-          </button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1290,15 +1271,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         currentTranslation={currentTranslation}
       />
 
-      <EditVocabularyModal
-        isOpen={isEditVocabOpen}
-        onClose={() => setIsEditVocabOpen(false)}
-        currentVocabList={reading.selectedVocabulary}
-        readingId={reading.id}
-        readingContent={reading.content}
-        onSave={onUpdateReadingVocabulary}
-        targetLanguage={targetLanguage}
-      />
     </div>
   );
 };
