@@ -33,6 +33,7 @@ import {
   initDefaultData,
   getAllReadings,
   saveReading,
+  saveReadingWithVocabulary,
   deleteReading,
   getAllVocabularies,
   saveVocabulary,
@@ -139,12 +140,7 @@ export default function App() {
       );
 
       // Save reading to Dexie
-      await saveReading(record);
-
-      // Automatically sync newly selected vocabulary to wordbook
-      for (const vocab of record.selectedVocabulary) {
-        await saveVocabulary(vocab);
-      }
+      await saveReadingWithVocabulary(record);
 
       const [updatedR, updatedV] = await Promise.all([
         getAllReadings(),
@@ -208,7 +204,8 @@ export default function App() {
         updatedAt: Date.now(),
       };
 
-      await saveReading(updatedRecord);
+      await saveReadingWithVocabulary(updatedRecord);
+      setVocabularies(await getAllVocabularies());
       setCurrentReading(updatedRecord);
 
       const allR = await getAllReadings();
@@ -239,6 +236,7 @@ export default function App() {
     } else {
       await saveVocabulary({
         ...vocab,
+        savedManually: true,
         status: 'New',
         nextReviewDate: Date.now(),
       });
@@ -377,6 +375,12 @@ export default function App() {
             wordbookVocabIds={wordbookVocabIds}
             onToggleWordbook={handleToggleWordbook}
             onUpdateReading={handleUpdateReading}
+            onUpdateVocabulary={async updated => {
+              await saveReadingWithVocabulary(updated);
+              setCurrentReading(updated);
+              setReadings(await getAllReadings());
+              setVocabularies(await getAllVocabularies());
+            }}
             onRewrite={handleRewrite}
             onOpenHistory={() => setActiveTab('history')}
             isRewriting={isRewriting}
@@ -389,6 +393,7 @@ export default function App() {
           <WordbookView
             vocabularyList={vocabularies}
             readings={readings}
+            currentReading={currentReading}
             onDeleteVocab={handleDeleteVocab}
             onUpdateStatus={handleUpdateStatus}
             onGenerateFromWordbook={handleGenerateFromWordbook}
@@ -402,6 +407,7 @@ export default function App() {
               const existing = vocabularies.find(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(vocab.term));
               await saveVocabulary(existing ? {
                 ...existing,
+                savedManually: true,
                 updatedAt: vocab.updatedAt,
                 nextReviewDate: Math.min(existing.nextReviewDate, vocab.nextReviewDate),
                 wordbookLevels: [...new Set([...(existing.wordbookLevels || []), ...(vocab.wordbookLevels || [])])],

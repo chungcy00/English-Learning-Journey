@@ -73,6 +73,25 @@ export function extractEnglishWords(text: string): string[] {
   return text.match(/[A-Za-z]+(?:['’-][A-Za-z]+)*/g) || [];
 }
 
+// Exact boundaries for local suggestions; inflections are assessed by the server
+// with an excerpt, never inferred by substring matching (e.g. he/the).
+export function containsEnglishExpression(text: string, term: string): boolean {
+  if (!isEnglishTermQuery(term)) return false;
+  const escaped = normalizeEnglishTerm(term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^a-z'\\-])${escaped}(?=$|[^a-z'\\-])`, 'i').test(normalizeEnglishTerm(text));
+}
+
+export function readingTermSuggestions(content: string, selectedTerms: string[], query: string): string[] {
+  if (!isEnglishTermQuery(query)) return [];
+  // Never fabricate phrases by taking arbitrary adjacent n-grams. Whole known
+  // expressions plus an explicitly typed expression are validated before saving.
+  const candidates = [...selectedTerms, ...extractEnglishWords(content), ...(containsEnglishExpression(content, query) ? [query] : [])];
+  return [...new Set(candidates.map(normalizeEnglishTerm))]
+    .filter(term => getEnglishTermMatchRank(term, query) !== null)
+    .sort((a, b) => (getEnglishTermMatchRank(a, query)! - getEnglishTermMatchRank(b, query)!) || a.localeCompare(b, 'en'))
+    .slice(0, 8);
+}
+
 export function hasEnglishWordSequence(text: string, query: string): boolean {
   const queryWords = extractEnglishWords(normalizeEnglishTerm(query)).map(normalizeEnglishTerm);
   if (queryWords.length === 0 || !isEnglishTermQuery(query)) return false;

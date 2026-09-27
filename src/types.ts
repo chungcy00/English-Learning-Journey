@@ -9,7 +9,8 @@ export interface VocabularyItem {
   id: string;
   term: string;
   type: 'word' | 'phrase' | 'idiom';
-  cefrLevel?: CEFRLevel;
+  cefrLevel?: CEFRLevel | 'A1' | 'C2';
+  savedManually?: boolean;
   phonetic: string;
   partOfSpeech: string;
   meaningZh: string;

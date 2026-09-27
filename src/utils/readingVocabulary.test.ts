@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import type { ReadingRecord, VocabularyItem } from '../types';
+import { replaceReadingTerm, planReadingVocabularySync } from './readingVocabulary';
+import { containsEnglishExpression, readingTermSuggestions } from './englishSearch';
+const item = (term: string): VocabularyItem => ({ id: term, term, cefrLevel: 'B1', sourceReadingId: 'r1', status: 'Learning', nextReviewDate: 100, reviewCount: 4 } as VocabularyItem);
+const old = item('pleasant'), next = item('take a break');
+const reading = { id: 'r1', cefrLevel: 'B1', content: 'It was pleasant to take a break.', vocabularyCount: 1, selectedVocabulary: [old], rewritePractice: [{ target: 'pleasant' }], translations: { ja: { language: 'ja', languageName: '日本語', title: '題名', translatedContent: '本文', vocabularyTranslations: { pleasant: { meaning: '楽しい' } }, exerciseTranslations: { pleasant: { originalSentenceMeaning: '文' } }, updatedAt: 1 } } } as unknown as ReadingRecord;
+test('reading custom selection enforces CEFR, uniqueness and requested count', () => {
+  assert.throws(() => replaceReadingTerm(reading, next));
+  assert.throws(() => replaceReadingTerm(reading, { ...next, cefrLevel: 'B2' }, old.id));
+  assert.throws(() => replaceReadingTerm(reading, old, old.id));
+  assert.throws(() => replaceReadingTerm(reading, next, 'missing'));
+  const updated = replaceReadingTerm(reading, next, old.id);
+  assert.equal(updated.selectedVocabulary.length, 1);
+  assert.equal(updated.selectedVocabulary[0].term, next.term);
+  assert.equal(updated.rewritePractice.length, 0);
+  assert.equal(updated.translations?.ja.translatedContent, '本文');
+  assert.equal(updated.translations?.ja.vocabularyTranslations, undefined);
+  assert.equal(updated.translations?.ja.exerciseTranslations, undefined);
+});
+test('reading sync replaces owned terms but preserves manual/shared words and review progress', () => {
+  const updated = replaceReadingTerm(reading, next, old.id);
+  assert.deepEqual(planReadingVocabularySync(reading, updated, [old], [reading]).removeIds, [old.id]);
+  assert.equal(planReadingVocabularySync(reading, updated, [{ ...old, savedManually: true }], [reading]).removeIds.length, 0);
+  assert.equal(planReadingVocabularySync(reading, updated, [old], [reading, { ...reading, id: 'other' }]).removeIds.length, 0);
+  const existing = { ...next, id: 'saved', sourceReadingId: 'other', reviewCount: 15, status: 'Difficult' as const, meaningZh: '旧释义' };
+  const refreshed = { ...next, meaningZh: '新语境释义' };
+  const plan = planReadingVocabularySync(reading, { ...updated, selectedVocabulary: [refreshed] }, [old, existing], [reading]);
+  assert.equal(plan.upserts[0].id, 'saved');
+  assert.equal(plan.upserts[0].reviewCount, 15);
+  assert.equal(plan.upserts[0].status, 'Difficult');
+  assert.equal(plan.upserts[0].meaningZh, '新语境释义');
+});
+test('search suggestions come from current reading without arbitrary phrase splitting', () => {
+  assert.equal(containsEnglishExpression('The weather is nice.', 'he'), false);
+  assert.equal(containsEnglishExpression('They take a break.', 'take a break'), true);
+  assert.equal(containsEnglishExpression('They take a break.', 'break the ice'), false);
+  const results = readingTermSuggestions(reading.content, ['take a break'], 'break');
+  assert.ok(results.includes('take a break'));
+  assert.ok(results.includes('break'));
+  assert.ok(!results.includes('a break'));
+  assert.deepEqual(readingTermSuggestions(reading.content, ['take a break'], 'genuine'), []);
+});

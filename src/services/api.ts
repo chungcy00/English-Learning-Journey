@@ -687,12 +687,12 @@ export async function evaluateRewriteAnswer(params: {
   }
 }
 
-export async function explainVocabularyTerm(term: string, context?: string, targetLanguage?: string, requireDetails = false): Promise<Partial<VocabularyItem>> {
+export async function explainVocabularyTerm(term: string, context?: string, targetLanguage?: string, requireDetails = false, constraints?: { cefrLevel?: CEFRLevel; requireInReading?: boolean }): Promise<Partial<VocabularyItem>> {
   try {
     const res = await fetch('/api/vocabulary/explain', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ term, contextReading: context, targetLanguage })
+      body: JSON.stringify({ term, contextReading: context, targetLanguage, ...constraints })
     });
     if (res.ok) {
       return await res.json();

@@ -17,6 +17,7 @@ import {
 import { ReadingRecord, VocabularyItem, RewritePracticeItem, ReadingTranslation } from '../types';
 import { WordDetailModal } from '../components/WordDetailModal';
 import { RewritePracticeCard } from '../components/RewritePracticeCard';
+import { ReadingVocabularyEditor } from '../components/ReadingVocabularyEditor';
 import { generateReadingPDF } from '../services/pdfGenerator';
 import {
   generateDialogueSpeech,
@@ -46,6 +47,7 @@ interface ReadingViewProps {
   wordbookVocabIds: Set<string>;
   onToggleWordbook: (vocab: VocabularyItem) => void;
   onUpdateReading?: (updatedReading: ReadingRecord) => void;
+  onUpdateVocabulary: (updatedReading: ReadingRecord) => Promise<void>;
   onRewrite: (mode: string, keepVocab: boolean) => void;
   onOpenHistory: () => void;
   isRewriting: boolean;
@@ -189,6 +191,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   wordbookVocabIds,
   onToggleWordbook,
   onUpdateReading,
+  onUpdateVocabulary,
   onRewrite,
   onOpenHistory,
   isRewriting,
@@ -199,6 +202,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isRewriteMenuOpen, setIsRewriteMenuOpen] = useState(false);
   const [keepVocab, setKeepVocab] = useState(true);
+  const translationRunRef = useRef(0);
+  const vocabularySignature = reading.selectedVocabulary.map(vocab => `${vocab.id}:${vocab.term}`).join('|');
 
   // Parse dialogue turns
   const dialogueTurns = parseDialogueTurns(reading.content);
@@ -573,6 +578,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     }
     setIsTranslating(true);
     setTranslationError(null);
+    const runId = ++translationRunRef.current;
     try {
       const result = await translateReading({
         text: reading.content,
@@ -590,14 +596,19 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           [lang]: result,
         },
       };
+      if (runId !== translationRunRef.current) return;
       onUpdateReading?.(updatedReading);
     } catch (err: any) {
       console.error('Translation failed:', err);
       setTranslationError(err?.message || '地道翻译生成失败，请点击重试');
     } finally {
-      setIsTranslating(false);
+      if (runId === translationRunRef.current) setIsTranslating(false);
     }
   };
+
+  useEffect(() => () => {
+    translationRunRef.current += 1;
+  }, [reading.id, reading.content, vocabularySignature]);
 
   // Automatically fetch translation when reading or language changes
   useEffect(() => {
@@ -1172,6 +1183,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           </div>
         </div>
 
+        <ReadingVocabularyEditor key={reading.id} reading={reading} targetLanguage={targetLanguage} onSave={onUpdateVocabulary} />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {reading.selectedVocabulary.map((vocab) => {
             const inWordbook = wordbookVocabIds.has(vocab.term.toLowerCase());

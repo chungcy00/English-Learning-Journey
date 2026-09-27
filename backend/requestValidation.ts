@@ -23,7 +23,7 @@ export function validateApiBody(body: unknown): string | null {
   for (const key of ['specifiedVocabulary', 'currentVocabulary']) {
     if (Array.isArray(data[key]) && data[key].some(item => typeof item !== 'string' || item.length > 160)) return '词条列表格式不正确';
   }
-  for (const key of ['keepVocabulary', 'keepCurrentVocabulary']) {
+  for (const key of ['keepVocabulary', 'keepCurrentVocabulary', 'requireInReading']) {
     if (data[key] !== undefined && typeof data[key] !== 'boolean') return '选项格式不正确';
   }
   const enums: Record<string, unknown[]> = {
