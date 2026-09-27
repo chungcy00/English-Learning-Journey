@@ -43,7 +43,6 @@ interface WordbookViewProps {
   onLanguageChange: (lang: string) => void;
   onBatchUpdateVocabularies: (updatedVocabs: VocabularyItem[]) => void;
   currentCefr: CEFRLevel;
-  onCefrChange: (level: CEFRLevel) => void;
   onSaveVocab: (vocab: VocabularyItem) => Promise<void>;
   onOpenReview: () => void;
 }
@@ -60,7 +59,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   onLanguageChange,
   onBatchUpdateVocabularies,
   currentCefr,
-  onCefrChange,
   onSaveVocab,
   onOpenReview,
 }) => {
@@ -344,7 +342,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                       {term}
                     </span>
                     <span className="block text-[11px] font-ui text-[#717265] truncate">
-                      {item ? `${vocabularyList.some(saved => saved.id === item.id) ? '已在生词本 · ' : ''}${getLocalizedVocabMeaning(item, targetLanguage)} · ${item.type}` : `点击后验证 ${currentReading?.cefrLevel || currentCefr}`}
+                      {item ? `${vocabularyList.some(saved => saved.id === item.id) ? '已在生词本 · ' : '当前精选 · '}${getLocalizedVocabMeaning(item, targetLanguage)} · ${item.type}` : ''}
                     </span>
                   </button>
                 ))}
@@ -447,20 +445,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
           <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-[#D4CCBC]/60">
             <div className="flex items-center gap-1.5 text-xs font-ui text-[#292B25]">
-              <span>CEFR:</span>
-              <select
-                value={currentCefr}
-                onChange={(e) => onCefrChange(e.target.value as CEFRLevel)}
-                className="px-2 py-1 text-xs bg-[#F2EEE4] border border-[#D4CCBC] rounded-xs"
-              >
-                <option value="A2">A2</option>
-                <option value="B1">B1</option>
-                <option value="B2">B2</option>
-                <option value="C1">C1</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-1.5 text-xs font-ui text-[#292B25]">
               <span>类型:</span>
               <select
                 value={readingType}
@@ -551,7 +535,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                         <button type="button" disabled={isAdding}
                           onClick={(e) => { e.stopPropagation(); void addToCurrentLevel(vocab); }}
                           className="text-xs font-ui border border-[#D4CCBC] rounded-sm px-2 py-1 disabled:opacity-50">
-                          {isVocabularyAtLevel(vocab, currentCefr, readingById) ? '加入今日复习' : `添加到 ${currentCefr}`}
+                          加入生词本
                         </button>
                       )}
                     </div>

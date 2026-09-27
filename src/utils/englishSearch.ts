@@ -81,12 +81,15 @@ export function containsEnglishExpression(text: string, term: string): boolean {
   return new RegExp(`(^|[^a-z'\\-])${escaped}(?=$|[^a-z'\\-])`, 'i').test(normalizeEnglishTerm(text));
 }
 
-export function readingTermSuggestions(content: string, selectedTerms: string[], query: string): string[] {
+export function readingTermSuggestions(content: string, confirmedTerms: string[], query: string): string[] {
   if (!isEnglishTermQuery(query)) return [];
-  // Never fabricate phrases by taking arbitrary adjacent n-grams. Whole known
-  // expressions plus an explicitly typed expression are validated before saving.
-  const candidates = [...selectedTerms, ...extractEnglishWords(content), ...(containsEnglishExpression(content, query) ? [query] : [])];
-  return [...new Set(candidates.map(normalizeEnglishTerm))]
+  // Suggestions are labels, so showing an unverified token beside the selected
+  // CEFR level would falsely imply that it already passed level validation.
+  // Unknown expressions can still be entered manually and are verified by the
+  // server before saving, but they must not appear in this confirmed list.
+  return [...new Set(confirmedTerms
+    .filter(term => containsEnglishExpression(content, term))
+    .map(normalizeEnglishTerm))]
     .filter(term => getEnglishTermMatchRank(term, query) !== null)
     .sort((a, b) => (getEnglishTermMatchRank(a, query)! - getEnglishTermMatchRank(b, query)!) || a.localeCompare(b, 'en'))
     .slice(0, 8);

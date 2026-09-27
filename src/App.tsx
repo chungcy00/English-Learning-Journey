@@ -403,7 +403,6 @@ export default function App() {
             onLanguageChange={handleLanguageChange}
             onBatchUpdateVocabularies={handleBatchUpdateVocabularies}
             currentCefr={settings.cefr}
-            onCefrChange={handleCefrChange}
             onSaveVocab={async (vocab) => {
               const existing = vocabularies.find(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(vocab.term));
               await saveVocabulary(existing ? {

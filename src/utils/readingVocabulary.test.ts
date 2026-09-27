@@ -32,14 +32,16 @@ test('reading sync replaces owned terms but preserves manual/shared words and re
   assert.equal(plan.upserts[0].status, 'Difficult');
   assert.equal(plan.upserts[0].meaningZh, '新语境释义');
 });
-test('search suggestions come from current reading without arbitrary phrase splitting', () => {
+test('search suggestions only expose confirmed CEFR terms from the current reading', () => {
   assert.equal(containsEnglishExpression('The weather is nice.', 'he'), false);
   assert.equal(containsEnglishExpression('They take a break.', 'take a break'), true);
   assert.equal(containsEnglishExpression('They take a break.', 'break the ice'), false);
   const results = readingTermSuggestions(reading.content, ['take a break'], 'break');
   assert.ok(results.includes('take a break'));
-  assert.ok(results.includes('break'));
+  assert.ok(!results.includes('break'));
   assert.ok(!results.includes('a break'));
   assert.deepEqual(readingTermSuggestions(reading.content, ['take a break'], 'genuine'), []);
   assert.ok(readingTermSuggestions('We can grab a coffee after work.', ['grab a coffee'], 'grab').includes('grab a coffee'));
+  assert.deepEqual(readingTermSuggestions('We will work well this week.', [], 'w'), []);
+  assert.deepEqual(readingTermSuggestions('We will work well this week.', ['wish'], 'w'), []);
 });

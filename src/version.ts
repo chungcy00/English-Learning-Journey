@@ -1,9 +1,9 @@
-export const APP_VERSION = 'V2.3.10';
+export const APP_VERSION = 'V2.3.11';
 
-export const VERSION_HISTORY_COUNT = 18;
+export const VERSION_HISTORY_COUNT = 19;
 
 export const CURRENT_RELEASE_NOTES = [
-  '阅读搜索输入时显示当前短文候选，支持键盘和点击选择',
-  '候选词保存前仍按原文语境与所选 CEFR 严格验证',
-  '生词本保留已收藏词条回显，复习页仅显示全部词条',
+  '阅读搜索只显示已确认且与当前短文等级一致的完整表达',
+  '未判级表达不再被预先标记为当前 CEFR，提交后才由服务端验证',
+  '生词本移除可见 CEFR 信息，保留词条类型与语境添加流程',
 ];
