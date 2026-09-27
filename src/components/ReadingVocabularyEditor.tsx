@@ -23,7 +23,10 @@ export const ReadingVocabularyEditor: React.FC<{
   useEffect(() => { setCandidate(null); setReplaceId(''); setError(''); setQuery(''); }, [reading.id, reading.content, reading.cefrLevel]);
 
   const selectedTerms = reading.selectedVocabulary
-    .filter(item => item.cefrLevel === reading.cefrLevel)
+    // Legacy selected entries may predate the per-item CEFR field. They were
+    // already validated as part of this reading, but an explicit mismatch is
+    // never allowed back into the current-level suggestions.
+    .filter(item => !item.cefrLevel || item.cefrLevel === reading.cefrLevel)
     .map(item => item.term);
   const confirmedSameLevelTerms = knownVocabulary
     .filter(item => containsEnglishExpression(reading.content, item.term) && item.cefrLevel === reading.cefrLevel)
