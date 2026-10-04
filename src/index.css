@@ -501,8 +501,27 @@ main {
 
 @media (max-width: 639px) {
   .app-header {
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    backdrop-filter: none;
+  }
+
+  .app-header nav {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 35;
+    height: calc(4.5rem + env(safe-area-inset-bottom));
+    padding: 0.5rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom));
+    background: #FAF7F2;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  main {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+
+  .review-shell {
+    --review-nav-offset: 4.5rem;
   }
 
   .app-header nav button {
@@ -671,6 +690,15 @@ main {
 .wordbook-detail-disclosure > summary { list-style: none; }
 .wordbook-detail-disclosure > summary::-webkit-details-marker { display: none; }
 .wordbook-detail-content { padding-top: 1.5rem; }
+.wordbook-accordion { min-width: 0; border-bottom: 1px solid var(--border-subtle); }
+.wordbook-accordion-heading { display: flex; align-items: center; gap: 0.25rem; }
+.wordbook-accordion-toggle { display: flex; align-items: center; gap: 0.75rem; width: 100%; min-height: 5rem; padding: 0.75rem 0.5rem; text-align: left; }
+.wordbook-accordion.is-expanded { background: #FAF7F2; border-radius: 12px; }
+.wordbook-accordion-content { padding: 0 1rem 1rem; overflow-wrap: anywhere; }
+.wordbook-accordion-content h2 { display: none; }
+.wordbook-accordion-content > div:first-child { margin-bottom: 1rem; padding-bottom: 0.5rem; }
+.wordbook-accordion-content > div:last-child { margin-top: 1rem; }
+.wordbook-accordion-status { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0 1rem 1rem; }
 .wordbook-selection-panel { border-radius: 12px; }
 .rewrite-practice-section { max-width: 68rem; margin-inline: auto; }
 .rewrite-practice-section > div:first-child h2 { font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.2; }
@@ -714,6 +742,23 @@ main {
   .rewrite-exercise-heading { grid-column: 1 / -1; grid-template-columns: 7rem minmax(0, 1fr); column-gap: 1.5rem; }
 }
 @media (max-width: 639px) {
+  .page-stack { margin-block: 1rem; }
+  .home-page__title h1 { font-size: clamp(1.875rem, 8vw, 2.25rem); }
+  .wordbook-heading-row { align-items: stretch; }
+  .wordbook-heading-row > div { width: 100%; }
+  .wordbook-heading-row > button { width: 100%; justify-content: center; }
+  .wordbook-search-tools { gap: 0.75rem; }
+  .wordbook-selection-panel select, .wordbook-selection-panel button { min-height: 44px; font-size: 1rem; }
+  .wordbook-selection-panel > div:last-child { align-items: stretch; }
+  .wordbook-selection-panel > div:last-child > button { width: 100%; margin-left: 0; justify-content: center; }
+  .reading-toolbar .reading-actions { justify-content: flex-start; gap: 0.5rem; }
+  .reading-panel { border-radius: 12px; }
+  .reading-panel .reading-prose { font-size: 1.25rem; line-height: 1.8; }
+  .review-flashcard { padding: 1.25rem; }
+  .review-flashcard > .space-y-4 > .flex:first-child { top: 0.75rem; right: 0.75rem; }
+  .review-flashcard > .space-y-4 > .text-center { padding: 2.5rem 0 0.5rem; }
+  .review-flashcard h2 { font-size: clamp(2rem, 9vw, 2.75rem); line-height: 1.15; }
+  .review-progress { flex-wrap: wrap; gap: 0.5rem; }
   .rewrite-exercise-heading { grid-template-columns: minmax(0, 1fr); }
   .rewrite-target-term { font-size: 1.75rem; }
   .rewrite-answer-controls { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }

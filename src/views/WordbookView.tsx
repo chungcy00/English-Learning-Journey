@@ -7,6 +7,7 @@ import {
   Trash2,
   Volume2,
   ChevronRight,
+  ChevronDown,
   Filter,
   Layers,
   Plus,
@@ -425,6 +426,39 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         ) : (
           filtered.map((vocab) => {
             const isSelected = selectedTerms.includes(vocab.term);
+            if (!isWideLayout) {
+              const expanded = detailVocab?.id === vocab.id;
+              const panelId = `wordbook-details-${vocab.id}`;
+              return (
+                <div key={vocab.id} role="listitem" className={`wordbook-accordion ${expanded ? 'is-expanded' : ''}`}>
+                  <div className="wordbook-accordion-heading">
+                    <label className="flex min-h-11 min-w-11 items-center justify-center cursor-pointer">
+                      <input type="checkbox" aria-label={`选择 ${vocab.term}`} checked={isSelected} onChange={() => toggleSelect(vocab.term)} className="h-4 w-4 accent-[#5F654D]" />
+                    </label>
+                    <h3 className="min-w-0 flex-1">
+                      <button type="button" id={`${panelId}-toggle`} aria-expanded={expanded} aria-controls={panelId} aria-label={`查看 ${vocab.term} 的词汇释义`} onClick={() => setDetailVocab(expanded ? null : vocab)} className="wordbook-accordion-toggle">
+                        <span className="min-w-0 flex-1">
+                          <span className="type-term font-editorial font-semibold text-[#5F654D] block break-words">{vocab.term}</span>
+                          <span className="type-meta font-ui italic text-[#555848]">{vocab.partOfSpeech} · {vocab.type}</span>
+                        </span>
+                        <span className="type-meta font-ui text-[#555848] shrink-0">{vocab.status}</span>
+                        <ChevronDown aria-hidden="true" className={`w-4 h-4 shrink-0 ${expanded ? 'rotate-180' : ''}`} />
+                      </button>
+                    </h3>
+                  </div>
+                  <div id={panelId} role="region" aria-labelledby={`${panelId}-toggle`} hidden={!expanded}>
+                    {expanded && <>
+                      <WordDetailModal vocab={vocab} isOpen embedded isInWordbook onClose={() => setDetailVocab(null)} onToggleWordbook={v => { onDeleteVocab(v.id); setDetailVocab(null); }} targetLanguage={targetLanguage} />
+                      <label className="wordbook-accordion-status type-label font-ui">学习状态
+                        <select aria-label={`${vocab.term} 的学习状态`} value={vocab.status} onChange={e => onUpdateStatus(vocab.id, e.target.value as VocabStatus)} className={`min-h-11 text-base px-3 rounded-sm border ${getStatusColor(vocab.status)}`}>
+                          {(['New', 'Learning', 'Difficult', 'Mastered'] as const).map(status => <option key={status}>{status}</option>)}
+                        </select>
+                      </label>
+                    </>}
+                  </div>
+                </div>
+              );
+            }
             return (
               <div
                 key={vocab.id}
@@ -502,7 +536,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
       </div>
 
       {/* Detail Modal */}
-      <WordDetailModal
+      {isWideLayout && <WordDetailModal
         vocab={vocabularyList.find(v => v.id === detailVocab?.id) || (isWideLayout ? filtered[0] : null)}
         isOpen={!!detailVocab || (isWideLayout && filtered.length > 0)}
         inline={isWideLayout}
@@ -514,7 +548,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
           setDetailVocab(null);
         }}
         targetLanguage={targetLanguage}
-      />
+      />}
       </div>
       {selectedTerms.length > 0 && (
         <div className="wordbook-selection-panel bg-[#E5DED0] border border-[#D4CCBC] rounded-sm p-4 space-y-3">

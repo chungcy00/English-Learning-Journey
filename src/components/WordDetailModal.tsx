@@ -19,6 +19,7 @@ interface WordDetailModalProps {
   currentTranslation?: ReadingTranslation;
   inline?: boolean;
   inlineExpanded?: boolean;
+  embedded?: boolean;
 }
 
 export const WordDetailModal: React.FC<WordDetailModalProps> = ({
@@ -31,8 +32,9 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
   currentTranslation,
   inline = false,
   inlineExpanded = false,
+  embedded = false,
 }) => {
-  const dialogRef = useModalDialog(isOpen && !!vocab && !inline);
+  const dialogRef = useModalDialog(isOpen && !!vocab && !inline && !embedded);
   if (!isOpen || !vocab) return null;
 
   const playPronunciation = () => {
@@ -69,7 +71,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
             </div>
           </div>
 
-          {!inline && <button
+          {!inline && !embedded && <button
             data-dialog-initial-focus
             aria-label="关闭词汇详情"
             onClick={onClose}
@@ -163,7 +165,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
             )}
           </button>
 
-          {!inline && <button
+          {!inline && !embedded && <button
             onClick={onClose}
             className="type-label min-h-11 px-4 py-2 font-ui text-[#555848] hover:text-[#292B25] hover:bg-[#E5DED0] rounded-sm transition-colors"
           >
@@ -172,6 +174,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
         </div>
     </>
   );
+  if (embedded) return <div className="wordbook-accordion-content">{content}</div>;
   return inline ? (
     <aside className="wordbook-detail-panel" aria-label="词条详情">
       <details key={vocab.id} open={inlineExpanded} className="wordbook-detail-disclosure group">

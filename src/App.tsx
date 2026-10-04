@@ -54,6 +54,9 @@ import {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('home');
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [activeTab]);
   const [currentReading, setCurrentReading] = useState<ReadingRecord | null>(null);
   // Prepare once when a passage is ready, independently of opening a search menu.
   useReadingExpressions(currentReading);
@@ -387,7 +390,7 @@ export default function App() {
 
   return (
     <div className={`min-h-screen flex flex-col bg-[#F2EEE4] text-[#292B25] selection:bg-[#62694D]/20 ${activeTab === 'review' ? 'review-shell' : ''}`}
-      style={{ '--review-nav-offset': isInstalledApp ? '4.5rem' : '0px' } as React.CSSProperties}>
+      style={{ '--review-nav-offset': isInstalledApp ? '4.5rem' : undefined } as React.CSSProperties}>
       {/* Web navigation; installed phone/tablet software uses the bottom tabs. */}
       {!isInstalledApp && (
         <Navbar

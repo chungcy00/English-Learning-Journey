@@ -27,6 +27,13 @@ test('selecting a desktop term can expand its native disclosure', () => {
   assert.match(panel, /<summary/);
 });
 
+test('mobile accordion details preserve learning content without opening a dialog', () => {
+  const html = renderToStaticMarkup(React.createElement(WordDetailModal, { vocab, isOpen: true, embedded: true, isInWordbook: true, onClose: () => {}, onToggleWordbook: () => {} }));
+  assert.match(html, /wordbook-accordion-content/);
+  assert.doesNotMatch(html, /<dialog|<aside|关闭词汇详情|data-dialog-initial-focus/);
+  for (const text of [vocab.definitionEn, vocab.example, vocab.collocations[0], '移出生词本']) assert.ok(html.includes(text));
+});
+
 test('workbook presents the target before the original and uses a multiline answer without revealing the reference', () => {
   const item = { id: 'workbook', originalSentence: 'She listened carefully.', target: 'undivided attention', referenceAnswer: 'She gave me her undivided attention.' } as RewritePracticeItem;
   const html = renderToStaticMarkup(React.createElement(RewritePracticeCard, { item, index: 0, cefrLevel: 'B1', targetLanguage: 'zh-CN' }));
