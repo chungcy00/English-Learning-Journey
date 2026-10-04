@@ -55,7 +55,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
   const getRatingBadgeStyle = (rating: string) => {
     switch (rating) {
       case 'Excellent':
-        return 'bg-[#73785E] text-[#F2EEE4]';
+        return 'bg-[#62694D] text-[#F2EEE4]';
       case 'Very Good':
         return 'bg-[#5F654D] text-[#F2EEE4]';
       case 'Good':
@@ -72,14 +72,14 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
       {/* Question Header */}
       <div className="flex items-start justify-between gap-4 mb-3">
         <div>
-          <span className="text-xs font-ui text-[#717265] uppercase tracking-wider block mb-1">
+          <span className="text-xs font-ui text-[#555848] uppercase tracking-wider block mb-1">
             {getI18nText(targetLanguage, 'exerciseLabel')} {index + 1}
           </span>
           <p className="font-editorial text-lg text-[#292B25] leading-snug">
             "{item.originalSentence}"
           </p>
           {localizedOriginalMeaning && (
-            <p className="font-ui text-xs text-[#717265] mt-1.5 italic">
+            <p className="font-ui text-xs text-[#555848] mt-1.5 italic">
               {localizedOriginalMeaning}
             </p>
           )}
@@ -104,12 +104,12 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
             onChange={(e) => setAnswer(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
             placeholder={`${getI18nText(targetLanguage, 'inputPlaceholder')} (e.g. "${item.target}")`}
-            className="flex-1 px-3 py-2 text-sm bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm focus:outline-none focus:border-[#73785E] font-editorial text-base text-[#292B25]"
+            className="flex-1 px-3 py-2 text-sm bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm focus:outline-none focus:border-[#62694D] font-editorial text-base text-[#292B25]"
           />
           <button
             onClick={handleCheck}
             disabled={!answer.trim() || loading}
-            className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#73785E] text-[#F2EEE4] text-xs font-medium font-ui rounded-sm hover:bg-[#73785E]/90 disabled:opacity-50 transition-colors shrink-0"
+            className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#62694D] text-[#F2EEE4] text-xs font-medium font-ui rounded-sm hover:bg-[#5F654D] disabled:opacity-50 transition-colors shrink-0"
           >
             {loading ? (
               <>
@@ -131,14 +131,14 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
         <div className="mt-3">
           <button 
             onClick={() => setShowAnswer(!showAnswer)}
-            className="text-[11px] text-[#717265] hover:text-[#5F654D] font-ui transition-colors uppercase tracking-widest"
+            className="text-[11px] text-[#555848] hover:text-[#5F654D] font-ui transition-colors uppercase tracking-widest"
           >
             {showAnswer ? 'Hide Answer' : 'Show Answer'}
           </button>
           
           {showAnswer && (
             <div className="mt-2 p-3 bg-[#F2EEE4] rounded-sm border border-[#D4CCBC] text-xs font-ui animate-in fade-in">
-              <span className="text-[11px] text-[#717265] block mb-1">
+              <span className="text-[11px] text-[#555848] block mb-1">
                 {getI18nText(targetLanguage, 'referenceAnswer')}:
               </span>
               <p className="font-editorial text-sm text-[#5F654D]">
@@ -155,7 +155,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
           {/* Rating Badge */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-ui text-[#717265]">AI Rating:</span>
+              <span className="text-xs font-ui text-[#555848]">AI Rating:</span>
               <span className={`px-2.5 py-0.5 text-xs font-ui font-semibold rounded-xs ${getRatingBadgeStyle(evaluation.rating)}`}>
                 {evaluation.rating}
               </span>
@@ -185,18 +185,18 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
           {/* What Needs Improvement (❌ original vs ✅ correction + explanation) */}
           {evaluation.issues && evaluation.issues.length > 0 && (
             <div className="bg-[#F2EEE4]/80 p-3 rounded-sm border border-[#D4CCBC]/60 space-y-2">
-              <span className="text-xs font-ui font-semibold text-[#B49379] block">
+              <span className="text-xs font-ui font-semibold text-[#77543D] block">
                 {getI18nText(targetLanguage, 'issuesToImprove')}:
               </span>
               {evaluation.issues.map((issue, idx) => (
                 <div key={idx} className="text-xs font-ui space-y-0.5">
                   <div className="flex items-center gap-3">
-                    <span className="text-[#9E6554]">❌ {issue.original}</span>
-                    <ArrowRight className="w-3 h-3 text-[#717265]" />
+                    <span className="text-[#854C3C]">❌ {issue.original}</span>
+                    <ArrowRight className="w-3 h-3 text-[#555848]" />
                     <span className="text-[#5F654D] font-medium">✅ {issue.correction}</span>
                   </div>
                   {issue.explanation && (
-                    <p className="text-[11px] text-[#717265] pl-1">
+                    <p className="text-[11px] text-[#555848] pl-1">
                       {issue.explanation}
                     </p>
                   )}
@@ -208,7 +208,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
           {/* Improved Version & Reference Answer */}
           <div className="grid sm:grid-cols-2 gap-3 text-xs font-ui">
             <div className="p-2.5 bg-[#F2EEE4] rounded-sm border border-[#D4CCBC]">
-              <span className="text-[11px] text-[#717265] block mb-0.5">
+              <span className="text-[11px] text-[#555848] block mb-0.5">
                 {getI18nText(targetLanguage, 'improvedVersion')}:
               </span>
               <p className="font-editorial text-sm text-[#292B25] italic">
@@ -217,7 +217,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
             </div>
 
             <div className="p-2.5 bg-[#F2EEE4] rounded-sm border border-[#D4CCBC]">
-              <span className="text-[11px] text-[#717265] block mb-0.5">
+              <span className="text-[11px] text-[#555848] block mb-0.5">
                 {getI18nText(targetLanguage, 'referenceAnswer')}:
               </span>
               <p className="font-editorial text-sm text-[#5F654D]">

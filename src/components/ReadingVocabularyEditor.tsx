@@ -80,7 +80,7 @@ export const ReadingVocabularyEditor: React.FC<{
         <option value="">已达 {limit} 项上限，请选择替换项</option>
         {reading.selectedVocabulary.map(v => <option key={v.id} value={v.id}>{v.term}</option>)}
       </select>}
-      <button onClick={save} disabled={busy || (full && !replaceId)} className="px-3 py-2 bg-[#73785E] text-white rounded-sm disabled:opacity-50">{full ? '替换并同步生词本' : '添加并同步生词本'}</button>
+      <button onClick={save} disabled={busy || (full && !replaceId)} className="px-3 py-2 bg-[#62694D] text-white rounded-sm disabled:opacity-50">{full ? '替换并同步生词本' : '添加并同步生词本'}</button>
     </div>}
     {error && <p role="alert" className="text-red-700">{error}</p>}
     {message && <p role="status" className="text-[#5F654D]">{message}</p>}

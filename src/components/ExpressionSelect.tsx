@@ -23,7 +23,7 @@ export function ExpressionSelect({ options, value, disabled, loading, onOpen, on
   }, [open, active, id]);
   const choose = (term: string) => { setOpen(false); trigger.current?.focus(); onChange(term); };
   const label = (option: ExpressionOption) => <>
-    <span>{option.term}</span> <span className="text-sm italic font-ui text-[#717265]">{option.type}</span>
+    <span>{option.term}</span> <span className="text-sm italic font-ui text-[#555848]">{option.type}</span>
     {option.selected && <span aria-label="已选"> ☑️</span>}
   </>;
   return <div ref={root} className="relative min-w-0 flex-1 basis-64" onBlur={event => {
@@ -50,8 +50,8 @@ export function ExpressionSelect({ options, value, disabled, loading, onOpen, on
     </button>
     {open && <div id={`${id}-list`} role="listbox" aria-labelledby={`${id}-label`}
       className="absolute top-full left-0 right-0 mt-1 z-30 max-h-72 overflow-y-auto border border-[#D4CCBC] rounded-sm bg-[#FAF7F2] shadow-lg">
-      {loading && <p role="status" className="p-3 text-sm text-[#717265]">正在识别短文中的表达…</p>}
-      {!loading && !options.length && <p className="p-3 text-sm text-[#717265]">暂无可选的同级表达</p>}
+      {loading && <p role="status" className="p-3 text-sm text-[#555848]">正在识别短文中的表达…</p>}
+      {!loading && !options.length && <p className="p-3 text-sm text-[#555848]">暂无可选的同级表达</p>}
       {options.map((option, index) => <button key={option.term} id={`${id}-${index}`} type="button"
         role="option" aria-selected={option.term === value} tabIndex={-1}
         onPointerMove={() => setActive(index)} onClick={() => choose(option.term)}

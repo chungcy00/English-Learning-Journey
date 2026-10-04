@@ -135,32 +135,32 @@ export const AppUpdateView: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
       <div className="pb-5 border-b border-[#D4CCBC]">
-        <div className="flex items-center gap-2 text-[#73785E] mb-2">
+        <div className="flex items-center gap-2 text-[#62694D] mb-2">
           <ShieldCheck className="w-5 h-5" />
           <span className="font-ui text-xs uppercase tracking-wider font-semibold">Installed App</span>
-          <span className="font-ui text-xs px-2 py-0.5 rounded-full bg-[#73785E]/15 text-[#5F654D] font-semibold">
+          <span className="font-ui text-xs px-2 py-0.5 rounded-full bg-[#62694D]/15 text-[#5F654D] font-semibold">
             {APP_VERSION}
           </span>
         </div>
         <h1 className="font-editorial text-3xl sm:text-4xl font-semibold text-[#292B25]">
           软件检测与更新
         </h1>
-        <p className="font-ui text-sm text-[#717265] mt-2">
+        <p className="font-ui text-sm text-[#555848] mt-2">
           此页面仅在 Android 安装版中显示。
         </p>
       </div>
 
       <div className="mt-7 bg-[#FAF7F2] border border-[#D4CCBC] rounded-sm p-6 shadow-sm">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-full bg-[#73785E]/15 flex items-center justify-center flex-shrink-0">
+          <div className="w-12 h-12 rounded-full bg-[#62694D]/15 flex items-center justify-center flex-shrink-0">
             <StatusIcon
               className={`w-6 h-6 text-[#5F654D] ${status === 'checking' || status === 'updating' ? 'animate-spin' : ''}`}
             />
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="font-ui text-base font-semibold text-[#292B25]">{statusContent.title}</h2>
-            <p className="font-ui text-sm text-[#717265] mt-1">{statusContent.detail}</p>
-            <p className="font-ui text-xs text-[#717265] mt-3 leading-relaxed">
+            <p className="font-ui text-sm text-[#555848] mt-1">{statusContent.detail}</p>
+            <p className="font-ui text-xs text-[#555848] mt-3 leading-relaxed">
               更新软件不会删除生词本、短文记录或复习进度。
             </p>
 
@@ -169,14 +169,14 @@ export const AppUpdateView: React.FC = () => {
                 <h3 className="font-ui text-sm font-semibold text-[#292B25]">
                   {APP_VERSION} 更新内容
                 </h3>
-                <span className="font-ui text-[10px] text-[#717265]">
+                <span className="font-ui text-[10px] text-[#555848]">
                   共 {VERSION_HISTORY_COUNT} 个版本
                 </span>
               </div>
               <ul className="mt-2 space-y-1.5">
                 {CURRENT_RELEASE_NOTES.map((note) => (
-                  <li key={note} className="font-ui text-xs leading-relaxed text-[#717265] flex gap-2">
-                    <span className="text-[#73785E]" aria-hidden="true">•</span>
+                  <li key={note} className="font-ui text-xs leading-relaxed text-[#555848] flex gap-2">
+                    <span className="text-[#62694D]" aria-hidden="true">•</span>
                     <span>{note}</span>
                   </li>
                 ))}
@@ -188,7 +188,7 @@ export const AppUpdateView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => void applyUpdate()}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#73785E] text-[#F2EEE4] rounded-sm text-sm font-ui font-medium"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#62694D] text-[#F2EEE4] rounded-sm text-sm font-ui font-medium"
                 >
                   <Download className="w-4 h-4" />
                   立即更新
@@ -198,7 +198,7 @@ export const AppUpdateView: React.FC = () => {
                   type="button"
                   onClick={() => void checkForUpdate()}
                   disabled={status === 'checking' || status === 'updating'}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#73785E] text-[#5F654D] rounded-sm text-sm font-ui font-medium disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#62694D] text-[#5F654D] rounded-sm text-sm font-ui font-medium disabled:opacity-50"
                 >
                   <RefreshCw className="w-4 h-4" />
                   {status === 'idle' ? '检查更新' : '重新检查'}

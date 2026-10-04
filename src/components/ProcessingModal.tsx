@@ -29,14 +29,14 @@ export const ProcessingModal: React.FC<ProcessingModalProps> = ({ isOpen, status
           className="w-full max-w-md bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm p-6 sm:p-8 shadow-md"
         >
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-8 h-8 rounded-full bg-[#E5DED0] flex items-center justify-center text-[#73785E]">
+            <div className="w-8 h-8 rounded-full bg-[#E5DED0] flex items-center justify-center text-[#62694D]">
               <Sparkles className="w-4 h-4 animate-spin-slow" />
             </div>
             <div>
               <h3 className="font-editorial text-lg font-semibold text-[#292B25]">
                 Humanise Reading Pipeline
               </h3>
-              <p className="text-xs text-[#717265] font-ui">
+              <p className="text-xs text-[#555848] font-ui">
                 Crafting natural contextual reading
               </p>
             </div>
@@ -51,9 +51,9 @@ export const ProcessingModal: React.FC<ProcessingModalProps> = ({ isOpen, status
                 <div key={step.text} className="flex items-start gap-3">
                   <div className="mt-0.5">
                     {isPast ? (
-                      <CheckCircle2 className="w-4 h-4 text-[#73785E]" />
+                      <CheckCircle2 className="w-4 h-4 text-[#62694D]" />
                     ) : isCurrent ? (
-                      <Loader2 className="w-4 h-4 text-[#B49379] animate-spin" />
+                      <Loader2 className="w-4 h-4 text-[#77543D] animate-spin" />
                     ) : (
                       <div className="w-4 h-4 rounded-full border border-[#D4CCBC]" />
                     )}
@@ -64,13 +64,13 @@ export const ProcessingModal: React.FC<ProcessingModalProps> = ({ isOpen, status
                         isCurrent
                           ? 'font-medium text-[#292B25]'
                           : isPast
-                          ? 'text-[#73785E]'
+                          ? 'text-[#62694D]'
                           : 'text-[#A5AA91]'
                       }`}
                     >
                       {step.text}
                     </p>
-                    <p className="text-[11px] text-[#717265]">
+                    <p className="text-[11px] text-[#555848]">
                       {step.label}
                     </p>
                   </div>
@@ -79,7 +79,7 @@ export const ProcessingModal: React.FC<ProcessingModalProps> = ({ isOpen, status
             })}
           </div>
 
-          <p className="text-xs text-center text-[#717265] font-ui italic">
+          <p className="text-xs text-center text-[#555848] font-ui italic">
             Automatic Humanise ensures natural rhythm and authentic vocabulary usage.
           </p>
         </motion.div>

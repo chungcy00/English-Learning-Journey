@@ -45,15 +45,15 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
                   ? 'text-[#292B25]'
                   : tab.disabled
                     ? 'text-[#A5AA91] opacity-45'
-                    : 'text-[#858679] active:bg-[#E5DED0]/70'
+                    : 'text-[#555848] active:bg-[#E5DED0]/70'
               }`}
             >
               <span className={`relative flex h-7 min-w-11 items-center justify-center rounded-full ${
-                isActive ? 'bg-[#73785E]/15' : ''
+                isActive ? 'bg-[#62694D]/15' : ''
               }`}>
                 <Icon className={`h-5 w-5 ${isActive ? 'stroke-[2.4]' : ''}`} />
                 {tab.badge !== undefined && tab.badge > 0 ? (
-                  <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-[#B49379] px-1 text-[9px] font-semibold leading-4 text-[#FAF7F2]">
+                  <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-[#B49379] px-1 text-[9px] font-semibold leading-4 text-[#292B25]">
                     {tab.badge > 99 ? '99+' : tab.badge}
                   </span>
                 ) : null}

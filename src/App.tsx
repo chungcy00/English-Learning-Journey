@@ -18,6 +18,7 @@ import { ReadingHistoryView } from './views/ReadingHistoryView';
 import { isAppleMobileDevice, isManualUpdateApp } from './utils/pwa';
 import { normalizeEnglishTerm } from './utils/englishSearch';
 import { useReadingExpressions } from './hooks/useReadingExpressions';
+import { WordbookRemovalDialog } from './components/WordbookRemovalDialog';
 
 import {
   ReadingRecord,
@@ -58,6 +59,7 @@ export default function App() {
   useReadingExpressions(currentReading);
   const [readings, setReadings] = useState<ReadingRecord[]>([]);
   const [vocabularies, setVocabularies] = useState<VocabularyItem[]>([]);
+  const [removalTarget, setRemovalTarget] = useState<VocabularyItem | null>(null);
   const [settings, setAppSettings] = useState<AppSettings>({
     cefr: 'B1',
     defaultReadingType: 'story',
@@ -257,7 +259,8 @@ export default function App() {
     );
 
     if (exists) {
-      await deleteVocabulary(exists.id);
+      setRemovalTarget(exists);
+      return;
     } else {
       await saveVocabulary({
         ...vocab,
@@ -272,10 +275,9 @@ export default function App() {
   };
 
   // 5. Delete Vocabulary from Wordbook
-  const handleDeleteVocab = async (id: string) => {
-    await deleteVocabulary(id);
-    const updated = await getAllVocabularies();
-    setVocabularies(updated);
+  const handleDeleteVocab = (id: string) => {
+    const target = vocabularies.find(item => item.id === id);
+    if (target) setRemovalTarget(target);
   };
 
   // 6. Update Vocabulary Status
@@ -356,7 +358,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F2EEE4] text-[#292B25] selection:bg-[#73785E]/20">
+    <div className="min-h-screen flex flex-col bg-[#F2EEE4] text-[#292B25] selection:bg-[#62694D]/20">
       {/* Web navigation; installed phone/tablet software uses the bottom tabs. */}
       {!isInstalledApp && (
         <Navbar
@@ -469,6 +471,13 @@ export default function App() {
       </main>
 
       {/* Pipeline Status Modal */}
+      {removalTarget && <WordbookRemovalDialog key={removalTarget.id} term={removalTarget.term}
+        onCancel={() => setRemovalTarget(null)} onConfirm={async () => {
+          await deleteVocabulary(removalTarget.id);
+          setVocabularies(await getAllVocabularies());
+          setRemovalTarget(null);
+        }} />}
+
       <ProcessingModal
         isOpen={isGenerating || isRewriting}
         status={processingStatus}

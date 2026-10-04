@@ -148,13 +148,13 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
             <h2 className="font-editorial text-2xl font-semibold text-[#292B25]">
               调整重点词汇 (Edit Vocabulary)
             </h2>
-            <p className="text-xs text-[#717265] font-ui">
+            <p className="text-xs text-[#555848] font-ui">
               添加或移除重点学习词汇，正文高亮与复习将同步更新
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-sm text-[#717265] hover:text-[#292B25] hover:bg-[#E5DED0]"
+            className="p-1 rounded-sm text-[#555848] hover:text-[#292B25] hover:bg-[#E5DED0]"
           >
             <X className="w-5 h-5" />
           </button>
@@ -204,7 +204,7 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
               role="combobox"
               aria-expanded={isSuggestionOpen && readingSuggestions.length > 0}
               aria-autocomplete="list"
-              className="w-full px-3 py-2 text-sm bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm focus:outline-none focus:border-[#73785E] font-ui text-[#292B25]"
+              className="w-full px-3 py-2 text-sm bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm focus:outline-none focus:border-[#62694D] font-ui text-[#292B25]"
             />
 
             {isSuggestionOpen && readingSuggestions.length > 0 && (
@@ -212,7 +212,7 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
                 role="listbox"
                 className="absolute z-30 left-0 right-0 top-full mt-1 max-h-56 overflow-y-auto bg-[#FAF7F2] border border-[#D4CCBC] rounded-sm shadow-lg"
               >
-                <p className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider text-[#717265] font-ui">
+                <p className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider text-[#555848] font-ui">
                   来自当前短文
                 </p>
                 {readingSuggestions.map((suggestion, index) => (
@@ -234,7 +234,7 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
                     }`}
                   >
                     <span className="font-editorial text-base font-semibold">{suggestion}</span>
-                    <span className="ml-2 text-[10px] font-ui text-[#717265]">
+                    <span className="ml-2 text-[10px] font-ui text-[#555848]">
                       {suggestion.includes(' ') ? '短语' : '单词'}
                     </span>
                   </button>
@@ -245,7 +245,7 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
           <button
             onClick={handleAddNewTerm}
             disabled={!newTerm.trim() || isLookingUp}
-            className="flex items-center gap-1 px-3.5 py-2 bg-[#73785E] text-[#F2EEE4] text-xs font-medium font-ui rounded-sm hover:bg-[#73785E]/90 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1 px-3.5 py-2 bg-[#62694D] text-[#F2EEE4] text-xs font-medium font-ui rounded-sm hover:bg-[#5F654D] disabled:opacity-50 transition-colors"
           >
             {isLookingUp ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -258,12 +258,12 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
 
         {/* Current List */}
         <div className="flex-1 overflow-y-auto py-3 space-y-2">
-          <p className="text-xs uppercase tracking-wider text-[#717265] font-ui mb-2">
+          <p className="text-xs uppercase tracking-wider text-[#555848] font-ui mb-2">
             当前词汇 ({list.length})
           </p>
 
           {list.length === 0 ? (
-            <p className="text-sm text-[#A5AA91] font-ui italic py-4 text-center">
+            <p className="text-sm text-[#555848] font-ui italic py-4 text-center">
               暂无词汇，请在上方添加
             </p>
           ) : (
@@ -277,18 +277,18 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
                     <span className="font-editorial text-base font-semibold text-[#5F654D]">
                       {vocab.term}
                     </span>
-                    <span className="text-xs text-[#717265] font-ui">
+                    <span className="text-xs text-[#555848] font-ui">
                       {vocab.partOfSpeech}
                     </span>
                   </div>
-                  <p className="text-xs text-[#717265] font-ui mt-0.5">
+                  <p className="text-xs text-[#555848] font-ui mt-0.5">
                     {getLocalizedVocabMeaning(vocab, targetLanguage)}
                   </p>
                 </div>
                 <button
                   onClick={() => handleRemove(vocab.id)}
                   title="移除词汇"
-                  className="p-1.5 text-[#717265] hover:text-[#B49379] hover:bg-[#E5DED0] rounded-sm transition-colors"
+                  className="p-1.5 text-[#555848] hover:text-[#77543D] hover:bg-[#E5DED0] rounded-sm transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -301,13 +301,13 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
         <div className="pt-4 border-t border-[#D4CCBC] flex items-center justify-end gap-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-ui text-[#717265] hover:text-[#292B25] hover:bg-[#E5DED0] rounded-sm"
+            className="px-4 py-2 text-xs font-ui text-[#555848] hover:text-[#292B25] hover:bg-[#E5DED0] rounded-sm"
           >
             取消
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-[#73785E] text-[#F2EEE4] text-xs font-medium font-ui rounded-sm hover:bg-[#73785E]/90 transition-colors"
+            className="px-4 py-2 bg-[#62694D] text-[#F2EEE4] text-xs font-medium font-ui rounded-sm hover:bg-[#5F654D] transition-colors"
           >
             保存并同步
           </button>

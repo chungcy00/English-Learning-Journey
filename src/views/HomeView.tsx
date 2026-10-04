@@ -81,18 +81,19 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
       {/* Main Input Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm p-3 sm:p-4 shadow-sm focus-within:border-[#73785E] focus-within:ring-1 focus-within:ring-[#73785E]/30 transition-all">
+        <div className="bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm p-3 sm:p-4 shadow-sm focus-within:border-[#62694D] focus-within:ring-1 focus-within:ring-[#62694D]/30 transition-all">
           <textarea
+            aria-label="学习主题或英文词汇"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             rows={3}
             placeholder="输入英文单词 (如 genuine)、词组 (undivided attention)、多个生词 (genuine, considerate, rooted)、中文主题 (雨天里的小惊喜) 或任意学习想法..."
-            className="w-full bg-transparent resize-none border-none outline-none font-editorial text-lg sm:text-xl text-[#292B25] placeholder:text-[#A5AA91] placeholder:font-ui placeholder:text-sm leading-relaxed"
+            className="w-full bg-transparent resize-none border-none outline-none font-editorial text-lg sm:text-xl text-[#292B25] placeholder:text-[#646657] placeholder:font-ui placeholder:text-sm leading-relaxed"
           />
 
           <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#D4CCBC]/60">
             {/* Suggestion Chips */}
-            <div className="flex flex-wrap items-center gap-1.5 text-xs text-[#717265] font-ui">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-[#555848] font-ui">
               <span className="hidden sm:inline">灵感:</span>
               {quickPrompts.slice(0, 3).map((prompt, idx) => (
                 <button
@@ -109,7 +110,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="ml-auto flex items-center gap-2 px-5 py-2.5 bg-[#73785E] text-[#F2EEE4] font-ui text-sm font-medium rounded-sm hover:bg-[#73785E]/90 disabled:opacity-50 transition-all shadow-xs"
+              className="ml-auto flex items-center gap-2 px-5 py-2.5 bg-[#62694D] text-[#F2EEE4] font-ui text-sm font-medium rounded-sm hover:bg-[#5F654D] disabled:opacity-50 transition-all shadow-xs"
             >
               <Sparkles className="w-4 h-4" />
               <span>Generate Reading</span>
@@ -120,7 +121,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         {/* Reading Generation Settings (PRD Section 10) */}
         <div className="bg-[#E5DED0]/30 border border-[#D4CCBC] rounded-sm p-5 space-y-5">
           <div className="flex items-center border-b border-[#D4CCBC]/60 pb-2.5">
-            <span className="font-ui text-xs uppercase tracking-wider text-[#717265] font-semibold">
+            <span className="font-ui text-xs uppercase tracking-wider text-[#555848] font-semibold">
               短文定制参数 (Generation Settings)
             </span>
           </div>
@@ -136,14 +137,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <button
                     key={level}
                     type="button"
+                    aria-pressed={cefr === level}
                     onClick={() => {
                       setCefr(level);
                       onCefrChange?.(level);
                     }}
                     className={`py-1.5 text-xs font-ui font-semibold rounded-xs border transition-colors ${
                       cefr === level
-                        ? 'bg-[#73785E] text-[#F2EEE4] border-[#73785E]'
-                        : 'bg-[#F2EEE4] text-[#717265] border-[#D4CCBC] hover:bg-[#E5DED0]'
+                        ? 'bg-[#62694D] text-[#F2EEE4] border-[#62694D]'
+                        : 'bg-[#F2EEE4] text-[#555848] border-[#D4CCBC] hover:bg-[#E5DED0]'
                     }`}
                   >
                     {level}
@@ -154,13 +156,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
             {/* Reading Type */}
             <div>
-              <label className="text-xs font-ui font-medium text-[#292B25] block mb-1.5">
+              <label htmlFor="reading-type" className="text-xs font-ui font-medium text-[#292B25] block mb-1.5">
                 文体类型 (Type)
               </label>
               <select
+                id="reading-type"
                 value={type}
                 onChange={(e) => setType(e.target.value as ReadingType)}
-                className="w-full px-2.5 py-1.5 text-xs bg-[#F2EEE4] border border-[#D4CCBC] rounded-xs font-ui text-[#292B25] focus:outline-none focus:border-[#73785E]"
+                className="w-full px-2.5 py-1.5 text-xs bg-[#F2EEE4] border border-[#D4CCBC] rounded-xs font-ui text-[#292B25] focus:outline-none focus:border-[#62694D]"
               >
                 <option value="story">Story (故事叙述)</option>
                 <option value="non-story">Non-story (说明/生活见解)</option>
@@ -171,13 +174,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
             {/* Length */}
             <div>
-              <label className="text-xs font-ui font-medium text-[#292B25] block mb-1.5">
+              <label htmlFor="reading-length" className="text-xs font-ui font-medium text-[#292B25] block mb-1.5">
                 短文篇幅 (Length)
               </label>
               <select
+                id="reading-length"
                 value={length}
                 onChange={(e) => setLength(e.target.value as ReadingLength)}
-                className="w-full px-2.5 py-1.5 text-xs bg-[#F2EEE4] border border-[#D4CCBC] rounded-xs font-ui text-[#292B25] focus:outline-none focus:border-[#73785E]"
+                className="w-full px-2.5 py-1.5 text-xs bg-[#F2EEE4] border border-[#D4CCBC] rounded-xs font-ui text-[#292B25] focus:outline-none focus:border-[#62694D]"
               >
                 <option value="short">Short (80–120 words)</option>
                 <option value="medium">Medium (150–200 words)</option>
@@ -195,11 +199,12 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <button
                     key={count}
                     type="button"
+                    aria-pressed={vocabCount === count}
                     onClick={() => setVocabCount(count)}
                     className={`py-1.5 text-xs font-ui font-medium rounded-xs border transition-colors ${
                       vocabCount === count
                         ? 'bg-[#5F654D] text-[#F2EEE4] border-[#5F654D]'
-                        : 'bg-[#F2EEE4] text-[#717265] border-[#D4CCBC] hover:bg-[#E5DED0]'
+                        : 'bg-[#F2EEE4] text-[#555848] border-[#D4CCBC] hover:bg-[#E5DED0]'
                     }`}
                   >
                     {count}
@@ -223,24 +228,24 @@ export const HomeView: React.FC<HomeViewProps> = ({
       <div className="mt-12 pt-8 border-t border-[#D4CCBC]/50">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           <div className="p-3 bg-[#F2EEE4] rounded-sm border border-[#D4CCBC]/60">
-            <span className="font-editorial text-lg text-[#73785E] block font-semibold">01</span>
+            <span className="font-editorial text-lg text-[#62694D] block font-semibold">01</span>
             <span className="font-ui text-xs text-[#292B25] font-medium block mt-0.5">情境生成</span>
-            <span className="font-ui text-[11px] text-[#717265] block mt-0.5">自然叙述与对话</span>
+            <span className="font-ui text-[11px] text-[#555848] block mt-0.5">自然叙述与对话</span>
           </div>
           <div className="p-3 bg-[#F2EEE4] rounded-sm border border-[#D4CCBC]/60">
-            <span className="font-editorial text-lg text-[#73785E] block font-semibold">02</span>
+            <span className="font-editorial text-lg text-[#62694D] block font-semibold">02</span>
             <span className="font-ui text-xs text-[#292B25] font-medium block mt-0.5">自动 Humanise</span>
-            <span className="font-ui text-[11px] text-[#717265] block mt-0.5">祛除模板感长短句</span>
+            <span className="font-ui text-[11px] text-[#555848] block mt-0.5">祛除模板感长短句</span>
           </div>
           <div className="p-3 bg-[#F2EEE4] rounded-sm border border-[#D4CCBC]/60">
-            <span className="font-editorial text-lg text-[#73785E] block font-semibold">03</span>
+            <span className="font-editorial text-lg text-[#62694D] block font-semibold">03</span>
             <span className="font-ui text-xs text-[#292B25] font-medium block mt-0.5">生词与改写</span>
-            <span className="font-ui text-[11px] text-[#717265] block mt-0.5">语境记忆与AI反馈</span>
+            <span className="font-ui text-[11px] text-[#555848] block mt-0.5">语境记忆与AI反馈</span>
           </div>
           <div className="p-3 bg-[#F2EEE4] rounded-sm border border-[#D4CCBC]/60">
-            <span className="font-editorial text-lg text-[#73785E] block font-semibold">04</span>
+            <span className="font-editorial text-lg text-[#62694D] block font-semibold">04</span>
             <span className="font-ui text-xs text-[#292B25] font-medium block mt-0.5">A4 导出打印</span>
-            <span className="font-ui text-[11px] text-[#717265] block mt-0.5">学习册随身练习</span>
+            <span className="font-ui text-[11px] text-[#555848] block mt-0.5">学习册随身练习</span>
           </div>
         </div>
       </div>

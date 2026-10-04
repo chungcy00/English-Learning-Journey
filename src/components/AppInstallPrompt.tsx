@@ -75,13 +75,13 @@ export const AppInstallPrompt: React.FC = () => {
     <div
       role="dialog"
       aria-label="安装 Mine English 软件"
-      className="fixed z-50 left-4 right-4 bottom-4 sm:left-auto sm:right-6 sm:w-[25rem] bg-[#FAF7F2] border border-[#73785E]/40 rounded-sm shadow-xl p-4 font-ui"
+      className="fixed z-50 left-4 right-4 bottom-4 sm:left-auto sm:right-6 sm:w-[25rem] bg-[#FAF7F2] border border-[#62694D]/40 rounded-sm shadow-xl p-4 font-ui"
     >
       <div className="flex items-start gap-3">
         <img src="/site-icon.png" alt="" className="w-12 h-12 object-contain flex-shrink-0" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-[#292B25]">安装 Mine English 软件</p>
-          <p className="text-xs text-[#717265] mt-1 leading-relaxed">
+          <p className="text-xs text-[#555848] mt-1 leading-relaxed">
             添加到手机或平板主屏幕，之后可以像普通软件一样打开。
           </p>
 
@@ -89,7 +89,7 @@ export const AppInstallPrompt: React.FC = () => {
             <button
               type="button"
               onClick={() => void install()}
-              className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#73785E] text-[#F2EEE4] rounded-sm text-xs font-medium"
+              className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#62694D] text-[#F2EEE4] rounded-sm text-xs font-medium"
             >
               <Download className="w-3.5 h-3.5" />
               安装软件
@@ -109,7 +109,7 @@ export const AppInstallPrompt: React.FC = () => {
           type="button"
           onClick={dismiss}
           aria-label="关闭安装提示"
-          className="text-[#717265] hover:text-[#292B25]"
+          className="text-[#555848] hover:text-[#292B25]"
         >
           <X className="w-4 h-4" />
         </button>

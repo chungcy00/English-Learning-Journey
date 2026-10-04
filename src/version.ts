@@ -1,8 +1,8 @@
-export const APP_VERSION = 'V2.4.3';
+export const APP_VERSION = 'V2.4.4';
 
-export const VERSION_HISTORY_COUNT = 23;
+export const VERSION_HISTORY_COUNT = 24;
 
 export const CURRENT_RELEASE_NOTES = [
-  '短文词条提前准备，并在本机保存，刷新后无需重复分析',
-  '精简词条分析结果，阅读与生词本共享缓存，改写后自动更新',
+  '改善导航、词条详情和表单的键盘操作与无障碍标记',
+  '提升文字与按钮对比度，移出生词本前增加确认保护',
 ];

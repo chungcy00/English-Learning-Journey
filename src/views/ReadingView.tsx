@@ -182,7 +182,7 @@ function parseDialogueTurns(text: string, knownSpeakers: string[] = []): Dialogu
 
 const SPEAKER_STYLES = [
   { bg: 'bg-[#5F654D]', text: 'text-[#FAF7F2]', border: 'border-[#5F654D]/30', label: 'text-[#5F654D]' },
-  { bg: 'bg-[#8C6D4F]', text: 'text-[#FAF7F2]', border: 'border-[#8C6D4F]/30', label: 'text-[#8C6D4F]' },
+  { bg: 'bg-[#77543D]', text: 'text-[#FAF7F2]', border: 'border-[#77543D]/30', label: 'text-[#77543D]' },
   { bg: 'bg-[#4B6B6E]', text: 'text-[#FAF7F2]', border: 'border-[#4B6B6E]/30', label: 'text-[#4B6B6E]' },
   { bg: 'bg-[#7A5868]', text: 'text-[#FAF7F2]', border: 'border-[#7A5868]/30', label: 'text-[#7A5868]' },
 ];
@@ -692,14 +692,15 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       const isMatch = vocabTerms.some(t => t.toLowerCase() === part.toLowerCase());
       if (isMatch) {
         return (
-          <span
+          <button
             key={idx}
+            type="button"
             onClick={() => handleTermClick(part)}
             className="vocab-highlight"
-            title="点击查看词汇释义"
+            aria-label={`查看 ${part} 的词汇释义`}
           >
             {part}
-          </span>
+          </button>
         );
       }
       return <React.Fragment key={idx}>{part}</React.Fragment>;
@@ -725,7 +726,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             return (
               <div
                 key={tIdx}
-                className="italic font-editorial text-sm sm:text-base text-[#717265] bg-[#E5DED0]/40 border-l-2 border-[#73785E] px-4 py-2.5 rounded-xs my-2"
+                className="italic font-editorial text-sm sm:text-base text-[#555848] bg-[#E5DED0]/40 border-l-2 border-[#62694D] px-4 py-2.5 rounded-xs my-2"
               >
                 {turn.speaker ? (
                   <span className="not-italic font-ui font-semibold text-xs text-[#5F654D] uppercase tracking-wider block mb-1">
@@ -746,7 +747,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
               key={tIdx}
               className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-sm bg-[#FAF7F2]/80 hover:bg-[#FAF7F2] border transition-all ${
                 isSpeaking && activeSpeechTurn === tIdx
-                  ? 'border-[#73785E] ring-2 ring-[#73785E]/20 shadow-sm'
+                  ? 'border-[#62694D] ring-2 ring-[#62694D]/20 shadow-sm'
                   : 'border-[#D4CCBC]/50'
               }`}
             >
@@ -810,7 +811,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             return (
               <div
                 key={tIdx}
-                className="italic font-editorial text-sm sm:text-base text-[#717265] bg-[#E5DED0]/40 border-l-2 border-[#73785E] px-4 py-2.5 rounded-xs my-2"
+                className="italic font-editorial text-sm sm:text-base text-[#555848] bg-[#E5DED0]/40 border-l-2 border-[#62694D] px-4 py-2.5 rounded-xs my-2"
               >
                 {turn.speaker ? (
                   <span className="not-italic font-ui font-semibold text-xs text-[#5F654D] uppercase tracking-wider block mb-1">
@@ -938,10 +939,10 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       {/* Top Controls Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#D4CCBC]">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-ui font-semibold px-2 py-0.5 bg-[#E5DED0] text-[#717265] rounded-xs uppercase">
+          <span className="text-xs font-ui font-semibold px-2 py-0.5 bg-[#E5DED0] text-[#555848] rounded-xs uppercase">
             {reading.cefrLevel}
           </span>
-          <span className="text-xs text-[#717265] font-ui capitalize">
+          <span className="text-xs text-[#555848] font-ui capitalize">
             {reading.readingType}
           </span>
 
@@ -955,7 +956,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             <button
               onClick={() => setIsRewriteMenuOpen(!isRewriteMenuOpen)}
               disabled={isRewriting}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F2EEE4] text-[#717265] hover:text-[#292B25] hover:bg-[#E5DED0] border border-[#D4CCBC] text-xs font-ui rounded-sm transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F2EEE4] text-[#555848] hover:text-[#292B25] hover:bg-[#E5DED0] border border-[#D4CCBC] text-xs font-ui rounded-sm transition-colors"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRewriting ? 'animate-spin' : ''}`} />
               <span>Rewrite</span>
@@ -970,7 +971,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                       type="checkbox"
                       checked={keepVocab}
                       onChange={(e) => setKeepVocab(e.target.checked)}
-                      className="rounded-xs text-[#73785E]"
+                      className="rounded-xs text-[#62694D]"
                     />
                     <span>保留当前生词 (Keep Vocab)</span>
                   </label>
@@ -997,7 +998,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           <button
             onClick={handleDownloadPDF}
             disabled={isExportingPdf}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#73785E] text-[#F2EEE4] hover:bg-[#73785E]/90 text-xs font-ui rounded-sm transition-colors shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#62694D] text-[#F2EEE4] hover:bg-[#5F654D] text-xs font-ui rounded-sm transition-colors shadow-xs"
           >
             <Download className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{isExportingPdf ? '正在导出…' : 'Generate PDF'}</span>
@@ -1008,7 +1009,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           <button
             onClick={onOpenHistory}
             title="查看历史短文"
-            className="p-1.5 text-[#717265] hover:text-[#292B25] hover:bg-[#E5DED0] border border-[#D4CCBC] rounded-sm transition-colors"
+            className="p-1.5 text-[#555848] hover:text-[#292B25] hover:bg-[#E5DED0] border border-[#D4CCBC] rounded-sm transition-colors"
           >
             <History className="w-4 h-4" />
           </button>
@@ -1039,7 +1040,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                       className={`flex items-center gap-1 px-2.5 py-1 rounded-xs transition-colors ${
                         formatMode === 'dialogue'
                           ? 'bg-[#F2EEE4] text-[#292B25] font-semibold shadow-xs'
-                          : 'text-[#717265] hover:text-[#292B25]'
+                          : 'text-[#555848] hover:text-[#292B25]'
                       }`}
                     >
                       <MessageSquare className="w-3.5 h-3.5" />
@@ -1051,7 +1052,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                       className={`flex items-center gap-1 px-2.5 py-1 rounded-xs transition-colors ${
                         formatMode === 'paragraph'
                           ? 'bg-[#F2EEE4] text-[#292B25] font-semibold shadow-xs'
-                          : 'text-[#717265] hover:text-[#292B25]'
+                          : 'text-[#555848] hover:text-[#292B25]'
                       }`}
                     >
                       <AlignLeft className="w-3.5 h-3.5" />
@@ -1095,7 +1096,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-[#717265] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <ChevronDown className="w-3.5 h-3.5 text-[#555848] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
 
                 {/* Regenerate Button */}
@@ -1104,7 +1105,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   onClick={() => fetchTranslation(targetLanguage, true)}
                   disabled={isTranslating}
                   title="重新按母语习惯润色翻译"
-                  className="p-1.5 text-[#717265] hover:text-[#292B25] hover:bg-[#E5DED0] border border-[#D4CCBC] rounded-sm transition-colors disabled:opacity-50"
+                  className="p-1.5 text-[#555848] hover:text-[#292B25] hover:bg-[#E5DED0] border border-[#D4CCBC] rounded-sm transition-colors disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isTranslating ? 'animate-spin' : ''}`} />
                 </button>
@@ -1115,7 +1116,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   onClick={handleCopyTranslation}
                   disabled={!currentTranslation || isTranslating}
                   title="复制地道译文"
-                  className="p-1.5 text-[#717265] hover:text-[#292B25] hover:bg-[#E5DED0] border border-[#D4CCBC] rounded-sm transition-colors disabled:opacity-50"
+                  className="p-1.5 text-[#555848] hover:text-[#292B25] hover:bg-[#E5DED0] border border-[#D4CCBC] rounded-sm transition-colors disabled:opacity-50"
                 >
                   {copiedTranslation ? (
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -1136,7 +1137,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   <h4 className="font-editorial text-base font-semibold text-[#292B25]">
                     正在生成地道母语译文...
                   </h4>
-                  <p className="text-xs font-ui text-[#717265] mt-1.5 max-w-xs mx-auto leading-relaxed">
+                  <p className="text-xs font-ui text-[#555848] mt-1.5 max-w-xs mx-auto leading-relaxed">
                     AI 正在根据母语说话习惯与情境语感进行 Humanise 润色，确保译文自然地道，消除机械直译痕迹。
                   </p>
                 </div>
@@ -1156,7 +1157,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   ? renderTranslatedDialogue(currentTranslation.translatedContent)
                   : renderTranslatedParagraphs(currentTranslation.translatedContent)
               ) : (
-                <div className="py-16 text-center text-xs font-ui text-[#717265]">
+                <div className="py-16 text-center text-xs font-ui text-[#555848]">
                   暂无翻译，请点击刷新生成
                 </div>
               )}
@@ -1179,7 +1180,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 </span>
               )}
             </div>
-            <p className="text-xs font-ui text-[#717265]">
+            <p className="text-xs font-ui text-[#555848]">
               {getI18nText(targetLanguage, 'vocabSectionSub')}
             </p>
           </div>
@@ -1203,26 +1204,27 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
               >
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-editorial text-lg font-semibold text-[#5F654D] group-hover:text-[#292B25] transition-colors">
+                    <button type="button" aria-haspopup="dialog" aria-label={`查看 ${vocab.term} 的词汇释义`} onClick={(e) => { e.stopPropagation(); setSelectedVocab(vocab); setIsDetailOpen(true); }} className="font-editorial text-lg font-semibold text-[#5F654D] group-hover:text-[#292B25] transition-colors min-h-11 text-left">
                       {vocab.term}
-                    </span>
+                    </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         onToggleWordbook(vocab);
                       }}
-                      title={inWordbook ? getI18nText(targetLanguage, 'inWordbook') : getI18nText(targetLanguage, 'addToWordbook')}
-                      className={`p-1 rounded-xs transition-colors ${
+                      title={inWordbook ? '移出生词本' : getI18nText(targetLanguage, 'addToWordbook')}
+                      aria-label={`${inWordbook ? '移出生词本' : '加入生词本'}：${vocab.term}`}
+                      className={`min-h-11 min-w-11 flex items-center justify-center p-2 rounded-xs transition-colors ${
                         inWordbook
-                          ? 'text-[#5F654D] bg-[#73785E]/10'
-                          : 'text-[#A5AA91] hover:text-[#73785E]'
+                          ? 'text-[#5F654D] bg-[#62694D]/10'
+                          : 'text-[#A5AA91] hover:text-[#62694D]'
                       }`}
                     >
                       <Bookmark className="w-4 h-4" />
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-2 text-xs text-[#717265] font-ui mb-2">
+                  <div className="flex items-center gap-2 text-xs text-[#555848] font-ui mb-2">
                     {vocab.phonetic && <span>{vocab.phonetic}</span>}
                     <span>•</span>
                     <span className="italic">{vocab.partOfSpeech}</span>
@@ -1232,11 +1234,11 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                     {localizedMeaning}
                   </p>
 
-                  <p className="font-editorial text-base sm:text-lg leading-relaxed text-[#717265] line-clamp-2 italic">
+                  <p className="font-editorial text-base sm:text-lg leading-relaxed text-[#555848] line-clamp-2 italic">
                     "{vocab.example}"
                   </p>
                   {localizedExample && (
-                    <p className="font-ui text-xs text-[#717265]/85 line-clamp-1 mt-0.5">
+                    <p className="font-ui text-xs text-[#555848] line-clamp-1 mt-0.5">
                       {localizedExample}
                     </p>
                   )}
@@ -1254,7 +1256,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             <h2 className="font-editorial text-xl sm:text-2xl font-semibold text-[#292B25]">
               {getI18nText(targetLanguage, 'rewriteSectionTitle')}
             </h2>
-            <p className="text-xs font-ui text-[#717265]">
+            <p className="text-xs font-ui text-[#555848]">
               {getI18nText(targetLanguage, 'rewriteSectionSub')}
             </p>
           </div>

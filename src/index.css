@@ -5,8 +5,8 @@
     --bg-primary: #F2EEE4;
     --bg-alt: #E5DED0;
     --text-primary: #292B25;
-    --text-secondary: #717265;
-    --accent-primary: #73785E;
+    --text-secondary: #555848;
+    --accent-primary: #62694D;
     --accent-vocab: #5F654D;
     --accent-secondary: #A5AA91;
     --accent-warm: #B49379;
@@ -35,11 +35,33 @@ button, input, select, textarea, option {
   font-family: var(--font-app);
 }
 
+input::placeholder, textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
+:is(button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent-vocab);
+  outline-offset: 3px;
+}
+
+.word-detail-dialog::backdrop {
+  background: rgb(41 43 37 / 40%);
+  backdrop-filter: blur(2px);
+}
+
+button.vocab-highlight {
+  font: inherit;
+  line-height: inherit;
+  display: inline;
+  text-align: inherit;
+}
+
 /* Vocabulary highlight specific style as required in PRD #14 */
 .vocab-highlight {
   color: #5F654D;
   text-decoration-line: underline;
-  text-decoration-color: #73785E;
+  text-decoration-color: #62694D;
   text-decoration-thickness: 1.5px;
   text-underline-offset: 3px;
   background-color: rgba(115, 120, 94, 0.08);

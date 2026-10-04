@@ -152,14 +152,14 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
       {/* When finished or the wordbook is empty */}
       {sessionCompleted || reviewList.length === 0 ? (
         <div className="bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm p-8 text-center space-y-4 shadow-xs">
-          <div className="w-12 h-12 mx-auto rounded-full bg-[#E5DED0] flex items-center justify-center text-[#73785E]">
+          <div className="w-12 h-12 mx-auto rounded-full bg-[#E5DED0] flex items-center justify-center text-[#62694D]">
             <CheckCircle className="w-6 h-6" />
           </div>
 
           <h2 className="font-editorial text-2xl font-semibold text-[#292B25]">
             {allVocabularies.length === 0 ? '生词本还没有词条' : '本轮复习已完成！'}
           </h2>
-          <p className="text-xs font-ui text-[#717265] max-w-md mx-auto">
+          <p className="text-xs font-ui text-[#555848] max-w-md mx-auto">
             {allVocabularies.length === 0 ? '在阅读页或生词本添加单词、短语或习语后，即可在这里复习。' : '可以开始新一轮全部词条复习。'}
           </p>
 
@@ -167,7 +167,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
             {allVocabularies.length > 0 && (
               <button
                 onClick={handleStartReviewAll}
-                className="px-4 py-2 bg-[#73785E] text-[#F2EEE4] font-ui text-xs font-medium rounded-sm hover:bg-[#73785E]/90 transition-colors"
+                className="px-4 py-2 bg-[#62694D] text-[#F2EEE4] font-ui text-xs font-medium rounded-sm hover:bg-[#5F654D] transition-colors"
               >
                 自由复习全部生词 ({allVocabularies.length})
               </button>
@@ -184,7 +184,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
         /* Active Flashcard */
         <div className="space-y-6">
           {/* Progress Indicator */}
-          <div className="flex items-center justify-between text-xs font-ui text-[#717265]">
+          <div className="flex items-center justify-between text-xs font-ui text-[#555848]">
             <span>全部词条：{reviewList.length} 项</span>
             <div className="flex items-center gap-3">
               <button
@@ -218,7 +218,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
             {/* Front: Term & Phonetic */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-ui uppercase tracking-wider text-[#717265]">
+                <span className="text-[11px] font-ui uppercase tracking-wider text-[#555848]">
                   Word {currentIndex + 1}
                 </span>
                 <div className="flex items-center gap-2">
@@ -231,7 +231,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   <button
                     onClick={() => playVoice(currentVocab.term)}
                     title="朗读发音"
-                    className="p-1.5 text-[#73785E] hover:bg-[#E5DED0] rounded-xs transition-colors"
+                    className="p-1.5 text-[#62694D] hover:bg-[#E5DED0] rounded-xs transition-colors"
                   >
                     <Volume2 className="w-4 h-4" />
                   </button>
@@ -242,7 +242,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                 <h2 className="font-editorial text-4xl sm:text-5xl font-semibold text-[#5F654D] tracking-tight">
                   {currentVocab.term}
                 </h2>
-                <p className="text-sm font-ui text-[#717265] mt-1">
+                <p className="text-sm font-ui text-[#555848] mt-1">
                   {currentVocab.phonetic} •{' '}
                   <span className="italic">{currentVocab.partOfSpeech}</span>
                 </p>
@@ -253,14 +253,14 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                 <div className="space-y-4 pt-4 border-t border-[#D4CCBC] text-left animate-fadeIn">
                   {/* Localized Meaning */}
                   <div>
-                    <span className="text-[11px] font-ui text-[#717265] block uppercase">
+                    <span className="text-[11px] font-ui text-[#555848] block uppercase">
                       {getI18nText(targetLanguage, 'targetMeaningLabel', '母语地道释义 (Meaning)')}:
                     </span>
                     <p className="font-ui text-base font-semibold text-[#292B25] mt-0.5">
                       {localizedMeaning}
                     </p>
                     {isNotZh && currentVocab.meaningZh && localizedMeaning !== currentVocab.meaningZh && (
-                      <p className="text-xs font-ui text-[#717265] mt-0.5">
+                      <p className="text-xs font-ui text-[#555848] mt-0.5">
                         (中文参考: {currentVocab.meaningZh})
                       </p>
                     )}
@@ -268,7 +268,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
 
                   {/* English Definition */}
                   <div>
-                    <span className="text-[11px] font-ui text-[#717265] block uppercase">
+                    <span className="text-[11px] font-ui text-[#555848] block uppercase">
                       {getI18nText(targetLanguage, 'enDefinitionLabel', '英文释义 (Definition)')}:
                     </span>
                     <p className="font-editorial text-base text-[#292B25] leading-relaxed">
@@ -278,15 +278,15 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
 
                   {/* Example & Localized Example Translation */}
                   <div>
-                    <span className="text-[11px] font-ui text-[#717265] block uppercase">
+                    <span className="text-[11px] font-ui text-[#555848] block uppercase">
                       {getI18nText(targetLanguage, 'exampleLabel', '例句 (Example)')}:
                     </span>
-                    <div className="bg-[#E5DED0]/40 p-2.5 rounded-sm border-l-2 border-[#73785E] mt-1 space-y-1">
+                    <div className="bg-[#E5DED0]/40 p-2.5 rounded-sm border-l-2 border-[#62694D] mt-1 space-y-1">
                       <p className="font-editorial text-base italic text-[#5F654D]">
                         "{currentVocab.example}"
                       </p>
                       {localizedExample && (
-                        <p className="text-xs font-ui text-[#717265] pt-1 border-t border-[#D4CCBC]/40">
+                        <p className="text-xs font-ui text-[#555848] pt-1 border-t border-[#D4CCBC]/40">
                           {localizedExample}
                         </p>
                       )}
@@ -296,7 +296,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   {/* Collocations */}
                   {currentVocab.collocations && currentVocab.collocations.length > 0 && (
                     <div>
-                      <span className="text-[11px] font-ui text-[#717265] block uppercase mb-1">
+                      <span className="text-[11px] font-ui text-[#555848] block uppercase mb-1">
                         {getI18nText(targetLanguage, 'collocationsLabel', '常见搭配 (Collocations)')}:
                       </span>
                       <div className="flex flex-wrap gap-1.5">
@@ -331,8 +331,8 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   onClick={() => handleRating('Again')}
                   className="py-2.5 px-2 bg-[#9E6554]/10 hover:bg-[#9E6554]/20 border border-[#9E6554]/30 rounded-sm text-center transition-colors"
                 >
-                  <span className="font-ui text-xs font-semibold text-[#9E6554] block">Again</span>
-                  <span className="text-[10px] text-[#717265] font-ui block">
+                  <span className="font-ui text-xs font-semibold text-[#854C3C] block">Again</span>
+                  <span className="text-[10px] text-[#555848] font-ui block">
                     {getI18nText(targetLanguage, 'againHint', '今天再复习')}
                   </span>
                 </button>
@@ -341,28 +341,28 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   onClick={() => handleRating('Hard')}
                   className="py-2.5 px-2 bg-[#B49379]/15 hover:bg-[#B49379]/25 border border-[#B49379]/30 rounded-sm text-center transition-colors"
                 >
-                  <span className="font-ui text-xs font-semibold text-[#B49379] block">Hard</span>
-                  <span className="text-[10px] text-[#717265] font-ui block">
+                  <span className="font-ui text-xs font-semibold text-[#77543D] block">Hard</span>
+                  <span className="text-[10px] text-[#555848] font-ui block">
                     {getI18nText(targetLanguage, 'hardHint', '1 天后')}
                   </span>
                 </button>
 
                 <button
                   onClick={() => handleRating('Good')}
-                  className="py-2.5 px-2 bg-[#73785E]/15 hover:bg-[#73785E]/25 border border-[#73785E]/30 rounded-sm text-center transition-colors"
+                  className="py-2.5 px-2 bg-[#62694D]/15 hover:bg-[#62694D]/25 border border-[#62694D]/30 rounded-sm text-center transition-colors"
                 >
                   <span className="font-ui text-xs font-semibold text-[#5F654D] block">Good</span>
-                  <span className="text-[10px] text-[#717265] font-ui block">
+                  <span className="text-[10px] text-[#555848] font-ui block">
                     {getI18nText(targetLanguage, 'goodHint', '3 天后')}
                   </span>
                 </button>
 
                 <button
                   onClick={() => handleRating('Easy')}
-                  className="py-2.5 px-2 bg-[#73785E] hover:bg-[#73785E]/90 border border-[#73785E] rounded-sm text-center transition-colors"
+                  className="py-2.5 px-2 bg-[#62694D] hover:bg-[#5F654D] border border-[#62694D] rounded-sm text-center transition-colors"
                 >
                   <span className="font-ui text-xs font-semibold text-[#F2EEE4] block">Easy</span>
-                  <span className="text-[10px] text-[#F2EEE4]/80 font-ui block">
+                  <span className="text-[10px] text-[#F2EEE4] font-ui block">
                     {getI18nText(targetLanguage, 'easyHint', '7 天后')}
                   </span>
                 </button>
