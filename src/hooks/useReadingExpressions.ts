@@ -22,7 +22,9 @@ export function useReadingExpressions(reading: ReadingRecord | null) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contextReading: reading.content }),
       }).then(async response => {
-        const body = await response.json();
+        const body = await response.json().catch(() => {
+          throw new Error('短文词条服务暂不可用，请稍后重试。');
+        });
         if (!response.ok) throw new Error(body.error || '短文词条暂时无法加载，请重试。');
         if (!Array.isArray(body.expressions)) throw new Error('词条数据不完整，请重试。');
         return body.expressions as ReadingExpression[];
