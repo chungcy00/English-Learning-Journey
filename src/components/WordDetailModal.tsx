@@ -17,6 +17,7 @@ interface WordDetailModalProps {
   onToggleWordbook: (vocab: VocabularyItem) => void;
   targetLanguage?: string;
   currentTranslation?: ReadingTranslation;
+  inline?: boolean;
 }
 
 export const WordDetailModal: React.FC<WordDetailModalProps> = ({
@@ -27,8 +28,9 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
   onToggleWordbook,
   targetLanguage = 'zh-CN',
   currentTranslation,
+  inline = false,
 }) => {
-  const dialogRef = useModalDialog(isOpen && !!vocab);
+  const dialogRef = useModalDialog(isOpen && !!vocab && !inline);
   if (!isOpen || !vocab) return null;
 
   const playPronunciation = () => {
@@ -38,8 +40,8 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
   const localizedMeaning = getLocalizedVocabMeaning(vocab, targetLanguage, currentTranslation);
   const localizedExample = getLocalizedExampleTranslation(vocab, targetLanguage, currentTranslation);
 
-  return (
-    <dialog ref={dialogRef} aria-labelledby="word-detail-title" onCancel={onClose} className="app-dialog word-detail-dialog w-[calc(100%_-_2rem)] max-w-lg bg-[#F2EEE4] text-[#292B25] border border-[#D4CCBC] rounded-sm p-6 sm:p-8 shadow-lg m-auto break-words">
+  const content = (
+    <>
         {/* Header */}
         <div className="flex items-start justify-between gap-3 border-b border-[#D4CCBC] pb-4 mb-5">
           <div className="min-w-0 flex-1">
@@ -65,14 +67,14 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
             </div>
           </div>
 
-          <button
+          {!inline && <button
             data-dialog-initial-focus
             aria-label="关闭词汇详情"
             onClick={onClose}
             className="min-h-11 min-w-11 flex items-center justify-center p-2 rounded-sm text-[#555848] hover:text-[#292B25] hover:bg-[#E5DED0] transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
-          </button>
+          </button>}
         </div>
 
         {/* Content Body */}
@@ -102,7 +104,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
             <span className="text-xs uppercase tracking-wider text-[#555848] font-ui block mb-1">
               {getI18nText(targetLanguage, 'exampleLabel')}
             </span>
-            <div className="bg-[#E5DED0]/30 p-3 rounded-sm border-l-2 border-[#62694D] space-y-1.5">
+            <div className="bg-[#E5DED0]/30 p-3 rounded-sm border-l border-[#62694D] space-y-1.5">
               <p className="type-example font-editorial italic text-[#5F654D]">
                 "{vocab.example}"
               </p>
@@ -159,13 +161,18 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
             )}
           </button>
 
-          <button
+          {!inline && <button
             onClick={onClose}
             className="type-label min-h-11 px-4 py-2 font-ui text-[#555848] hover:text-[#292B25] hover:bg-[#E5DED0] rounded-sm transition-colors"
           >
             {getI18nText(targetLanguage, 'close')}
-          </button>
+          </button>}
         </div>
-    </dialog>
+    </>
+  );
+  return inline ? (
+    <aside className="wordbook-detail-panel" aria-labelledby="word-detail-title">{content}</aside>
+  ) : (
+    <dialog ref={dialogRef} aria-labelledby="word-detail-title" onCancel={onClose} className="app-dialog word-detail-dialog w-[calc(100%_-_2rem)] max-w-lg bg-[#F2EEE4] text-[#292B25] border border-[#D4CCBC] rounded-sm p-6 sm:p-8 shadow-lg m-auto break-words">{content}</dialog>
   );
 };

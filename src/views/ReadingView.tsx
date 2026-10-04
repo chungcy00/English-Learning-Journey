@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useWideLayout } from '../hooks/useWideLayout';
 import {
   Sparkles,
   Download,
@@ -202,7 +203,9 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const [selectedVocab, setSelectedVocab] = useState<VocabularyItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isRewriteMenuOpen, setIsRewriteMenuOpen] = useState(false);
-  const [mobileReadingMode, setMobileReadingMode] = useState<'original' | 'translation'>('original');
+  const isWideLayout = useWideLayout();
+  const [mobileReadingMode, setMobileReadingMode] = useState<'original' | 'translation' | 'parallel'>(() =>
+    typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches ? 'parallel' : 'original');
   const [keepVocab, setKeepVocab] = useState(true);
   const translationRunRef = useRef(0);
   const vocabularySignature = reading.selectedVocabulary.map(vocab => `${vocab.id}:${vocab.term}`).join('|');
@@ -936,6 +939,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
   return (
     <div className="page-shell page-shell--reading page-stack--reading reading-page">
+      <h1 className="reading-page-title font-editorial font-semibold text-[#292B25]">{reading.title}</h1>
       {/* Top Controls Bar */}
       <div className="reading-toolbar flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#D4CCBC]">
         <div className="flex items-center gap-2 flex-wrap">
@@ -1020,17 +1024,16 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       {/* Main Reading Area: switch between the original and translated reading modes */}
       {pdfError && <p role="alert" className="type-body font-ui text-red-700">{pdfError}</p>}
       <div className="mobile-reading-switch" role="tablist" aria-label="阅读内容模式">
-        <button type="button" role="tab" aria-selected={mobileReadingMode === 'original'} onClick={() => setMobileReadingMode('original')}>原文</button>
+        <button type="button" role="tab" aria-selected={mobileReadingMode === 'original' || (!isWideLayout && mobileReadingMode === 'parallel')} onClick={() => setMobileReadingMode('original')}>原文</button>
         <button type="button" role="tab" aria-selected={mobileReadingMode === 'translation'} onClick={() => setMobileReadingMode('translation')}>翻译</button>
+        <button type="button" role="tab" className="reading-parallel-switch" aria-selected={mobileReadingMode === 'parallel'} onClick={() => setMobileReadingMode('parallel')}>对照</button>
       </div>
-      <div className="reading-columns grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className={`reading-columns grid grid-cols-1 gap-6 items-start ${mobileReadingMode === 'parallel' ? 'reading-mode-parallel' : ''}`}>
           {/* Left Column: English Reading Card */}
           <article className={`reading-panel reading-original bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm flex flex-col ${mobileReadingMode === 'translation' ? 'mobile-reading-hidden' : ''}`}>
             <header className="reading-panel-header mb-6 pb-4 border-b border-[#D4CCBC]/50">
               <div>
-                <h1 className="type-section font-editorial font-semibold text-[#292B25] tracking-tight">
-                  {reading.title}
-                </h1>
+                <h2 className="type-label font-ui text-[#555848]">原文</h2>
               </div>
 
               <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">

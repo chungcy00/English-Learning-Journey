@@ -18,7 +18,6 @@ import { WordDetailModal } from '../components/WordDetailModal';
 import {
   SUPPORTED_LANGUAGES,
   getLocalizedVocabMeaning,
-  getLocalizedExampleTranslation,
   getI18nText,
 } from '../utils/i18n';
 import { explainVocabularyTerm, translateVocabularies } from '../services/api';
@@ -26,6 +25,7 @@ import { getEnglishTermMatchRank, isEnglishTermQuery, normalizeEnglishTerm, cont
 import { filterSavedVocabulary } from '../utils/savedVocabulary';
 import { speakEnglishTerm } from '../utils/speech';
 import { useReadingExpressions } from '../hooks/useReadingExpressions';
+import { useWideLayout } from '../hooks/useWideLayout';
 
 interface WordbookViewProps {
   vocabularyList: VocabularyItem[];
@@ -67,6 +67,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [selectedTerms, setSelectedTerms] = useState<string[]>([]);
   const [detailVocab, setDetailVocab] = useState<VocabularyItem | null>(null);
+  const isWideLayout = useWideLayout();
   const [isTranslating, setIsTranslating] = useState(false);
   const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
@@ -225,7 +226,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === targetLanguage) || SUPPORTED_LANGUAGES[0];
 
   return (
-    <div className="page-shell page-stack">
+    <div className="page-shell page-stack wordbook-page">
       {/* Header */}
       <div className="space-y-5 pb-6 border-b border-[#D4CCBC]">
         <div>
@@ -366,13 +367,15 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         <span>当前短文已添加词条：{vocabularyList.length} 项{statusFilter !== 'All' || collectionSearch.trim() ? ` · 当前显示 ${filtered.length} 项` : ''}</span>
         <button type="button" onClick={onOpenReview} className="min-h-11 underline underline-offset-4 hover:text-[#292B25]">开始复习</button>
       </div>
-      <div className="space-y-2 font-ui">
-        <label htmlFor="saved-vocabulary-search" className="block text-sm text-[#292B25]">筛选已添加词条</label>
+      <details className="wordbook-saved-search space-y-2 font-ui" open={isWideLayout || undefined}>
+        <summary className="min-h-11 flex items-center cursor-pointer type-label text-[#292B25]">筛选已添加词条 <ChevronRight aria-hidden="true" className="w-4 h-4 ml-2" /></summary>
+        <label htmlFor="saved-vocabulary-search" className="sr-only">筛选已添加词条</label>
         <input id="saved-vocabulary-search" value={collectionSearch} onChange={event => setCollectionSearch(event.target.value)}
+          placeholder="单词、短语或习语"
           className="w-full min-h-11 px-3 py-2 text-base bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm text-[#292B25] placeholder:text-[#646657]" />
-      </div>
+      </details>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="wordbook-status-filters flex flex-wrap items-center gap-1.5">
           {filterOptions.map((status) => (
             <button
               key={status}
@@ -467,7 +470,8 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
       )}
 
       {/* Vocabulary List */}
-      <div className="space-y-3">
+      <div className="wordbook-workspace">
+      <div className="wordbook-list" role="list" aria-label="已添加词条">
         {filtered.length === 0 ? (
           <div className="text-center py-12 bg-[#E5DED0]/20 border border-[#D4CCBC] rounded-sm">
             <p className="type-body font-ui text-[#555848]">
@@ -480,8 +484,9 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
             return (
               <div
                 key={vocab.id}
+                role="listitem"
                 onClick={() => setDetailVocab(vocab)}
-                className="wordbook-entry group cursor-pointer p-4 sm:p-5 bg-[#F2EEE4] hover:bg-[#E5DED0]/40 border border-[#D4CCBC] rounded-sm transition-colors"
+                className={`wordbook-entry group cursor-pointer transition-colors ${isWideLayout && vocab.id === (detailVocab?.id || filtered[0]?.id) ? 'is-active' : ''}`}
               >
                 {/* Checkbox & Term Info */}
                 <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -492,7 +497,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                   <div className="min-w-0 break-words">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="type-term font-editorial font-semibold text-[#5F654D] group-hover:text-[#292B25] transition-colors">
-                        <button type="button" aria-haspopup="dialog" aria-label={`查看 ${vocab.term} 的词汇释义`} onClick={e => { e.stopPropagation(); setDetailVocab(vocab); }} className="font-editorial text-left min-h-11">{vocab.term}</button>
+                        <button type="button" aria-haspopup={isWideLayout ? undefined : 'dialog'} aria-label={`查看 ${vocab.term} 的词汇释义`} onClick={e => { e.stopPropagation(); setDetailVocab(vocab); }} className="font-editorial text-left min-h-11">{vocab.term}</button>
                       </h3>
                       <button
                         onClick={(e) => playVoice(vocab.term, e)}
@@ -502,11 +507,11 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                       >
                         <Volume2 className="w-3.5 h-3.5" />
                       </button>
-                      <span className="type-meta font-ui italic text-[#555848]">
-                        [{vocab.partOfSpeech}]
-                      </span>
                     </div>
-
+                    <p className="type-meta font-ui text-[#555848] flex flex-wrap gap-x-2">
+                      {vocab.phonetic && <span>{vocab.phonetic}</span>}
+                      <span className="italic">{vocab.partOfSpeech} · {vocab.type}</span>
+                    </p>
                     <p className="type-body font-ui font-medium text-[#292B25] mt-1 flex items-center gap-1.5 flex-wrap">
                       <span>{getLocalizedVocabMeaning(vocab, targetLanguage)}</span>
                       {targetLanguage !== 'zh-CN' && vocab.meaningZh && getLocalizedVocabMeaning(vocab, targetLanguage) !== vocab.meaningZh && (
@@ -516,14 +521,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                       )}
                     </p>
 
-                    <p className="type-example font-editorial text-[#555848] italic break-words mt-1">
-                      "{vocab.example}"
-                    </p>
-                    {getLocalizedExampleTranslation(vocab, targetLanguage) && (
-                      <p className="type-body font-ui text-[#5F654D] mt-0.5">
-                        {getLocalizedExampleTranslation(vocab, targetLanguage)}
-                      </p>
-                    )}
                   </div>
                 </div>
 
@@ -562,8 +559,9 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
       {/* Detail Modal */}
       <WordDetailModal
-        vocab={detailVocab}
-        isOpen={!!detailVocab}
+        vocab={vocabularyList.find(v => v.id === detailVocab?.id) || (isWideLayout ? filtered[0] : null)}
+        isOpen={!!detailVocab || (isWideLayout && filtered.length > 0)}
+        inline={isWideLayout}
         onClose={() => setDetailVocab(null)}
         isInWordbook={true}
         onToggleWordbook={(v) => {
@@ -572,6 +570,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         }}
         targetLanguage={targetLanguage}
       />
+      </div>
     </div>
   );
 };

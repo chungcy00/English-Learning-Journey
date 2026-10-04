@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles, ChevronDown } from 'lucide-react';
-import { CEFRLevel, ReadingType, ReadingLength, ReadingStyle, AppSettings } from '../types';
+import { Sparkles, ChevronDown, ArrowRight } from 'lucide-react';
+import { CEFRLevel, ReadingType, ReadingLength, ReadingStyle, AppSettings, ReadingRecord } from '../types';
 import { READING_STYLES } from '../utils/readingStyles';
 import { CEFR_ABILITY_HINTS, parseSpecifiedVocabulary } from '../utils/generationInput';
 import { readGenerationDraft, saveGenerationDraft } from '../utils/generationDraft';
@@ -18,6 +18,8 @@ interface HomeViewProps {
   }) => void;
   isLoading: boolean;
   onCefrChange?: (level: CEFRLevel) => void;
+  currentReading?: ReadingRecord | null;
+  onContinueReading?: () => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
@@ -25,6 +27,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onGenerate,
   isLoading,
   onCefrChange,
+  currentReading,
+  onContinueReading,
 }) => {
   const [input, setDraftInput] = useState(readGenerationDraft);
   const setInput = (value: string) => {
@@ -127,8 +131,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <details className="group">
             <summary className="home-settings__summary flex min-h-11 items-center justify-between gap-3 cursor-pointer list-none font-ui rounded-xs focus-visible:outline-2 focus-visible:outline-[#5F654D] [&::-webkit-details-marker]:hidden">
               <span className="min-w-0">
-                <span className="block text-sm font-medium text-[#292B25]">文体、篇幅与风格</span>
-                <span className="block mt-1 text-xs leading-relaxed text-[#555848]">{typeSummary} · {lengthSummary} · {styleSummary}</span>
+                <span className="block text-sm font-medium text-[#292B25]">阅读设置</span>
+                <span className="block mt-1 text-sm leading-relaxed text-[#555848]">{cefr} · {typeSummary} · {lengthSummary} · {vocabCount} 个词 · {styleSummary}</span>
               </span>
               <ChevronDown aria-hidden="true" className="w-4 h-4 shrink-0 text-[#5F654D] group-open:rotate-180" />
             </summary>
@@ -226,7 +230,18 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </details>
         </section>
       </form>
-
+      {currentReading && onContinueReading && (
+        <section className="home-continue" aria-labelledby="continue-reading-title">
+          <h2 id="continue-reading-title" className="type-label font-ui text-[#555848]">继续上次阅读</h2>
+          <button type="button" onClick={onContinueReading} className="home-continue__link">
+            <span className="min-w-0">
+              <span className="type-term font-editorial block">{currentReading.title}</span>
+              <span className="type-label font-ui text-[#555848] block mt-1">{currentReading.cefrLevel} · {currentReading.selectedVocabulary.length} 个精选词汇</span>
+            </span>
+            <ArrowRight aria-hidden="true" className="w-5 h-5 shrink-0" />
+          </button>
+        </section>
+      )}
     </div>
   );
 };

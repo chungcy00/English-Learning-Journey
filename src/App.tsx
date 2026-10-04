@@ -422,6 +422,8 @@ export default function App() {
             onGenerate={handleGenerateReading}
             isLoading={isGenerating}
             onCefrChange={handleCefrChange}
+            currentReading={currentReading}
+            onContinueReading={() => setActiveTab('reading')}
           />
         )}
 

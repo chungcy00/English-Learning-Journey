@@ -27,7 +27,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-30 bg-[#F2EEE4]/90 backdrop-blur-sm border-b border-[#D4CCBC] px-4 sm:px-6 lg:px-8 py-3.5 transition-colors">
+    <header className="app-header sticky top-0 z-30 bg-[#F2EEE4]/90 backdrop-blur-sm border-b border-[#D4CCBC] px-4 sm:px-6 lg:px-8 py-3.5 transition-colors">
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2 lg:gap-4">
         {/* Brand & Editorial Title */}
         <button

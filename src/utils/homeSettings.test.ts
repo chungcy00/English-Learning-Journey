@@ -4,17 +4,25 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { HomeView } from '../views/HomeView';
 import { READING_STYLES } from './readingStyles';
-import type { AppSettings } from '../types';
+import type { AppSettings, ReadingRecord } from '../types';
 
 const settings = { cefr: 'B2', defaultReadingType: 'dialogue', defaultReadingStyle: 'warm', defaultLength: 'long', vocabularyCount: 10 } as AppSettings;
 const render = (isLoading = false) => renderToStaticMarkup(React.createElement(HomeView, { settings, onGenerate: () => {}, isLoading }));
 
-test('CEFR and count stay outside a closed native disclosure; all optional controls remain available', () => {
+test('continue reading only appears for a real current passage and uses its actual vocabulary count', () => {
+  assert.doesNotMatch(render(), /continue-reading-title/);
+  const currentReading = { title: 'A real saved passage', cefrLevel: 'B1', selectedVocabulary: [{ term: 'genuine' }] } as ReadingRecord;
+  const html = renderToStaticMarkup(React.createElement(HomeView, { settings, onGenerate: () => {}, isLoading: false, currentReading, onContinueReading: () => {} }));
+  assert.match(html, /A real saved passage/);
+  assert.match(html, /B1 · 1 个精选词汇/);
+});
+
+test('all reading parameters stay available inside a closed native disclosure', () => {
   const html = render();
   const details = html.match(/<details\b[^>]*>[\s\S]*?<\/details>/)![0];
   assert.doesNotMatch(details, /^<details[^>]*\bopen(?:=|\s|>)/);
-  assert.match(html.slice(0, html.indexOf('<details')), /aria-labelledby="cefr-label"/);
-  assert.match(html.slice(0, html.indexOf('<details')), /aria-labelledby="vocab-count-label"/);
+  assert.match(details, /aria-labelledby="cefr-label"/);
+  assert.match(details, /aria-labelledby="vocab-count-label"/);
   for (const id of ['reading-type', 'reading-length', 'reading-style']) assert.match(details, new RegExp(`id="${id}"`));
   for (const style of READING_STYLES) assert.match(details, new RegExp(`value="${style.value}"`));
 });
@@ -26,7 +34,7 @@ test('saved parameters and the collapsed summary agree without resetting default
   assert.match(html, /value="dialogue" selected=""/);
   assert.match(html, /value="long" selected=""/);
   assert.match(html, /value="warm" selected=""/);
-  assert.match(html, /情境对话 · 250–350 词 · Warm（温暖治愈）/);
+  assert.match(html, /B2 · 情境对话 · 250–350 词 · 10 个词 · Warm（温暖治愈）/);
   assert.match(html, /能力参考：理解较复杂内容，清楚表达观点与理由。/);
   assert.match(html, /aria-describedby="cefr-ability-hint"/);
   assert.match(html, /<label for="generation-input"/);
