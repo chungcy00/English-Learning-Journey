@@ -44,7 +44,7 @@ export function ExpressionSelect({ options, value, disabled, loading, onOpen, on
         else if (open && ['Enter', ' '].includes(event.key)) {
           event.preventDefault(); if (options[active]) choose(options[active].term);
         }
-      }} className="w-full min-h-11 flex items-center justify-between gap-3 px-3 py-2 text-base text-left border border-[#D4CCBC] rounded-sm bg-[#F2EEE4] text-[#292B25] focus-visible:outline-2 focus-visible:outline-[#5F654D] disabled:opacity-50">
+      }} className="w-full flex items-center justify-between gap-3 px-3 py-2 text-base text-left border border-[#D4CCBC] rounded-sm bg-[#F2EEE4] text-[#292B25] focus-visible:outline-2 focus-visible:outline-[#5F654D] disabled:opacity-50">
       <span className="min-w-0 break-words">{chosen ? label(chosen) : '请选择文中的表达'}</span>
       <ChevronDown aria-hidden="true" className="w-4 h-4 shrink-0" />
     </button>

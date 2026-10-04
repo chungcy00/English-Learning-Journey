@@ -752,7 +752,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
               }`}
             >
               {/* Speaker Avatar & Name */}
-              <div className="flex-shrink-0 flex flex-col items-center pt-0.5 w-12 sm:w-16 text-center">
+              <div className="flex-shrink-0 flex flex-col items-center pt-0.5 w-16 sm:w-20 text-center">
                 <div
                   className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-ui font-bold text-xs sm:text-sm shadow-xs ${style.bg} ${style.text}`}
                 >
@@ -836,7 +836,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
               key={tIdx}
               className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-sm bg-[#FAF7F2]/90 hover:bg-[#FAF7F2] border border-[#D4CCBC]/50 transition-colors"
             >
-              <div className="flex-shrink-0 flex flex-col items-center pt-0.5 w-12 sm:w-16 text-center">
+              <div className="flex-shrink-0 flex flex-col items-center pt-0.5 w-16 sm:w-20 text-center">
                 <div
                   className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-ui font-bold text-xs sm:text-sm shadow-xs ${style.bg} ${style.text}`}
                 >
@@ -935,7 +935,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   };
 
   return (
-    <div className="page-shell page-shell--reading page-stack--reading">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8 transition-all">
       {/* Top Controls Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#D4CCBC]">
         <div className="flex items-center gap-2 flex-wrap">
@@ -949,7 +949,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         </div>
 
         {/* Action Buttons: Rewrite, PDF, History */}
-        <div className="reading-actions flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
 
           {/* Rewrite Dropdown (PRD Section 21) */}
           <div className="relative">
@@ -964,7 +964,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             </button>
 
             {isRewriteMenuOpen && (
-              <div className="absolute left-0 sm:left-auto sm:right-0 mt-1.5 w-60 max-w-[calc(100vw-2rem)] bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm shadow-lg z-20 p-2 space-y-1">
+              <div className="absolute right-0 mt-1.5 w-60 bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm shadow-lg z-20 p-2 space-y-1">
                 <div className="px-2 py-1.5 border-b border-[#D4CCBC]/60 flex items-center justify-between">
                   <label className="text-[11px] font-ui text-[#292B25] flex items-center gap-1.5 cursor-pointer">
                     <input
@@ -1020,8 +1020,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       {pdfError && <p role="alert" className="text-sm font-ui text-red-700">{pdfError}</p>}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           {/* Left Column: English Reading Card */}
-          <article className="reading-panel bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm flex flex-col">
-            <header className="reading-panel-header mb-6 pb-4 border-b border-[#D4CCBC]/50">
+          <article className="bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm p-6 sm:p-8 shadow-xs flex flex-col">
+            <header className="mb-6 pb-4 border-b border-[#D4CCBC]/50 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
                 <h1 className="font-editorial text-xl sm:text-2xl font-semibold text-[#292B25] tracking-tight leading-tight">
                   {reading.title}
@@ -1064,7 +1064,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             </header>
 
             {/* Content with highlighted vocabulary */}
-            <div className="reading-prose text-[#292B25] flex-1">
+            <div className="prose max-w-none text-[#292B25] flex-1">
               {formatMode === 'dialogue' && isDetectedDialogue
                 ? renderDialogueContent()
                 : renderParagraphContent()}
@@ -1072,8 +1072,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           </article>
 
           {/* Right Column: Humanised Translation Card ("短文我需要旁边有个翻译") */}
-          <article className="reading-panel bg-[#FAF7F2] border border-[#D4CCBC] rounded-sm flex flex-col relative">
-            <header className="reading-panel-header mb-6 pb-4 border-b border-[#D4CCBC]/50">
+          <article className="bg-[#FAF7F2] border border-[#D4CCBC] rounded-sm p-6 sm:p-8 shadow-xs flex flex-col relative">
+            <header className="mb-6 pb-4 border-b border-[#D4CCBC]/50 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
                 <h2 className="font-ui text-lg sm:text-xl font-semibold text-[#292B25] tracking-tight leading-tight">
                   {currentTranslation?.title || (isTranslating ? '正在生成自然译文...' : reading.title)}
@@ -1128,7 +1128,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             </header>
 
             {/* Translation Content */}
-            <div className="reading-prose text-[#292B25] flex-1">
+            <div className="prose max-w-none text-[#292B25] flex-1">
               {isTranslating ? (
                 <div className="py-16 px-4 text-center">
                   <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#5F654D]/10 text-[#5F654D] mb-3 animate-pulse">
@@ -1144,7 +1144,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   <button
                     type="button"
                     onClick={() => fetchTranslation(targetLanguage, true)}
-                    className="min-h-11 px-3 py-2 bg-amber-700 text-white rounded-xs text-xs font-ui hover:bg-amber-800"
+                    className="px-3 py-1 bg-amber-700 text-white rounded-xs text-xs font-ui hover:bg-amber-800"
                   >
                     重试翻译
                   </button>
@@ -1181,7 +1181,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         </div>
 
         <ReadingVocabularyEditor key={reading.id} reading={reading} knownVocabulary={knownVocabulary} targetLanguage={targetLanguage} onSave={onUpdateVocabulary} />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {reading.selectedVocabulary.map((vocab) => {
             const inWordbook = wordbookVocabIds.has(vocab.term.toLowerCase());
             const localizedMeaning = getLocalizedVocabMeaning(vocab, targetLanguage, currentTranslation);
@@ -1197,7 +1197,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 className="group cursor-pointer p-4 bg-[#E5DED0]/30 hover:bg-[#E5DED0]/70 border border-[#D4CCBC] rounded-sm transition-all flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between gap-3 mb-1">
+                  <div className="flex items-center justify-between mb-1">
                     <button type="button" aria-haspopup="dialog" aria-label={`查看 ${vocab.term} 的词汇释义`} onClick={(e) => { e.stopPropagation(); setSelectedVocab(vocab); setIsDetailOpen(true); }} className="font-editorial text-lg font-semibold text-[#5F654D] group-hover:text-[#292B25] transition-colors min-h-11 text-left">
                       {vocab.term}
                     </button>
@@ -1208,7 +1208,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                       }}
                       title={inWordbook ? '移出生词本' : getI18nText(targetLanguage, 'addToWordbook')}
                       aria-label={`${inWordbook ? '移出生词本' : '加入生词本'}：${vocab.term}`}
-                      className={`min-h-11 min-w-11 shrink-0 flex items-center justify-center p-2 rounded-xs transition-colors ${
+                      className={`min-h-11 min-w-11 flex items-center justify-center p-2 rounded-xs transition-colors ${
                         inWordbook
                           ? 'text-[#5F654D] bg-[#62694D]/10'
                           : 'text-[#A5AA91] hover:text-[#62694D]'

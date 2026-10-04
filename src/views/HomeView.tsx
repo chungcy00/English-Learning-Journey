@@ -75,7 +75,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   };
 
   return (
-    <div className="page-shell page-shell--focus">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
       {/* Title section with Editorial Typography */}
       <div className="text-center mb-8 space-y-2">
         <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-semibold text-[#292B25] tracking-tight">
@@ -103,7 +103,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <p className="mt-1">逗号、顿号和分号会分隔词条；主题描述请避免这些分隔符。</p>
           </div>}
 
-          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3 pt-3 border-t border-[#D4CCBC]/60">
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#D4CCBC]/60">
             {/* Suggestion Chips */}
             <div className="flex flex-wrap items-center gap-1.5 text-xs text-[#555848] font-ui">
               {quickPrompts.slice(0, 3).map((prompt, idx) => (
@@ -121,7 +121,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="w-full sm:w-auto sm:ml-auto min-h-11 flex items-center justify-center gap-2 px-5 py-2.5 bg-[#62694D] text-[#F2EEE4] font-ui text-sm font-medium rounded-sm hover:bg-[#5F654D] disabled:opacity-50 transition-all shadow-xs"
+              className="ml-auto min-h-11 flex items-center gap-2 px-5 py-2.5 bg-[#62694D] text-[#F2EEE4] font-ui text-sm font-medium rounded-sm hover:bg-[#5F654D] disabled:opacity-50 transition-all shadow-xs"
             >
               <Sparkles className="w-4 h-4" />
               <span>Generate Reading</span>

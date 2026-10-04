@@ -13,13 +13,6 @@
     --border-subtle: #D4CCBC;
     --font-app: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
     --font-editorial: "Cormorant Garamond", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", Georgia, serif;
-    --space-control: 0.75rem;
-    --space-group: 1.5rem;
-    --space-section: 2.5rem;
-    --page-gutter: 1rem;
-    --page-focus: 48rem;
-    --page-collection: 56rem;
-    --page-reading: 76rem;
   }
 
   body {
@@ -28,46 +21,6 @@
     color: var(--text-primary);
     line-height: 1.6;
   }
-}
-
-/* Shared 4px rhythm; width follows the task rather than the device. */
-.page-shell {
-  width: 100%;
-  min-width: 0;
-  max-width: var(--page-collection);
-  margin-inline: auto;
-  padding: var(--space-group) var(--page-gutter) var(--space-section);
-}
-.page-shell--focus { max-width: var(--page-focus); }
-.page-shell--reading { max-width: var(--page-reading); }
-.page-shell--review { max-width: 44rem; }
-.page-stack > * + * { margin-top: var(--space-group); }
-.page-stack--reading > * + * { margin-top: var(--space-section); }
-.reading-prose { width: 100%; max-width: 70ch; margin-inline: auto; overflow-wrap: anywhere; }
-.reading-panel { min-width: 0; padding: var(--space-group); }
-.reading-panel-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-control); }
-.reading-panel-header > :first-child { flex: 1 1 12rem; min-width: 0; }
-.reading-panel-header :is(button, select), .reading-actions button { min-height: 2.75rem; }
-.reading-panel-header button, .reading-actions button { min-width: 2.75rem; }
-.wordbook-controls { display: grid; gap: 1rem; }
-.wordbook-search-tools { display: grid; grid-template-columns: minmax(0, 1fr); align-items: end; gap: var(--space-control); }
-.wordbook-entry { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-control); overflow-wrap: anywhere; }
-.wordbook-entry-controls { justify-self: end; }
-.exercise-heading { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
-.exercise-target { min-width: 0; overflow-wrap: anywhere; }
-.app-dialog { max-height: calc(100dvh - 2rem); overflow-y: auto; overscroll-behavior: contain; }
-main :is(h1, h2, h3) { overflow-wrap: anywhere; text-wrap: balance; }
-@media (min-width: 640px) {
-  :root { --page-gutter: 1.5rem; }
-  .page-shell { padding-top: var(--space-section); }
-  .wordbook-search-tools { grid-template-columns: minmax(0, 1fr) auto; }
-  .wordbook-entry { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1.5rem; }
-  .exercise-heading { grid-template-columns: minmax(0, 1fr) minmax(8rem, 30%); gap: 1.5rem; }
-  .exercise-target { text-align: right; }
-}
-@media (min-width: 1024px) {
-  :root { --page-gutter: 2rem; }
-  .reading-panel { padding: 2rem; }
 }
 
 .font-editorial {
