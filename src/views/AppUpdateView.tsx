@@ -1,15 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Download, Loader2, RefreshCw, ShieldCheck } from 'lucide-react';
 import { APP_VERSION, CURRENT_RELEASE_NOTES, VERSION_HISTORY_COUNT } from '../version';
+import { workerMessage } from '../utils/workerMessage';
 
-type UpdateStatus = 'checking' | 'current' | 'available' | 'updating' | 'error';
+type UpdateStatus = 'idle' | 'checking' | 'current' | 'available' | 'updating' | 'error';
 
 export const AppUpdateView: React.FC = () => {
-  const [status, setStatus] = useState<UpdateStatus>('checking');
+  const [status, setStatus] = useState<UpdateStatus>('idle');
   const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
   const waitingWorkerRef = useRef<ServiceWorker | null>(null);
   const applyingUpdateRef = useRef(false);
   const reloadingRef = useRef(false);
+  const userCheckedRef = useRef(false);
 
   const markUpdateAvailable = useCallback((worker: ServiceWorker) => {
     waitingWorkerRef.current = worker;
@@ -23,6 +25,7 @@ export const AppUpdateView: React.FC = () => {
     }
 
     if (showChecking) setStatus('checking');
+    userCheckedRef.current = true;
     try {
       const registration = registrationRef.current ||
         await navigator.serviceWorker.getRegistration('/');
@@ -36,7 +39,11 @@ export const AppUpdateView: React.FC = () => {
       if (registration.waiting) {
         markUpdateAvailable(registration.waiting);
       } else if (!registration.installing) {
-        setStatus('current');
+        const worker = registration.active;
+        if (!worker) throw new Error('No active worker');
+        const state = await workerMessage<{ hasUpdate: boolean }>(worker, 'GET_UPDATE_STATE');
+        if (state.hasUpdate) markUpdateAvailable(worker);
+        else setStatus('current');
       }
     } catch {
       setStatus('error');
@@ -56,7 +63,7 @@ export const AppUpdateView: React.FC = () => {
     const watchInstallingWorker = (worker: ServiceWorker | null) => {
       if (!worker) return;
       worker.addEventListener('statechange', () => {
-        if (disposed || worker.state !== 'installed') return;
+        if (disposed || !userCheckedRef.current || worker.state !== 'installed') return;
         if (navigator.serviceWorker.controller) {
           markUpdateAvailable(registration?.waiting || worker);
         } else {
@@ -80,36 +87,23 @@ export const AppUpdateView: React.FC = () => {
       registration = registered;
       registrationRef.current = registered;
 
-      if (registered.waiting && navigator.serviceWorker.controller) {
-        markUpdateAvailable(registered.waiting);
-      } else {
-        void checkForUpdate(false);
-      }
-
       updateFoundHandler = () => watchInstallingWorker(registered.installing);
       registered.addEventListener('updatefound', updateFoundHandler);
+      watchInstallingWorker(registered.installing);
     }).catch(() => {
       if (!disposed) setStatus('error');
     });
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') void checkForUpdate(false);
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    const intervalId = window.setInterval(() => void checkForUpdate(false), 60 * 60 * 1000);
-
     return () => {
       disposed = true;
-      window.clearInterval(intervalId);
       navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (registration && updateFoundHandler) {
         registration.removeEventListener('updatefound', updateFoundHandler);
       }
     };
   }, [checkForUpdate, markUpdateAvailable]);
 
-  const applyUpdate = () => {
+  const applyUpdate = async () => {
     const worker = waitingWorkerRef.current || registrationRef.current?.waiting;
     if (!worker) {
       void checkForUpdate();
@@ -118,13 +112,18 @@ export const AppUpdateView: React.FC = () => {
 
     applyingUpdateRef.current = true;
     setStatus('updating');
-    worker.postMessage({ type: 'SKIP_WAITING' });
-    window.setTimeout(() => {
-      if (!reloadingRef.current) window.location.reload();
-    }, 5000);
+    try {
+      const result = await workerMessage<{ ok: boolean }>(worker, 'SKIP_WAITING');
+      if (!result.ok) throw new Error('Update failed');
+      if (!reloadingRef.current) { reloadingRef.current = true; window.location.reload(); }
+    } catch {
+      applyingUpdateRef.current = false;
+      setStatus('error');
+    }
   };
 
   const statusContent = {
+    idle: { icon: RefreshCw, title: '检查软件更新', detail: `当前安装版本为 ${APP_VERSION}。` },
     checking: { icon: Loader2, title: '正在检测软件版本', detail: '正在连接服务器检查更新。' },
     current: { icon: CheckCircle2, title: '当前已是最新版本', detail: `Mine English ${APP_VERSION} 无需更新。` },
     available: { icon: Download, title: '发现新版本', detail: `当前安装版本为 ${APP_VERSION}，新版本已经准备好。` },
@@ -188,7 +187,7 @@ export const AppUpdateView: React.FC = () => {
               {status === 'available' ? (
                 <button
                   type="button"
-                  onClick={applyUpdate}
+                  onClick={() => void applyUpdate()}
                   className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#73785E] text-[#F2EEE4] rounded-sm text-sm font-ui font-medium"
                 >
                   <Download className="w-4 h-4" />
@@ -202,7 +201,7 @@ export const AppUpdateView: React.FC = () => {
                   className="inline-flex items-center gap-1.5 px-4 py-2 border border-[#73785E] text-[#5F654D] rounded-sm text-sm font-ui font-medium disabled:opacity-50"
                 >
                   <RefreshCw className="w-4 h-4" />
-                  重新检查
+                  {status === 'idle' ? '检查更新' : '重新检查'}
                 </button>
               )}
             </div>

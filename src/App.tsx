@@ -72,6 +72,14 @@ export default function App() {
 
   useEffect(() => {
     setIsInstalledApp(isStandaloneApp() && isMobileOrTablet());
+    if (isStandaloneApp() && import.meta.env.PROD && 'serviceWorker' in navigator) {
+      const installedUrl = new URL(window.location.href);
+      installedUrl.searchParams.set('app', 'installed');
+      window.history.replaceState(window.history.state, '', installedUrl);
+      void navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).catch(() => {
+        // Existing app remains usable; the update page exposes retry errors.
+      });
+    }
     // If a previous visit had to use free browser speech, quietly retry
     // Gemini once on this fresh visit and cache a successful result.
     void refreshPendingDialogueSpeech();

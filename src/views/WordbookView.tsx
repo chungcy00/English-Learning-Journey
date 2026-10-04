@@ -108,7 +108,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
       setAddedTerm(item.term);
       setStatusFilter('All');
       setSearch('');
-      setIsSuggestionOpen(false);
+      setIsSuggestionOpen(true);
     } catch (error) {
       setAddError(error instanceof Error ? error.message : '添加失败，请稍后重试。');
     } finally {
@@ -287,7 +287,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                 } else if (e.key === 'Enter' && activeSuggestionIndex >= 0) {
                   e.preventDefault();
                   setSearch(searchSuggestions[activeSuggestionIndex].term);
-                  setIsSuggestionOpen(false);
+                  setIsSuggestionOpen(true);
                   setActiveSuggestionIndex(-1);
                 } else if (e.key === 'Enter' && isEnglishTermQuery(search)) {
                   e.preventDefault();
@@ -302,14 +302,11 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
               className="w-full pl-9 pr-3 py-2 text-base bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm focus-visible:outline-2 focus-visible:outline-[#5F654D] font-ui text-[#292B25]"
             />
 
-            {isSuggestionOpen && searchSuggestions.length > 0 && (
+            {isSuggestionOpen && (search.trim() || catalogue.loading || catalogue.error || addError || addedTerm) && (
               <div
-                role="listbox"
                 className="absolute z-30 left-0 right-0 top-full mt-1 max-h-72 overflow-y-auto bg-[#FAF7F2] border border-[#D4CCBC] rounded-sm shadow-lg"
               >
-                <p className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider text-[#717265] font-ui">
-                  当前短文中的表达 · 添加前验证英文用法
-                </p>
+                <div role="listbox" aria-label="当前短文中的表达">
                 {searchSuggestions.map(({ item, term, expression }, index) => (
                   <button
                     key={term}
@@ -319,7 +316,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                     onMouseDown={(e) => {
                       e.preventDefault();
                       setSearch(term);
-                      setIsSuggestionOpen(false);
+                      setIsSuggestionOpen(true);
                       setActiveSuggestionIndex(-1);
                     }}
                     className={`w-full px-3 py-2 text-left border-t border-[#D4CCBC]/50 transition-colors ${
@@ -332,10 +329,21 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                       {term}
                     </span>
                     <span className="block text-[11px] font-ui text-[#717265] truncate">
-                      {item ? `${vocabularyList.some(saved => saved.id === item.id) ? '已在生词本 · ' : '当前精选 · '}${getLocalizedVocabMeaning(item, targetLanguage)} · ${item.type}` : expression?.type || ''}
+                      {item ? `${vocabularyList.some(saved => saved.id === item.id) ? '已在生词本 · ' : '当前精选 · '}${getLocalizedVocabMeaning(item, targetLanguage)} · ` : ''}
+                      <span className="italic">{item?.type || expression?.type || ''}</span>
                     </span>
                   </button>
                 ))}
+                </div>
+                <div className="p-3 space-y-2 text-sm font-ui">
+                  {catalogue.loading && <p role="status">正在识别表达…</p>}
+                  {catalogue.error && <p role="alert" className="text-red-700">{catalogue.error} <button onClick={catalogue.retry} className="underline">重试</button></p>}
+                  {isEnglishTermQuery(search) && search.trim().length <= 160 && !vocabularyList.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(search)) && <button type="button" disabled={isAdding} onClick={() => void addToCurrentLevel()} className="border border-[#D4CCBC] rounded-sm px-3 py-1.5 disabled:opacity-50 break-words w-full text-left">
+                    {isAdding ? '正在添加…' : `添加 “${search.trim()}”`}
+                  </button>}
+                  {addError && <p role="alert" className="text-red-700">{addError}</p>}
+                  {addedTerm && <p role="status">已添加 “{addedTerm}”。 <button onClick={onOpenReview} className="underline">去复习</button></p>}
+                </div>
               </div>
             )}
           </div>
@@ -357,30 +365,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
             </select>
           </div>
         </div>
-      </div>
-
-      <div className="h-24 overflow-y-auto space-y-2" aria-label="搜索与添加提示">
-      {catalogue.loading && <p role="status" className="text-sm font-ui text-[#5F654D]">正在识别当前短文的单词、短语和习语…</p>}
-      {catalogue.error && <p role="alert" className="text-sm font-ui text-red-700">{catalogue.error} <button className="underline" onClick={catalogue.retry}>重试</button></p>}
-      {search.trim() && (
-        <div className="flex flex-wrap items-center gap-3 text-sm font-ui text-[#5F654D]">
-          <span>{isEnglishTermQuery(search) ? `仅添加当前短文中的完整表达；添加后进入复习` : '请输入当前短文中的英文单词、短语或习语'}</span>
-          {isEnglishTermQuery(search) && search.trim().length <= 160 && !vocabularyList.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(search)) && (
-            <button type="button" disabled={isAdding} onClick={() => addToCurrentLevel()}
-              className="border border-[#D4CCBC] rounded-sm px-3 py-1.5 disabled:opacity-50">
-              {isAdding ? '正在添加…' : `添加 “${search.trim()}”`}
-            </button>
-          )}
-        </div>
-      )}
-      {addError && <p role="alert" className="text-sm text-red-700">{addError}</p>}
-      {addedTerm && (
-        <div role="status" className="flex flex-wrap items-center gap-3 text-sm font-ui text-[#5F654D]">
-          <span>已添加 “{addedTerm}”，已加入今日复习。</span>
-          <button type="button" onClick={onOpenReview} className="underline font-semibold">去复习</button>
-        </div>
-      )}
-      {!search.trim() && !catalogue.loading && !catalogue.error && !addedTerm && !addError && <p className="text-sm font-ui text-[#5F654D]">搜索当前短文中的完整表达；下方生词列表保持不变。</p>}
       </div>
 
       {/* Filter Tabs & Multi-select Toolbar */}

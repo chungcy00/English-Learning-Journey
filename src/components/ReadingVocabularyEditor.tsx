@@ -4,6 +4,7 @@ import { explainVocabularyTerm } from '../services/api';
 import { containsEnglishExpression, normalizeEnglishTerm } from '../utils/englishSearch';
 import { replaceReadingTerm } from '../utils/readingVocabulary';
 import { useReadingExpressions } from '../hooks/useReadingExpressions';
+import { ExpressionSelect } from './ExpressionSelect';
 
 export const ReadingVocabularyEditor: React.FC<{
   reading: ReadingRecord;
@@ -64,17 +65,9 @@ export const ReadingVocabularyEditor: React.FC<{
   };
   return <div className="space-y-3 font-ui text-sm">
     <div className="flex flex-wrap gap-3 items-center">
-      <label className="min-w-0 flex-1 basis-64">
-        <span className="block mb-1.5 text-[#292B25]">选择文中的单词、短语或习语</span>
-        <select aria-label="选择当前短文的同级表达" value={term} disabled={busy}
-          onFocus={catalogue.load} onPointerDown={catalogue.load} onChange={event => void lookup(event.target.value)}
-          className="w-full min-w-0 px-3 py-2 text-base border border-[#D4CCBC] rounded-sm bg-[#F2EEE4] text-[#292B25] focus-visible:outline-2 focus-visible:outline-[#5F654D] disabled:opacity-50">
-          <option value="">{catalogue.loading ? '正在识别短文中的表达…' : '请选择文中的表达'}</option>
-          {options.map(item => <option key={normalizeEnglishTerm(item.term)} value={item.term}>
-            {item.term} · {item.type}{reading.selectedVocabulary.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(item.term)) ? ' · ☑️' : ''}
-          </option>)}
-        </select>
-      </label>
+      <ExpressionSelect identity={identity} value={term} disabled={busy} loading={catalogue.loading} onOpen={catalogue.load}
+        onChange={value => void lookup(value)} options={options.map(item => ({ term: item.term, type: item.type,
+          selected: reading.selectedVocabulary.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(item.term)) }))} />
       <span className="text-[#5F654D]">{reading.selectedVocabulary.length}/{limit}</span>
     </div>
     {catalogue.loading && <p role="status" className="text-[#5F654D]">正在按原文语境确认词条和程度…</p>}
