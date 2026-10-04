@@ -27,10 +27,12 @@ import {
   CEFRLevel,
   ReadingType,
   ReadingLength,
+  VocabStatus,
   ReviewRating,
 } from './types';
 
 import {
+  db,
   initDefaultData,
   getAllReadings,
   saveReading,
@@ -305,6 +307,14 @@ export default function App() {
     if (target) setRemovalTarget(target);
   };
 
+  const handleUpdateStatus = async (id: string, status: VocabStatus) => {
+    const updatedAt = Date.now();
+    // Update only these fields; preserve review scheduling and passage associations.
+    const updated = await db.vocabulary.update(id, { status, updatedAt });
+    if (!updated) throw new Error('词条已不存在');
+    setVocabularies(items => items.map(item => item.id === id ? { ...item, status, updatedAt } : item));
+  };
+
   // 7. Rate Review Flashcard (PRD Section 29)
   const handleRateReview = async (vocabId: string, rating: ReviewRating) => {
     if (pendingRatings.current.has(vocabId)) throw new Error('此词条评分仍在保存');
@@ -445,6 +455,7 @@ export default function App() {
             readings={readings}
             currentReading={currentReading}
             onDeleteVocab={handleDeleteVocab}
+            onUpdateStatus={handleUpdateStatus}
             onGenerateFromWordbook={handleGenerateFromWordbook}
             isGenerating={isGenerating}
             targetLanguage={settings.targetLanguage || 'zh-CN'}

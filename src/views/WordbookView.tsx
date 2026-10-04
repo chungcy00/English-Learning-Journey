@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { VocabularyItem, VocabStatus, CEFRLevel, ReadingType, ReadingLength, ReadingRecord } from '../types';
 import { WordDetailModal } from '../components/WordDetailModal';
+import { VocabularyStatusSelect } from '../components/VocabularyStatusSelect';
 import {
   SUPPORTED_LANGUAGES,
   getLocalizedVocabMeaning,
@@ -33,6 +34,7 @@ interface WordbookViewProps {
   readings: ReadingRecord[];
   currentReading: ReadingRecord | null;
   onDeleteVocab: (id: string) => void;
+  onUpdateStatus: (id: string, status: VocabStatus) => Promise<void>;
   onGenerateFromWordbook: (params: {
     selectedTerms: string[];
     cefrLevel: CEFRLevel;
@@ -52,6 +54,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   vocabularyList,
   currentReading,
   onDeleteVocab,
+  onUpdateStatus,
   onGenerateFromWordbook,
   isGenerating,
   targetLanguage,
@@ -373,10 +376,11 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
           className="w-full min-h-11 px-3 py-2 text-base bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm text-[#292B25] placeholder:text-[#646657]" />
       </details>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="wordbook-status-filters flex flex-wrap items-center gap-1.5">
+        <div className="wordbook-status-filters flex flex-wrap items-center gap-1.5" role="group" aria-label="按学习状态筛选">
           {filterOptions.map((status) => (
             <button
               key={status}
+              type="button"
               aria-pressed={statusFilter === status}
               onClick={() => setStatusFilter(status)}
               className={`type-label min-h-11 shrink-0 whitespace-nowrap px-3 py-1  font-ui rounded-xs border transition-colors ${
@@ -446,6 +450,10 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                   <div id={panelId} role="region" aria-labelledby={`${panelId}-toggle`} hidden={!expanded}>
                     {expanded && <>
                       <WordDetailModal vocab={vocab} isOpen embedded isInWordbook onClose={() => setDetailVocab(null)} onToggleWordbook={v => { onDeleteVocab(v.id); setDetailVocab(null); }} targetLanguage={targetLanguage} />
+                      <div className="flex flex-wrap items-center justify-between gap-3 py-3 font-ui">
+                        <span>学习状态</span>
+                        <VocabularyStatusSelect vocab={vocab} onUpdate={onUpdateStatus} />
+                      </div>
                     </>}
                   </div>
                 </div>
@@ -496,6 +504,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
                 {/* Status selector & Actions */}
                 <div className="wordbook-entry-controls flex items-center gap-2">
+                  <VocabularyStatusSelect vocab={vocab} onUpdate={onUpdateStatus} />
 
                   <button
                     onClick={(e) => {

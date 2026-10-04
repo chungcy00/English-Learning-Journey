@@ -726,7 +726,7 @@ main {
   .reading-mode-parallel .reading-translation { border-radius: 0 16px 16px 0; background: var(--bg-alt); border-left: 1px solid var(--border-subtle); }
 }
 @media (max-width: 639px) {
-  .wordbook-status-filters { flex-wrap: nowrap; width: 100%; overflow-x: auto; padding-bottom: 0.25rem; }
+  .wordbook-status-filters { flex-wrap: wrap; width: 100%; gap: 0.5rem; }
   .wordbook-controls { gap: 0.5rem; }
   .wordbook-workspace { gap: 1rem; }
   .word-detail-dialog::before { flex-shrink: 0; }

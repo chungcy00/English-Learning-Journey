@@ -4,16 +4,29 @@ import { existsSync, readFileSync } from 'node:fs';
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
-test('manual learning-status controls and all custom popup styles are removed, with filters retained', () => {
+test('simple status selects work in both layouts without restoring custom popups', () => {
   const wordbook = read('../views/WordbookView.tsx');
   const app = read('../App.tsx');
   const css = read('../index.css');
-  assert.doesNotMatch(wordbook, /LearningStatusPicker|onUpdateStatus|学习状态|<option value="(?:New|Learning|Difficult|Mastered)"/);
-  assert.doesNotMatch(app, /handleUpdateStatus|onUpdateStatus/);
+  assert.doesNotMatch(wordbook, /LearningStatusPicker|wordbook-accordion-status/);
+  assert.equal((wordbook.match(/<VocabularyStatusSelect vocab=\{vocab\} onUpdate=\{onUpdateStatus\}/g) || []).length, 2);
+  assert.match(app, /db\.vocabulary\.update\(id, \{ status, updatedAt \}\)/);
+  const select = read('../components/VocabularyStatusSelect.tsx');
+  assert.match(select, /await onUpdate\(vocab.id, status\)/);
+  assert.match(select, /状态未保存，请重试/);
   assert.doesNotMatch(css, /learning-status-|wordbook-accordion-status/);
   assert.equal(existsSync(new URL('../components/LearningStatusPicker.tsx', import.meta.url)), false);
   assert.match(wordbook, /filterSavedVocabulary/);
   assert.match(app, /recordReview/);
+});
+
+test('status filters wrap on phones and retain independent pressed-state buttons', () => {
+  const source = read('../views/WordbookView.tsx');
+  assert.match(source, /role="group" aria-label="按学习状态筛选"/);
+  assert.match(source, /type="button"\s+aria-pressed=\{statusFilter === status\}\s+onClick=\{\(\) => setStatusFilter\(status\)\}/);
+  const css = read('../index.css');
+  assert.doesNotMatch(css, /\.wordbook-status-filters\s*\{[^}]*flex-wrap:\s*nowrap/);
+  assert.match(css, /\.wordbook-status-filters\s*\{[^}]*flex-wrap:\s*wrap/);
 });
 
 test('wordbook suggestions expose matching list and active option identities plus pointer activation', () => {
