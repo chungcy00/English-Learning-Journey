@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useWideLayout } from '../hooks/useWideLayout';
 import {
   Sparkles,
   Download,
@@ -203,9 +202,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const [selectedVocab, setSelectedVocab] = useState<VocabularyItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isRewriteMenuOpen, setIsRewriteMenuOpen] = useState(false);
-  const isWideLayout = useWideLayout();
-  const [mobileReadingMode, setMobileReadingMode] = useState<'original' | 'translation' | 'parallel'>(() =>
-    typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches ? 'parallel' : 'original');
+  const [mobileReadingMode, setMobileReadingMode] = useState<'original' | 'translation'>('original');
   const [keepVocab, setKeepVocab] = useState(true);
   const translationRunRef = useRef(0);
   const vocabularySignature = reading.selectedVocabulary.map(vocab => `${vocab.id}:${vocab.term}`).join('|');
@@ -1024,11 +1021,10 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       {/* Main Reading Area: switch between the original and translated reading modes */}
       {pdfError && <p role="alert" className="type-body font-ui text-red-700">{pdfError}</p>}
       <div className="mobile-reading-switch" role="tablist" aria-label="阅读内容模式">
-        <button type="button" role="tab" aria-selected={mobileReadingMode === 'original' || (!isWideLayout && mobileReadingMode === 'parallel')} onClick={() => setMobileReadingMode('original')}>原文</button>
+        <button type="button" role="tab" aria-selected={mobileReadingMode === 'original'} onClick={() => setMobileReadingMode('original')}>原文</button>
         <button type="button" role="tab" aria-selected={mobileReadingMode === 'translation'} onClick={() => setMobileReadingMode('translation')}>翻译</button>
-        <button type="button" role="tab" className="reading-parallel-switch" aria-selected={mobileReadingMode === 'parallel'} onClick={() => setMobileReadingMode('parallel')}>对照</button>
       </div>
-      <div className={`reading-columns grid grid-cols-1 gap-6 items-start ${mobileReadingMode === 'parallel' ? 'reading-mode-parallel' : ''}`}>
+      <div className="reading-columns reading-mode-parallel grid grid-cols-1 gap-6 items-start">
           {/* Left Column: English Reading Card */}
           <article className={`reading-panel reading-original bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm flex flex-col ${mobileReadingMode === 'translation' ? 'mobile-reading-hidden' : ''}`}>
             <header className="reading-panel-header mb-6 pb-4 border-b border-[#D4CCBC]/50">
@@ -1230,7 +1226,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
       {/* Rewrite the Sentence Practice Section (PRD Section 22-27) */}
       {reading.rewritePractice && reading.rewritePractice.length > 0 && (
-        <section className="space-y-4 pt-4">
+        <section className="rewrite-practice-section space-y-4 pt-4">
           <div className="pb-2 border-b border-[#D4CCBC]">
             <h2 className="type-section font-editorial font-semibold text-[#292B25]">
               {getI18nText(targetLanguage, 'rewriteSectionTitle')}

@@ -177,13 +177,14 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   }, [isRevealed, sessionCompleted, reviewList.length]);
 
   return (
-    <div className="page-shell page-shell--review page-stack">
+    <div className="page-shell page-shell--review page-stack review-page">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#D4CCBC]">
         <div>
           <h1 className="type-page font-editorial font-semibold text-[#292B25]">
             {getI18nText(targetLanguage, 'reviewTitle')}
           </h1>
+          <p className="type-body font-ui text-[#555848] mt-2">当前短文已添加词条：{reviewList.length} 项</p>
         </div>
 
         {/* Target Language Selector */}
@@ -239,8 +240,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
         /* Active Flashcard */
         <div className="space-y-6">
           {/* Progress Indicator */}
-          <div className="type-label flex flex-wrap items-center justify-between gap-x-4 gap-y-2 font-ui text-[#555848]">
-            <span>当前短文已添加词条：{reviewList.length} 项</span>
+          <div className="review-progress type-label flex flex-wrap items-center justify-end gap-x-4 gap-y-2 font-ui text-[#555848]">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {
@@ -269,7 +269,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
           </div>
 
           {/* Flashcard Card (PRD Section 28) */}
-          <div className="bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm p-6 sm:p-10 shadow-sm min-h-[320px] flex flex-col justify-between">
+          <div className="review-flashcard bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm p-6 sm:p-10 min-h-[320px] flex flex-col justify-between">
             {/* Front: Term & Phonetic */}
             <div className="space-y-4">
               <div className="flex items-center justify-end">
@@ -348,7 +348,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
 
                   {/* Collocations */}
                   {currentVocab.collocations && currentVocab.collocations.length > 0 && (
-                    <details key={currentVocab.id} className="group">
+                    <details key={currentVocab.id} className="review-collocations group">
                       <summary className="type-label min-h-11 flex items-center justify-between font-ui text-[#555848] cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                         {getI18nText(targetLanguage, 'collocationsLabel', '常见搭配 (Collocations)')}:
                         <ChevronDown aria-hidden="true" className="w-4 h-4 group-open:rotate-180" />

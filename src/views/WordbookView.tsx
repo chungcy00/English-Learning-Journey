@@ -229,16 +229,20 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
     <div className="page-shell page-stack wordbook-page">
       {/* Header */}
       <div className="space-y-5 pb-6 border-b border-[#D4CCBC]">
+        <div className="wordbook-heading-row flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="type-page font-editorial font-semibold text-[#292B25]">
             {getI18nText(targetLanguage, 'wordbookTitle')}
           </h1>
+          <p className="type-label mt-2 font-ui text-[#555848]">当前短文已添加词条：{vocabularyList.length} 项</p>
           {isTranslating && (
             <span className="type-meta inline-flex items-center gap-1 mt-1 font-ui text-[#5F654D] animate-pulse">
               <Loader2 className="w-3 h-3 animate-spin" />
               {getI18nText(targetLanguage, 'syncingWordbook').replace('{lang}', currentLangObj.native)}
             </span>
           )}
+        </div>
+        <button type="button" onClick={onOpenReview} className="type-label min-h-11 px-4 py-2 rounded-xl bg-[#62694D] text-[#F2EEE4] font-ui hover:bg-[#5F654D]">开始复习</button>
         </div>
 
         {/* Search Bar & Target Language Picker */}
@@ -363,10 +367,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
       {/* Filter Tabs & Multi-select Toolbar */}
       <section className="wordbook-controls" aria-label="筛选生词本">
-      <div className="type-label flex flex-wrap items-center justify-between gap-x-4 gap-y-1 font-ui text-[#555848]">
-        <span>当前短文已添加词条：{vocabularyList.length} 项{statusFilter !== 'All' || collectionSearch.trim() ? ` · 当前显示 ${filtered.length} 项` : ''}</span>
-        <button type="button" onClick={onOpenReview} className="min-h-11 underline underline-offset-4 hover:text-[#292B25]">开始复习</button>
-      </div>
       <details className="wordbook-saved-search space-y-2 font-ui" open={isWideLayout || undefined}>
         <summary className="min-h-11 flex items-center cursor-pointer type-label text-[#292B25]">筛选已添加词条 <ChevronRight aria-hidden="true" className="w-4 h-4 ml-2" /></summary>
         <label htmlFor="saved-vocabulary-search" className="sr-only">筛选已添加词条</label>
@@ -412,62 +412,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
       {/* Generate Reading From Wordbook Action Card (PRD Section 20) */}
       </section>
-      {selectedTerms.length > 0 && (
-        <div className="bg-[#E5DED0] border border-[#D4CCBC] rounded-sm p-4 space-y-3 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#62694D]" />
-              <span className="type-label font-ui font-semibold text-[#292B25]">
-                已选 {selectedTerms.length} 个生词重新生成短文
-              </span>
-            </div>
-            <div className="min-w-0 flex flex-wrap gap-1 text-[11px] font-editorial text-[#5F654D] break-words">
-              {selectedTerms.map((t) => (
-                <span key={t} className="px-1.5 py-0.5 bg-[#F2EEE4] rounded-xs border border-[#D4CCBC]/50">
-                  {t}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-[#D4CCBC]/60">
-            <div className="type-label flex items-center gap-1.5 font-ui text-[#292B25]">
-              <span>类型:</span>
-              <select
-                value={readingType}
-                onChange={(e) => setReadingType(e.target.value as ReadingType)}
-                className="px-2 py-1 text-xs bg-[#F2EEE4] border border-[#D4CCBC] rounded-xs"
-              >
-                <option value="story">Story</option>
-                <option value="non-story">Non-story</option>
-                <option value="dialogue">Dialogue</option>
-              </select>
-            </div>
-
-            <div className="type-label flex items-center gap-1.5 font-ui text-[#292B25]">
-              <span>篇幅:</span>
-              <select
-                value={length}
-                onChange={(e) => setLength(e.target.value as ReadingLength)}
-                className="px-2 py-1 text-xs bg-[#F2EEE4] border border-[#D4CCBC] rounded-xs"
-              >
-                <option value="short">Short</option>
-                <option value="medium">Medium</option>
-                <option value="long">Long</option>
-              </select>
-            </div>
-
-            <button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className="type-label ml-auto flex items-center gap-1.5 px-4 py-1.5 bg-[#62694D] text-[#F2EEE4] hover:bg-[#5F654D] font-ui font-medium rounded-sm shadow-xs transition-colors"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>生成新短文 (Generate Reading)</span>
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Vocabulary List */}
       <div className="wordbook-workspace">
@@ -494,7 +438,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                     <input type="checkbox" aria-label={`选择 ${vocab.term}`} checked={isSelected} onChange={() => toggleSelect(vocab.term)} className="h-4 w-4 accent-[#5F654D] cursor-pointer" />
                   </label>
 
-                  <div className="min-w-0 break-words">
+                  <div className="wordbook-entry-copy min-w-0 break-words">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="type-term font-editorial font-semibold text-[#5F654D] group-hover:text-[#292B25] transition-colors">
                         <button type="button" aria-haspopup={isWideLayout ? undefined : 'dialog'} aria-label={`查看 ${vocab.term} 的词汇释义`} onClick={e => { e.stopPropagation(); setDetailVocab(vocab); }} className="font-editorial text-left min-h-11">{vocab.term}</button>
@@ -562,6 +506,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         vocab={vocabularyList.find(v => v.id === detailVocab?.id) || (isWideLayout ? filtered[0] : null)}
         isOpen={!!detailVocab || (isWideLayout && filtered.length > 0)}
         inline={isWideLayout}
+        inlineExpanded={!!detailVocab}
         onClose={() => setDetailVocab(null)}
         isInWordbook={true}
         onToggleWordbook={(v) => {
@@ -571,6 +516,62 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         targetLanguage={targetLanguage}
       />
       </div>
+      {selectedTerms.length > 0 && (
+        <div className="wordbook-selection-panel bg-[#E5DED0] border border-[#D4CCBC] rounded-sm p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#62694D]" />
+              <span className="type-label font-ui font-semibold text-[#292B25]">
+                已选 {selectedTerms.length} 个生词重新生成短文
+              </span>
+            </div>
+            <div className="min-w-0 flex flex-wrap gap-1 text-[11px] font-editorial text-[#5F654D] break-words">
+              {selectedTerms.map((t) => (
+                <span key={t} className="px-1.5 py-0.5 bg-[#F2EEE4] rounded-xs border border-[#D4CCBC]/50">
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-[#D4CCBC]/60">
+            <div className="type-label flex items-center gap-1.5 font-ui text-[#292B25]">
+              <span>类型:</span>
+              <select
+                value={readingType}
+                onChange={(e) => setReadingType(e.target.value as ReadingType)}
+                className="px-2 py-1 text-xs bg-[#F2EEE4] border border-[#D4CCBC] rounded-xs"
+              >
+                <option value="story">Story</option>
+                <option value="non-story">Non-story</option>
+                <option value="dialogue">Dialogue</option>
+              </select>
+            </div>
+
+            <div className="type-label flex items-center gap-1.5 font-ui text-[#292B25]">
+              <span>篇幅:</span>
+              <select
+                value={length}
+                onChange={(e) => setLength(e.target.value as ReadingLength)}
+                className="px-2 py-1 text-xs bg-[#F2EEE4] border border-[#D4CCBC] rounded-xs"
+              >
+                <option value="short">Short</option>
+                <option value="medium">Medium</option>
+                <option value="long">Long</option>
+              </select>
+            </div>
+
+            <button
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              className="type-label ml-auto flex items-center gap-1.5 px-4 py-1.5 bg-[#62694D] text-[#F2EEE4] hover:bg-[#5F654D] font-ui font-medium rounded-sm shadow-xs transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>生成新短文 (Generate Reading)</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

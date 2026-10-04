@@ -1,6 +1,6 @@
 import React from 'react';
 import { useModalDialog } from '../hooks/useModalDialog';
-import { Volume2, Bookmark, Check, X } from 'lucide-react';
+import { Volume2, Bookmark, Check, X, ChevronDown } from 'lucide-react';
 import { VocabularyItem, ReadingTranslation } from '../types';
 import {
   getI18nText,
@@ -18,6 +18,7 @@ interface WordDetailModalProps {
   targetLanguage?: string;
   currentTranslation?: ReadingTranslation;
   inline?: boolean;
+  inlineExpanded?: boolean;
 }
 
 export const WordDetailModal: React.FC<WordDetailModalProps> = ({
@@ -29,6 +30,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
   targetLanguage = 'zh-CN',
   currentTranslation,
   inline = false,
+  inlineExpanded = false,
 }) => {
   const dialogRef = useModalDialog(isOpen && !!vocab && !inline);
   if (!isOpen || !vocab) return null;
@@ -171,7 +173,14 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
     </>
   );
   return inline ? (
-    <aside className="wordbook-detail-panel" aria-labelledby="word-detail-title">{content}</aside>
+    <aside className="wordbook-detail-panel" aria-label="词条详情">
+      <details key={vocab.id} open={inlineExpanded} className="wordbook-detail-disclosure group">
+        <summary className="type-term font-editorial flex items-center justify-between gap-3 min-h-11 cursor-pointer">
+          <span>{vocab.term}</span><ChevronDown aria-hidden="true" className="w-4 h-4 shrink-0 group-open:rotate-180" />
+        </summary>
+        <div className="wordbook-detail-content">{content}</div>
+      </details>
+    </aside>
   ) : (
     <dialog ref={dialogRef} aria-labelledby="word-detail-title" onCancel={onClose} className="app-dialog word-detail-dialog w-[calc(100%_-_2rem)] max-w-lg bg-[#F2EEE4] text-[#292B25] border border-[#D4CCBC] rounded-sm p-6 sm:p-8 shadow-lg m-auto break-words">{content}</dialog>
   );

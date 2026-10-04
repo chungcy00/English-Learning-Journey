@@ -67,50 +67,47 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
   };
 
   return (
-    <div className="bg-[#E5DED0]/40 border border-[#D4CCBC] rounded-sm p-5 sm:p-6">
+    <div className="rewrite-exercise">
       {error && <p role="alert" className="type-body font-ui text-red-700 mb-3">{error}</p>}
       {/* Question Header */}
-      <div className="exercise-heading mb-3">
-        <div className="min-w-0 break-words">
-          <span className="text-xs font-ui text-[#555848] uppercase tracking-wider block mb-1">
-            {getI18nText(targetLanguage, 'exerciseLabel')} {index + 1}
-          </span>
-          <p className="type-example font-editorial text-[#292B25]">
-            "{item.originalSentence}"
-          </p>
-          {localizedOriginalMeaning && (
-            <p className="type-body font-ui text-[#555848] mt-1.5 italic">
-              {localizedOriginalMeaning}
-            </p>
-          )}
-        </div>
-
-        <div className="exercise-target">
+      <div className="rewrite-exercise-heading exercise-heading mb-3">
+        <span className="rewrite-exercise-number type-label font-ui text-[#555848]">
+          {getI18nText(targetLanguage, 'exerciseLabel')} {String(index + 1).padStart(2, '0')}
+        </span>
+        <div className="exercise-target flex flex-wrap items-center gap-x-4 gap-y-1">
           <span className="text-sm font-ui font-semibold text-[#5F654D] block mb-1">
             {getI18nText(targetLanguage, 'targetLabel')}:
           </span>
-          <span className="type-term inline-block font-editorial font-bold px-3 py-1 bg-[#F2EEE4] text-[#5F654D] border border-[#D4CCBC] rounded-sm">
+          <span className="rewrite-target-term inline-block font-editorial font-semibold text-[#5F654D]">
             {item.target}
           </span>
         </div>
       </div>
 
+      <div className="rewrite-original">
+        <span className="type-label font-ui text-[#555848]">原句</span>
+        <p className="type-example font-editorial text-[#292B25]">{item.originalSentence}</p>
+        {localizedOriginalMeaning && <p className="type-body font-ui text-[#555848] mt-1.5">{localizedOriginalMeaning}</p>}
+      </div>
+
       {/* Answer Input */}
       <div className="mt-4">
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            type="text"
+        <label htmlFor={`rewrite-answer-${item.id}`} className="type-label font-ui block mb-2">你的改写</label>
+        <div className="rewrite-answer-controls">
+          <textarea
+            id={`rewrite-answer-${item.id}`}
+            rows={3}
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
+            onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void handleCheck(); } }}
             aria-label={`${getI18nText(targetLanguage, 'exerciseLabel')} ${index + 1}：${getI18nText(targetLanguage, 'inputPlaceholder')}`}
             placeholder={getI18nText(targetLanguage, 'inputPlaceholder')}
-            className="type-example min-w-0 min-h-11 flex-1 px-3 py-2 bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm focus:outline-none focus:border-[#62694D] text-[#292B25]"
+            className="type-body font-ui min-w-0 min-h-11 flex-1 px-3 py-2 bg-[#FAF7F2] border border-[#D4CCBC] rounded-sm focus:outline-none focus:border-[#62694D] text-[#292B25]"
           />
           <button
             onClick={handleCheck}
             disabled={!answer.trim() || loading}
-            className="type-label min-h-11 flex items-center justify-center gap-1.5 px-4 py-2 bg-[#62694D] text-[#F2EEE4] font-medium font-ui rounded-sm hover:bg-[#5F654D] disabled:opacity-50 transition-colors shrink-0"
+            className="rewrite-check type-label min-h-11 flex items-center justify-center gap-1.5 px-4 py-2 bg-[#62694D] text-[#F2EEE4] font-medium font-ui rounded-sm hover:bg-[#5F654D] disabled:opacity-50 transition-colors shrink-0"
           >
             {loading ? (
               <>
@@ -124,19 +121,16 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
               </>
             )}
           </button>
+          {!evaluation && <button type="button" onClick={() => setShowAnswer(!showAnswer)} aria-expanded={showAnswer}
+            className="rewrite-show-answer type-label min-h-11 font-ui text-[#555848] underline underline-offset-4">
+            {showAnswer ? '收起参考答案' : '查看参考答案'}
+          </button>}
         </div>
       </div>
 
       {/* Show Answer Toggle for when not yet evaluated */}
-      {!evaluation && (
-        <div className="mt-3">
-          <button 
-            onClick={() => setShowAnswer(!showAnswer)}
-            className="type-meta min-h-11 text-[#555848] hover:text-[#5F654D] font-ui transition-colors uppercase"
-          >
-            {showAnswer ? 'Hide Answer' : 'Show Answer'}
-          </button>
-          
+      {!evaluation && showAnswer && (
+        <div className="rewrite-reference mt-3">
           {showAnswer && (
             <div className="type-label mt-2 p-3 bg-[#F2EEE4] rounded-sm border border-[#D4CCBC] font-ui animate-in fade-in">
               <span className="text-[11px] text-[#555848] block mb-1">
@@ -152,7 +146,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
 
       {/* AI Evaluation Section (PRD Sections 23-27) */}
       {evaluation && (
-        <div className="mt-5 pt-4 border-t border-[#D4CCBC] space-y-4">
+        <div className="rewrite-feedback mt-5 pt-4 border-t border-[#D4CCBC] space-y-4">
           {/* Rating Badge */}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">

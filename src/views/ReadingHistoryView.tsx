@@ -23,7 +23,7 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({
   );
 
   return (
-    <div className="page-shell">
+    <div className="page-shell history-page">
       <header className="border-b border-[#D4CCBC] pb-5">
         <h1 className="type-page font-editorial font-semibold text-[#292B25]">
           阅读历史记录
@@ -59,7 +59,7 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({
           filtered.map((item) => (
             <article
               key={item.id}
-              className="group flex items-start justify-between gap-3 rounded-sm border border-[#D4CCBC] bg-[#E5DED0]/40 p-4 transition-colors hover:bg-[#E5DED0]/80 sm:p-5"
+              className="history-entry group flex items-start justify-between gap-3 rounded-sm border border-[#D4CCBC] bg-[#FAF7F2] p-4 transition-colors hover:bg-[#E5DED0]/40 sm:p-5"
             >
               <button
                 type="button"
