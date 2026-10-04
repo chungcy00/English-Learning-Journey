@@ -1,8 +1,8 @@
-export const APP_VERSION = 'V2.4.4';
+export const APP_VERSION = 'V2.4.5';
 
-export const VERSION_HISTORY_COUNT = 24;
+export const VERSION_HISTORY_COUNT = 25;
 
 export const CURRENT_RELEASE_NOTES = [
-  '改善导航、词条详情和表单的键盘操作与无障碍标记',
-  '提升文字与按钮对比度，移出生词本前增加确认保护',
+  '明确当前短文搜索、按所选程度显示和全部词条复习的范围',
+  '精选数量标明上限，生词本提供全部词条复习入口',
 ];

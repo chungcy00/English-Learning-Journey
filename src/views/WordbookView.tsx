@@ -181,14 +181,12 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
       .map(term => ({ term, item: currentReading.selectedVocabulary.find(v => normalizeEnglishTerm(v.term) === term) || vocabularyList.find(v => normalizeEnglishTerm(v.term) === term), expression: catalogue.expressions.find(v => normalizeEnglishTerm(v.term) === term) }));
   }, [search, vocabularyList, currentReading, catalogue.expressions]);
 
-  const filtered = useMemo(() => {
+  const scopedVocabulary = useMemo(() => {
     return vocabularyList
-      .filter(item =>
-        (statusFilter === 'All' || item.status === statusFilter) &&
-        isVocabularyAtLevel(item, currentCefr, readingById)
-      )
+      .filter(item => isVocabularyAtLevel(item, currentCefr, readingById))
       .sort((a, b) => compareWordbookEntries(a, b, currentCefr, readingById));
-  }, [vocabularyList, readingById, statusFilter, currentCefr]);
+  }, [vocabularyList, readingById, currentCefr]);
+  const filtered = useMemo(() => scopedVocabulary.filter(item => statusFilter === 'All' || item.status === statusFilter), [scopedVocabulary, statusFilter]);
 
   const toggleSelect = (term: string) => {
     setSelectedTerms((prev) =>
@@ -253,9 +251,12 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
         {/* Search Bar & Target Language Picker */}
         <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
-          <div className="relative flex-1 sm:w-64">
+          <div className="flex-1 sm:w-64">
+            <label htmlFor="wordbook-expression-search" className="block mb-1.5 text-xs font-ui text-[#555848]">搜索并添加当前短文的表达</label>
+            <div className="relative">
             <Search className="w-4 h-4 text-[#555848] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
+              id="wordbook-expression-search"
               type="text"
               maxLength={160}
               value={search}
@@ -295,7 +296,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                 }
               }}
               placeholder="搜索当前短文的单词、短语或习语…"
-              aria-label="搜索当前短文中的英文单词、短语或习语"
+              aria-label="搜索并添加当前短文的英文单词、短语或习语"
               role="combobox"
               aria-expanded={isSuggestionOpen && searchSuggestions.length > 0}
               aria-autocomplete="list"
@@ -346,6 +347,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                 </div>
               </div>
             )}
+            </div>
           </div>
 
           {/* Language Selector */}
@@ -368,19 +370,24 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
       </div>
 
       {/* Filter Tabs & Multi-select Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs font-ui text-[#555848]">
+        <span>按所选程度显示：{scopedVocabulary.length} 项{statusFilter !== 'All' ? ` · 当前显示 ${filtered.length} 项` : ''}</span>
+        <button type="button" onClick={onOpenReview} className="min-h-11 underline underline-offset-4 hover:text-[#292B25]">复习生词本全部 {vocabularyList.length} 项</button>
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
           {filterOptions.map((status) => (
             <button
               key={status}
+              aria-pressed={statusFilter === status}
               onClick={() => setStatusFilter(status)}
-              className={`px-3 py-1 text-xs font-ui rounded-xs border transition-colors ${
+              className={`shrink-0 whitespace-nowrap px-3 py-1 text-xs font-ui rounded-xs border transition-colors ${
                 statusFilter === status
                   ? 'bg-[#62694D] text-[#F2EEE4] border-[#62694D]'
                   : 'bg-[#E5DED0]/50 text-[#555848] border-[#D4CCBC] hover:bg-[#E5DED0]'
               }`}
             >
-              {status}
+              {status === 'All' ? '全部状态' : status}
             </button>
           ))}
         </div>
@@ -466,7 +473,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         {filtered.length === 0 ? (
           <div className="text-center py-12 bg-[#E5DED0]/20 border border-[#D4CCBC] rounded-sm">
             <p className="font-ui text-sm text-[#555848]">
-              当前短文中暂无符合筛选的词条，可搜索并添加文中完整的单词、短语或习语。
+              {statusFilter === 'All' ? '当前学习范围还没有词条，可搜索并添加当前短文中的完整表达。' : '当前学习范围没有此状态的词条，请选择其他状态。'}
             </p>
           </div>
         ) : (

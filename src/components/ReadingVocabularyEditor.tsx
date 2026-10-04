@@ -68,7 +68,7 @@ export const ReadingVocabularyEditor: React.FC<{
       <ExpressionSelect identity={identity} value={term} disabled={busy} loading={catalogue.loading} onOpen={catalogue.load}
         onChange={value => void lookup(value)} options={options.map(item => ({ term: item.term, type: item.type,
           selected: reading.selectedVocabulary.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(item.term)) }))} />
-      <span className="text-[#5F654D]">{reading.selectedVocabulary.length}/{limit}</span>
+      <span className="text-[#5F654D]" aria-label={`当前短文已精选 ${reading.selectedVocabulary.length} 项，上限 ${limit} 项`}>已精选 {reading.selectedVocabulary.length}/{limit} 项</span>
     </div>
     {catalogue.loading && <p role="status" className="text-[#5F654D]">正在按原文语境确认词条和程度…</p>}
     {catalogue.error && <p role="alert" className="text-red-700">{catalogue.error} <button onClick={catalogue.retry} className="underline">重试</button></p>}

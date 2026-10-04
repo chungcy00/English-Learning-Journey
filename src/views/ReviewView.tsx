@@ -185,7 +185,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
         <div className="space-y-6">
           {/* Progress Indicator */}
           <div className="flex items-center justify-between text-xs font-ui text-[#555848]">
-            <span>全部词条：{reviewList.length} 项</span>
+            <span>生词本全部词条：{reviewList.length} 项</span>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {
