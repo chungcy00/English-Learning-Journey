@@ -1,6 +1,13 @@
 export type CEFRLevel = 'A2' | 'B1' | 'B2' | 'C1';
 export type ReadingType = 'story' | 'non-story' | 'dialogue' | 'random';
 export type ReadingLength = 'short' | 'medium' | 'long';
+export type ReadingStyle = 'auto' | 'natural' | 'funny' | 'warm' | 'suspenseful' | 'dramatic' | 'professional' | 'cinematic';
+export interface ReadingExpression {
+  term: string;
+  type: 'word' | 'phrase' | 'idiom';
+  cefrLevel: CEFRLevel | 'A1' | 'C2';
+  contextQuote: string;
+}
 export type VocabStatus = 'New' | 'Learning' | 'Difficult' | 'Mastered';
 export type ReviewRating = 'Again' | 'Hard' | 'Good' | 'Easy';
 export type RewriteRating = 'Excellent' | 'Very Good' | 'Good' | 'Needs Improvement';
@@ -82,6 +89,7 @@ export interface ReadingRecord {
   readingType: 'story' | 'non-story' | 'dialogue';
   speakers?: DialogueSpeaker[];
   length: ReadingLength;
+  readingStyle?: ReadingStyle;
   selectedVocabulary: VocabularyItem[];
   vocabularyCount?: number;
   rewritePractice: RewritePracticeItem[];
@@ -104,6 +112,7 @@ export interface AppSettings {
   defaultReadingType: ReadingType;
   vocabularyCount: number;
   defaultLength: ReadingLength;
+  defaultReadingStyle?: ReadingStyle;
   theme?: string;
   targetLanguage?: string;
 }
@@ -112,6 +121,7 @@ export interface GenerationRequest {
   input: string;
   cefrLevel: CEFRLevel;
   readingType: ReadingType;
+  readingStyle?: ReadingStyle;
   length: ReadingLength;
   vocabularyCount: number;
   specifiedVocabulary?: string[];

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Sparkles, ArrowRight, BookOpen, Layers, Check } from 'lucide-react';
-import { CEFRLevel, ReadingType, ReadingLength, AppSettings } from '../types';
+import { CEFRLevel, ReadingType, ReadingLength, ReadingStyle, AppSettings } from '../types';
+import { READING_STYLES } from '../utils/readingStyles';
 
 interface HomeViewProps {
   settings: AppSettings;
@@ -8,6 +9,7 @@ interface HomeViewProps {
     input: string;
     cefrLevel: CEFRLevel;
     readingType: ReadingType;
+    readingStyle: ReadingStyle;
     length: ReadingLength;
     vocabularyCount: number;
     specifiedVocabulary?: string[];
@@ -25,6 +27,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [input, setInput] = useState('');
   const [cefr, setCefr] = useState<CEFRLevel>(settings.cefr);
   const [type, setType] = useState<ReadingType>(settings.defaultReadingType);
+  const [style, setStyle] = useState<ReadingStyle>(settings.defaultReadingStyle || 'auto');
   const [length, setLength] = useState<ReadingLength>(settings.defaultLength);
   const [vocabCount, setVocabCount] = useState<number>(settings.vocabularyCount);
 
@@ -33,6 +36,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
   useEffect(() => {
     setCefr(settings.cefr);
   }, [settings.cefr]);
+
+  useEffect(() => {
+    setStyle(settings.defaultReadingStyle || 'auto');
+  }, [settings.defaultReadingStyle]);
 
   const quickPrompts = [
     { label: '雨天里的小惊喜', desc: '中文主题' },
@@ -56,6 +63,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       input: input.trim(),
       cefrLevel: cefr,
       readingType: type,
+      readingStyle: style,
       length,
       vocabularyCount: vocabCount,
       specifiedVocabulary: commaSeparated
@@ -199,6 +207,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 ))}
               </div>
             </div>
+          </div>
+          <div className="max-w-sm">
+            <label htmlFor="reading-style" className="text-sm font-ui font-medium text-[#292B25] block mb-1.5">短文风格 (Style)</label>
+            <select id="reading-style" value={style} disabled={isLoading}
+              onChange={e => setStyle(e.target.value as ReadingStyle)}
+              className="w-full px-3 py-2 text-base bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm font-ui text-[#292B25] focus-visible:outline-2 focus-visible:outline-[#5F654D]">
+              {READING_STYLES.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
           </div>
         </div>
       </form>

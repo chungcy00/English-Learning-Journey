@@ -553,6 +553,7 @@ export async function generateReadingWithPipeline(
           )
       : undefined,
     length: request.length,
+    readingStyle: request.readingStyle || 'auto',
     selectedVocabulary: vocabularyItems,
     vocabularyCount: request.vocabularyCount,
     rewritePractice: rewriteItems,

@@ -29,6 +29,7 @@ export function validateApiBody(body: unknown): string | null {
   const enums: Record<string, unknown[]> = {
     cefrLevel: ['A2', 'B1', 'B2', 'C1'],
     readingType: ['story', 'non-story', 'dialogue', 'random'],
+    readingStyle: ['auto', 'natural', 'funny', 'warm', 'suspenseful', 'dramatic', 'professional', 'cinematic'],
     length: ['short', 'medium', 'long'],
     targetLanguage: ['zh-CN', 'zh-TW', 'ja', 'ko', 'es', 'fr', 'de', 'vi', 'ru'],
   };

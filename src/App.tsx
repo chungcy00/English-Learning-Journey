@@ -122,6 +122,7 @@ export default function App() {
     length: ReadingLength;
     vocabularyCount: number;
     specifiedVocabulary?: string[];
+    readingStyle?: import('./types').ReadingStyle;
   }) => {
     setIsGenerating(true);
     setErrorMessage(null);
@@ -131,6 +132,7 @@ export default function App() {
           input: params.input,
           cefrLevel: params.cefrLevel,
           readingType: params.readingType,
+          readingStyle: params.readingStyle,
           length: params.length,
           vocabularyCount: params.vocabularyCount,
           specifiedVocabulary: params.specifiedVocabulary,
@@ -141,6 +143,11 @@ export default function App() {
 
       // Save reading to Dexie
       await saveReadingWithVocabulary(record);
+      if (params.readingStyle) {
+        const updatedSettings = { ...settings, defaultReadingStyle: params.readingStyle };
+        await saveSettings(updatedSettings);
+        setAppSettings(updatedSettings);
+      }
 
       const [updatedR, updatedV] = await Promise.all([
         getAllReadings(),

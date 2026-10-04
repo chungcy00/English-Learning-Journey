@@ -73,6 +73,7 @@ test('every AI endpoint refuses exhausted global quota before any provider reque
     ['reading/translate', { text: 'A rainy day.', targetLanguage: 'zh-CN' }],
     ['rewrite/evaluate', { userAnswer: 'Good morning.', target: 'morning' }],
     ['vocabulary/explain', { term: 'break the ice' }],
+    ['vocabulary/candidates', { contextReading: 'We helped her out.' }],
     ['vocabulary/translate', { vocabularies: [{ id: '1', term: 'genuine' }], targetLanguage: 'ja' }],
     ['speech/dialogue', { turns: [{ text: 'Hello.', gender: 'female' }] }],
   ] as const;

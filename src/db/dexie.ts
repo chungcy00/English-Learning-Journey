@@ -64,6 +64,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   defaultReadingType: 'random',
   vocabularyCount: 8,
   defaultLength: 'medium',
+  defaultReadingStyle: 'auto',
   theme: 'warm',
   targetLanguage: 'zh-CN'
 };

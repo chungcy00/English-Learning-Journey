@@ -11,6 +11,10 @@ test('rejects oversized, deeply nested and prototype-key input before invoking A
   assert.ok(validateApiBody({ term: {} }));
   assert.ok(validateApiBody({ vocabulary: 'not an array' }));
   assert.equal(validateApiBody({ input: 'Rainy day', cefrLevel: 'B1', vocabularyCount: 8, targetLanguage: 'zh-CN' }), null);
+  for (const readingStyle of ['auto', 'natural', 'funny', 'warm', 'suspenseful', 'dramatic', 'professional', 'cinematic']) {
+    assert.equal(validateApiBody({ input: 'Rainy day', readingStyle }), null);
+  }
+  assert.ok(validateApiBody({ input: 'Rainy day', readingStyle: 'unrecognized' }));
 });
 
 test('API returns safe JSON for malformed and oversized bodies, not a stack trace', async () => {
