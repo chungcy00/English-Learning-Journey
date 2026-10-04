@@ -196,9 +196,9 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
           <h2 className="font-editorial text-2xl font-semibold text-[#292B25]">
             {allVocabularies.length === 0 ? '当前短文还没有已添加词条' : '本轮复习已完成！'}
           </h2>
-          <p className="text-xs font-ui text-[#555848] max-w-md mx-auto">
-            {allVocabularies.length === 0 ? '在当前阅读页或生词本添加表达后，即可在这里复习。' : '可以开始新一轮当前短文词条复习。'}
-          </p>
+          {allVocabularies.length === 0 && <p className="text-xs font-ui text-[#555848] max-w-md mx-auto">
+            在当前阅读页或生词本添加表达后，即可在这里复习。
+          </p>}
 
           <div className="pt-4 flex flex-wrap justify-center gap-3">
             {allVocabularies.length > 0 && (
@@ -254,10 +254,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
           <div className="bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm p-6 sm:p-10 shadow-sm min-h-[320px] flex flex-col justify-between">
             {/* Front: Term & Phonetic */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-ui uppercase tracking-wider text-[#555848]">
-                  Word {currentIndex + 1}
-                </span>
+              <div className="flex items-center justify-end">
                 <div className="flex items-center gap-2">
                   {isTranslatingCurrent && (
                     <span className="inline-flex items-center gap-1 text-[11px] font-ui text-[#5F654D] animate-pulse">

@@ -31,4 +31,5 @@ test('saved parameters and the collapsed summary agree without resetting default
   assert.match(html, /aria-describedby="cefr-ability-hint"/);
   assert.match(html, /<label for="generation-input"/);
   assert.doesNotMatch(html, /将按词表处理/);
+  assert.doesNotMatch(html, /Generation Settings|自然叙述与对话|自动 Humanise|语境记忆与AI反馈|学习册随身练习/);
 });

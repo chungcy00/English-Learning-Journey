@@ -25,10 +25,6 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
       <header className="border-b border-[#D4CCBC] pb-5">
-        <div className="mb-2 flex items-center gap-2 text-[#62694D]">
-          <History className="h-5 w-5" />
-          <span className="font-ui text-xs font-semibold uppercase tracking-wider">Reading History</span>
-        </div>
         <h1 className="font-editorial text-3xl font-semibold text-[#292B25] sm:text-4xl">
           阅读历史记录
         </h1>
@@ -44,7 +40,8 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({
             type="search"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder="搜索短文标题、主题或正文..."
+            aria-label="搜索历史短文"
+            placeholder="标题、主题或正文"
             className="w-full rounded-sm border border-[#D4CCBC] bg-[#FAF7F2] py-2.5 pl-9 pr-3 font-ui text-sm text-[#292B25] focus:border-[#62694D] focus:outline-none"
           />
         </div>

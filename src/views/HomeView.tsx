@@ -106,7 +106,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#D4CCBC]/60">
             {/* Suggestion Chips */}
             <div className="flex flex-wrap items-center gap-1.5 text-xs text-[#555848] font-ui">
-              <span className="hidden sm:inline">灵感:</span>
               {quickPrompts.slice(0, 3).map((prompt, idx) => (
                 <button
                   key={idx}
@@ -132,12 +131,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         {/* Reading Generation Settings (PRD Section 10) */}
         <div className="bg-[#E5DED0]/30 border border-[#D4CCBC] rounded-sm p-5 space-y-5">
-          <div className="flex items-center border-b border-[#D4CCBC]/60 pb-2.5">
-            <span className="font-ui text-xs uppercase tracking-wider text-[#555848] font-semibold">
-              短文定制参数 (Generation Settings)
-            </span>
-          </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {/* CEFR Level */}
             <div>
@@ -194,7 +187,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             {/* Reading Type */}
             <div>
               <label htmlFor="reading-type" className="text-xs font-ui font-medium text-[#292B25] block mb-1.5">
-                文体类型 (Type)
+                文体
               </label>
               <select
                 id="reading-type"
@@ -212,7 +205,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             {/* Length */}
             <div>
               <label htmlFor="reading-length" className="text-xs font-ui font-medium text-[#292B25] block mb-1.5">
-                短文篇幅 (Length)
+                篇幅
               </label>
               <select
                 id="reading-length"
@@ -227,7 +220,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </div>
 
           <div>
-            <label htmlFor="reading-style" className="text-xs font-ui font-medium text-[#292B25] block mb-1.5">短文风格 (Style)</label>
+            <label htmlFor="reading-style" className="text-xs font-ui font-medium text-[#292B25] block mb-1.5">风格</label>
             <select id="reading-style" value={style} disabled={isLoading}
               onChange={e => setStyle(e.target.value as ReadingStyle)}
               className="w-full min-h-11 px-3 py-2 text-base bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm font-ui text-[#292B25] focus-visible:outline-2 focus-visible:outline-[#5F654D]">
@@ -239,31 +232,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </form>
 
-      {/* Learning Flow Steps Hint */}
-      <div className="mt-12 pt-8 border-t border-[#D4CCBC]/50">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          <div className="p-3 bg-[#F2EEE4] rounded-sm border border-[#D4CCBC]/60">
-            <span className="font-editorial text-lg text-[#62694D] block font-semibold">01</span>
-            <span className="font-ui text-xs text-[#292B25] font-medium block mt-0.5">情境生成</span>
-            <span className="font-ui text-[11px] text-[#555848] block mt-0.5">自然叙述与对话</span>
-          </div>
-          <div className="p-3 bg-[#F2EEE4] rounded-sm border border-[#D4CCBC]/60">
-            <span className="font-editorial text-lg text-[#62694D] block font-semibold">02</span>
-            <span className="font-ui text-xs text-[#292B25] font-medium block mt-0.5">自动 Humanise</span>
-            <span className="font-ui text-[11px] text-[#555848] block mt-0.5">祛除模板感长短句</span>
-          </div>
-          <div className="p-3 bg-[#F2EEE4] rounded-sm border border-[#D4CCBC]/60">
-            <span className="font-editorial text-lg text-[#62694D] block font-semibold">03</span>
-            <span className="font-ui text-xs text-[#292B25] font-medium block mt-0.5">生词与改写</span>
-            <span className="font-ui text-[11px] text-[#555848] block mt-0.5">语境记忆与AI反馈</span>
-          </div>
-          <div className="p-3 bg-[#F2EEE4] rounded-sm border border-[#D4CCBC]/60">
-            <span className="font-editorial text-lg text-[#62694D] block font-semibold">04</span>
-            <span className="font-ui text-xs text-[#292B25] font-medium block mt-0.5">A4 导出打印</span>
-            <span className="font-ui text-[11px] text-[#555848] block mt-0.5">学习册随身练习</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

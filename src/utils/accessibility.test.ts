@@ -32,6 +32,7 @@ test('rendering a removal request does not delete anything and provides a safe c
   assert.equal(writes, 0);
   assert.match(html, /break the ice/);
   assert.match(html, /不再出现在复习/);
+  assert.doesNotMatch(html, /取消会保留/);
   assert.match(html, /data-dialog-initial-focus/);
   assert.match(html, />取消<\/button>/);
   assert.match(html, />确认移除<\/button>/);

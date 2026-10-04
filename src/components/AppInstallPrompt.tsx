@@ -83,7 +83,7 @@ export const AppInstallPrompt: React.FC = () => {
               className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#62694D] text-[#F2EEE4] rounded-sm text-xs font-medium"
             >
               <Download className="w-3.5 h-3.5" />
-              安装软件
+              添加到主屏幕
             </button>
           ) : (
             <div className="mt-3 flex items-start gap-2 text-xs text-[#5F654D] bg-[#E5DED0]/60 px-3 py-2 rounded-sm">

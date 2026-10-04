@@ -286,7 +286,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                   void addToCurrentLevel(vocabularyList.find(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(search)));
                 }
               }}
-              placeholder="搜索当前短文的单词、短语或习语…"
+              placeholder="例如：catch up"
               aria-label="搜索并添加当前短文的英文单词、短语或习语"
               role="combobox"
               aria-expanded={isSuggestionOpen && searchSuggestions.length > 0}
@@ -363,12 +363,11 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
       {/* Filter Tabs & Multi-select Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs font-ui text-[#555848]">
         <span>当前短文已添加词条：{vocabularyList.length} 项{statusFilter !== 'All' || collectionSearch.trim() ? ` · 当前显示 ${filtered.length} 项` : ''}</span>
-        <button type="button" onClick={onOpenReview} className="min-h-11 underline underline-offset-4 hover:text-[#292B25]">复习当前短文 {vocabularyList.length} 项</button>
+        <button type="button" onClick={onOpenReview} className="min-h-11 underline underline-offset-4 hover:text-[#292B25]">开始复习</button>
       </div>
       <div className="space-y-2 font-ui">
         <label htmlFor="saved-vocabulary-search" className="block text-sm text-[#292B25]">筛选已添加词条</label>
         <input id="saved-vocabulary-search" value={collectionSearch} onChange={event => setCollectionSearch(event.target.value)}
-          placeholder="输入已添加的英文单词、短语或习语"
           className="w-full min-h-11 px-3 py-2 text-base bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm text-[#292B25] placeholder:text-[#646657]" />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -470,7 +469,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         {filtered.length === 0 ? (
           <div className="text-center py-12 bg-[#E5DED0]/20 border border-[#D4CCBC] rounded-sm">
             <p className="font-ui text-sm text-[#555848]">
-              {vocabularyList.length === 0 ? '还没有已添加词条，可搜索并添加当前短文中的完整表达。' : '没有匹配的已添加词条，请清空筛选文字或选择全部状态。'}
+              {vocabularyList.length === 0 ? '暂无词条，可在上方搜索添加。' : '没有匹配的词条，请清空筛选文字或选择全部状态。'}
             </p>
           </div>
         ) : (

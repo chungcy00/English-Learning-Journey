@@ -973,7 +973,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                       onChange={(e) => setKeepVocab(e.target.checked)}
                       className="rounded-xs text-[#62694D]"
                     />
-                    <span>保留当前生词 (Keep Vocab)</span>
+                    <span>保留当前生词</span>
                   </label>
                 </div>
                 <div className="max-h-60 overflow-y-auto pt-1">
@@ -1001,7 +1001,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             className="flex items-center gap-1.5 px-3 py-1.5 bg-[#62694D] text-[#F2EEE4] hover:bg-[#5F654D] text-xs font-ui rounded-sm transition-colors shadow-xs"
           >
             <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{isExportingPdf ? '正在导出…' : 'Generate PDF'}</span>
+            <span className="hidden sm:inline">{isExportingPdf ? '正在导出…' : '导出 PDF'}</span>
             <span className="sm:hidden">PDF</span>
           </button>
 
@@ -1134,16 +1134,13 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#5F654D]/10 text-[#5F654D] mb-3 animate-pulse">
                     <Sparkles className="w-5 h-5 animate-spin" style={{ animationDuration: '3s' }} />
                   </div>
-                  <h4 className="font-editorial text-base font-semibold text-[#292B25]">
-                    正在生成地道母语译文...
+                  <h4 role="status" className="font-editorial text-base font-semibold text-[#292B25]">
+                    正在翻译…
                   </h4>
-                  <p className="text-xs font-ui text-[#555848] mt-1.5 max-w-xs mx-auto leading-relaxed">
-                    AI 正在根据母语说话习惯与情境语感进行 Humanise 润色，确保译文自然地道，消除机械直译痕迹。
-                  </p>
                 </div>
               ) : translationError ? (
                 <div className="p-4 rounded-sm bg-amber-50 border border-amber-200 text-center my-6">
-                  <p className="text-xs text-amber-800 font-ui mb-2">{translationError}</p>
+                  <p role="alert" className="text-xs text-amber-800 font-ui mb-2">{translationError}</p>
                   <button
                     type="button"
                     onClick={() => fetchTranslation(targetLanguage, true)}
@@ -1180,9 +1177,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 </span>
               )}
             </div>
-            <p className="text-xs font-ui text-[#555848]">
-              {getI18nText(targetLanguage, 'vocabSectionSub')}
-            </p>
           </div>
         </div>
 

@@ -59,7 +59,7 @@ export const ReadingVocabularyEditor: React.FC<{
     setBusy(true); setError('');
     try {
       await onSave(replaceReadingTerm(reading, candidate, replaceId || undefined));
-      setCandidate(null); setTerm(''); setReplaceId(''); setMessage('精选词汇与生词本已同步，可前往复习。');
+      setCandidate(null); setTerm(''); setReplaceId(''); setMessage('已同步生词本。');
     } catch (err) { setError(err instanceof Error ? err.message : '保存失败，请重试。'); }
     finally { setBusy(false); }
   };
@@ -70,9 +70,8 @@ export const ReadingVocabularyEditor: React.FC<{
           selected: reading.selectedVocabulary.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(item.term)) }))} />
       <span className="text-[#5F654D]" aria-label={`当前短文已精选 ${reading.selectedVocabulary.length} 项，上限 ${limit} 项`}>已精选 {reading.selectedVocabulary.length}/{limit} 项</span>
     </div>
-    {catalogue.loading && <p role="status" className="text-[#5F654D]">正在按原文语境确认词条和程度…</p>}
     {catalogue.error && <p role="alert" className="text-red-700">{catalogue.error} <button onClick={catalogue.retry} className="underline">重试</button></p>}
-    {busy && <p role="status" className="text-[#5F654D]">正在处理…</p>}
+    {busy && <p role="status" className="text-[#5F654D]">{candidate ? '正在保存…' : '正在查询…'}</p>}
     {candidate && <div className="p-3 border border-[#D4CCBC] rounded-sm space-y-2">
       <p><strong className="font-editorial text-xl">{candidate.term}</strong> · {candidate.partOfSpeech}</p>
       <p>{candidate.meaningZh}</p>

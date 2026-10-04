@@ -103,7 +103,8 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
-            placeholder={`${getI18nText(targetLanguage, 'inputPlaceholder')} (e.g. "${item.target}")`}
+            aria-label={`${getI18nText(targetLanguage, 'exerciseLabel')} ${index + 1}：${getI18nText(targetLanguage, 'inputPlaceholder')}`}
+            placeholder={getI18nText(targetLanguage, 'inputPlaceholder')}
             className="flex-1 px-3 py-2 text-sm bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm focus:outline-none focus:border-[#62694D] font-editorial text-base text-[#292B25]"
           />
           <button
