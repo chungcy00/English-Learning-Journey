@@ -65,23 +65,23 @@ export const ReadingVocabularyEditor: React.FC<{
   return <div className="space-y-3 font-ui text-sm">
     <div className="flex flex-wrap gap-3 items-center">
       <label className="min-w-0 flex-1 basis-64">
-        <span className="block mb-1.5 text-[#292B25]">选择 {reading.cefrLevel} 单词、短语或习语</span>
+        <span className="block mb-1.5 text-[#292B25]">选择文中的单词、短语或习语</span>
         <select aria-label="选择当前短文的同级表达" value={term} disabled={busy}
           onFocus={catalogue.load} onPointerDown={catalogue.load} onChange={event => void lookup(event.target.value)}
           className="w-full min-w-0 px-3 py-2 text-base border border-[#D4CCBC] rounded-sm bg-[#F2EEE4] text-[#292B25] focus-visible:outline-2 focus-visible:outline-[#5F654D] disabled:opacity-50">
           <option value="">{catalogue.loading ? '正在识别短文中的表达…' : '请选择文中的表达'}</option>
           {options.map(item => <option key={normalizeEnglishTerm(item.term)} value={item.term}>
-            {item.term} · {item.type} · {reading.cefrLevel}{reading.selectedVocabulary.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(item.term)) ? ' · 已选' : ''}
+            {item.term} · {item.type}{reading.selectedVocabulary.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(item.term)) ? ' · ☑️' : ''}
           </option>)}
         </select>
       </label>
-      <span className="text-[#5F654D]">{reading.cefrLevel} · {reading.selectedVocabulary.length}/{limit}</span>
+      <span className="text-[#5F654D]">{reading.selectedVocabulary.length}/{limit}</span>
     </div>
     {catalogue.loading && <p role="status" className="text-[#5F654D]">正在按原文语境确认词条和程度…</p>}
     {catalogue.error && <p role="alert" className="text-red-700">{catalogue.error} <button onClick={catalogue.retry} className="underline">重试</button></p>}
     {busy && <p role="status" className="text-[#5F654D]">正在处理…</p>}
     {candidate && <div className="p-3 border border-[#D4CCBC] rounded-sm space-y-2">
-      <p><strong className="font-editorial text-xl">{candidate.term}</strong> · {candidate.partOfSpeech} · {candidate.cefrLevel}</p>
+      <p><strong className="font-editorial text-xl">{candidate.term}</strong> · {candidate.partOfSpeech}</p>
       <p>{candidate.meaningZh}</p>
       {full && <select aria-label="选择要替换的精选词汇" value={replaceId} disabled={busy} onChange={e => setReplaceId(e.target.value)} className="w-full text-base border border-[#D4CCBC] bg-transparent px-2 py-2">
         <option value="">已达 {limit} 项上限，请选择替换项</option>

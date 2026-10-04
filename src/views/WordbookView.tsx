@@ -182,28 +182,13 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   }, [search, vocabularyList, currentReading, catalogue.expressions]);
 
   const filtered = useMemo(() => {
-    const query = search.trim();
     return vocabularyList
-      .map((item) => {
-        const source = item.sourceReadingId ? readingById.get(item.sourceReadingId) : undefined;
-        const searchRank = query
-          ? getEnglishTermMatchRank(item.term, query)
-          : 0;
-        return { item, source, searchRank };
-      })
-      .filter(({ item, searchRank }) =>
-        searchRank !== null && (statusFilter === 'All' || item.status === statusFilter) &&
-        (!query || (!!currentReading && (containsEnglishExpression(currentReading.content, item.term) || catalogue.expressions.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(item.term)) || currentReading.selectedVocabulary.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(item.term))))) &&
-        (!!query || isVocabularyAtLevel(item, currentCefr, readingById))
+      .filter(item =>
+        (statusFilter === 'All' || item.status === statusFilter) &&
+        isVocabularyAtLevel(item, currentCefr, readingById)
       )
-      .sort((a, b) => {
-        if (query && a.searchRank !== b.searchRank) {
-          return (a.searchRank as number) - (b.searchRank as number);
-        }
-        return compareWordbookEntries(a.item, b.item, currentCefr, readingById);
-      })
-      .map(({ item }) => item);
-  }, [vocabularyList, readingById, targetLanguage, search, statusFilter, currentCefr, currentReading, catalogue.expressions]);
+      .sort((a, b) => compareWordbookEntries(a, b, currentCefr, readingById));
+  }, [vocabularyList, readingById, statusFilter, currentCefr]);
 
   const toggleSelect = (term: string) => {
     setSelectedTerms((prev) =>
@@ -374,6 +359,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         </div>
       </div>
 
+      <div className="h-24 overflow-y-auto space-y-2" aria-label="搜索与添加提示">
       {catalogue.loading && <p role="status" className="text-sm font-ui text-[#5F654D]">正在识别当前短文的单词、短语和习语…</p>}
       {catalogue.error && <p role="alert" className="text-sm font-ui text-red-700">{catalogue.error} <button className="underline" onClick={catalogue.retry}>重试</button></p>}
       {search.trim() && (
@@ -394,6 +380,8 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
           <button type="button" onClick={onOpenReview} className="underline font-semibold">去复习</button>
         </div>
       )}
+      {!search.trim() && !catalogue.loading && !catalogue.error && !addedTerm && !addError && <p className="text-sm font-ui text-[#5F654D]">搜索当前短文中的完整表达；下方生词列表保持不变。</p>}
+      </div>
 
       {/* Filter Tabs & Multi-select Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -538,13 +526,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                       <span className="text-[11px] font-ui italic text-[#717265]">
                         [{vocab.partOfSpeech}]
                       </span>
-                      {search.trim() && (
-                        <button type="button" disabled={isAdding}
-                          onClick={(e) => { e.stopPropagation(); void addToCurrentLevel(vocab); }}
-                          className="text-xs font-ui border border-[#D4CCBC] rounded-sm px-2 py-1 disabled:opacity-50">
-                          加入生词本
-                        </button>
-                      )}
                     </div>
 
                     <p className="text-sm font-ui font-medium text-[#292B25] mt-1 flex items-center gap-1.5 flex-wrap">
