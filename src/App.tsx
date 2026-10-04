@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Navbar, NavTab } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ProcessingModal } from './components/ProcessingModal';
@@ -67,6 +67,9 @@ export default function App() {
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const readingOperation = useRef<AbortController | null>(null);
+  const pendingRatings = useRef(new Set<string>());
+  const [isSavingReading, setIsSavingReading] = useState(false);
   const [isRewriting, setIsRewriting] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -146,6 +149,9 @@ export default function App() {
     specifiedVocabulary?: string[];
     readingStyle?: import('./types').ReadingStyle;
   }) => {
+    if (readingOperation.current) return;
+    const controller = new AbortController();
+    readingOperation.current = controller;
     setIsGenerating(true);
     setErrorMessage(null);
     try {
@@ -160,10 +166,13 @@ export default function App() {
           specifiedVocabulary: params.specifiedVocabulary,
           targetLanguage: settings.targetLanguage,
         },
-        (status) => setProcessingStatus(status)
+        (status) => setProcessingStatus(status), controller.signal
       );
 
       // Save reading to Dexie
+      controller.signal.throwIfAborted();
+      setIsSavingReading(true);
+      setProcessingStatus('Saving');
       await saveReadingWithVocabulary(record);
       if (params.readingStyle) {
         const updatedSettings = { ...settings, defaultReadingStyle: params.readingStyle };
@@ -181,9 +190,12 @@ export default function App() {
       setCurrentReading(record);
       setActiveTab('reading');
     } catch (err: any) {
+      if (controller.signal.aborted) return;
       console.error('Failed to generate reading:', err);
       setErrorMessage(err?.message || '短文生成遇到问题，请重试');
     } finally {
+      readingOperation.current = null;
+      setIsSavingReading(false);
       setIsGenerating(false);
       setProcessingStatus('');
     }
@@ -191,7 +203,9 @@ export default function App() {
 
   // 2. Rewrite Reading (PRD Section 21)
   const handleRewrite = async (mode: string, keepVocab: boolean) => {
-    if (!currentReading) return;
+    if (!currentReading || readingOperation.current) return;
+    const controller = new AbortController();
+    readingOperation.current = controller;
     setIsRewriting(true);
     setErrorMessage(null);
     setProcessingStatus('Generating reading...');
@@ -210,7 +224,7 @@ export default function App() {
           currentVocabulary: currentVocabTerms,
           vocabularyCount: currentReading.vocabularyCount || currentReading.selectedVocabulary.length,
         },
-        (status) => setProcessingStatus(status)
+        (status) => setProcessingStatus(status), controller.signal
       );
 
       const updatedRecord: ReadingRecord = {
@@ -233,6 +247,9 @@ export default function App() {
         updatedAt: Date.now(),
       };
 
+      controller.signal.throwIfAborted();
+      setIsSavingReading(true);
+      setProcessingStatus('Saving');
       await saveReadingWithVocabulary(updatedRecord);
       setVocabularies(await getAllVocabularies());
       setCurrentReading(updatedRecord);
@@ -240,9 +257,12 @@ export default function App() {
       const allR = await getAllReadings();
       setReadings(allR);
     } catch (err: any) {
+      if (controller.signal.aborted) return;
       console.error('Rewrite failed:', err);
       setErrorMessage(err?.message || '短文改写遇到问题，请重试');
     } finally {
+      readingOperation.current = null;
+      setIsSavingReading(false);
       setIsRewriting(false);
       setProcessingStatus('');
     }
@@ -295,9 +315,14 @@ export default function App() {
 
   // 7. Rate Review Flashcard (PRD Section 29)
   const handleRateReview = async (vocabId: string, rating: ReviewRating) => {
-    await recordReview(vocabId, rating);
-    const updated = await getAllVocabularies();
-    setVocabularies(updated);
+    if (pendingRatings.current.has(vocabId)) throw new Error('此词条评分仍在保存');
+    pendingRatings.current.add(vocabId);
+    try {
+      await recordReview(vocabId, rating);
+      // The transaction has committed. A refresh error must not invite a duplicate rating.
+      try { setVocabularies(await getAllVocabularies()); }
+      catch (error) { console.warn('评分已保存，但列表刷新失败', error); }
+    } finally { pendingRatings.current.delete(vocabId); }
   };
 
   // 8. Generate From Wordbook (PRD Section 20)
@@ -482,6 +507,8 @@ export default function App() {
       <ProcessingModal
         isOpen={isGenerating || isRewriting}
         status={processingStatus}
+        canCancel={!isSavingReading}
+        onCancel={() => readingOperation.current?.abort()}
       />
 
       {/* Mobile browsers offer installation; installed apps use the same network-loaded app. */}

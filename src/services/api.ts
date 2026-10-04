@@ -478,18 +478,15 @@ Sitting by the rain-streaked window, Maya explained why the current layout felt 
 
 export async function generateReadingWithPipeline(
   request: GenerationRequest,
-  onProgress?: GenerationProgressCallback
+  onProgress?: GenerationProgressCallback,
+  signal?: AbortSignal
 ): Promise<ReadingRecord> {
+  signal?.throwIfAborted();
   onProgress?.('Generating reading...');
-  await new Promise(r => setTimeout(r, 400));
-
-  onProgress?.('Humanising language...');
-  await new Promise(r => setTimeout(r, 400));
-
-  onProgress?.('Checking level and vocabulary...');
 
   let resultData;
   const res = await fetch('/api/reading/generate', {
+    signal,
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request),
@@ -501,6 +498,7 @@ export async function generateReadingWithPipeline(
   }
 
   resultData = await res.json();
+  signal?.throwIfAborted();
   onProgress?.('Ready');
 
   const now = Date.now();
@@ -567,15 +565,14 @@ export async function generateReadingWithPipeline(
 
 export async function rewriteReadingWithPipeline(
   request: RewriteReadingRequest,
-  onProgress?: GenerationProgressCallback
+  onProgress?: GenerationProgressCallback,
+  signal?: AbortSignal
 ): Promise<RewriteReadingResponse> {
+  signal?.throwIfAborted();
   onProgress?.('Generating reading...');
-  await new Promise(r => setTimeout(r, 400));
-  onProgress?.('Humanising language...');
-  await new Promise(r => setTimeout(r, 400));
-  onProgress?.('Checking level and vocabulary...');
 
   const res = await fetch('/api/reading/rewrite', {
+    signal,
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request)
@@ -585,6 +582,7 @@ export async function rewriteReadingWithPipeline(
     throw new Error(errorBody.error || `短文改写失败 (HTTP ${res.status})，请稍后重试`);
   }
   const resultData = await res.json();
+  signal?.throwIfAborted();
 
   onProgress?.('Ready');
   const now = Date.now();

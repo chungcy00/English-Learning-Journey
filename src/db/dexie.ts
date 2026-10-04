@@ -272,8 +272,9 @@ A few minutes later, someone discovered a copy on the exchange shelf. Maya opene
 // Good → 3 days
 // Easy → 7 days
 export async function updateVocabularyReview(vocabId: string, rating: ReviewRating) {
+  return db.transaction('rw', db.vocabulary, db.reviews, async () => {
   const vocab = await db.vocabulary.get(vocabId);
-  if (!vocab) return;
+  if (!vocab) throw new Error('词条已不存在，请刷新复习列表');
 
   const now = Date.now();
   let intervalDays = 0;
@@ -315,6 +316,7 @@ export async function updateVocabularyReview(vocabId: string, rating: ReviewRati
   });
 
   return updated;
+  });
 }
 
 // Data Export & Import (PRD Section 45, 46)

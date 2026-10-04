@@ -1,8 +1,9 @@
-export const APP_VERSION = 'V2.4.8';
+export const APP_VERSION = 'V2.4.9';
 
-export const VERSION_HISTORY_COUNT = 28;
+export const VERSION_HISTORY_COUNT = 29;
 
 export const CURRENT_RELEASE_NOTES = [
-  '生词本展示全部已添加表达，添加与列表筛选分开',
-  '复习入口和列表数量统一为全部已添加词条',
+  '短文生成和改写可取消，已有内容和输入不受影响',
+  '复习评分保存成功后才前进，失败可重试',
+  '同一标签页内恢复复习位置与释义展开状态',
 ];

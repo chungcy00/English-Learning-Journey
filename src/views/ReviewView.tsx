@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { readReviewProgress, restoreReviewProgress, writeReviewProgress } from '../utils/reviewProgress';
 import { RotateCcw, Volume2, CheckCircle, Sparkles, BookOpen, Check, Languages, Loader2 } from 'lucide-react';
 import { VocabularyItem, ReviewRating } from '../types';
 import {
@@ -12,7 +13,7 @@ import { speakEnglishTerm } from '../utils/speech';
 
 interface ReviewViewProps {
   allVocabularies: VocabularyItem[];
-  onRate: (vocabId: string, rating: ReviewRating) => void;
+  onRate: (vocabId: string, rating: ReviewRating) => Promise<void>;
   onRefresh: () => void;
   targetLanguage: string;
   onLanguageChange: (lang: string) => void;
@@ -27,9 +28,17 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   onLanguageChange,
   onBatchUpdateVocabularies,
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isRevealed, setIsRevealed] = useState(false);
-  const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [initialProgress] = useState(readReviewProgress);
+  const restored = restoreReviewProgress(allVocabularies.map(v => v.id), initialProgress);
+  const [currentIndex, setCurrentIndex] = useState(restored.index);
+  const [isRevealed, setIsRevealed] = useState(restored.revealed);
+  const [sessionCompleted, setSessionCompleted] = useState(restored.completed);
+  const initialized = useRef(allVocabularies.length > 0);
+  const saving = useRef(false);
+  const mounted = useRef(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [failedRating, setFailedRating] = useState<ReviewRating | null>(null);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const [reviewList, setReviewList] = useState<VocabularyItem[]>(allVocabularies);
   const [isTranslatingCurrent, setIsTranslatingCurrent] = useState(false);
 
@@ -37,6 +46,13 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   // replacing the list with the shortened due list here would skip the next card.
   useEffect(() => {
     setReviewList(allVocabularies);
+    if (!initialized.current && allVocabularies.length) {
+      const progress = restoreReviewProgress(allVocabularies.map(v => v.id), initialProgress);
+      setCurrentIndex(progress.index);
+      setIsRevealed(progress.revealed);
+      setSessionCompleted(progress.completed);
+      initialized.current = true;
+    }
   }, [allVocabularies]);
 
   useEffect(() => {
@@ -44,6 +60,11 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   }, [reviewList.length]);
 
   const currentVocab = reviewList[currentIndex];
+  useEffect(() => {
+    if (currentVocab && initialized.current) writeReviewProgress({ currentId: currentVocab.id,
+      revealed: isRevealed, completed: sessionCompleted, ids: reviewList.map(v => v.id) });
+  }, [currentVocab?.id, isRevealed, sessionCompleted, reviewList]);
+  useEffect(() => { setFailedRating(null); }, [currentVocab?.id]);
 
   // Auto translate current vocabulary item if targetLanguage is not zh-CN and translation is missing
   useEffect(() => {
@@ -96,17 +117,26 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
     onRefresh();
   };
 
-  const handleRating = (rating: ReviewRating) => {
-    if (!currentVocab) return;
-
-    onRate(currentVocab.id, rating);
-
-    setIsRevealed(false);
-    if (currentIndex + 1 < reviewList.length) {
-      setCurrentIndex((prev) => prev + 1);
-    } else {
-      setSessionCompleted(true);
-      onRefresh();
+  const handleRating = async (rating: ReviewRating) => {
+    if (!currentVocab || saving.current) return;
+    saving.current = true;
+    setIsSaving(true);
+    setFailedRating(null);
+    try {
+      await onRate(currentVocab.id, rating);
+      const nextIndex = Math.min(currentIndex + 1, reviewList.length - 1);
+      const completed = currentIndex + 1 >= reviewList.length;
+      writeReviewProgress({ currentId: reviewList[nextIndex].id, revealed: false, completed, ids: reviewList.map(v => v.id) });
+      if (mounted.current) {
+        setIsRevealed(false);
+        setCurrentIndex(nextIndex);
+        setSessionCompleted(completed);
+      }
+    } catch {
+      if (mounted.current) setFailedRating(rating);
+    } finally {
+      saving.current = false;
+      if (mounted.current) setIsSaving(false);
     }
   };
 
@@ -192,7 +222,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   setCurrentIndex((prev) => Math.max(0, prev - 1));
                   setIsRevealed(false);
                 }}
-                disabled={currentIndex === 0}
+                disabled={isSaving || currentIndex === 0}
                 className="px-2 py-1 rounded-xs hover:bg-[#E5DED0] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
               >
                 &larr; Prev
@@ -205,7 +235,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   setCurrentIndex((prev) => Math.min(reviewList.length - 1, prev + 1));
                   setIsRevealed(false);
                 }}
-                disabled={currentIndex === reviewList.length - 1}
+                disabled={isSaving || currentIndex === reviewList.length - 1}
                 className="px-2 py-1 rounded-xs hover:bg-[#E5DED0] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
               >
                 Next &rarr;
@@ -281,7 +311,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                     <span className="text-[11px] font-ui text-[#555848] block uppercase">
                       {getI18nText(targetLanguage, 'exampleLabel', '例句 (Example)')}:
                     </span>
-                    <div className="bg-[#E5DED0]/40 p-2.5 rounded-sm border-l-2 border-[#62694D] mt-1 space-y-1">
+                    <div className="bg-[#E5DED0]/40 p-2.5 rounded-sm border border-[#D4CCBC] mt-1 space-y-1">
                       <p className="font-editorial text-base italic text-[#5F654D]">
                         "{currentVocab.example}"
                       </p>
@@ -326,7 +356,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
 
             {/* Rating Buttons (PRD Section 29) */}
             {isRevealed && (
-              <div className="mt-8 pt-4 border-t border-[#D4CCBC] grid grid-cols-4 gap-2">
+              <fieldset disabled={isSaving} aria-label="评价记忆程度" className="mt-8 pt-4 border-t border-[#D4CCBC] grid grid-cols-4 gap-2 disabled:opacity-60">
                 <button
                   onClick={() => handleRating('Again')}
                   className="py-2.5 px-2 bg-[#9E6554]/10 hover:bg-[#9E6554]/20 border border-[#9E6554]/30 rounded-sm text-center transition-colors"
@@ -366,8 +396,13 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                     {getI18nText(targetLanguage, 'easyHint', '7 天后')}
                   </span>
                 </button>
-              </div>
+              </fieldset>
             )}
+            {isSaving && <p role="status" className="font-ui text-sm text-[#555848] mt-3">正在保存评分，请稍候…</p>}
+            {failedRating && <div role="alert" className="font-ui text-sm text-[#854C3C] mt-3">
+              <p>评分未保存，当前词条已保留。请检查设备存储后重试。</p>
+              <button onClick={() => handleRating(failedRating)} className="min-h-11 px-3 border rounded-sm mt-2">重试保存</button>
+            </div>}
           </div>
         </div>
       )}
