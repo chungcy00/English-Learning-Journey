@@ -75,18 +75,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
   };
 
   return (
-    <div className="page-shell page-shell--focus">
-      {/* Title section with Editorial Typography */}
-      <div className="text-center mb-8 space-y-2">
+    <div className="page-shell page-shell--focus home-page">
+      <div className="home-page__title">
         <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-semibold text-[#292B25] tracking-tight">
           What do you want to learn?
         </h1>
       </div>
 
-      {/* Main Input Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm p-3 sm:p-4 shadow-sm focus-within:border-[#62694D] focus-within:ring-1 focus-within:ring-[#62694D]/30 transition-all">
-          <label htmlFor="generation-input" className="block mb-2 text-sm font-ui font-medium text-[#292B25]">学习主题或英文词汇</label>
+      <form onSubmit={handleSubmit} className="home-workspace">
+        <section className="home-composer bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm shadow-sm focus-within:border-[#62694D] focus-within:ring-1 focus-within:ring-[#62694D]/30 transition-all">
+          <label htmlFor="generation-input" className="home-composer__label text-sm font-ui font-medium text-[#292B25]">学习主题或英文词汇</label>
           <textarea
             id="generation-input"
             aria-label="学习主题或英文词汇"
@@ -95,7 +93,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             onChange={(e) => setInput(e.target.value)}
             rows={3}
             placeholder="例如：Small talk at work 或 genuine, break the ice"
-            className="w-full bg-transparent resize-none border-none outline-none font-editorial text-lg sm:text-xl text-[#292B25] placeholder:text-[#646657] placeholder:font-ui placeholder:text-sm leading-relaxed"
+            className="home-composer__input w-full bg-transparent resize-none border-none outline-none font-editorial text-lg sm:text-xl text-[#292B25] placeholder:text-[#646657] placeholder:font-ui placeholder:text-sm leading-relaxed"
           />
 
           {specifiedVocabulary && <div id="generation-input-preview" className="type-label mb-3 font-ui text-[#555848] break-words">
@@ -103,34 +101,38 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <p className="mt-1">逗号、顿号和分号会分隔词条；主题描述请避免这些分隔符。</p>
           </div>}
 
-          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3 pt-3 border-t border-[#D4CCBC]/60">
-            {/* Suggestion Chips */}
-            <div className="type-label flex flex-wrap items-center gap-1.5 text-[#555848] font-ui">
-              {quickPrompts.slice(0, 3).map((prompt, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setInput(prompt.label)}
-                  className="min-h-11 px-2 py-0.5 bg-[#E5DED0]/60 hover:bg-[#E5DED0] text-[#292B25] border border-[#D4CCBC] rounded-xs transition-colors"
-                >
-                  {prompt.label}
-                </button>
-              ))}
-            </div>
-
+          <div className="home-composer__footer">
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="w-full sm:w-auto sm:ml-auto min-h-11 flex items-center justify-center gap-2 px-5 py-2.5 bg-[#62694D] text-[#F2EEE4] font-ui text-sm font-medium rounded-sm hover:bg-[#5F654D] disabled:opacity-50 transition-all shadow-xs"
+              className="home-composer__submit min-h-11 flex items-center justify-center gap-2 px-5 py-2.5 bg-[#62694D] text-[#F2EEE4] font-ui text-sm font-medium rounded-sm hover:bg-[#5F654D] disabled:opacity-50 transition-all shadow-xs"
             >
               <Sparkles className="w-4 h-4" />
               <span>Generate Reading</span>
             </button>
           </div>
-        </div>
+        </section>
 
-        {/* Reading Generation Settings (PRD Section 10) */}
-        <div className="bg-[#E5DED0]/30 border border-[#D4CCBC] rounded-sm p-5 space-y-5">
+        <section className="home-prompts">
+          <div className="home-prompts__list type-label flex flex-wrap items-center gap-1.5 text-[#555848] font-ui">
+            {quickPrompts.slice(0, 3).map((prompt, idx) => (
+              <button key={idx} type="button" onClick={() => setInput(prompt.label)} className="min-h-10 px-3 bg-[#E5DED0]/60 hover:bg-[#E5DED0] text-[#292B25] border border-[#D4CCBC] rounded-full transition-colors">
+                {prompt.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="home-settings bg-[#E5DED0]/30 border border-[#D4CCBC] rounded-sm">
+          <details className="group">
+            <summary className="home-settings__summary flex min-h-11 items-center justify-between gap-3 cursor-pointer list-none font-ui rounded-xs focus-visible:outline-2 focus-visible:outline-[#5F654D] [&::-webkit-details-marker]:hidden">
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-[#292B25]">文体、篇幅与风格</span>
+                <span className="block mt-1 text-xs leading-relaxed text-[#555848]">{typeSummary} · {lengthSummary} · {styleSummary}</span>
+              </span>
+              <ChevronDown aria-hidden="true" className="w-4 h-4 shrink-0 text-[#5F654D] group-open:rotate-180" />
+            </summary>
+            <div className="home-settings__body space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {/* CEFR Level */}
             <div>
@@ -175,14 +177,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
               </div>
             </div>
           </div>
-          <details className="group border-t border-[#D4CCBC]/60 pt-3">
-            <summary className="flex min-h-11 items-center justify-between gap-3 cursor-pointer list-none font-ui rounded-xs focus-visible:outline-2 focus-visible:outline-[#5F654D] [&::-webkit-details-marker]:hidden">
-              <span className="min-w-0">
-                <span className="block text-sm font-medium text-[#292B25]">文体、篇幅与风格</span>
-                <span className="block mt-1 text-xs leading-relaxed text-[#555848]">{typeSummary} · {lengthSummary} · {styleSummary}</span>
-              </span>
-              <ChevronDown aria-hidden="true" className="w-4 h-4 shrink-0 text-[#5F654D] group-open:rotate-180" />
-            </summary>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
             {/* Reading Type */}
             <div>
@@ -228,8 +222,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </select>
           </div>
             </div>
+            </div>
           </details>
-        </div>
+        </section>
       </form>
 
     </div>

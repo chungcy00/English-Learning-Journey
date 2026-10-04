@@ -263,3 +263,135 @@ main {
     min-height: 6.5rem;
   }
 }
+
+/* Home artboard structure: composer, prompt rail, and collapsed settings. */
+.home-page {
+  max-width: 42rem;
+  padding-bottom: 4rem;
+}
+
+.home-page__title {
+  margin: 0 auto clamp(2rem, 6vw, 3.75rem);
+  text-align: center;
+}
+
+.home-page__title h1 {
+  margin: 0;
+}
+
+.home-workspace {
+  display: grid;
+  gap: 1rem;
+}
+
+.home-composer {
+  display: grid;
+  min-height: 12.75rem;
+  padding: 1.25rem 1.375rem;
+  grid-template-rows: auto minmax(5.5rem, 1fr) auto;
+}
+
+.home-composer__label {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.home-composer__input {
+  min-height: 0 !important;
+  padding: 0.25rem 0;
+}
+
+.home-composer__footer {
+  display: flex;
+  align-items: end;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgb(212 204 188 / 65%);
+}
+
+.home-composer__submit {
+  min-width: 9.5rem;
+}
+
+.home-prompts {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0 0.125rem;
+}
+
+.home-prompts__list button {
+  white-space: nowrap;
+}
+
+.home-settings {
+  overflow: hidden;
+}
+
+.home-settings__summary {
+  padding: 0.75rem 1rem;
+}
+
+.home-settings__summary:hover {
+  background: rgb(229 222 208 / 45%);
+}
+
+.home-settings__body {
+  padding: 0 1rem 1rem;
+  border-top: 1px solid rgb(212 204 188 / 65%);
+}
+
+.home-settings__body > .grid:first-child {
+  padding-top: 1rem;
+}
+
+@media (min-width: 640px) {
+  .home-composer {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .home-settings__summary,
+  .home-settings__body {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .home-page {
+    padding-top: 1.75rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .home-page__title {
+    margin-bottom: 1.75rem;
+  }
+
+  .home-page__title h1 {
+    font-size: 2.25rem;
+  }
+
+  .home-composer {
+    min-height: 14rem;
+    padding: 1rem;
+  }
+
+  .home-composer__footer {
+    align-items: stretch;
+  }
+
+  .home-composer__submit {
+    width: 100%;
+  }
+
+  .home-prompts__list {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: none;
+  }
+
+  .home-prompts__list::-webkit-scrollbar {
+    display: none;
+  }
+}
