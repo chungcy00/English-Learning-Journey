@@ -29,7 +29,6 @@ import {
   SUPPORTED_LANGUAGES,
   getI18nText,
   getLocalizedVocabMeaning,
-  getLocalizedExampleTranslation,
 } from '../utils/i18n';
 import {
   DIALOGUE_SPEECH_RATE,
@@ -1171,8 +1170,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       </div>
 
       {/* Vocabulary Section (PRD Section 13 & 16) */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between pb-2 border-b border-[#D4CCBC] flex-wrap gap-2">
+      <section className="reading-vocabulary space-y-4">
+        <div className="reading-vocabulary__header flex items-center justify-between pb-2 border-b border-[#D4CCBC] flex-wrap gap-2">
           <div>
             <div className="flex items-center gap-2">
               <h2 className="type-section font-editorial font-semibold text-[#5F654D]">
@@ -1189,62 +1188,37 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         </div>
 
         <ReadingVocabularyEditor key={reading.id} reading={reading} knownVocabulary={knownVocabulary} targetLanguage={targetLanguage} onSave={onUpdateVocabulary} />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="reading-vocabulary__list" role="list">
           {reading.selectedVocabulary.map((vocab) => {
             const inWordbook = wordbookVocabIds.has(vocab.term.toLowerCase());
             const localizedMeaning = getLocalizedVocabMeaning(vocab, targetLanguage, currentTranslation);
-            const localizedExample = getLocalizedExampleTranslation(vocab, targetLanguage, currentTranslation);
 
             return (
               <div
                 key={vocab.id}
+                role="listitem"
                 onClick={() => {
                   setSelectedVocab(vocab);
                   setIsDetailOpen(true);
                 }}
-                className="group cursor-pointer p-4 bg-[#E5DED0]/30 hover:bg-[#E5DED0]/70 border border-[#D4CCBC] rounded-sm transition-all flex flex-col justify-between"
+                className="reading-vocabulary__row group cursor-pointer transition-colors"
               >
-                <div>
-                  <div className="flex items-center justify-between gap-3 mb-1">
-                    <button type="button" aria-haspopup="dialog" aria-label={`查看 ${vocab.term} 的词汇释义`} onClick={(e) => { e.stopPropagation(); setSelectedVocab(vocab); setIsDetailOpen(true); }} className="type-term font-editorial font-semibold text-[#5F654D] group-hover:text-[#292B25] transition-colors min-h-11 text-left">
-                      {vocab.term}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleWordbook(vocab);
-                      }}
-                      title={inWordbook ? '移出生词本' : getI18nText(targetLanguage, 'addToWordbook')}
-                      aria-label={`${inWordbook ? '移出生词本' : '加入生词本'}：${vocab.term}`}
-                      className={`min-h-11 min-w-11 shrink-0 flex items-center justify-center p-2 rounded-xs transition-colors ${
-                        inWordbook
-                          ? 'text-[#5F654D] bg-[#62694D]/10'
-                          : 'text-[#A5AA91] hover:text-[#62694D]'
-                      }`}
-                    >
-                      <Bookmark className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <div className="type-label flex items-center gap-2 text-[#555848] font-ui mb-2">
-                    {vocab.phonetic && <span>{vocab.phonetic}</span>}
-                    <span>•</span>
-                    <span className="italic">{vocab.partOfSpeech}</span>
-                  </div>
-
-                  <p className="type-body font-ui font-medium text-[#292B25] mb-1">
-                    {localizedMeaning}
-                  </p>
-
-                  <p className="type-example font-editorial text-[#555848] italic">
-                    "{vocab.example}"
-                  </p>
-                  {localizedExample && (
-                    <p className="type-body font-ui text-[#555848] line-clamp-1 mt-0.5">
-                      {localizedExample}
-                    </p>
-                  )}
+                <button type="button" aria-haspopup="dialog" aria-label={`查看 ${vocab.term} 的词汇释义`} onClick={(e) => { e.stopPropagation(); setSelectedVocab(vocab); setIsDetailOpen(true); }} className="reading-vocabulary__term type-term font-editorial font-semibold text-[#5F654D] group-hover:text-[#292B25] transition-colors text-left">
+                  {vocab.term}
+                </button>
+                <div className="reading-vocabulary__meta type-meta font-ui text-[#555848]">
+                  {vocab.phonetic && <span>{vocab.phonetic}</span>}
+                  {vocab.partOfSpeech && <span className="italic">{vocab.partOfSpeech}</span>}
                 </div>
+                <p className="reading-vocabulary__meaning type-body font-ui text-[#292B25]">{localizedMeaning || '暂无释义'}</p>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onToggleWordbook(vocab); }}
+                  title={inWordbook ? '移出生词本' : getI18nText(targetLanguage, 'addToWordbook')}
+                  aria-label={`${inWordbook ? '移出生词本' : '加入生词本'}：${vocab.term}`}
+                  className={`reading-vocabulary__bookmark ${inWordbook ? 'is-saved' : ''}`}
+                >
+                  <Bookmark className="w-4 h-4" />
+                </button>
               </div>
             );
           })}

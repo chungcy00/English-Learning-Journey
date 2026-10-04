@@ -159,6 +159,125 @@ button.vocab-highlight {
   }
 }
 
+/* Vocabulary stays a quiet index below the reading, not a second study surface. */
+.reading-vocabulary {
+  max-width: 70rem;
+  margin-inline: auto;
+}
+
+.reading-vocabulary__header {
+  border-bottom-color: rgb(212 204 188 / 72%);
+}
+
+.reading-vocabulary-editor {
+  padding: 0.25rem 0 0.5rem;
+}
+
+.reading-vocabulary-editor__tool {
+  justify-content: space-between;
+}
+
+.reading-vocabulary-editor__tool [role="combobox"],
+.reading-vocabulary-editor__tool select {
+  min-height: 2.5rem;
+  border-color: rgb(212 204 188 / 80%);
+  background: transparent;
+  box-shadow: none;
+}
+
+.reading-vocabulary-editor__count {
+  font-size: 0.72rem;
+}
+
+.reading-inline-status {
+  margin: 0.25rem 0;
+  padding: 0.45rem 0.65rem;
+  border: 0;
+  background: rgb(229 222 208 / 35%);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.reading-vocabulary-editor__candidate {
+  max-width: 34rem;
+  background: rgb(229 222 208 / 26%);
+  border-color: rgb(212 204 188 / 75%);
+}
+
+.reading-vocabulary__list {
+  display: grid;
+  border-top: 1px solid rgb(212 204 188 / 65%);
+}
+
+.reading-vocabulary__row {
+  display: grid;
+  grid-template-columns: minmax(9rem, 1.1fr) minmax(8rem, 0.8fr) minmax(12rem, 2fr) auto;
+  align-items: center;
+  gap: 1rem;
+  min-height: 3.75rem;
+  padding: 0.65rem 0.5rem;
+  border-bottom: 1px solid rgb(212 204 188 / 55%);
+}
+
+.reading-vocabulary__row:hover {
+  background: rgb(229 222 208 / 32%);
+}
+
+.reading-vocabulary__term {
+  min-height: 2.5rem;
+  padding: 0.35rem 0;
+}
+
+.reading-vocabulary__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.reading-vocabulary__meaning {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.reading-vocabulary__bookmark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  color: var(--accent-secondary);
+  border-radius: 4px;
+}
+
+.reading-vocabulary__bookmark:hover,
+.reading-vocabulary__bookmark.is-saved {
+  color: var(--accent-primary);
+  background: rgb(98 105 77 / 10%);
+}
+
+@media (max-width: 639px) {
+  .reading-vocabulary__row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'term bookmark'
+      'meta meaning';
+    gap: 0.15rem 0.75rem;
+    min-height: 4.25rem;
+    padding: 0.55rem 0.1rem;
+  }
+
+  .reading-vocabulary__term { grid-area: term; }
+  .reading-vocabulary__bookmark { grid-area: bookmark; }
+  .reading-vocabulary__meta { grid-area: meta; }
+  .reading-vocabulary__meaning { grid-area: meaning; text-align: right; }
+
+  .reading-vocabulary-editor__tool {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
 /* Reading artboard: the English text owns the page; translation supports it. */
 .reading-page {
   max-width: 78rem;

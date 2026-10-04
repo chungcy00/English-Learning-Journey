@@ -63,16 +63,16 @@ export const ReadingVocabularyEditor: React.FC<{
     } catch (err) { setError(err instanceof Error ? err.message : '保存失败，请重试。'); }
     finally { setBusy(false); }
   };
-  return <div className="space-y-3 font-ui text-sm">
-    <div className="flex flex-wrap gap-3 items-center">
+  return <div className="reading-vocabulary-editor space-y-3 font-ui text-sm">
+    <div className="reading-vocabulary-editor__tool flex flex-wrap gap-3 items-center">
       <ExpressionSelect identity={identity} value={term} disabled={busy} loading={catalogue.loading} onOpen={catalogue.load}
         onChange={value => void lookup(value)} options={options.map(item => ({ term: item.term, type: item.type,
           selected: reading.selectedVocabulary.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(item.term)) }))} />
-      <span className="text-[#5F654D]" aria-label={`当前短文已精选 ${reading.selectedVocabulary.length} 项，上限 ${limit} 项`}>已精选 {reading.selectedVocabulary.length}/{limit} 项</span>
+      <span className="reading-vocabulary-editor__count text-[#5F654D]" aria-label={`当前短文已精选 ${reading.selectedVocabulary.length} 项，上限 ${limit} 项`}>已精选 {reading.selectedVocabulary.length}/{limit} 项</span>
     </div>
-    {catalogue.error && <p role="alert" className="text-red-700">{catalogue.error} <button onClick={catalogue.retry} className="min-h-11 min-w-11 inline-flex items-center justify-center underline">重试</button></p>}
-    {busy && <p role="status" className="text-[#5F654D]">{candidate ? '正在保存…' : '正在查询…'}</p>}
-    {candidate && <div className="p-3 border border-[#D4CCBC] rounded-sm space-y-2">
+    {catalogue.error && <p role="alert" className="reading-inline-status text-red-700">{catalogue.error} <button onClick={catalogue.retry} className="min-h-11 min-w-11 inline-flex items-center justify-center underline">重试</button></p>}
+    {busy && <p role="status" className="reading-inline-status text-[#5F654D]">{candidate ? '正在保存…' : '正在查询…'}</p>}
+    {candidate && <div className="reading-vocabulary-editor__candidate p-3 border border-[#D4CCBC] rounded-sm space-y-2">
       <p><strong className="type-term">{candidate.term}</strong> · <span className="type-label italic">{candidate.partOfSpeech}</span></p>
       <p className="type-body">{candidate.meaningZh}</p>
       {full && <select aria-label="选择要替换的精选词汇" value={replaceId} disabled={busy} onChange={e => setReplaceId(e.target.value)} className="w-full text-base border border-[#D4CCBC] bg-transparent px-2 py-2">
@@ -81,7 +81,7 @@ export const ReadingVocabularyEditor: React.FC<{
       </select>}
       <button onClick={save} disabled={busy || (full && !replaceId)} className="min-h-11 px-3 py-2 bg-[#62694D] text-white rounded-sm disabled:opacity-50">{full ? '替换并同步生词本' : '添加并同步生词本'}</button>
     </div>}
-    {error && <p role="alert" className="text-red-700">{error}</p>}
-    {message && <p role="status" className="text-[#5F654D]">{message}</p>}
+    {error && <p role="alert" className="reading-inline-status text-red-700">{error}</p>}
+    {message && <p role="status" className="reading-inline-status text-[#5F654D]">{message}</p>}
   </div>;
 };
