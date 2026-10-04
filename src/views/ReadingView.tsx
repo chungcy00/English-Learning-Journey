@@ -203,6 +203,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const [selectedVocab, setSelectedVocab] = useState<VocabularyItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isRewriteMenuOpen, setIsRewriteMenuOpen] = useState(false);
+  const [mobileReadingMode, setMobileReadingMode] = useState<'original' | 'translation'>('original');
   const [keepVocab, setKeepVocab] = useState(true);
   const translationRunRef = useRef(0);
   const vocabularySignature = reading.selectedVocabulary.map(vocab => `${vocab.id}:${vocab.term}`).join('|');
@@ -935,9 +936,9 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   };
 
   return (
-    <div className="page-shell page-shell--reading page-stack--reading">
+    <div className="page-shell page-shell--reading page-stack--reading reading-page">
       {/* Top Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#D4CCBC]">
+      <div className="reading-toolbar flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#D4CCBC]">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-ui font-semibold px-2 py-0.5 bg-[#E5DED0] text-[#555848] rounded-xs uppercase">
             {reading.cefrLevel}
@@ -1019,9 +1020,13 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
       {/* Main Reading Area: Side-by-side Bilingual Layout */}
       {pdfError && <p role="alert" className="type-body font-ui text-red-700">{pdfError}</p>}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className="mobile-reading-switch" role="tablist" aria-label="阅读内容模式">
+        <button type="button" role="tab" aria-selected={mobileReadingMode === 'original'} onClick={() => setMobileReadingMode('original')}>原文</button>
+        <button type="button" role="tab" aria-selected={mobileReadingMode === 'translation'} onClick={() => setMobileReadingMode('translation')}>翻译</button>
+      </div>
+      <div className="reading-columns grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           {/* Left Column: English Reading Card */}
-          <article className="reading-panel bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm flex flex-col">
+          <article className={`reading-panel reading-original bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm flex flex-col ${mobileReadingMode === 'translation' ? 'mobile-reading-hidden' : ''}`}>
             <header className="reading-panel-header mb-6 pb-4 border-b border-[#D4CCBC]/50">
               <div>
                 <h1 className="type-section font-editorial font-semibold text-[#292B25] tracking-tight">
@@ -1073,7 +1078,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           </article>
 
           {/* Right Column: Humanised Translation Card ("短文我需要旁边有个翻译") */}
-          <article className="reading-panel bg-[#FAF7F2] border border-[#D4CCBC] rounded-sm flex flex-col relative">
+          <article className={`reading-panel reading-translation bg-[#FAF7F2] border border-[#D4CCBC] rounded-sm flex flex-col relative ${mobileReadingMode === 'original' ? 'mobile-reading-hidden' : ''}`}>
             <header className="reading-panel-header mb-6 pb-4 border-b border-[#D4CCBC]/50">
               <div>
                 <h2 className="type-section font-ui font-semibold text-[#292B25] tracking-tight">
