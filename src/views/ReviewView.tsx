@@ -159,7 +159,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   const isNotZh = targetLanguage !== 'zh-CN';
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
+    <div className="page-shell page-shell--review page-stack">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#D4CCBC]">
         <div>
@@ -221,7 +221,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
         /* Active Flashcard */
         <div className="space-y-6">
           {/* Progress Indicator */}
-          <div className="flex items-center justify-between text-xs font-ui text-[#555848]">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-xs font-ui text-[#555848]">
             <span>当前短文已添加词条：{reviewList.length} 项</span>
             <div className="flex items-center gap-3">
               <button
@@ -273,7 +273,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
               </div>
 
               <div className="text-center py-4">
-                <h2 className="font-editorial text-4xl sm:text-5xl font-semibold text-[#5F654D] tracking-tight">
+                <h2 className="font-editorial text-4xl sm:text-5xl font-semibold text-[#5F654D] tracking-tight break-words">
                   {currentVocab.term}
                 </h2>
                 <p className="text-sm font-ui text-[#555848] mt-1">

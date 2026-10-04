@@ -27,12 +27,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-30 bg-[#F2EEE4]/90 backdrop-blur-sm border-b border-[#D4CCBC] px-4 sm:px-8 py-3.5 transition-colors">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2 md:gap-4">
+    <header className="sticky top-0 z-30 bg-[#F2EEE4]/90 backdrop-blur-sm border-b border-[#D4CCBC] px-4 sm:px-6 lg:px-8 py-3.5 transition-colors">
+      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2 lg:gap-4">
         {/* Brand & Editorial Title */}
         <button
           onClick={() => setActiveTab('home')}
-          className="flex items-center gap-3 min-h-11 text-left group self-start"
+          className="flex items-center gap-3 min-h-11 text-left group self-start shrink-0"
         >
           <img
             src="/site-icon.png"
@@ -48,7 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
 
         {/* Navigation Tabs */}
-        <nav aria-label="主导航" className="grid grid-cols-5 md:flex md:items-center gap-1 sm:gap-2">
+        <nav aria-label="主导航" className="grid grid-cols-5 lg:flex lg:items-center gap-1 sm:gap-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -60,7 +60,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 aria-current={isActive ? 'page' : undefined}
                 onClick={() => setActiveTab(tab.id)}
                 disabled={tab.disabled}
-                className={`relative flex flex-col md:flex-row items-center justify-center gap-1 md:gap-1.5 min-h-12 md:min-h-11 min-w-0 px-1 md:px-3 py-1.5 text-[11px] md:text-sm font-medium transition-all rounded-sm ${
+                className={`relative flex flex-col lg:flex-row items-center justify-center gap-1 lg:gap-1.5 min-h-12 lg:min-h-11 min-w-0 px-1 lg:px-3 py-1.5 text-[11px] lg:text-sm font-medium transition-all rounded-sm ${
                   isActive
                     ? 'text-[#292B25] bg-[#E5DED0] border-b-2 border-[#62694D]'
                     : tab.disabled
@@ -71,7 +71,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <Icon aria-hidden="true" className="w-4 h-4 shrink-0" />
                 <span className="text-center leading-tight break-words">{tab.label}</span>
                 {tab.badge !== undefined && tab.badge > 0 && (
-                  <span aria-hidden="true" className="absolute top-0 right-0 md:static md:ml-1 px-1.5 text-[10px] rounded-full bg-[#B49379] text-[#292B25] font-semibold">
+                  <span aria-hidden="true" className="absolute top-0 right-0 lg:static lg:ml-1 px-1.5 text-[10px] rounded-full bg-[#B49379] text-[#292B25] font-semibold">
                     {tab.badge}
                   </span>
                 )}

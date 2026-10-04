@@ -70,8 +70,8 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
     <div className="bg-[#E5DED0]/40 border border-[#D4CCBC] rounded-sm p-5 sm:p-6 transition-all">
       {error && <p role="alert" className="font-ui text-sm text-red-700 mb-3">{error}</p>}
       {/* Question Header */}
-      <div className="flex items-start justify-between gap-4 mb-3">
-        <div>
+      <div className="exercise-heading mb-3">
+        <div className="min-w-0 break-words">
           <span className="text-xs font-ui text-[#555848] uppercase tracking-wider block mb-1">
             {getI18nText(targetLanguage, 'exerciseLabel')} {index + 1}
           </span>
@@ -85,7 +85,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
           )}
         </div>
 
-        <div className="shrink-0 text-right">
+        <div className="exercise-target">
           <span className="text-sm font-ui font-semibold text-[#5F654D] block mb-1">
             {getI18nText(targetLanguage, 'targetLabel')}:
           </span>
@@ -105,12 +105,12 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
             onKeyDown={(e) => e.key === 'Enter' && handleCheck()}
             aria-label={`${getI18nText(targetLanguage, 'exerciseLabel')} ${index + 1}：${getI18nText(targetLanguage, 'inputPlaceholder')}`}
             placeholder={getI18nText(targetLanguage, 'inputPlaceholder')}
-            className="flex-1 px-3 py-2 text-sm bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm focus:outline-none focus:border-[#62694D] font-editorial text-base text-[#292B25]"
+            className="min-w-0 min-h-11 flex-1 px-3 py-2 bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm focus:outline-none focus:border-[#62694D] font-editorial text-base text-[#292B25]"
           />
           <button
             onClick={handleCheck}
             disabled={!answer.trim() || loading}
-            className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[#62694D] text-[#F2EEE4] text-xs font-medium font-ui rounded-sm hover:bg-[#5F654D] disabled:opacity-50 transition-colors shrink-0"
+            className="min-h-11 flex items-center justify-center gap-1.5 px-4 py-2 bg-[#62694D] text-[#F2EEE4] text-xs font-medium font-ui rounded-sm hover:bg-[#5F654D] disabled:opacity-50 transition-colors shrink-0"
           >
             {loading ? (
               <>
@@ -132,7 +132,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
         <div className="mt-3">
           <button 
             onClick={() => setShowAnswer(!showAnswer)}
-            className="text-[11px] text-[#555848] hover:text-[#5F654D] font-ui transition-colors uppercase tracking-widest"
+            className="min-h-11 text-[11px] text-[#555848] hover:text-[#5F654D] font-ui transition-colors uppercase tracking-widest"
           >
             {showAnswer ? 'Hide Answer' : 'Show Answer'}
           </button>

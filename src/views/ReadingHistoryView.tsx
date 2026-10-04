@@ -23,7 +23,7 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({
   );
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+    <div className="page-shell">
       <header className="border-b border-[#D4CCBC] pb-5">
         <h1 className="font-editorial text-3xl font-semibold text-[#292B25] sm:text-4xl">
           阅读历史记录
@@ -91,13 +91,13 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({
                 </div>
               </button>
 
-              <div className="flex shrink-0 items-center gap-1">
+              <div className="flex shrink-0 flex-col sm:flex-row items-center gap-1">
                 <button
                   type="button"
                   onClick={() => onSelectReading(item)}
                   title="打开阅读"
                   aria-label={`打开 ${item.title}`}
-                  className="rounded-sm p-2 text-[#62694D] transition-colors hover:bg-[#F2EEE4]"
+                  className="min-h-11 min-w-11 flex items-center justify-center rounded-sm p-2 text-[#62694D] transition-colors hover:bg-[#F2EEE4]"
                 >
                   <ArrowUpRight className="h-4 w-4" />
                 </button>
@@ -110,7 +110,7 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({
                   }}
                   title="删除"
                   aria-label={`删除 ${item.title}`}
-                  className="rounded-sm p-2 text-[#555848] transition-colors hover:bg-[#F2EEE4] hover:text-[#854C3C]"
+                  className="min-h-11 min-w-11 flex items-center justify-center rounded-sm p-2 text-[#555848] transition-colors hover:bg-[#F2EEE4] hover:text-[#854C3C]"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
