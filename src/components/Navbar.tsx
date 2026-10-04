@@ -1,7 +1,7 @@
 import React from 'react';
 import { BookOpen, Bookmark, History, RotateCcw, Sparkles } from 'lucide-react';
 
-export type NavTab = 'home' | 'reading' | 'history' | 'wordbook' | 'review' | 'update';
+export type NavTab = 'home' | 'reading' | 'history' | 'wordbook' | 'review';
 
 interface NavbarProps {
   activeTab: NavTab | 'settings'; // keep 'settings' literal here just in case App passes it

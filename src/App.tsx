@@ -13,7 +13,6 @@ import { HomeView } from './views/HomeView';
 import { ReadingView } from './views/ReadingView';
 import { WordbookView } from './views/WordbookView';
 import { ReviewView } from './views/ReviewView';
-import { AppUpdateView } from './views/AppUpdateView';
 import { ReadingHistoryView } from './views/ReadingHistoryView';
 import { isAppleMobileDevice, isManualUpdateApp } from './utils/pwa';
 import { normalizeEnglishTerm } from './utils/englishSearch';
@@ -84,13 +83,19 @@ export default function App() {
     } else {
       document.querySelector('link[rel="manifest"]')?.setAttribute('href', '/manifest-android.webmanifest');
     }
-    if (isManualUpdateApp() && import.meta.env.PROD && 'serviceWorker' in navigator) {
-      const installedUrl = new URL(window.location.href);
-      installedUrl.searchParams.set('app', 'installed');
-      window.history.replaceState(window.history.state, '', installedUrl);
-      void navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).catch(() => {
-        // Existing app remains usable; the update page exposes retry errors.
-      });
+    // Remove the legacy update worker from installations made by earlier releases.
+    // The app now uses the network directly and never updates in the background.
+    if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+      void (async () => {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.unregister()));
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames
+            .filter((name) => name.startsWith('mine-english-build-') || name === 'mine-english-installed-shell')
+            .map((name) => caches.delete(name)));
+        }
+      })();
     }
     // If a previous visit had to use free browser speech, quietly retry
     // Gemini once on this fresh visit and cache a successful result.
@@ -467,7 +472,6 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'update' && isInstalledApp && <AppUpdateView />}
       </main>
 
       {/* Pipeline Status Modal */}
@@ -483,7 +487,7 @@ export default function App() {
         status={processingStatus}
       />
 
-      {/* Mobile browsers offer installation; update controls only exist inside the installed app. */}
+      {/* Mobile browsers offer installation; installed apps use the same network-loaded app. */}
       {!isInstalledApp && <AppInstallPrompt />}
 
       {/* Browser copyright only; installed phone/tablet software stays app-like. */}

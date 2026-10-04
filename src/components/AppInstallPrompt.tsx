@@ -19,15 +19,6 @@ export const AppInstallPrompt: React.FC = () => {
     if (!isMobileOrTablet() || isStandaloneApp()) return;
     if (sessionStorage.getItem(DISMISSED_KEY) === 'true') return;
 
-    if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js', {
-        scope: '/',
-        updateViaCache: 'none',
-      }).catch(() => {
-        // Installation instructions can still be useful when registration fails temporarily.
-      });
-    }
-
     const handleInstallPrompt = (event: Event) => {
       event.preventDefault();
       if (fallbackTimerRef.current !== null) window.clearTimeout(fallbackTimerRef.current);
