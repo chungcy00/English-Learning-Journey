@@ -1,9 +1,9 @@
-export const APP_VERSION = 'V2.4.12';
+export const APP_VERSION = 'V2.4.13';
 
-export const VERSION_HISTORY_COUNT = 32;
+export const VERSION_HISTORY_COUNT = 33;
 
 export const CURRENT_RELEASE_NOTES = [
-  '统一全站内容宽度、页边距和分组间距',
-  '优化平板导航、生词本操作区和手机改写练习布局',
-  '长词条与弹窗适应窄屏，保留完整学习内容',
+  '统一全站标题、词条、例句和界面文字的排版层级',
+  '放大学习内容，优化中英文正文与译文行距',
+  '保留原有字体、配色、布局与词条同步规则',
 ];

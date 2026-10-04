@@ -7,7 +7,7 @@ export const Footer: React.FC = () => {
         <p className="font-ui text-xs text-[#555848]">
           © 2026 Mine English. All rights reserved.
         </p>
-        <p className="font-ui text-[11px] text-[#555848] max-w-2xl mx-auto leading-relaxed">
+        <p className="type-meta text-[#555848] max-w-2xl mx-auto leading-relaxed">
           This material was created with AI assistance and reviewed and edited by a human. For personal learning use only. Redistribution, resale, republication, or commercial reuse is prohibited without prior written permission.
         </p>
       </div>

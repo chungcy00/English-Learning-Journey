@@ -163,7 +163,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#D4CCBC]">
         <div>
-          <h1 className="font-editorial text-3xl sm:text-4xl font-semibold text-[#292B25]">
+          <h1 className="type-page font-editorial font-semibold text-[#292B25]">
             {getI18nText(targetLanguage, 'reviewTitle')}
           </h1>
         </div>
@@ -174,7 +174,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
           <select
             value={targetLanguage}
             onChange={(e) => onLanguageChange(e.target.value)}
-            className="bg-transparent min-h-11 text-xs font-ui font-medium text-[#292B25] focus:outline-none cursor-pointer"
+            className="type-label bg-transparent min-h-11 font-ui font-medium text-[#292B25] focus:outline-none cursor-pointer"
             title="切换复习释义语言"
           >
             {SUPPORTED_LANGUAGES.map((lang) => (
@@ -196,7 +196,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
           <h2 className="font-editorial text-2xl font-semibold text-[#292B25]">
             {allVocabularies.length === 0 ? '当前短文还没有已添加词条' : '本轮复习已完成！'}
           </h2>
-          {allVocabularies.length === 0 && <p className="text-xs font-ui text-[#555848] max-w-md mx-auto">
+          {allVocabularies.length === 0 && <p className="type-body font-ui text-[#555848] max-w-md mx-auto">
             在当前阅读页或生词本添加表达后，即可在这里复习。
           </p>}
 
@@ -204,14 +204,14 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
             {allVocabularies.length > 0 && (
               <button
                 onClick={handleStartReviewAll}
-                className="px-4 py-2 bg-[#62694D] text-[#F2EEE4] font-ui text-xs font-medium rounded-sm hover:bg-[#5F654D] transition-colors"
+                className="type-label px-4 py-2 bg-[#62694D] text-[#F2EEE4] font-ui font-medium rounded-sm hover:bg-[#5F654D] transition-colors"
               >
                 重新复习当前短文 ({allVocabularies.length})
               </button>
             )}
             <button
               onClick={handleRefreshReviews}
-              className="px-4 py-2 bg-[#E5DED0] text-[#292B25] border border-[#D4CCBC] font-ui text-xs rounded-sm hover:bg-[#E5DED0]/80 transition-colors"
+              className="type-label px-4 py-2 bg-[#E5DED0] text-[#292B25] border border-[#D4CCBC] font-ui rounded-sm hover:bg-[#E5DED0]/80 transition-colors"
             >
               刷新复习状态
             </button>
@@ -221,7 +221,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
         /* Active Flashcard */
         <div className="space-y-6">
           {/* Progress Indicator */}
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-xs font-ui text-[#555848]">
+          <div className="type-label flex flex-wrap items-center justify-between gap-x-4 gap-y-2 font-ui text-[#555848]">
             <span>当前短文已添加词条：{reviewList.length} 项</span>
             <div className="flex items-center gap-3">
               <button
@@ -257,7 +257,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
               <div className="flex items-center justify-end">
                 <div className="flex items-center gap-2">
                   {isTranslatingCurrent && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-ui text-[#5F654D] animate-pulse">
+                    <span className="type-meta inline-flex items-center gap-1 font-ui text-[#5F654D] animate-pulse">
                       <Loader2 className="w-3 h-3 animate-spin" />
                       翻译释义中...
                     </span>
@@ -276,7 +276,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                 <h2 className="font-editorial text-4xl sm:text-5xl font-semibold text-[#5F654D] tracking-tight break-words">
                   {currentVocab.term}
                 </h2>
-                <p className="text-sm font-ui text-[#555848] mt-1">
+                <p className="type-body font-ui text-[#555848] mt-1">
                   {currentVocab.phonetic} •{' '}
                   <span className="italic">{currentVocab.partOfSpeech}</span>
                 </p>
@@ -287,14 +287,14 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                 <div className="space-y-4 pt-4 border-t border-[#D4CCBC] text-left animate-fadeIn">
                   {/* Localized Meaning */}
                   <div>
-                    <span className="text-[11px] font-ui text-[#555848] block uppercase">
+                    <span className="type-meta font-ui text-[#555848] block uppercase">
                       {getI18nText(targetLanguage, 'targetMeaningLabel', '母语地道释义 (Meaning)')}:
                     </span>
                     <p className="font-ui text-base font-semibold text-[#292B25] mt-0.5">
                       {localizedMeaning}
                     </p>
                     {isNotZh && currentVocab.meaningZh && localizedMeaning !== currentVocab.meaningZh && (
-                      <p className="text-xs font-ui text-[#555848] mt-0.5">
+                      <p className="type-body font-ui text-[#555848] mt-0.5">
                         (中文参考: {currentVocab.meaningZh})
                       </p>
                     )}
@@ -302,25 +302,25 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
 
                   {/* English Definition */}
                   <div>
-                    <span className="text-[11px] font-ui text-[#555848] block uppercase">
+                    <span className="type-meta font-ui text-[#555848] block uppercase">
                       {getI18nText(targetLanguage, 'enDefinitionLabel', '英文释义 (Definition)')}:
                     </span>
-                    <p className="font-editorial text-base text-[#292B25] leading-relaxed">
+                    <p className="type-example font-editorial text-[#292B25]">
                       {currentVocab.definitionEn}
                     </p>
                   </div>
 
                   {/* Example & Localized Example Translation */}
                   <div>
-                    <span className="text-[11px] font-ui text-[#555848] block uppercase">
+                    <span className="type-meta font-ui text-[#555848] block uppercase">
                       {getI18nText(targetLanguage, 'exampleLabel', '例句 (Example)')}:
                     </span>
                     <div className="bg-[#E5DED0]/40 p-2.5 rounded-sm border border-[#D4CCBC] mt-1 space-y-1">
-                      <p className="font-editorial text-base italic text-[#5F654D]">
+                      <p className="type-example font-editorial italic text-[#5F654D]">
                         "{currentVocab.example}"
                       </p>
                       {localizedExample && (
-                        <p className="text-xs font-ui text-[#555848] pt-1 border-t border-[#D4CCBC]/40">
+                        <p className="type-body font-ui text-[#555848] pt-1 border-t border-[#D4CCBC]/40">
                           {localizedExample}
                         </p>
                       )}
@@ -330,7 +330,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   {/* Collocations */}
                   {currentVocab.collocations && currentVocab.collocations.length > 0 && (
                     <details key={currentVocab.id} className="group">
-                      <summary className="min-h-11 flex items-center justify-between font-ui text-xs text-[#555848] cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                      <summary className="type-label min-h-11 flex items-center justify-between font-ui text-[#555848] cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                         {getI18nText(targetLanguage, 'collocationsLabel', '常见搭配 (Collocations)')}:
                         <ChevronDown aria-hidden="true" className="w-4 h-4 group-open:rotate-180" />
                       </summary>
@@ -338,7 +338,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                         {currentVocab.collocations.map((col, idx) => (
                           <span
                             key={idx}
-                            className="text-xs font-editorial px-2 py-0.5 bg-[#E5DED0] text-[#292B25] rounded-xs border border-[#D4CCBC]"
+                            className="type-example font-editorial px-2 py-0.5 bg-[#E5DED0] text-[#292B25] rounded-xs border border-[#D4CCBC]"
                           >
                             {col}
                           </span>
@@ -351,7 +351,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                 <div className="text-center py-6">
                   <button
                     onClick={() => setIsRevealed(true)}
-                    className="min-h-11 px-6 py-2.5 bg-[#E5DED0] hover:bg-[#E5DED0]/80 text-[#292B25] text-xs font-ui font-medium border border-[#D4CCBC] rounded-sm transition-colors"
+                    className="type-label min-h-11 px-6 py-2.5 bg-[#E5DED0] hover:bg-[#E5DED0]/80 text-[#292B25] font-ui font-medium border border-[#D4CCBC] rounded-sm transition-colors"
                   >
                     {getI18nText(targetLanguage, 'revealDetails', '显示详细释义与例句 (Reveal Details)')}
                   </button>
@@ -366,8 +366,8 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   onClick={() => handleRating('Again')}
                   className="min-h-14 py-2.5 px-2 bg-[#9E6554]/10 hover:bg-[#9E6554]/20 border border-[#9E6554]/30 rounded-sm text-center transition-colors"
                 >
-                  <span className="font-ui text-xs font-semibold text-[#854C3C] block">Again</span>
-                  <span className="text-[10px] text-[#555848] font-ui block">
+                  <span className="type-label font-ui font-semibold text-[#854C3C] block">Again</span>
+                  <span className="type-meta text-[#555848] font-ui block">
                     {getI18nText(targetLanguage, 'againHint', '今天再复习')}
                   </span>
                 </button>
@@ -376,8 +376,8 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   onClick={() => handleRating('Hard')}
                   className="min-h-14 py-2.5 px-2 bg-[#B49379]/15 hover:bg-[#B49379]/25 border border-[#B49379]/30 rounded-sm text-center transition-colors"
                 >
-                  <span className="font-ui text-xs font-semibold text-[#77543D] block">Hard</span>
-                  <span className="text-[10px] text-[#555848] font-ui block">
+                  <span className="type-label font-ui font-semibold text-[#77543D] block">Hard</span>
+                  <span className="type-meta text-[#555848] font-ui block">
                     {getI18nText(targetLanguage, 'hardHint', '1 天后')}
                   </span>
                 </button>
@@ -386,8 +386,8 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   onClick={() => handleRating('Good')}
                   className="min-h-14 py-2.5 px-2 bg-[#62694D]/15 hover:bg-[#62694D]/25 border border-[#62694D]/30 rounded-sm text-center transition-colors"
                 >
-                  <span className="font-ui text-xs font-semibold text-[#5F654D] block">Good</span>
-                  <span className="text-[10px] text-[#555848] font-ui block">
+                  <span className="type-label font-ui font-semibold text-[#5F654D] block">Good</span>
+                  <span className="type-meta text-[#555848] font-ui block">
                     {getI18nText(targetLanguage, 'goodHint', '3 天后')}
                   </span>
                 </button>
@@ -396,14 +396,14 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   onClick={() => handleRating('Easy')}
                   className="min-h-14 py-2.5 px-2 bg-[#62694D] hover:bg-[#5F654D] border border-[#62694D] rounded-sm text-center transition-colors"
                 >
-                  <span className="font-ui text-xs font-semibold text-[#F2EEE4] block">Easy</span>
-                  <span className="text-[10px] text-[#F2EEE4] font-ui block">
+                  <span className="type-label font-ui font-semibold text-[#F2EEE4] block">Easy</span>
+                  <span className="type-meta text-[#F2EEE4] font-ui block">
                     {getI18nText(targetLanguage, 'easyHint', '7 天后')}
                   </span>
                 </button>
               </fieldset>
             )}
-            {isSaving && <p role="status" className="font-ui text-sm text-[#555848] mt-3">正在保存评分，请稍候…</p>}
+            {isSaving && <p role="status" className="type-body font-ui text-[#555848] mt-3">正在保存评分，请稍候…</p>}
             {failedRating && <div role="alert" className="font-ui text-sm text-[#854C3C] mt-3">
               <p>评分未保存，当前词条已保留。请检查设备存储后重试。</p>
               <button onClick={() => handleRating(failedRating)} className="min-h-11 px-3 border rounded-sm mt-2">重试保存</button>

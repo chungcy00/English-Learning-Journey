@@ -23,7 +23,7 @@ export function ExpressionSelect({ options, value, disabled, loading, onOpen, on
   }, [open, active, id]);
   const choose = (term: string) => { setOpen(false); trigger.current?.focus(); onChange(term); };
   const label = (option: ExpressionOption) => <>
-    <span>{option.term}</span> <span className="text-sm italic font-ui text-[#555848]">{option.type}</span>
+    <span className="type-example">{option.term}</span> <span className="type-label italic text-[#555848]">{option.type}</span>
     {option.selected && <span aria-label="已选"> ☑️</span>}
   </>;
   return <div ref={root} className="relative min-w-0 flex-1 basis-64" onBlur={event => {

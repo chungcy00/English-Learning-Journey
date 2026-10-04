@@ -229,11 +229,11 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
       {/* Header */}
       <div className="space-y-5 pb-6 border-b border-[#D4CCBC]">
         <div>
-          <h1 className="font-editorial text-3xl sm:text-4xl font-semibold text-[#292B25]">
+          <h1 className="type-page font-editorial font-semibold text-[#292B25]">
             {getI18nText(targetLanguage, 'wordbookTitle')}
           </h1>
           {isTranslating && (
-            <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-ui text-[#5F654D] animate-pulse">
+            <span className="type-meta inline-flex items-center gap-1 mt-1 font-ui text-[#5F654D] animate-pulse">
               <Loader2 className="w-3 h-3 animate-spin" />
               {getI18nText(targetLanguage, 'syncingWordbook').replace('{lang}', currentLangObj.native)}
             </span>
@@ -243,7 +243,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         {/* Search Bar & Target Language Picker */}
         <div className="wordbook-search-tools">
           <div className="min-w-0">
-            <label htmlFor="wordbook-expression-search" className="block mb-1.5 text-xs font-ui text-[#555848]">搜索并添加当前短文的表达</label>
+            <label htmlFor="wordbook-expression-search" className="type-label block mb-1.5 font-ui text-[#555848]">搜索并添加当前短文的表达</label>
             <div className="relative">
             <Search className="w-4 h-4 text-[#555848] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -320,7 +320,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                     <span className="block font-editorial text-base font-semibold text-[#5F654D]">
                       {term}
                     </span>
-                    <span className="block text-[11px] font-ui text-[#555848] truncate">
+                    <span className="type-meta block font-ui text-[#555848] truncate">
                       {item ? `${vocabularyList.some(saved => saved.id === item.id) ? '已在生词本 · ' : '当前精选 · '}${getLocalizedVocabMeaning(item, targetLanguage)} · ` : ''}
                       <span className="italic">{item?.type || expression?.type || ''}</span>
                     </span>
@@ -347,7 +347,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
             <select
               value={targetLanguage}
               onChange={(e) => onLanguageChange(e.target.value)}
-              className="bg-transparent min-h-11 max-w-full text-xs font-ui font-medium text-[#292B25] focus:outline-none cursor-pointer"
+              className="type-label bg-transparent min-h-11 max-w-full font-ui font-medium text-[#292B25] focus:outline-none cursor-pointer"
               title="切换单词本释义语言"
             >
               {SUPPORTED_LANGUAGES.map((lang) => (
@@ -362,7 +362,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
       {/* Filter Tabs & Multi-select Toolbar */}
       <section className="wordbook-controls" aria-label="筛选生词本">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs font-ui text-[#555848]">
+      <div className="type-label flex flex-wrap items-center justify-between gap-x-4 gap-y-1 font-ui text-[#555848]">
         <span>当前短文已添加词条：{vocabularyList.length} 项{statusFilter !== 'All' || collectionSearch.trim() ? ` · 当前显示 ${filtered.length} 项` : ''}</span>
         <button type="button" onClick={onOpenReview} className="min-h-11 underline underline-offset-4 hover:text-[#292B25]">开始复习</button>
       </div>
@@ -378,7 +378,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
               key={status}
               aria-pressed={statusFilter === status}
               onClick={() => setStatusFilter(status)}
-              className={`min-h-11 shrink-0 whitespace-nowrap px-3 py-1 text-xs font-ui rounded-xs border transition-colors ${
+              className={`type-label min-h-11 shrink-0 whitespace-nowrap px-3 py-1  font-ui rounded-xs border transition-colors ${
                 statusFilter === status
                   ? 'bg-[#62694D] text-[#F2EEE4] border-[#62694D]'
                   : 'bg-[#E5DED0]/50 text-[#555848] border-[#D4CCBC] hover:bg-[#E5DED0]'
@@ -389,7 +389,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
           ))}
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-ui">
+        <div className="type-label flex items-center gap-2 font-ui">
           <button
             onClick={selectAllFiltered}
             className="min-h-11 text-[#555848] hover:text-[#292B25] underline"
@@ -414,7 +414,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[#62694D]" />
-              <span className="font-ui text-xs font-semibold text-[#292B25]">
+              <span className="type-label font-ui font-semibold text-[#292B25]">
                 已选 {selectedTerms.length} 个生词重新生成短文
               </span>
             </div>
@@ -428,7 +428,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-[#D4CCBC]/60">
-            <div className="flex items-center gap-1.5 text-xs font-ui text-[#292B25]">
+            <div className="type-label flex items-center gap-1.5 font-ui text-[#292B25]">
               <span>类型:</span>
               <select
                 value={readingType}
@@ -441,7 +441,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
               </select>
             </div>
 
-            <div className="flex items-center gap-1.5 text-xs font-ui text-[#292B25]">
+            <div className="type-label flex items-center gap-1.5 font-ui text-[#292B25]">
               <span>篇幅:</span>
               <select
                 value={length}
@@ -457,7 +457,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
             <button
               onClick={handleGenerate}
               disabled={isGenerating}
-              className="ml-auto flex items-center gap-1.5 px-4 py-1.5 bg-[#62694D] text-[#F2EEE4] hover:bg-[#5F654D] text-xs font-ui font-medium rounded-sm shadow-xs transition-colors"
+              className="type-label ml-auto flex items-center gap-1.5 px-4 py-1.5 bg-[#62694D] text-[#F2EEE4] hover:bg-[#5F654D] font-ui font-medium rounded-sm shadow-xs transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>生成新短文 (Generate Reading)</span>
@@ -470,7 +470,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
       <div className="space-y-3">
         {filtered.length === 0 ? (
           <div className="text-center py-12 bg-[#E5DED0]/20 border border-[#D4CCBC] rounded-sm">
-            <p className="font-ui text-sm text-[#555848]">
+            <p className="type-body font-ui text-[#555848]">
               {vocabularyList.length === 0 ? '暂无词条，可在上方搜索添加。' : '没有匹配的词条，请清空筛选文字或选择全部状态。'}
             </p>
           </div>
@@ -491,7 +491,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
                   <div className="min-w-0 break-words">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-editorial text-xl font-semibold text-[#5F654D] group-hover:text-[#292B25] transition-colors">
+                      <h3 className="type-term font-editorial font-semibold text-[#5F654D] group-hover:text-[#292B25] transition-colors">
                         <button type="button" aria-haspopup="dialog" aria-label={`查看 ${vocab.term} 的词汇释义`} onClick={e => { e.stopPropagation(); setDetailVocab(vocab); }} className="font-editorial text-left min-h-11">{vocab.term}</button>
                       </h3>
                       <button
@@ -502,12 +502,12 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                       >
                         <Volume2 className="w-3.5 h-3.5" />
                       </button>
-                      <span className="text-[11px] font-ui italic text-[#555848]">
+                      <span className="type-meta font-ui italic text-[#555848]">
                         [{vocab.partOfSpeech}]
                       </span>
                     </div>
 
-                    <p className="text-sm font-ui font-medium text-[#292B25] mt-1 flex items-center gap-1.5 flex-wrap">
+                    <p className="type-body font-ui font-medium text-[#292B25] mt-1 flex items-center gap-1.5 flex-wrap">
                       <span>{getLocalizedVocabMeaning(vocab, targetLanguage)}</span>
                       {targetLanguage !== 'zh-CN' && vocab.meaningZh && getLocalizedVocabMeaning(vocab, targetLanguage) !== vocab.meaningZh && (
                         <span className="text-xs font-normal text-[#555848]">
@@ -516,11 +516,11 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                       )}
                     </p>
 
-                    <p className="font-editorial text-lg sm:text-xl leading-relaxed text-[#555848] italic break-words mt-1">
+                    <p className="type-example font-editorial text-[#555848] italic break-words mt-1">
                       "{vocab.example}"
                     </p>
                     {getLocalizedExampleTranslation(vocab, targetLanguage) && (
-                      <p className="text-sm font-ui text-[#5F654D] line-clamp-1 mt-0.5">
+                      <p className="type-body font-ui text-[#5F654D] mt-0.5">
                         {getLocalizedExampleTranslation(vocab, targetLanguage)}
                       </p>
                     )}
