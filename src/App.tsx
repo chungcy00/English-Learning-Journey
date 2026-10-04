@@ -15,7 +15,7 @@ import { WordbookView } from './views/WordbookView';
 import { ReviewView } from './views/ReviewView';
 import { AppUpdateView } from './views/AppUpdateView';
 import { ReadingHistoryView } from './views/ReadingHistoryView';
-import { isMobileOrTablet, isStandaloneApp } from './utils/pwa';
+import { isAppleMobileDevice, isManualUpdateApp } from './utils/pwa';
 import { normalizeEnglishTerm } from './utils/englishSearch';
 
 import {
@@ -67,12 +67,19 @@ export default function App() {
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isInstalledApp, setIsInstalledApp] = useState(
-    () => isStandaloneApp() && isMobileOrTablet()
+    () => isManualUpdateApp()
   );
 
   useEffect(() => {
-    setIsInstalledApp(isStandaloneApp() && isMobileOrTablet());
-    if (isStandaloneApp() && import.meta.env.PROD && 'serviceWorker' in navigator) {
+    setIsInstalledApp(isManualUpdateApp());
+    if (isAppleMobileDevice()) {
+      const webUrl = new URL(window.location.href);
+      webUrl.searchParams.delete('app');
+      window.history.replaceState(window.history.state, '', webUrl);
+    } else {
+      document.querySelector('link[rel="manifest"]')?.setAttribute('href', '/manifest-android.webmanifest');
+    }
+    if (isManualUpdateApp() && import.meta.env.PROD && 'serviceWorker' in navigator) {
       const installedUrl = new URL(window.location.href);
       installedUrl.searchParams.set('app', 'installed');
       window.history.replaceState(window.history.state, '', installedUrl);

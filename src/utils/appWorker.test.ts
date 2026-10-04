@@ -34,9 +34,9 @@ function harness() {
     };
     return { dispatch, skips: () => skips,
       async message(type: string) { let result: any; await dispatch('message', { data: { type }, ports: [{ postMessage(data: any) { result = data; } }] }); return result; },
-      async navigate(url: string) {
+      async navigate(url: string, userAgent = '') {
         let response: Promise<Response> | undefined;
-        listeners.fetch({ request: { url, mode: 'navigate', method: 'GET' }, respondWith(promise: Promise<Response>) { response = promise; } });
+        listeners.fetch({ request: { url, mode: 'navigate', method: 'GET', headers: new Headers({ 'user-agent': userAgent }) }, respondWith(promise: Promise<Response>) { response = promise; } });
         return response ? (await response).text() : null;
       },
     };
@@ -64,6 +64,8 @@ test('background install and activation preserve the installed shell until expli
 test('normal browser navigation is not pinned and a mismatched deployment does not replace the shell', async () => {
   const h = harness(); const first = h.worker('one'); await first.dispatch('install');
   assert.equal(await first.navigate('https://app.test/'), null);
+  assert.equal(await first.navigate('https://app.test/?app=installed', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)'), null);
+  assert.equal(await first.navigate('https://app.test/?app=installed', 'Mozilla/5.0 (Macintosh; Intel Mac OS X)'), null);
   const next = h.worker('two'); // HTML still references build one.
   await assert.rejects(next.dispatch('install'), /Deployment is not ready/);
   assert.match((await first.navigate('https://app.test/?app=installed'))!, /one.js/);

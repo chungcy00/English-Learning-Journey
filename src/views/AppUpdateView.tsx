@@ -146,7 +146,7 @@ export const AppUpdateView: React.FC = () => {
           软件检测与更新
         </h1>
         <p className="font-ui text-sm text-[#717265] mt-2">
-          此页面仅在已安装的手机或平板软件中显示。
+          此页面仅在 Android 安装版中显示。
         </p>
       </div>
 

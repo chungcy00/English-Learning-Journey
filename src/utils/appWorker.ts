@@ -47,7 +47,8 @@ self.addEventListener('message', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
-  if (event.request.mode === 'navigate' && url.searchParams.get('app') === 'installed') {
+  const appleRequest = /iPhone|iPad|iPod|Macintosh/i.test(event.request.headers?.get('user-agent') || '');
+  if (event.request.mode === 'navigate' && url.searchParams.get('app') === 'installed' && !appleRequest) {
     event.respondWith((async () => {
       const pin = await readPin();
       const shell = pin && await (await caches.open(pin.cache)).match('/');

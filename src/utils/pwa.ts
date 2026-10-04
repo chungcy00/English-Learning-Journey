@@ -22,3 +22,11 @@ export function isAppleMobileDevice(): boolean {
   return /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
     (/Macintosh|MacIntel/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 }
+
+export function manualUpdatePlatform(standalone: boolean, mobile: boolean, appleMobile: boolean): boolean {
+  return standalone && mobile && !appleMobile;
+}
+
+export function isManualUpdateApp(): boolean {
+  return manualUpdatePlatform(isStandaloneApp(), isMobileOrTablet(), isAppleMobileDevice());
+}
