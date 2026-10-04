@@ -1,9 +1,7 @@
 // One-time migration for installations created before background updates were removed.
-self.addEventListener('install', () => self.skipWaiting());
+// Wait for existing windows to close; never activate or navigate mid-task.
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     await self.registration.unregister();
-    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    await Promise.all(clients.map((client) => client.navigate(client.url)));
   })());
 });

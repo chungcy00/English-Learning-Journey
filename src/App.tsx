@@ -84,7 +84,7 @@ export default function App() {
       document.querySelector('link[rel="manifest"]')?.setAttribute('href', '/manifest-android.webmanifest');
     }
     // Remove the legacy update worker from installations made by earlier releases.
-    // The app now uses the network directly and never updates in the background.
+    // Fresh navigations load the network version; never reload an active window.
     if (import.meta.env.PROD && 'serviceWorker' in navigator) {
       void (async () => {
         const registrations = await navigator.serviceWorker.getRegistrations();
@@ -95,7 +95,7 @@ export default function App() {
             .filter((name) => name.startsWith('mine-english-build-') || name === 'mine-english-installed-shell')
             .map((name) => caches.delete(name)));
         }
-      })();
+      })().catch(error => console.warn('Legacy app cache cleanup failed; will retry on next visit.', error));
     }
     // If a previous visit had to use free browser speech, quietly retry
     // Gemini once on this fresh visit and cache a successful result.
@@ -132,10 +132,7 @@ export default function App() {
     vocabularies.map((v) => v.term.toLowerCase())
   );
 
-  // Due reviews
-  const dueVocabularies = vocabularies.filter(
-    (v) => v.nextReviewDate <= Date.now()
-  );
+  // Navigation matches the review session: every saved expression, not just due items.
 
   // --- Handlers ---
 
@@ -369,7 +366,7 @@ export default function App() {
         <Navbar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          reviewDueCount={dueVocabularies.length}
+          reviewCount={vocabularies.length}
           hasCurrentReading={!!currentReading}
           targetLanguage={settings.targetLanguage || 'zh-CN'}
         />
@@ -497,7 +494,7 @@ export default function App() {
         <InstalledAppBottomNav
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          reviewDueCount={dueVocabularies.length}
+          reviewCount={vocabularies.length}
           hasCurrentReading={!!currentReading}
         />
       )}

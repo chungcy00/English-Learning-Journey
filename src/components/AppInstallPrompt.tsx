@@ -65,15 +65,15 @@ export const AppInstallPrompt: React.FC = () => {
   return (
     <div
       role="dialog"
-      aria-label="安装 Mine English 软件"
+      aria-label="添加 Mine English 到主屏幕"
       className="fixed z-50 left-4 right-4 bottom-4 sm:left-auto sm:right-6 sm:w-[25rem] bg-[#FAF7F2] border border-[#62694D]/40 rounded-sm shadow-xl p-4 font-ui"
     >
       <div className="flex items-start gap-3">
         <img src="/site-icon.png" alt="" className="w-12 h-12 object-contain flex-shrink-0" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-[#292B25]">安装 Mine English 软件</p>
+          <p className="text-sm font-semibold text-[#292B25]">添加 Mine English 到主屏幕</p>
           <p className="text-xs text-[#555848] mt-1 leading-relaxed">
-            添加到手机或平板主屏幕，之后可以像普通软件一样打开。
+            这是联网网站的主屏幕入口，不是独立安装包。关闭后重新打开会加载线上版本，使用中不会主动刷新。
           </p>
 
           {nativePrompt ? (

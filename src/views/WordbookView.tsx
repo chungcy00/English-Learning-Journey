@@ -23,7 +23,7 @@ import {
 } from '../utils/i18n';
 import { explainVocabularyTerm, translateVocabularies } from '../services/api';
 import { getEnglishTermMatchRank, isEnglishTermQuery, normalizeEnglishTerm, containsEnglishExpression } from '../utils/englishSearch';
-import { compareWordbookEntries, isVocabularyAtLevel } from '../utils/wordbookSort';
+import { filterSavedVocabulary } from '../utils/savedVocabulary';
 import { speakEnglishTerm } from '../utils/speech';
 import { useReadingExpressions } from '../hooks/useReadingExpressions';
 
@@ -50,7 +50,6 @@ interface WordbookViewProps {
 
 export const WordbookView: React.FC<WordbookViewProps> = ({
   vocabularyList,
-  readings,
   currentReading,
   onDeleteVocab,
   onUpdateStatus,
@@ -64,6 +63,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   onOpenReview,
 }) => {
   const [search, setSearch] = useState('');
+  const [collectionSearch, setCollectionSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [selectedTerms, setSelectedTerms] = useState<string[]>([]);
   const [detailVocab, setDetailVocab] = useState<VocabularyItem | null>(null);
@@ -164,11 +164,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
   const filterOptions = ['All', 'New', 'Learning', 'Difficult', 'Mastered'];
 
-  const readingById = useMemo(
-    () => new Map(readings.map((reading) => [reading.id, reading])),
-    [readings]
-  );
-
   const searchSuggestions = useMemo(() => {
     const query = search.trim();
     if (!query || !currentReading) return [];
@@ -181,12 +176,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
       .map(term => ({ term, item: currentReading.selectedVocabulary.find(v => normalizeEnglishTerm(v.term) === term) || vocabularyList.find(v => normalizeEnglishTerm(v.term) === term), expression: catalogue.expressions.find(v => normalizeEnglishTerm(v.term) === term) }));
   }, [search, vocabularyList, currentReading, catalogue.expressions]);
 
-  const scopedVocabulary = useMemo(() => {
-    return vocabularyList
-      .filter(item => isVocabularyAtLevel(item, currentCefr, readingById))
-      .sort((a, b) => compareWordbookEntries(a, b, currentCefr, readingById));
-  }, [vocabularyList, readingById, currentCefr]);
-  const filtered = useMemo(() => scopedVocabulary.filter(item => statusFilter === 'All' || item.status === statusFilter), [scopedVocabulary, statusFilter]);
+  const filtered = useMemo(() => filterSavedVocabulary(vocabularyList, collectionSearch, statusFilter), [vocabularyList, collectionSearch, statusFilter]);
 
   const toggleSelect = (term: string) => {
     setSelectedTerms((prev) =>
@@ -371,8 +361,14 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
       {/* Filter Tabs & Multi-select Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs font-ui text-[#555848]">
-        <span>按所选程度显示：{scopedVocabulary.length} 项{statusFilter !== 'All' ? ` · 当前显示 ${filtered.length} 项` : ''}</span>
+        <span>已添加全部词条：{vocabularyList.length} 项{statusFilter !== 'All' || collectionSearch.trim() ? ` · 当前显示 ${filtered.length} 项` : ''}</span>
         <button type="button" onClick={onOpenReview} className="min-h-11 underline underline-offset-4 hover:text-[#292B25]">复习生词本全部 {vocabularyList.length} 项</button>
+      </div>
+      <div className="space-y-2 font-ui">
+        <label htmlFor="saved-vocabulary-search" className="block text-sm text-[#292B25]">筛选已添加词条</label>
+        <input id="saved-vocabulary-search" value={collectionSearch} onChange={event => setCollectionSearch(event.target.value)}
+          placeholder="输入已添加的英文单词、短语或习语"
+          className="w-full min-h-11 px-3 py-2 text-base bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm text-[#292B25] placeholder:text-[#646657]" />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -473,7 +469,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         {filtered.length === 0 ? (
           <div className="text-center py-12 bg-[#E5DED0]/20 border border-[#D4CCBC] rounded-sm">
             <p className="font-ui text-sm text-[#555848]">
-              {statusFilter === 'All' ? '当前学习范围还没有词条，可搜索并添加当前短文中的完整表达。' : '当前学习范围没有此状态的词条，请选择其他状态。'}
+              {vocabularyList.length === 0 ? '还没有已添加词条，可搜索并添加当前短文中的完整表达。' : '没有匹配的已添加词条，请清空筛选文字或选择全部状态。'}
             </p>
           </div>
         ) : (

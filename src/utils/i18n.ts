@@ -24,7 +24,7 @@ export const I18N_STRINGS: Record<string, Record<string, string>> = {
 
     wordbookTitle: '个人生词本 (My Wordbook)',
     wordbookSub: '共收录 {count} 个重点词汇与短语',
-    reviewTitle: '间隔复习 (Vocabulary Review)',
+    reviewTitle: '词汇复习 (Vocabulary Review)',
     reviewSub: '根据艾宾浩斯记忆曲线科学安排复习间隔，加深真实语境记忆',
     revealDetails: '显示详细释义与例句 (Reveal Details)',
     searchPlaceholder: '搜索英文、{lang}或释义...',
@@ -62,7 +62,7 @@ export const I18N_STRINGS: Record<string, Record<string, string>> = {
 
     wordbookTitle: '個人生詞本 (My Wordbook)',
     wordbookSub: '共收錄 {count} 個重點詞彙與短語',
-    reviewTitle: '間隔複習 (Vocabulary Review)',
+    reviewTitle: '詞彙複習 (Vocabulary Review)',
     reviewSub: '根據艾賓浩斯記憶曲線科學安排複習間隔，加深真實語境記憶',
     revealDetails: '顯示詳細釋義與例句 (Reveal Details)',
     searchPlaceholder: '搜尋英文、{lang}或釋義...',
@@ -100,7 +100,7 @@ export const I18N_STRINGS: Record<string, Record<string, string>> = {
 
     wordbookTitle: 'マイ単語帳 (My Wordbook)',
     wordbookSub: '全 {count} 個の重要語彙・フレーズを収録',
-    reviewTitle: '間隔反復学習 (Vocabulary Review)',
+    reviewTitle: '語彙復習 (Vocabulary Review)',
     reviewSub: 'エビングハウスの忘却曲線に基づき、実際の文脈で記憶を定着させます',
     revealDetails: '詳細な意味と例文を表示 (Reveal Details)',
     searchPlaceholder: '英語、{lang}、または意味を検索...',
@@ -138,7 +138,7 @@ export const I18N_STRINGS: Record<string, Record<string, string>> = {
 
     wordbookTitle: '내 단어장 (My Wordbook)',
     wordbookSub: '총 {count}개의 핵심 어휘 및 표현 수록',
-    reviewTitle: '간격 복습 (Vocabulary Review)',
+    reviewTitle: '어휘 복습 (Vocabulary Review)',
     reviewSub: '에빙하우스 망각 곡선에 기반하여 실제 문맥에서의 기억을 강화합니다',
     revealDetails: '상세 뜻과 예문 보기 (Reveal Details)',
     searchPlaceholder: '영어, {lang} 또는 뜻 검색...',
@@ -176,7 +176,7 @@ export const I18N_STRINGS: Record<string, Record<string, string>> = {
 
     wordbookTitle: 'Mi vocabulario (My Wordbook)',
     wordbookSub: 'Contiene {count} palabras y frases clave',
-    reviewTitle: 'Repaso espaciado (Vocabulary Review)',
+    reviewTitle: 'Repaso de vocabulario (Vocabulary Review)',
     reviewSub: 'Repaso científico basado en la curva del olvido para reforzar la memoria en contexto',
     revealDetails: 'Mostrar significado y ejemplos (Reveal Details)',
     searchPlaceholder: 'Buscar inglés, {lang} o significado...',
@@ -214,7 +214,7 @@ export const I18N_STRINGS: Record<string, Record<string, string>> = {
 
     wordbookTitle: 'Mon carnet de vocabulaire (My Wordbook)',
     wordbookSub: 'Contient {count} mots et expressions clés',
-    reviewTitle: 'Révision espacée (Vocabulary Review)',
+    reviewTitle: 'Révision du vocabulaire (Vocabulary Review)',
     reviewSub: 'Révision scientifique basée sur la courbe de l\'oubli pour renforcer la mémoire en contexte',
     revealDetails: 'Afficher les détails et exemples (Reveal Details)',
     searchPlaceholder: 'Rechercher anglais, {lang} ou signification...',
@@ -252,7 +252,7 @@ export const I18N_STRINGS: Record<string, Record<string, string>> = {
 
     wordbookTitle: 'Mein Vokabelheft (My Wordbook)',
     wordbookSub: 'Enthält {count} wichtige Wörter und Phrasen',
-    reviewTitle: 'Verteilte Wiederholung (Vocabulary Review)',
+    reviewTitle: 'Wortschatz wiederholen (Vocabulary Review)',
     reviewSub: 'Wissenschaftliche Wiederholung basierend auf der Vergessenskurve',
     revealDetails: 'Details und Beispiele anzeigen (Reveal Details)',
     searchPlaceholder: 'Suche Englisch, {lang} oder Bedeutung...',
@@ -290,7 +290,7 @@ export const I18N_STRINGS: Record<string, Record<string, string>> = {
 
     wordbookTitle: 'Sổ từ vựng của tôi (My Wordbook)',
     wordbookSub: 'Bao gồm {count} từ vựng và cụm từ cốt lõi',
-    reviewTitle: 'Ôn tập ngắt quãng (Vocabulary Review)',
+    reviewTitle: 'Ôn tập từ vựng (Vocabulary Review)',
     reviewSub: 'Ôn tập khoa học dựa trên đường cong lãng quên Ebbinghaus',
     revealDetails: 'Hiển thị chi tiết và ví dụ (Reveal Details)',
     searchPlaceholder: 'Tìm kiếm tiếng Anh, {lang} hoặc nghĩa...',
@@ -328,7 +328,7 @@ export const I18N_STRINGS: Record<string, Record<string, string>> = {
 
     wordbookTitle: 'Мой словарь (My Wordbook)',
     wordbookSub: 'Содержит {count} ключевых слов и фраз',
-    reviewTitle: 'Интервальное повторение (Vocabulary Review)',
+    reviewTitle: 'Повторение словаря (Vocabulary Review)',
     reviewSub: 'Научное повторение на основе кривой забывания Эббингауза',
     revealDetails: 'Показать детали и примеры (Reveal Details)',
     searchPlaceholder: 'Поиск английского, {lang} или значения...',

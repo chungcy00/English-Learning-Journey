@@ -5,21 +5,21 @@ import { NavTab } from './Navbar';
 interface InstalledAppBottomNavProps {
   activeTab: NavTab;
   setActiveTab: (tab: NavTab) => void;
-  reviewDueCount: number;
+  reviewCount: number;
   hasCurrentReading: boolean;
 }
 
 export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
   activeTab,
   setActiveTab,
-  reviewDueCount,
+  reviewCount,
   hasCurrentReading,
 }) => {
   const tabs = [
     { id: 'home' as NavTab, label: '生成', icon: Sparkles },
     { id: 'reading' as NavTab, label: '阅读', icon: BookOpen, disabled: !hasCurrentReading },
     { id: 'wordbook' as NavTab, label: '生词本', icon: Bookmark },
-    { id: 'review' as NavTab, label: '复习', icon: RotateCcw, badge: reviewDueCount },
+    { id: 'review' as NavTab, label: '复习', icon: RotateCcw, badge: reviewCount },
     { id: 'history' as NavTab, label: '历史', icon: History },
   ];
 
@@ -36,6 +36,7 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
             <button
               key={tab.id}
               type="button"
+              aria-label={`${tab.label}${tab.badge !== undefined ? `，${tab.badge} 个词条` : ''}`}
               onClick={() => setActiveTab(tab.id)}
               disabled={tab.disabled}
               aria-current={isActive ? 'page' : undefined}
@@ -50,9 +51,9 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
               <span className={`relative flex h-7 min-w-11 items-center justify-center rounded-full ${
                 isActive ? 'bg-[#62694D]/15' : ''
               }`}>
-                <Icon className={`h-5 w-5 ${isActive ? 'stroke-[2.4]' : ''}`} />
+                <Icon aria-hidden="true" className={`h-5 w-5 ${isActive ? 'stroke-[2.4]' : ''}`} />
                 {tab.badge !== undefined && tab.badge > 0 ? (
-                  <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-[#B49379] px-1 text-[9px] font-semibold leading-4 text-[#292B25]">
+                  <span aria-hidden="true" className="absolute -right-1 -top-1 min-w-4 rounded-full bg-[#B49379] px-1 text-[9px] font-semibold leading-4 text-[#292B25]">
                     {tab.badge > 99 ? '99+' : tab.badge}
                   </span>
                 ) : null}

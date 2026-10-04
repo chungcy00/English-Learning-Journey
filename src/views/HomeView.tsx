@@ -3,6 +3,7 @@ import { Sparkles, ChevronDown } from 'lucide-react';
 import { CEFRLevel, ReadingType, ReadingLength, ReadingStyle, AppSettings } from '../types';
 import { READING_STYLES } from '../utils/readingStyles';
 import { CEFR_ABILITY_HINTS, parseSpecifiedVocabulary } from '../utils/generationInput';
+import { readGenerationDraft, saveGenerationDraft } from '../utils/generationDraft';
 
 interface HomeViewProps {
   settings: AppSettings;
@@ -25,7 +26,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
   isLoading,
   onCefrChange,
 }) => {
-  const [input, setInput] = useState('');
+  const [input, setDraftInput] = useState(readGenerationDraft);
+  const setInput = (value: string) => {
+    saveGenerationDraft(value);
+    setDraftInput(value);
+  };
   const [cefr, setCefr] = useState<CEFRLevel>(settings.cefr);
   const [type, setType] = useState<ReadingType>(settings.defaultReadingType);
   const [style, setStyle] = useState<ReadingStyle>(settings.defaultReadingStyle || 'auto');
