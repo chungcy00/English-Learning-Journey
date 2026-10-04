@@ -400,7 +400,7 @@ export default function App() {
       )}
 
       {/* Main Content Router */}
-      <main className={`flex-1 ${isInstalledApp ? 'pb-[calc(5rem+env(safe-area-inset-bottom))]' : ''}`}>
+      <main className={`min-w-0 flex-1 ${isInstalledApp ? 'pb-[calc(5rem+env(safe-area-inset-bottom))]' : ''}`}>
         {errorMessage && (
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4">
             <div role="alert" className="bg-[#FAF3F0] border border-[#D98E7B]/40 text-[#7D3220] px-4 py-3 rounded-sm text-sm font-ui flex items-center justify-between shadow-xs">

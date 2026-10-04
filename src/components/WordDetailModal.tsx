@@ -39,11 +39,11 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
   const localizedExample = getLocalizedExampleTranslation(vocab, targetLanguage, currentTranslation);
 
   return (
-    <dialog ref={dialogRef} aria-labelledby="word-detail-title" onCancel={onClose} className="word-detail-dialog w-[calc(100%_-_2rem)] max-w-lg bg-[#F2EEE4] text-[#292B25] border border-[#D4CCBC] rounded-sm p-6 sm:p-8 shadow-lg max-h-[90vh] overflow-y-auto m-auto">
+    <dialog ref={dialogRef} aria-labelledby="word-detail-title" onCancel={onClose} className="app-dialog word-detail-dialog w-[calc(100%_-_2rem)] max-w-lg bg-[#F2EEE4] text-[#292B25] border border-[#D4CCBC] rounded-sm p-6 sm:p-8 shadow-lg m-auto break-words">
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-[#D4CCBC] pb-4 mb-5">
-          <div>
-            <div className="flex items-center gap-3">
+        <div className="flex items-start justify-between gap-3 border-b border-[#D4CCBC] pb-4 mb-5">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-3">
               <h2 id="word-detail-title" className="font-editorial text-2xl sm:text-3xl font-semibold text-[#5F654D] break-words">
                 {vocab.term}
               </h2>
@@ -56,7 +56,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
                 <Volume2 className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex items-center gap-2 mt-1 text-xs text-[#555848] font-ui">
+            <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-[#555848] font-ui">
               {vocab.phonetic && <span>{vocab.phonetic}</span>}
               <span>•</span>
               <span className="italic">{vocab.partOfSpeech}</span>

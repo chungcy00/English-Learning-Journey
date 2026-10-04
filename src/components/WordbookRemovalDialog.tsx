@@ -16,7 +16,7 @@ export const WordbookRemovalDialog: React.FC<{
   return <dialog ref={ref} aria-labelledby="removal-title" aria-describedby="removal-description" onCancel={event => {
     event.preventDefault();
     if (!busy) onCancel();
-  }} className="word-detail-dialog m-auto w-[calc(100%_-_2rem)] max-w-md border border-[#D4CCBC] rounded-sm bg-[#F2EEE4] text-[#292B25] p-6 shadow-lg">
+  }} className="app-dialog word-detail-dialog m-auto w-[calc(100%_-_2rem)] max-w-md border border-[#D4CCBC] rounded-sm bg-[#F2EEE4] text-[#292B25] p-6 shadow-lg">
     <h2 id="removal-title" className="font-ui text-lg font-semibold">移出生词本？</h2>
     <p id="removal-description" className="mt-3 text-sm font-ui break-words">“{term}” 移除后将不再出现在复习中。</p>
     {error && <p role="alert" className="mt-3 text-sm text-red-700">{error}</p>}
