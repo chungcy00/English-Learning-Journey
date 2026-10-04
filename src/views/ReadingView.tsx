@@ -1100,7 +1100,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-[#555848] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
 
                 {/* Regenerate Button */}

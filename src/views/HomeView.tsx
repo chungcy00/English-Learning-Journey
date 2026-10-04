@@ -143,7 +143,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <div id="cefr-label" className="type-label font-ui font-medium text-[#292B25] block mb-1.5">
                 CEFR 难度等级
               </div>
-              <div role="group" aria-labelledby="cefr-label" aria-describedby="cefr-ability-hint" className="grid grid-cols-4 gap-1">
+              <div role="group" aria-labelledby="cefr-label" aria-describedby="cefr-ability-hint" className="single-choice-group grid grid-cols-4 gap-1.5">
                 {(['A2', 'B1', 'B2', 'C1'] as CEFRLevel[]).map((level) => (
                   <button
                     key={level}
@@ -169,7 +169,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             {/* Vocabulary Count */}
             <div>
               <div id="vocab-count-label" className="type-label font-ui font-medium text-[#292B25] block mb-1.5">精选词汇数</div>
-              <div role="group" aria-labelledby="vocab-count-label" className="grid grid-cols-4 gap-1">
+              <div role="group" aria-labelledby="vocab-count-label" className="single-choice-group grid grid-cols-4 gap-1.5">
                 {[5, 6, 8, 10].map((count) => (
                   <button key={count} type="button" aria-pressed={vocabCount === count} onClick={() => setVocabCount(count)}
                     className={`min-h-11 py-1.5 text-sm font-ui font-medium rounded-xs border transition-colors ${vocabCount === count
@@ -181,7 +181,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               </div>
             </div>
           </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
             {/* Reading Type */}
             <div>
               <label htmlFor="reading-type" className="type-label font-ui font-medium text-[#292B25] block mb-1.5">

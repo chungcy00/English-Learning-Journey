@@ -348,7 +348,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
           </div>
 
           {/* Language Selector */}
-          <div className="flex items-center gap-1.5 justify-self-start sm:justify-self-end bg-[#F2EEE4] border border-[#D4CCBC] px-2.5 rounded-sm">
+          <div className="select-with-icon justify-self-start sm:justify-self-end">
             <Languages className="w-3.5 h-3.5 text-[#5F654D]" />
             <select
               value={targetLanguage}

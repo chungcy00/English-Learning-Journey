@@ -188,7 +188,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
         </div>
 
         {/* Target Language Selector */}
-        <div className="flex items-center gap-1.5 self-start sm:self-auto bg-[#F2EEE4] border border-[#D4CCBC] px-2.5 py-1.5 rounded-sm">
+        <div className="select-with-icon self-start sm:self-auto">
           <Languages className="w-3.5 h-3.5 text-[#5F654D]" />
           <select
             value={targetLanguage}

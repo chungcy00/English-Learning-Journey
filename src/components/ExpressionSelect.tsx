@@ -51,7 +51,7 @@ export function ExpressionSelect({ options, value, disabled, loading, onOpen, on
       <ChevronDown aria-hidden="true" className="w-4 h-4 shrink-0" />
     </button>
     {open && <div id={`${id}-list`} role="listbox" aria-labelledby={`${id}-label`}
-      className="absolute top-full left-0 right-0 mt-1 z-30 max-h-72 overflow-y-auto border border-[#D4CCBC] rounded-sm bg-[#FAF7F2] shadow-lg">
+      className="expression-options absolute top-full left-0 right-0 mt-2 z-30 max-h-72 overflow-y-auto border border-[#D4CCBC] bg-[#FAF7F2] shadow-lg">
       {loading && <p role="status" className="p-3 text-sm text-[#555848]">正在识别短文中的表达…</p>}
       {!loading && !options.length && <p className="p-3 text-sm text-[#555848]">暂无可选的同级表达</p>}
       {options.map((option, index) => <button key={option.term} id={`${id}-${index}`} type="button"

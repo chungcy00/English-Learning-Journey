@@ -8,11 +8,10 @@ interface LanguageSelectorProps {
 
 export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ targetLanguage, onLanguageChange }) => {
   return (
-    <div className="relative inline-flex items-center">
-      <div className="absolute left-3 text-[#555848] pointer-events-none">
-        <Languages className="w-4 h-4" />
-      </div>
+    <div className="select-with-icon inline-flex items-center">
+      <Languages aria-hidden="true" className="w-4 h-4 text-[#555848]" />
       <select
+        aria-label="选择释义语言"
         value={targetLanguage}
         onChange={(e) => onLanguageChange(e.target.value)}
         className="pl-9 pr-8 py-2 bg-[#F2EEE4] hover:bg-[#E5DED0] border border-[#D4CCBC] text-xs font-ui text-[#292B25] rounded-sm appearance-none cursor-pointer transition-colors focus:outline-none focus:border-[#62694D]"
@@ -27,11 +26,6 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ targetLangua
         <option value="vi">🇻🇳 Tiếng Việt</option>
         <option value="ru">🇷🇺 Русский</option>
       </select>
-      <div className="absolute right-3 text-[#555848] pointer-events-none">
-        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </div>
     </div>
   );
 };
