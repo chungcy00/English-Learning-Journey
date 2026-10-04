@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Sparkles, ChevronDown } from 'lucide-react';
 import { CEFRLevel, ReadingType, ReadingLength, ReadingStyle, AppSettings } from '../types';
 import { READING_STYLES } from '../utils/readingStyles';
+import { CEFR_ABILITY_HINTS, parseSpecifiedVocabulary } from '../utils/generationInput';
 
 interface HomeViewProps {
   settings: AppSettings;
@@ -30,6 +31,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [style, setStyle] = useState<ReadingStyle>(settings.defaultReadingStyle || 'auto');
   const [length, setLength] = useState<ReadingLength>(settings.defaultLength);
   const [vocabCount, setVocabCount] = useState<number>(settings.vocabularyCount);
+  const specifiedVocabulary = parseSpecifiedVocabulary(input);
   const typeSummary = { story: '故事叙述', 'non-story': '说明/生活见解', dialogue: '情境对话', random: '随机文体' }[type];
   const lengthSummary = { short: '80–120 词', medium: '150–200 词', long: '250–350 词' }[length];
   const styleSummary = READING_STYLES.find(option => option.value === style)?.label || READING_STYLES[0].label;
@@ -56,12 +58,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
-    // Detect if input contains separated vocabulary list (English/Chinese comma, enumeration comma, semicolon)
-    const hasDelimiter = /[,，、;；]/.test(input);
-    const commaSeparated = hasDelimiter
-      ? input.split(/[,，、;；]/).map(s => s.trim()).filter(Boolean)
-      : undefined;
-
     onGenerate({
       input: input.trim(),
       cefrLevel: cefr,
@@ -69,7 +65,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       readingStyle: style,
       length,
       vocabularyCount: vocabCount,
-      specifiedVocabulary: commaSeparated
+      specifiedVocabulary
     });
   };
 
@@ -85,14 +81,22 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {/* Main Input Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm p-3 sm:p-4 shadow-sm focus-within:border-[#62694D] focus-within:ring-1 focus-within:ring-[#62694D]/30 transition-all">
+          <label htmlFor="generation-input" className="block mb-2 text-sm font-ui font-medium text-[#292B25]">学习主题或英文词汇</label>
           <textarea
+            id="generation-input"
             aria-label="学习主题或英文词汇"
+            aria-describedby={specifiedVocabulary ? 'generation-input-preview' : undefined}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             rows={3}
-            placeholder="输入英文单词 (如 genuine)、词组 (undivided attention)、多个生词 (genuine, considerate, rooted)、中文主题 (雨天里的小惊喜) 或任意学习想法..."
+            placeholder="例如：Small talk at work 或 genuine, break the ice"
             className="w-full bg-transparent resize-none border-none outline-none font-editorial text-lg sm:text-xl text-[#292B25] placeholder:text-[#646657] placeholder:font-ui placeholder:text-sm leading-relaxed"
           />
+
+          {specifiedVocabulary && <div id="generation-input-preview" className="mb-3 text-xs font-ui text-[#555848] leading-relaxed break-words">
+            <p role="status">{specifiedVocabulary.length ? `将按词表处理（${specifiedVocabulary.length} 项）：${specifiedVocabulary.join(' · ')}` : '尚未识别到词条，请在分隔符之间输入表达。'}</p>
+            <p className="mt-1">逗号、顿号和分号会分隔词条；主题描述请避免这些分隔符。</p>
+          </div>}
 
           <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#D4CCBC]/60">
             {/* Suggestion Chips */}
@@ -135,7 +139,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <div id="cefr-label" className="text-xs font-ui font-medium text-[#292B25] block mb-1.5">
                 CEFR 难度等级
               </div>
-              <div role="group" aria-labelledby="cefr-label" className="grid grid-cols-4 gap-1">
+              <div role="group" aria-labelledby="cefr-label" aria-describedby="cefr-ability-hint" className="grid grid-cols-4 gap-1">
                 {(['A2', 'B1', 'B2', 'C1'] as CEFRLevel[]).map((level) => (
                   <button
                     key={level}
@@ -155,6 +159,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   </button>
                 ))}
               </div>
+              <p id="cefr-ability-hint" aria-live="polite" className="mt-2 text-xs leading-relaxed font-ui text-[#555848]">能力参考：{CEFR_ABILITY_HINTS[cefr]}</p>
             </div>
 
             {/* Vocabulary Count */}

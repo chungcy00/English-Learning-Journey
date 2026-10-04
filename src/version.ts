@@ -1,8 +1,8 @@
-export const APP_VERSION = 'V2.4.6';
+export const APP_VERSION = 'V2.4.7';
 
-export const VERSION_HISTORY_COUNT = 26;
+export const VERSION_HISTORY_COUNT = 27;
 
 export const CURRENT_RELEASE_NOTES = [
-  '首页保留程度与词汇数量，其他设置按需展开',
-  '收起时显示文体、篇幅和风格摘要，保留已选参数',
+  'CEFR 选择附简短能力参考，输入标签更清楚',
+  '分隔词表实时显示本机识别预览，不额外调用 AI',
 ];

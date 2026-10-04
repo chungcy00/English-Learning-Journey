@@ -27,4 +27,8 @@ test('saved parameters and the collapsed summary agree without resetting default
   assert.match(html, /value="long" selected=""/);
   assert.match(html, /value="warm" selected=""/);
   assert.match(html, /情境对话 · 250–350 词 · Warm（温暖治愈）/);
+  assert.match(html, /能力参考：理解较复杂内容，清楚表达观点与理由。/);
+  assert.match(html, /aria-describedby="cefr-ability-hint"/);
+  assert.match(html, /<label for="generation-input"/);
+  assert.doesNotMatch(html, /将按词表处理/);
 });
