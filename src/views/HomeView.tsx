@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Sparkles, ArrowRight, BookOpen, Layers, Check } from 'lucide-react';
+import { Sparkles, ChevronDown } from 'lucide-react';
 import { CEFRLevel, ReadingType, ReadingLength, ReadingStyle, AppSettings } from '../types';
 import { READING_STYLES } from '../utils/readingStyles';
 
@@ -30,6 +30,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [style, setStyle] = useState<ReadingStyle>(settings.defaultReadingStyle || 'auto');
   const [length, setLength] = useState<ReadingLength>(settings.defaultLength);
   const [vocabCount, setVocabCount] = useState<number>(settings.vocabularyCount);
+  const typeSummary = { story: '故事叙述', 'non-story': '说明/生活见解', dialogue: '情境对话', random: '随机文体' }[type];
+  const lengthSummary = { short: '80–120 词', medium: '150–200 词', long: '250–350 词' }[length];
+  const styleSummary = READING_STYLES.find(option => option.value === style)?.label || READING_STYLES[0].label;
 
   // Settings load asynchronously from local storage. Keep the visible level in
   // sync so Wordbook ranking and the generation form always use the same CEFR.
@@ -126,13 +129,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {/* CEFR Level */}
             <div>
-              <label className="text-xs font-ui font-medium text-[#292B25] block mb-1.5">
+              <div id="cefr-label" className="text-xs font-ui font-medium text-[#292B25] block mb-1.5">
                 CEFR 难度等级
-              </label>
-              <div className="grid grid-cols-4 gap-1">
+              </div>
+              <div role="group" aria-labelledby="cefr-label" className="grid grid-cols-4 gap-1">
                 {(['A2', 'B1', 'B2', 'C1'] as CEFRLevel[]).map((level) => (
                   <button
                     key={level}
@@ -142,7 +145,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       setCefr(level);
                       onCefrChange?.(level);
                     }}
-                    className={`py-1.5 text-xs font-ui font-semibold rounded-xs border transition-colors ${
+                    className={`min-h-11 py-1.5 text-sm font-ui font-semibold rounded-xs border transition-colors ${
                       cefr === level
                         ? 'bg-[#62694D] text-[#F2EEE4] border-[#62694D]'
                         : 'bg-[#F2EEE4] text-[#555848] border-[#D4CCBC] hover:bg-[#E5DED0]'
@@ -154,6 +157,30 @@ export const HomeView: React.FC<HomeViewProps> = ({
               </div>
             </div>
 
+            {/* Vocabulary Count */}
+            <div>
+              <div id="vocab-count-label" className="text-xs font-ui font-medium text-[#292B25] block mb-1.5">精选词汇数</div>
+              <div role="group" aria-labelledby="vocab-count-label" className="grid grid-cols-4 gap-1">
+                {[5, 6, 8, 10].map((count) => (
+                  <button key={count} type="button" aria-pressed={vocabCount === count} onClick={() => setVocabCount(count)}
+                    className={`min-h-11 py-1.5 text-sm font-ui font-medium rounded-xs border transition-colors ${vocabCount === count
+                      ? 'bg-[#5F654D] text-[#F2EEE4] border-[#5F654D]'
+                      : 'bg-[#F2EEE4] text-[#555848] border-[#D4CCBC] hover:bg-[#E5DED0]'}`}>
+                    {count}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <details className="group border-t border-[#D4CCBC]/60 pt-3">
+            <summary className="flex min-h-11 items-center justify-between gap-3 cursor-pointer list-none font-ui rounded-xs focus-visible:outline-2 focus-visible:outline-[#5F654D] [&::-webkit-details-marker]:hidden">
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-[#292B25]">文体、篇幅与风格</span>
+                <span className="block mt-1 text-xs leading-relaxed text-[#555848]">{typeSummary} · {lengthSummary} · {styleSummary}</span>
+              </span>
+              <ChevronDown aria-hidden="true" className="w-4 h-4 shrink-0 text-[#5F654D] group-open:rotate-180" />
+            </summary>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
             {/* Reading Type */}
             <div>
               <label htmlFor="reading-type" className="text-xs font-ui font-medium text-[#292B25] block mb-1.5">
@@ -163,7 +190,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 id="reading-type"
                 value={type}
                 onChange={(e) => setType(e.target.value as ReadingType)}
-                className="w-full px-2.5 py-1.5 text-xs bg-[#F2EEE4] border border-[#D4CCBC] rounded-xs font-ui text-[#292B25] focus:outline-none focus:border-[#62694D]"
+                className="w-full min-h-11 px-2.5 py-1.5 text-base bg-[#F2EEE4] border border-[#D4CCBC] rounded-xs font-ui text-[#292B25] focus:border-[#62694D]"
               >
                 <option value="story">Story (故事叙述)</option>
                 <option value="non-story">Non-story (说明/生活见解)</option>
@@ -181,7 +208,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 id="reading-length"
                 value={length}
                 onChange={(e) => setLength(e.target.value as ReadingLength)}
-                className="w-full px-2.5 py-1.5 text-xs bg-[#F2EEE4] border border-[#D4CCBC] rounded-xs font-ui text-[#292B25] focus:outline-none focus:border-[#62694D]"
+                className="w-full min-h-11 px-2.5 py-1.5 text-base bg-[#F2EEE4] border border-[#D4CCBC] rounded-xs font-ui text-[#292B25] focus:border-[#62694D]"
               >
                 <option value="short">Short (80–120 words)</option>
                 <option value="medium">Medium (150–200 words)</option>
@@ -189,38 +216,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
               </select>
             </div>
 
-            {/* Vocabulary Count */}
-            <div>
-              <label className="text-xs font-ui font-medium text-[#292B25] block mb-1.5">
-                精选词汇数
-              </label>
-              <div className="grid grid-cols-4 gap-1">
-                {[5, 6, 8, 10].map((count) => (
-                  <button
-                    key={count}
-                    type="button"
-                    aria-pressed={vocabCount === count}
-                    onClick={() => setVocabCount(count)}
-                    className={`py-1.5 text-xs font-ui font-medium rounded-xs border transition-colors ${
-                      vocabCount === count
-                        ? 'bg-[#5F654D] text-[#F2EEE4] border-[#5F654D]'
-                        : 'bg-[#F2EEE4] text-[#555848] border-[#D4CCBC] hover:bg-[#E5DED0]'
-                    }`}
-                  >
-                    {count}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="max-w-sm">
-            <label htmlFor="reading-style" className="text-sm font-ui font-medium text-[#292B25] block mb-1.5">短文风格 (Style)</label>
+          <div>
+            <label htmlFor="reading-style" className="text-xs font-ui font-medium text-[#292B25] block mb-1.5">短文风格 (Style)</label>
             <select id="reading-style" value={style} disabled={isLoading}
               onChange={e => setStyle(e.target.value as ReadingStyle)}
-              className="w-full px-3 py-2 text-base bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm font-ui text-[#292B25] focus-visible:outline-2 focus-visible:outline-[#5F654D]">
+              className="w-full min-h-11 px-3 py-2 text-base bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm font-ui text-[#292B25] focus-visible:outline-2 focus-visible:outline-[#5F654D]">
               {READING_STYLES.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
           </div>
+            </div>
+          </details>
         </div>
       </form>
 

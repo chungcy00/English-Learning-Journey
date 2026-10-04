@@ -1,8 +1,8 @@
-export const APP_VERSION = 'V2.4.5';
+export const APP_VERSION = 'V2.4.6';
 
-export const VERSION_HISTORY_COUNT = 25;
+export const VERSION_HISTORY_COUNT = 26;
 
 export const CURRENT_RELEASE_NOTES = [
-  '明确当前短文搜索、按所选程度显示和全部词条复习的范围',
-  '精选数量标明上限，生词本提供全部词条复习入口',
+  '首页保留程度与词汇数量，其他设置按需展开',
+  '收起时显示文体、篇幅和风格摘要，保留已选参数',
 ];
