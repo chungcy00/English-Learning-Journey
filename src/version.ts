@@ -1,9 +1,9 @@
-export const APP_VERSION = 'V2.4.13';
+export const APP_VERSION = 'V2.4.14';
 
-export const VERSION_HISTORY_COUNT = 33;
+export const VERSION_HISTORY_COUNT = 34;
 
 export const CURRENT_RELEASE_NOTES = [
-  '统一全站标题、词条、例句和界面文字的排版层级',
-  '放大学习内容，优化中英文正文与译文行距',
-  '保留原有字体、配色、布局与词条同步规则',
+  '手机复习按评分栏实际高度预留空间，避免遮挡',
+  '词条菜单鼠标移动不再自动滚动，保留键盘导航',
+  '完善图标按钮名称、评分对比度与减少动画支持',
 ];

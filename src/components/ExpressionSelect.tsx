@@ -9,6 +9,7 @@ export function ExpressionSelect({ options, value, disabled, loading, onOpen, on
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const keyboardNavigation = useRef(false);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const chosen = options.find(option => option.term === value);
@@ -19,7 +20,7 @@ export function ExpressionSelect({ options, value, disabled, loading, onOpen, on
     return () => document.removeEventListener('pointerdown', close);
   }, []);
   useEffect(() => {
-    if (open) document.getElementById(`${id}-${active}`)?.scrollIntoView({ block: 'nearest' });
+    if (open && keyboardNavigation.current) document.getElementById(`${id}-${active}`)?.scrollIntoView({ block: 'nearest' });
   }, [open, active, id]);
   const choose = (term: string) => { setOpen(false); trigger.current?.focus(); onChange(term); };
   const label = (option: ExpressionOption) => <>
@@ -33,10 +34,11 @@ export function ExpressionSelect({ options, value, disabled, loading, onOpen, on
     <button ref={trigger} type="button" role="combobox" aria-label="选择当前短文的同级表达"
       aria-haspopup="listbox" aria-controls={`${id}-list`} aria-expanded={open}
       aria-activedescendant={open && options[active] ? `${id}-${active}` : undefined}
-      disabled={disabled} onClick={() => { onOpen(); setOpen(!open); }}
+      disabled={disabled} onClick={() => { keyboardNavigation.current = false; onOpen(); setOpen(!open); }}
       onKeyDown={event => {
         if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
           event.preventDefault(); onOpen(); setOpen(true);
+          keyboardNavigation.current = true;
           setActive(index => event.key === 'Home' ? 0 : event.key === 'End' ? Math.max(0, options.length - 1)
             : !open ? Math.max(0, options.findIndex(option => option.term === value))
             : Math.max(0, Math.min(options.length - 1, index + (event.key === 'ArrowDown' ? 1 : -1))));
@@ -54,7 +56,7 @@ export function ExpressionSelect({ options, value, disabled, loading, onOpen, on
       {!loading && !options.length && <p className="p-3 text-sm text-[#555848]">暂无可选的同级表达</p>}
       {options.map((option, index) => <button key={option.term} id={`${id}-${index}`} type="button"
         role="option" aria-selected={option.term === value} tabIndex={-1}
-        onPointerMove={() => setActive(index)} onClick={() => choose(option.term)}
+        onPointerMove={() => { keyboardNavigation.current = false; setActive(index); }} onClick={() => choose(option.term)}
         className={`w-full text-left px-3 py-2.5 text-base break-words border-b border-[#D4CCBC]/50 last:border-0 ${active === index ? 'bg-[#E5DED0]' : 'hover:bg-[#E5DED0]/60'}`}>
         {label(option)}
       </button>)}

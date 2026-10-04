@@ -1009,6 +1009,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           <button
             onClick={onOpenHistory}
             title="查看历史短文"
+            aria-label="查看历史短文"
             className="p-1.5 text-[#555848] hover:text-[#292B25] hover:bg-[#E5DED0] border border-[#D4CCBC] rounded-sm transition-colors"
           >
             <History className="w-4 h-4" />
@@ -1105,6 +1106,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   onClick={() => fetchTranslation(targetLanguage, true)}
                   disabled={isTranslating}
                   title="重新按母语习惯润色翻译"
+                  aria-label="重新生成翻译"
                   className="p-1.5 text-[#555848] hover:text-[#292B25] hover:bg-[#E5DED0] border border-[#D4CCBC] rounded-sm transition-colors disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isTranslating ? 'animate-spin' : ''}`} />
@@ -1116,6 +1118,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   onClick={handleCopyTranslation}
                   disabled={!currentTranslation || isTranslating}
                   title="复制地道译文"
+                  aria-label="复制译文"
                   className="p-1.5 text-[#555848] hover:text-[#292B25] hover:bg-[#E5DED0] border border-[#D4CCBC] rounded-sm transition-colors disabled:opacity-50"
                 >
                   {copiedTranslation ? (

@@ -61,7 +61,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
               <span>•</span>
               <span className="italic">{vocab.partOfSpeech}</span>
               <span>•</span>
-              <span className="capitalize">{vocab.type}</span>
+              <span className="italic">{vocab.type}</span>
             </div>
           </div>
 

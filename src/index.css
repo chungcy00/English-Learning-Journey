@@ -136,7 +136,7 @@ button.vocab-highlight {
   background-color: rgba(115, 120, 94, 0.08);
   padding: 1px 4px;
   border-radius: 2px;
-  transition: all 0.15s ease-in-out;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
   cursor: pointer;
 }
 
@@ -146,7 +146,7 @@ button.vocab-highlight {
 }
 /* Mobile ratings stay within thumb reach without covering the installed tabs. */
 @media (max-width: 639px) {
-  .review-shell { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); }
+  .review-shell { padding-bottom: calc(var(--review-rating-height, 6rem) + env(safe-area-inset-bottom)); }
   .review-rating-bar {
     position: fixed;
     z-index: 30;
@@ -156,5 +156,14 @@ button.vocab-highlight {
     margin-top: 0;
     padding: 0.75rem 1rem;
     background: #F2EEE4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

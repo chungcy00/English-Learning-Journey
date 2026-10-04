@@ -32,6 +32,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   const restored = restoreReviewProgress(allVocabularies.map(v => v.id), initialProgress);
   const [currentIndex, setCurrentIndex] = useState(restored.index);
   const [isRevealed, setIsRevealed] = useState(restored.revealed);
+  const ratingBarRef = useRef<HTMLFieldSetElement>(null);
   const [sessionCompleted, setSessionCompleted] = useState(restored.completed);
   const initialized = useRef(allVocabularies.length > 0);
   const saving = useRef(false);
@@ -158,6 +159,23 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   const localizedExample = currentVocab ? getLocalizedExampleTranslation(currentVocab, targetLanguage) : undefined;
   const isNotZh = targetLanguage !== 'zh-CN';
 
+  useEffect(() => {
+    const bar = ratingBarRef.current;
+    const shell = bar?.closest<HTMLElement>('.review-shell');
+    if (!bar || !shell) return;
+    // Reserve the real height, including localized hints and text scaling.
+    const measure = () => shell.style.setProperty('--review-rating-height', `${bar.getBoundingClientRect().height}px`);
+    measure();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    observer?.observe(bar);
+    window.addEventListener('resize', measure);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', measure);
+      shell.style.removeProperty('--review-rating-height');
+    };
+  }, [isRevealed, sessionCompleted, reviewList.length]);
+
   return (
     <div className="page-shell page-shell--review page-stack">
       {/* Header */}
@@ -265,6 +283,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   <button
                     onClick={() => playVoice(currentVocab.term)}
                     title="朗读发音"
+                    aria-label={`播放 ${currentVocab.term} 的发音`}
                     className="min-h-11 min-w-11 flex items-center justify-center p-1.5 text-[#62694D] hover:bg-[#E5DED0] rounded-xs transition-colors"
                   >
                     <Volume2 className="w-4 h-4" />
@@ -278,7 +297,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                 </h2>
                 <p className="type-body font-ui text-[#555848] mt-1">
                   {currentVocab.phonetic} •{' '}
-                  <span className="italic">{currentVocab.partOfSpeech}</span>
+                  <span className="type-label italic">{currentVocab.partOfSpeech}</span>
                 </p>
               </div>
 
@@ -361,7 +380,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
 
             {/* Rating Buttons (PRD Section 29) */}
             {isRevealed && (
-              <fieldset disabled={isSaving} aria-label="评价记忆程度" className="review-rating-bar mt-8 pt-4 border-t border-[#D4CCBC] grid grid-cols-4 gap-2 disabled:opacity-60">
+              <fieldset ref={ratingBarRef} disabled={isSaving} aria-label="评价记忆程度" className="review-rating-bar mt-8 pt-4 border-t border-[#D4CCBC] grid grid-cols-4 gap-2 disabled:opacity-60">
                 <button
                   onClick={() => handleRating('Again')}
                   className="min-h-14 py-2.5 px-2 bg-[#9E6554]/10 hover:bg-[#9E6554]/20 border border-[#9E6554]/30 rounded-sm text-center transition-colors"

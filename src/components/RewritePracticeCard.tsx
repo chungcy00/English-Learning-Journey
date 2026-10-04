@@ -59,7 +59,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
       case 'Very Good':
         return 'bg-[#5F654D] text-[#F2EEE4]';
       case 'Good':
-        return 'bg-[#B49379] text-[#F2EEE4]';
+        return 'bg-[#B49379]/20 text-[#77543D]';
       case 'Needs Improvement':
       default:
         return 'bg-[#9E6554] text-[#F2EEE4]';
@@ -67,7 +67,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
   };
 
   return (
-    <div className="bg-[#E5DED0]/40 border border-[#D4CCBC] rounded-sm p-5 sm:p-6 transition-all">
+    <div className="bg-[#E5DED0]/40 border border-[#D4CCBC] rounded-sm p-5 sm:p-6">
       {error && <p role="alert" className="type-body font-ui text-red-700 mb-3">{error}</p>}
       {/* Question Header */}
       <div className="exercise-heading mb-3">
