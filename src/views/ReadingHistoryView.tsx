@@ -65,6 +65,7 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({
                 type="button"
                 onClick={() => onSelectReading(item)}
                 className="min-w-0 flex-1 text-left"
+                aria-label={`打开短文：${item.title}`}
               >
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <span className="type-meta rounded-xs border border-[#D4CCBC] bg-[#F2EEE4] px-2 py-0.5 font-ui font-semibold uppercase text-[#62694D]">

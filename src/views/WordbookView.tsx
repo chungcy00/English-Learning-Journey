@@ -33,7 +33,6 @@ interface WordbookViewProps {
   readings: ReadingRecord[];
   currentReading: ReadingRecord | null;
   onDeleteVocab: (id: string) => void;
-  onUpdateStatus: (id: string, status: VocabStatus) => void;
   onGenerateFromWordbook: (params: {
     selectedTerms: string[];
     cefrLevel: CEFRLevel;
@@ -53,7 +52,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   vocabularyList,
   currentReading,
   onDeleteVocab,
-  onUpdateStatus,
   onGenerateFromWordbook,
   isGenerating,
   targetLanguage,
@@ -211,20 +209,13 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
     speakEnglishTerm(term);
   };
 
-  const getStatusColor = (status: VocabStatus) => {
-    switch (status) {
-      case 'New':
-        return 'bg-[#62694D]/15 text-[#5F654D] border-[#62694D]/30';
-      case 'Learning':
-        return 'bg-[#B49379]/15 text-[#77543D] border-[#B49379]/30';
-      case 'Difficult':
-        return 'bg-[#9E6554]/15 text-[#854C3C] border-[#9E6554]/30';
-      case 'Mastered':
-        return 'bg-[#62694D] text-[#F2EEE4] border-[#62694D]';
-    }
-  };
-
   const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === targetLanguage) || SUPPORTED_LANGUAGES[0];
+  const suggestionPanelVisible = isSuggestionOpen && !!(search.trim() || catalogue.loading || catalogue.error || addError || addedTerm);
+  useEffect(() => {
+    if (suggestionPanelVisible && activeSuggestionIndex >= 0) {
+      document.getElementById(`wordbook-expression-option-${activeSuggestionIndex}`)?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [suggestionPanelVisible, activeSuggestionIndex]);
 
   return (
     <div className="page-shell page-stack wordbook-page">
@@ -282,7 +273,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                 } else if (e.key === 'Escape') {
                   setIsSuggestionOpen(false);
                   setActiveSuggestionIndex(-1);
-                } else if (e.key === 'Enter' && activeSuggestionIndex >= 0) {
+                } else if (e.key === 'Enter' && isSuggestionOpen && searchSuggestions[activeSuggestionIndex]) {
                   e.preventDefault();
                   setSearch(searchSuggestions[activeSuggestionIndex].term);
                   setIsSuggestionOpen(true);
@@ -295,24 +286,30 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
               placeholder="例如：catch up"
               aria-label="搜索并添加当前短文的英文单词、短语或习语"
               role="combobox"
-              aria-expanded={isSuggestionOpen && searchSuggestions.length > 0}
+              aria-expanded={suggestionPanelVisible && searchSuggestions.length > 0}
               aria-autocomplete="list"
+              aria-controls={suggestionPanelVisible ? 'wordbook-expression-options' : undefined}
+              aria-activedescendant={suggestionPanelVisible && searchSuggestions[activeSuggestionIndex] ? `wordbook-expression-option-${activeSuggestionIndex}` : undefined}
               className="w-full pl-9 pr-3 py-2 text-base bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm focus-visible:outline-2 focus-visible:outline-[#5F654D] font-ui text-[#292B25]"
             />
 
-            {isSuggestionOpen && (search.trim() || catalogue.loading || catalogue.error || addError || addedTerm) && (
+            {suggestionPanelVisible && (
               <div
                 className="absolute z-30 left-0 right-0 top-full mt-1 max-h-72 overflow-y-auto bg-[#FAF7F2] border border-[#D4CCBC] rounded-sm shadow-lg"
               >
-                <div role="listbox" aria-label="当前短文中的表达">
+                <div id="wordbook-expression-options" role="listbox" aria-label="当前短文中的表达">
                 {searchSuggestions.map(({ item, term, expression }, index) => (
                   <button
                     key={term}
                     type="button"
                     role="option"
+                    id={`wordbook-expression-option-${index}`}
+                    tabIndex={-1}
                     aria-selected={activeSuggestionIndex === index}
                     onMouseDown={(e) => {
                       e.preventDefault();
+                    }}
+                    onClick={() => {
                       setSearch(term);
                       setIsSuggestionOpen(true);
                       setActiveSuggestionIndex(-1);
@@ -449,11 +446,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                   <div id={panelId} role="region" aria-labelledby={`${panelId}-toggle`} hidden={!expanded}>
                     {expanded && <>
                       <WordDetailModal vocab={vocab} isOpen embedded isInWordbook onClose={() => setDetailVocab(null)} onToggleWordbook={v => { onDeleteVocab(v.id); setDetailVocab(null); }} targetLanguage={targetLanguage} />
-                      <label className="wordbook-accordion-status type-label font-ui">学习状态
-                        <select aria-label={`${vocab.term} 的学习状态`} value={vocab.status} onChange={e => onUpdateStatus(vocab.id, e.target.value as VocabStatus)} className={`min-h-11 text-base px-3 rounded-sm border ${getStatusColor(vocab.status)}`}>
-                          {(['New', 'Learning', 'Difficult', 'Mastered'] as const).map(status => <option key={status}>{status}</option>)}
-                        </select>
-                      </label>
                     </>}
                   </div>
                 </div>
@@ -504,18 +496,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
                 {/* Status selector & Actions */}
                 <div className="wordbook-entry-controls flex items-center gap-2">
-                  <select
-                    aria-label={`${vocab.term} 的学习状态`}
-                    value={vocab.status}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => onUpdateStatus(vocab.id, e.target.value as VocabStatus)}
-                    className={`min-h-11 text-sm font-ui px-2 py-1 rounded-xs border ${getStatusColor(vocab.status)}`}
-                  >
-                    <option value="New">New</option>
-                    <option value="Learning">Learning</option>
-                    <option value="Difficult">Difficult</option>
-                    <option value="Mastered">Mastered</option>
-                  </select>
 
                   <button
                     onClick={(e) => {
@@ -573,6 +553,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
               <span>类型:</span>
               <select
                 value={readingType}
+                aria-label="生成短文的类型"
                 onChange={(e) => setReadingType(e.target.value as ReadingType)}
                 className="px-2 py-1 text-xs bg-[#F2EEE4] border border-[#D4CCBC] rounded-xs"
               >
@@ -586,6 +567,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
               <span>篇幅:</span>
               <select
                 value={length}
+                aria-label="生成短文的篇幅"
                 onChange={(e) => setLength(e.target.value as ReadingLength)}
                 className="px-2 py-1 text-xs bg-[#F2EEE4] border border-[#D4CCBC] rounded-xs"
               >

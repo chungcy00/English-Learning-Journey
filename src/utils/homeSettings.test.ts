@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -8,6 +9,17 @@ import type { AppSettings, ReadingRecord } from '../types';
 
 const settings = { cefr: 'B2', defaultReadingType: 'dialogue', defaultReadingStyle: 'warm', defaultLength: 'long', vocabularyCount: 10 } as AppSettings;
 const render = (isLoading = false) => renderToStaticMarkup(React.createElement(HomeView, { settings, onGenerate: () => {}, isLoading }));
+
+test('topic suggestions and reading bookmarks keep at least 44px touch targets', () => {
+  const prompts = render().match(/<section class="home-prompts">[\s\S]*?<\/section>/)![0];
+  const buttons = prompts.match(/<button\b[^>]*>/g)!;
+  assert.equal(buttons.length, 3);
+  for (const button of buttons) assert.match(button, /\bmin-h-11\b/);
+  const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8');
+  const bookmark = css.match(/\.reading-vocabulary__bookmark\s*\{([^}]+)\}/)![1];
+  assert.match(bookmark, /min-width:\s*2\.75rem/);
+  assert.match(bookmark, /min-height:\s*2\.75rem/);
+});
 
 test('continue reading only appears for a real current passage and uses its actual vocabulary count', () => {
   assert.doesNotMatch(render(), /continue-reading-title/);

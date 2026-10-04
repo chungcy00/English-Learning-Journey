@@ -1238,7 +1238,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           <div className="space-y-4">
             {reading.rewritePractice.map((item, idx) => (
               <RewritePracticeCard
-                key={item.id || idx}
+                key={`${reading.id}:${item.id || idx}:${item.originalSentence}:${item.target}:${item.referenceAnswer}`}
+                readingId={reading.id}
                 item={item}
                 index={idx}
                 cefrLevel={reading.cefrLevel}

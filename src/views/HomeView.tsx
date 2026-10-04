@@ -120,7 +120,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <section className="home-prompts">
           <div className="home-prompts__list type-label flex flex-wrap items-center gap-1.5 text-[#555848] font-ui">
             {quickPrompts.slice(0, 3).map((prompt, idx) => (
-              <button key={idx} type="button" onClick={() => setInput(prompt.label)} className="min-h-10 px-3 bg-[#E5DED0]/60 hover:bg-[#E5DED0] text-[#292B25] border border-[#D4CCBC] rounded-full transition-colors">
+              <button key={idx} type="button" onClick={() => setInput(prompt.label)} className="min-h-11 px-3 bg-[#E5DED0]/60 hover:bg-[#E5DED0] text-[#292B25] border border-[#D4CCBC] rounded-full transition-colors">
                 {prompt.label}
               </button>
             ))}

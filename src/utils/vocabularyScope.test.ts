@@ -13,7 +13,7 @@ const noop = () => {};
 
 test('wordbook shows all saved degrees, distinguishes passage addition from collection filtering, and hides CEFR', () => {
   const html = renderToStaticMarkup(React.createElement(WordbookView, {
-    vocabularyList: entries, readings: [], currentReading: reading, onDeleteVocab: noop, onUpdateStatus: noop,
+    vocabularyList: entries, readings: [], currentReading: reading, onDeleteVocab: noop,
     onGenerateFromWordbook: noop, isGenerating: false, targetLanguage: 'zh-CN', onLanguageChange: noop,
     onBatchUpdateVocabularies: noop, currentCefr: 'B1', onSaveVocab: async () => {}, onOpenReview: noop,
   }));

@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+
 @layer base {
   :root {
     --bg-primary: #F2EEE4;
@@ -288,8 +289,8 @@ button.vocab-highlight {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 2.5rem;
-  min-height: 2.5rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
   color: var(--accent-secondary);
   border-radius: 4px;
 }
@@ -743,7 +744,6 @@ main {
 .wordbook-accordion-content h2 { display: none; }
 .wordbook-accordion-content > div:first-child { margin-bottom: 1rem; padding-bottom: 0.5rem; }
 .wordbook-accordion-content > div:last-child { margin-top: 1rem; }
-.wordbook-accordion-status { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0 1rem 1rem; }
 .wordbook-selection-panel { border-radius: 12px; }
 .rewrite-practice-section { max-width: 68rem; margin-inline: auto; }
 .rewrite-practice-section > div:first-child h2 { font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.2; }

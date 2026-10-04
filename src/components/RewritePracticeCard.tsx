@@ -1,55 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useSyncExternalStore } from 'react';
 import { CheckCircle2, Sparkles, Loader2, ArrowRight } from 'lucide-react';
-import { RewritePracticeItem, RewriteEvaluation, ReadingTranslation } from '../types';
+import { RewritePracticeItem, ReadingTranslation } from '../types';
 import { evaluateRewriteAnswer } from '../services/api';
 import { getI18nText, getLocalizedExerciseMeaning } from '../utils/i18n';
+import { rewriteProgressKey, rewriteProgressStore } from '../utils/rewriteProgress';
 
 interface RewritePracticeCardProps {
+  readingId: string;
   item: RewritePracticeItem;
   index: number;
   cefrLevel: string;
   targetLanguage?: string;
   currentTranslation?: ReadingTranslation;
-  onAnswerChecked?: (itemId: string, userAnswer: string, evaluation: RewriteEvaluation) => void;
 }
 
 export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
+  readingId,
   item,
   index,
   cefrLevel,
   targetLanguage = 'zh-CN',
   currentTranslation,
-  onAnswerChecked,
 }) => {
-  const [answer, setAnswer] = useState(item.userAnswer || '');
-  const [evaluation, setEvaluation] = useState<RewriteEvaluation | undefined>(item.evaluation);
-  const [loading, setLoading] = useState(false);
+  const progressKey = rewriteProgressKey(readingId, item);
+  const { answer, evaluation, pending: loading, saved, error } = useSyncExternalStore(
+    rewriteProgressStore.subscribe,
+    () => rewriteProgressStore.get(progressKey, item),
+    () => rewriteProgressStore.get(progressKey, item),
+  );
   const [showAnswer, setShowAnswer] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const localizedOriginalMeaning = getLocalizedExerciseMeaning(item, index, targetLanguage, currentTranslation);
 
   const handleCheck = async () => {
-    if (!answer.trim() || loading) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const evalResult = await evaluateRewriteAnswer({
+    await rewriteProgressStore.evaluate(progressKey, item, submittedAnswer => evaluateRewriteAnswer({
         originalSentence: item.originalSentence,
         target: item.target,
-        userAnswer: answer.trim(),
+        userAnswer: submittedAnswer,
         referenceAnswer: item.referenceAnswer,
         cefrLevel,
         targetLanguage,
-      });
-      setEvaluation(evalResult);
-      onAnswerChecked?.(item.id, answer.trim(), evalResult);
-    } catch (err) {
-      console.error(err);
-      setError(err instanceof Error ? err.message : '评估暂不可用，请稍后重试');
-    } finally {
-      setLoading(false);
-    }
+      }));
   };
 
   const getRatingBadgeStyle = (rating: string) => {
@@ -98,7 +89,8 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
             id={`rewrite-answer-${item.id}`}
             rows={3}
             value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
+            onChange={(e) => rewriteProgressStore.edit(progressKey, item, e.target.value)}
+            disabled={loading}
             onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void handleCheck(); } }}
             aria-label={`${getI18nText(targetLanguage, 'exerciseLabel')} ${index + 1}：${getI18nText(targetLanguage, 'inputPlaceholder')}`}
             placeholder={getI18nText(targetLanguage, 'inputPlaceholder')}
@@ -125,6 +117,13 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
             className="rewrite-show-answer type-label min-h-11 font-ui text-[#555848] underline underline-offset-4">
             {showAnswer ? '收起参考答案' : '查看参考答案'}
           </button>}
+        </div>
+        <div role="status" className="type-label font-ui text-[#555848] mt-2">
+          {loading ? '正在评估，切换页面后可返回查看结果' : !saved ? (
+            <>无法保存到此设备；离开或刷新前请复制答案。
+              <button type="button" onClick={() => rewriteProgressStore.retrySave(progressKey, item)} className="underline underline-offset-4 min-h-11 px-2">重试保存</button>
+            </>
+          ) : answer ? '已保存到此设备' : null}
         </div>
       </div>
 
