@@ -83,6 +83,7 @@ export interface ReadingRecord {
   id: string;
   title: string;
   content: string;
+  expressionCatalogue?: { version: number; content: string; expressions: ReadingExpression[] };
   topic: string;
   input: string;
   cefrLevel: CEFRLevel;

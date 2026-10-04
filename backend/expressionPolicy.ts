@@ -9,7 +9,7 @@ export function validateExpressions(result: any, reading: string) {
   return result.expressions.filter((item: any) => {
     if (!item || typeof item.term !== 'string' || item.term.length > 160 || !isEnglishTermQuery(item.term) ||
       !['word', 'phrase', 'idiom'].includes(item.type) || !['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].includes(item.cefrLevel) ||
-      item.isValidTerm !== true || typeof item.contextQuote !== 'string' || !item.contextQuote.trim() ||
+      item.isValidTerm === false || typeof item.contextQuote !== 'string' || !item.contextQuote.trim() ||
       !normalizeEnglishTerm(reading).includes(normalizeEnglishTerm(item.contextQuote))) return false;
     const term = normalizeEnglishTerm(item.term);
     if (seen.has(term)) return false;

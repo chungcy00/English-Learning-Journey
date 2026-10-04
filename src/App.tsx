@@ -17,6 +17,7 @@ import { AppUpdateView } from './views/AppUpdateView';
 import { ReadingHistoryView } from './views/ReadingHistoryView';
 import { isAppleMobileDevice, isManualUpdateApp } from './utils/pwa';
 import { normalizeEnglishTerm } from './utils/englishSearch';
+import { useReadingExpressions } from './hooks/useReadingExpressions';
 
 import {
   ReadingRecord,
@@ -53,6 +54,8 @@ import {
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('home');
   const [currentReading, setCurrentReading] = useState<ReadingRecord | null>(null);
+  // Prepare once when a passage is ready, independently of opening a search menu.
+  useReadingExpressions(currentReading);
   const [readings, setReadings] = useState<ReadingRecord[]>([]);
   const [vocabularies, setVocabularies] = useState<VocabularyItem[]>([]);
   const [settings, setAppSettings] = useState<AppSettings>({

@@ -17,3 +17,11 @@ test('catalogue keeps independent levels and complete expressions with real cont
   assert.deepEqual(items.map((item: any) => [item.term, item.cefrLevel]), [['we', 'A1'], ['help out', 'B1'], ['break the ice', 'B2']]);
   assert.deepEqual(items.filter((item: any) => item.cefrLevel === 'B1').map((item: any) => item.term), ['help out']);
 });
+
+test('compact catalogue retains minimal exact evidence and independent levels', () => {
+  const items = validateExpressions({ expressions: [
+    { term: 'we', type: 'word', cefrLevel: 'B1', contextQuote: 'We' },
+    { term: 'help out', type: 'phrase', cefrLevel: 'B1', contextQuote: 'helped her out' },
+  ] }, 'We helped her out.');
+  assert.deepEqual(items.map((item: any) => item.cefrLevel), ['A1', 'B1']);
+});

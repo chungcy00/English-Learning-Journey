@@ -1,6 +1,7 @@
 import Dexie, { Table } from 'dexie';
 import { ReadingRecord, VocabularyItem, ReviewLog, AppSettings, VocabStatus, ReviewRating } from '../types';
 import { planReadingVocabularySync } from '../utils/readingVocabulary';
+import { preserveCatalogue } from '../utils/expressionCache';
 
 export interface RewriteRecord {
   id?: number;
@@ -402,14 +403,15 @@ export async function getAllReadings(): Promise<ReadingRecord[]> {
 }
 
 export async function saveReading(reading: ReadingRecord): Promise<string> {
-  return db.readings.put(reading);
+  return db.transaction('rw', db.readings, async () =>
+    db.readings.put(preserveCatalogue(reading, await db.readings.get(reading.id))));
 }
 
 export async function saveReadingWithVocabulary(reading: ReadingRecord): Promise<void> {
   await db.transaction('rw', db.readings, db.vocabulary, async () => {
     const [previous, saved, readings] = await Promise.all([db.readings.get(reading.id), db.vocabulary.toArray(), db.readings.toArray()]);
     const plan = planReadingVocabularySync(previous, reading, saved, readings);
-    await db.readings.put(reading);
+    await db.readings.put(preserveCatalogue(reading, previous));
     await db.vocabulary.bulkDelete(plan.removeIds);
     await db.vocabulary.bulkPut(plan.upserts);
   });
