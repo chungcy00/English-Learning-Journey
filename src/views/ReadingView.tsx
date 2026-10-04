@@ -1017,7 +1017,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         </div>
       </div>
 
-      {/* Main Reading Area: Side-by-side Bilingual Layout */}
+      {/* Main Reading Area: switch between the original and translated reading modes */}
       {pdfError && <p role="alert" className="type-body font-ui text-red-700">{pdfError}</p>}
       <div className="mobile-reading-switch" role="tablist" aria-label="阅读内容模式">
         <button type="button" role="tab" aria-selected={mobileReadingMode === 'original'} onClick={() => setMobileReadingMode('original')}>原文</button>
