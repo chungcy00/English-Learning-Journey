@@ -17,10 +17,10 @@ test('wordbook shows all saved degrees, distinguishes passage addition from coll
     onGenerateFromWordbook: noop, isGenerating: false, targetLanguage: 'zh-CN', onLanguageChange: noop,
     onBatchUpdateVocabularies: noop, currentCefr: 'B1', onSaveVocab: async () => {}, onOpenReview: noop,
   }));
-  assert.match(html, /已添加全部词条：2 项/);
+  assert.match(html, /当前短文已添加词条：2 项/);
   assert.match(html, /筛选已添加词条/);
   assert.match(html, /dread/);
-  assert.match(html, /复习生词本全部 2 项/);
+  assert.match(html, /复习当前短文 2 项/);
   assert.match(html, /搜索并添加当前短文的表达/);
   assert.match(html, /全部状态/);
   assert.doesNotMatch(html.replace(/<[^>]*>/g, ''), /B1|B2|CEFR|搜索与添加提示/);
@@ -28,7 +28,7 @@ test('wordbook shows all saved degrees, distinguishes passage addition from coll
 
 test('review count includes vocabulary from every degree', () => {
   const html = renderToStaticMarkup(React.createElement(ReviewView, { allVocabularies: entries, onRate: noop, onRefresh: noop, targetLanguage: 'zh-CN', onLanguageChange: noop, onBatchUpdateVocabularies: noop }));
-  assert.match(html, /生词本全部词条：2 项/);
+  assert.match(html, /当前短文已添加词条：2 项/);
 });
 
 test('reading count explicitly identifies the selected count and limit', () => {

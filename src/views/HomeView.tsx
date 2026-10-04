@@ -112,7 +112,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   key={idx}
                   type="button"
                   onClick={() => setInput(prompt.label)}
-                  className="px-2 py-0.5 bg-[#E5DED0]/60 hover:bg-[#E5DED0] text-[#292B25] border border-[#D4CCBC] rounded-xs transition-colors"
+                  className="min-h-11 px-2 py-0.5 bg-[#E5DED0]/60 hover:bg-[#E5DED0] text-[#292B25] border border-[#D4CCBC] rounded-xs transition-colors"
                 >
                   {prompt.label}
                 </button>
@@ -122,7 +122,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="ml-auto flex items-center gap-2 px-5 py-2.5 bg-[#62694D] text-[#F2EEE4] font-ui text-sm font-medium rounded-sm hover:bg-[#5F654D] disabled:opacity-50 transition-all shadow-xs"
+              className="ml-auto min-h-11 flex items-center gap-2 px-5 py-2.5 bg-[#62694D] text-[#F2EEE4] font-ui text-sm font-medium rounded-sm hover:bg-[#5F654D] disabled:opacity-50 transition-all shadow-xs"
             >
               <Sparkles className="w-4 h-4" />
               <span>Generate Reading</span>

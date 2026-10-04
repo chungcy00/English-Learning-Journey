@@ -1,9 +1,9 @@
-export const APP_VERSION = 'V2.4.9';
+export const APP_VERSION = 'V2.4.10';
 
-export const VERSION_HISTORY_COUNT = 29;
+export const VERSION_HISTORY_COUNT = 30;
 
 export const CURRENT_RELEASE_NOTES = [
-  '短文生成和改写可取消，已有内容和输入不受影响',
-  '复习评分保存成功后才前进，失败可重试',
-  '同一标签页内恢复复习位置与释义展开状态',
+  '生词本和复习同步展示当前短文已添加词条，按字母排序',
+  '手机复习评分保持易触达，常见搭配按需展开',
+  '扩大复习和生成页面关键按钮的点击区域',
 ];

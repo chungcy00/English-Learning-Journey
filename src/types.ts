@@ -18,6 +18,7 @@ export interface VocabularyItem {
   type: 'word' | 'phrase' | 'idiom';
   cefrLevel?: CEFRLevel | 'A1' | 'C2';
   savedManually?: boolean;
+  addedFromReadingIds?: string[];
   phonetic: string;
   partOfSpeech: string;
   meaningZh: string;

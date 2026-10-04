@@ -36,6 +36,7 @@ export function planReadingVocabularySync(previous: ReadingRecord | undefined, r
       reviewCount: existing.reviewCount, currentInterval: existing.currentInterval,
       lastRating: existing.lastRating, savedManually: existing.savedManually,
       wordbookLevels: existing.wordbookLevels, translations: existing.translations,
+      addedFromReadingIds: existing.addedFromReadingIds,
       cefrLevel: v.cefrLevel || existing.cefrLevel,
     } : { ...v, sourceReadingId: reading.id, sourceCefrLevel: reading.cefrLevel };
   });

@@ -104,6 +104,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         reviewCount: 0, currentInterval: 0,
       };
       await onSaveVocab({ ...item, savedManually: true, updatedAt: now, nextReviewDate: now,
+        addedFromReadingIds: [...new Set([...(item.addedFromReadingIds || []), currentReading.id])],
         wordbookLevels: [...new Set([...(item.wordbookLevels || []), level])] });
       setAddedTerm(item.term);
       setStatusFilter('All');
@@ -361,8 +362,8 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
       {/* Filter Tabs & Multi-select Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs font-ui text-[#555848]">
-        <span>已添加全部词条：{vocabularyList.length} 项{statusFilter !== 'All' || collectionSearch.trim() ? ` · 当前显示 ${filtered.length} 项` : ''}</span>
-        <button type="button" onClick={onOpenReview} className="min-h-11 underline underline-offset-4 hover:text-[#292B25]">复习生词本全部 {vocabularyList.length} 项</button>
+        <span>当前短文已添加词条：{vocabularyList.length} 项{statusFilter !== 'All' || collectionSearch.trim() ? ` · 当前显示 ${filtered.length} 项` : ''}</span>
+        <button type="button" onClick={onOpenReview} className="min-h-11 underline underline-offset-4 hover:text-[#292B25]">复习当前短文 {vocabularyList.length} 项</button>
       </div>
       <div className="space-y-2 font-ui">
         <label htmlFor="saved-vocabulary-search" className="block text-sm text-[#292B25]">筛选已添加词条</label>

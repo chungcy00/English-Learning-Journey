@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { readReviewProgress, restoreReviewProgress, writeReviewProgress } from '../utils/reviewProgress';
-import { RotateCcw, Volume2, CheckCircle, Sparkles, BookOpen, Check, Languages, Loader2 } from 'lucide-react';
+import { RotateCcw, Volume2, CheckCircle, Sparkles, BookOpen, Check, Languages, Loader2, ChevronDown } from 'lucide-react';
 import { VocabularyItem, ReviewRating } from '../types';
 import {
   SUPPORTED_LANGUAGES,
@@ -40,11 +40,18 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   const [failedRating, setFailedRating] = useState<ReviewRating | null>(null);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const [reviewList, setReviewList] = useState<VocabularyItem[]>(allVocabularies);
+  const activeId = useRef(reviewList[currentIndex]?.id);
+  activeId.current = reviewList[currentIndex]?.id;
+  const previousIds = useRef(allVocabularies.map(item => item.id));
   const [isTranslatingCurrent, setIsTranslatingCurrent] = useState(false);
 
   // Keep this session's order stable. Rating moves an item's due date forward;
   // replacing the list with the shortened due list here would skip the next card.
   useEffect(() => {
+    const nextIndex = allVocabularies.findIndex(item => item.id === activeId.current);
+    if (initialized.current && nextIndex >= 0) setCurrentIndex(nextIndex);
+    if (allVocabularies.some(item => !previousIds.current.includes(item.id))) setSessionCompleted(false);
+    previousIds.current = allVocabularies.map(item => item.id);
     setReviewList(allVocabularies);
     if (!initialized.current && allVocabularies.length) {
       const progress = restoreReviewProgress(allVocabularies.map(v => v.id), initialProgress);
@@ -167,7 +174,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
           <select
             value={targetLanguage}
             onChange={(e) => onLanguageChange(e.target.value)}
-            className="bg-transparent text-xs font-ui font-medium text-[#292B25] focus:outline-none cursor-pointer"
+            className="bg-transparent min-h-11 text-xs font-ui font-medium text-[#292B25] focus:outline-none cursor-pointer"
             title="切换复习释义语言"
           >
             {SUPPORTED_LANGUAGES.map((lang) => (
@@ -187,10 +194,10 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
           </div>
 
           <h2 className="font-editorial text-2xl font-semibold text-[#292B25]">
-            {allVocabularies.length === 0 ? '生词本还没有词条' : '本轮复习已完成！'}
+            {allVocabularies.length === 0 ? '当前短文还没有已添加词条' : '本轮复习已完成！'}
           </h2>
           <p className="text-xs font-ui text-[#555848] max-w-md mx-auto">
-            {allVocabularies.length === 0 ? '在阅读页或生词本添加单词、短语或习语后，即可在这里复习。' : '可以开始新一轮全部词条复习。'}
+            {allVocabularies.length === 0 ? '在当前阅读页或生词本添加表达后，即可在这里复习。' : '可以开始新一轮当前短文词条复习。'}
           </p>
 
           <div className="pt-4 flex flex-wrap justify-center gap-3">
@@ -199,7 +206,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                 onClick={handleStartReviewAll}
                 className="px-4 py-2 bg-[#62694D] text-[#F2EEE4] font-ui text-xs font-medium rounded-sm hover:bg-[#5F654D] transition-colors"
               >
-                自由复习全部生词 ({allVocabularies.length})
+                重新复习当前短文 ({allVocabularies.length})
               </button>
             )}
             <button
@@ -215,7 +222,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
         <div className="space-y-6">
           {/* Progress Indicator */}
           <div className="flex items-center justify-between text-xs font-ui text-[#555848]">
-            <span>生词本全部词条：{reviewList.length} 项</span>
+            <span>当前短文已添加词条：{reviewList.length} 项</span>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {
@@ -223,7 +230,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   setIsRevealed(false);
                 }}
                 disabled={isSaving || currentIndex === 0}
-                className="px-2 py-1 rounded-xs hover:bg-[#E5DED0] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                className="min-h-11 min-w-11 px-2 py-1 rounded-xs hover:bg-[#E5DED0] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
               >
                 &larr; Prev
               </button>
@@ -236,7 +243,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   setIsRevealed(false);
                 }}
                 disabled={isSaving || currentIndex === reviewList.length - 1}
-                className="px-2 py-1 rounded-xs hover:bg-[#E5DED0] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                className="min-h-11 min-w-11 px-2 py-1 rounded-xs hover:bg-[#E5DED0] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
               >
                 Next &rarr;
               </button>
@@ -261,7 +268,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   <button
                     onClick={() => playVoice(currentVocab.term)}
                     title="朗读发音"
-                    className="p-1.5 text-[#62694D] hover:bg-[#E5DED0] rounded-xs transition-colors"
+                    className="min-h-11 min-w-11 flex items-center justify-center p-1.5 text-[#62694D] hover:bg-[#E5DED0] rounded-xs transition-colors"
                   >
                     <Volume2 className="w-4 h-4" />
                   </button>
@@ -325,10 +332,11 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
 
                   {/* Collocations */}
                   {currentVocab.collocations && currentVocab.collocations.length > 0 && (
-                    <div>
-                      <span className="text-[11px] font-ui text-[#555848] block uppercase mb-1">
+                    <details key={currentVocab.id} className="group">
+                      <summary className="min-h-11 flex items-center justify-between font-ui text-xs text-[#555848] cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                         {getI18nText(targetLanguage, 'collocationsLabel', '常见搭配 (Collocations)')}:
-                      </span>
+                        <ChevronDown aria-hidden="true" className="w-4 h-4 group-open:rotate-180" />
+                      </summary>
                       <div className="flex flex-wrap gap-1.5">
                         {currentVocab.collocations.map((col, idx) => (
                           <span
@@ -339,14 +347,14 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                           </span>
                         ))}
                       </div>
-                    </div>
+                    </details>
                   )}
                 </div>
               ) : (
                 <div className="text-center py-6">
                   <button
                     onClick={() => setIsRevealed(true)}
-                    className="px-6 py-2.5 bg-[#E5DED0] hover:bg-[#E5DED0]/80 text-[#292B25] text-xs font-ui font-medium border border-[#D4CCBC] rounded-sm transition-colors"
+                    className="min-h-11 px-6 py-2.5 bg-[#E5DED0] hover:bg-[#E5DED0]/80 text-[#292B25] text-xs font-ui font-medium border border-[#D4CCBC] rounded-sm transition-colors"
                   >
                     {getI18nText(targetLanguage, 'revealDetails', '显示详细释义与例句 (Reveal Details)')}
                   </button>
@@ -356,10 +364,10 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
 
             {/* Rating Buttons (PRD Section 29) */}
             {isRevealed && (
-              <fieldset disabled={isSaving} aria-label="评价记忆程度" className="mt-8 pt-4 border-t border-[#D4CCBC] grid grid-cols-4 gap-2 disabled:opacity-60">
+              <fieldset disabled={isSaving} aria-label="评价记忆程度" className="review-rating-bar mt-8 pt-4 border-t border-[#D4CCBC] grid grid-cols-4 gap-2 disabled:opacity-60">
                 <button
                   onClick={() => handleRating('Again')}
-                  className="py-2.5 px-2 bg-[#9E6554]/10 hover:bg-[#9E6554]/20 border border-[#9E6554]/30 rounded-sm text-center transition-colors"
+                  className="min-h-14 py-2.5 px-2 bg-[#9E6554]/10 hover:bg-[#9E6554]/20 border border-[#9E6554]/30 rounded-sm text-center transition-colors"
                 >
                   <span className="font-ui text-xs font-semibold text-[#854C3C] block">Again</span>
                   <span className="text-[10px] text-[#555848] font-ui block">
@@ -369,7 +377,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
 
                 <button
                   onClick={() => handleRating('Hard')}
-                  className="py-2.5 px-2 bg-[#B49379]/15 hover:bg-[#B49379]/25 border border-[#B49379]/30 rounded-sm text-center transition-colors"
+                  className="min-h-14 py-2.5 px-2 bg-[#B49379]/15 hover:bg-[#B49379]/25 border border-[#B49379]/30 rounded-sm text-center transition-colors"
                 >
                   <span className="font-ui text-xs font-semibold text-[#77543D] block">Hard</span>
                   <span className="text-[10px] text-[#555848] font-ui block">
@@ -379,7 +387,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
 
                 <button
                   onClick={() => handleRating('Good')}
-                  className="py-2.5 px-2 bg-[#62694D]/15 hover:bg-[#62694D]/25 border border-[#62694D]/30 rounded-sm text-center transition-colors"
+                  className="min-h-14 py-2.5 px-2 bg-[#62694D]/15 hover:bg-[#62694D]/25 border border-[#62694D]/30 rounded-sm text-center transition-colors"
                 >
                   <span className="font-ui text-xs font-semibold text-[#5F654D] block">Good</span>
                   <span className="text-[10px] text-[#555848] font-ui block">
@@ -389,7 +397,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
 
                 <button
                   onClick={() => handleRating('Easy')}
-                  className="py-2.5 px-2 bg-[#62694D] hover:bg-[#5F654D] border border-[#62694D] rounded-sm text-center transition-colors"
+                  className="min-h-14 py-2.5 px-2 bg-[#62694D] hover:bg-[#5F654D] border border-[#62694D] rounded-sm text-center transition-colors"
                 >
                   <span className="font-ui text-xs font-semibold text-[#F2EEE4] block">Easy</span>
                   <span className="text-[10px] text-[#F2EEE4] font-ui block">

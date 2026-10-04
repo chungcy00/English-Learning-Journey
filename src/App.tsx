@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { currentReadingSavedVocabulary } from './utils/savedVocabulary';
 import { Navbar, NavTab } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ProcessingModal } from './components/ProcessingModal';
@@ -58,6 +59,7 @@ export default function App() {
   useReadingExpressions(currentReading);
   const [readings, setReadings] = useState<ReadingRecord[]>([]);
   const [vocabularies, setVocabularies] = useState<VocabularyItem[]>([]);
+  const reviewVocabulary = useMemo(() => currentReadingSavedVocabulary(vocabularies, currentReading), [vocabularies, currentReading]);
   const [removalTarget, setRemovalTarget] = useState<VocabularyItem | null>(null);
   const [settings, setAppSettings] = useState<AppSettings>({
     cefr: 'B1',
@@ -132,10 +134,10 @@ export default function App() {
 
   // Set of vocab terms currently in wordbook for O(1) lookup
   const wordbookVocabIds = new Set(
-    vocabularies.map((v) => v.term.toLowerCase())
+    reviewVocabulary.map((v) => v.term.toLowerCase())
   );
 
-  // Navigation matches the review session: every saved expression, not just due items.
+  // Navigation and both learning views share the current passage's saved expressions.
 
   // --- Handlers ---
 
@@ -280,15 +282,14 @@ export default function App() {
       (v) => v.term.toLowerCase() === vocab.term.toLowerCase()
     );
 
-    if (exists) {
+    if (exists && reviewVocabulary.some(v => v.id === exists.id)) {
       setRemovalTarget(exists);
       return;
     } else {
       await saveVocabulary({
-        ...vocab,
+        ...(exists || vocab),
         savedManually: true,
-        status: 'New',
-        nextReviewDate: Date.now(),
+        addedFromReadingIds: [...new Set([...(exists?.addedFromReadingIds || []), ...(currentReading ? [currentReading.id] : [])])],
       });
     }
 
@@ -385,13 +386,14 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F2EEE4] text-[#292B25] selection:bg-[#62694D]/20">
+    <div className={`min-h-screen flex flex-col bg-[#F2EEE4] text-[#292B25] selection:bg-[#62694D]/20 ${activeTab === 'review' ? 'review-shell' : ''}`}
+      style={{ '--review-nav-offset': isInstalledApp ? '4.5rem' : '0px' } as React.CSSProperties}>
       {/* Web navigation; installed phone/tablet software uses the bottom tabs. */}
       {!isInstalledApp && (
         <Navbar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          reviewCount={vocabularies.length}
+          reviewCount={reviewVocabulary.length}
           hasCurrentReading={!!currentReading}
           targetLanguage={settings.targetLanguage || 'zh-CN'}
         />
@@ -401,7 +403,7 @@ export default function App() {
       <main className={`flex-1 ${isInstalledApp ? 'pb-[calc(5rem+env(safe-area-inset-bottom))]' : ''}`}>
         {errorMessage && (
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4">
-            <div className="bg-[#FAF3F0] border border-[#D98E7B]/40 text-[#7D3220] px-4 py-3 rounded-sm text-sm font-ui flex items-center justify-between shadow-xs">
+            <div role="alert" className="bg-[#FAF3F0] border border-[#D98E7B]/40 text-[#7D3220] px-4 py-3 rounded-sm text-sm font-ui flex items-center justify-between shadow-xs">
               <span>{errorMessage}</span>
               <button
                 type="button"
@@ -446,7 +448,7 @@ export default function App() {
 
         {activeTab === 'wordbook' && (
           <WordbookView
-            vocabularyList={vocabularies}
+            vocabularyList={reviewVocabulary}
             readings={readings}
             currentReading={currentReading}
             onDeleteVocab={handleDeleteVocab}
@@ -462,6 +464,7 @@ export default function App() {
               await saveVocabulary(existing ? {
                 ...existing,
                 savedManually: true,
+                addedFromReadingIds: [...new Set([...(existing.addedFromReadingIds || []), ...(vocab.addedFromReadingIds || [])])],
                 updatedAt: vocab.updatedAt,
                 nextReviewDate: Math.min(existing.nextReviewDate, vocab.nextReviewDate),
                 wordbookLevels: [...new Set([...(existing.wordbookLevels || []), ...(vocab.wordbookLevels || [])])],
@@ -474,7 +477,7 @@ export default function App() {
 
         {activeTab === 'review' && (
           <ReviewView
-            allVocabularies={vocabularies}
+            allVocabularies={reviewVocabulary}
             onRate={handleRateReview}
             onRefresh={loadData}
             targetLanguage={settings.targetLanguage || 'zh-CN'}
@@ -521,7 +524,7 @@ export default function App() {
         <InstalledAppBottomNav
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          reviewCount={vocabularies.length}
+          reviewCount={reviewVocabulary.length}
           hasCurrentReading={!!currentReading}
         />
       )}

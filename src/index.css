@@ -75,3 +75,17 @@ button.vocab-highlight {
   background-color: rgba(115, 120, 94, 0.16);
   color: #292B25;
 }
+/* Mobile ratings stay within thumb reach without covering the installed tabs. */
+@media (max-width: 639px) {
+  .review-shell { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); }
+  .review-rating-bar {
+    position: fixed;
+    z-index: 30;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--review-nav-offset, 0px) + env(safe-area-inset-bottom));
+    margin-top: 0;
+    padding: 0.75rem 1rem;
+    background: #F2EEE4;
+  }
+}
