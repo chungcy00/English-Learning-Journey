@@ -1,4 +1,4 @@
-export const APP_VERSION = 'V2.4.25';
+export const APP_VERSION = 'V2.4.26';
 
 export const VERSION_HISTORY_COUNT = 45;
 

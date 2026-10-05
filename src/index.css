@@ -47,14 +47,14 @@ input, textarea, select { scroll-margin-block: 6rem; }
     --border-subtle: #D4CCBC;
     --font-app: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
     --font-editorial: "Cormorant Garamond", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", Georgia, serif;
-    --type-page: 1.875rem;
-    --type-section: 1.5rem;
-    --type-term: 1.375rem;
-    --type-reading: 1.25rem;
-    --type-example: 1.25rem;
+    --type-page: 1.75rem;
+    --type-section: 1.375rem;
+    --type-term: 1.125rem;
+    --type-reading: 1.125rem;
+    --type-example: 1.125rem;
     --type-body: 1rem;
     --type-label: 0.875rem;
-    --type-meta: 0.75rem;
+    --type-meta: 0.875rem;
     --space-control: 0.75rem;
     --space-group: 1.5rem;
     --space-section: 2.5rem;
@@ -131,7 +131,7 @@ main :is(h1, h2, h3) { overflow-wrap: anywhere; text-wrap: balance; }
 .type-label { font-family: var(--font-app); font-size: var(--type-label); line-height: 1.5; letter-spacing: normal; }
 .type-meta { font-family: var(--font-app); font-size: var(--type-meta); line-height: 1.5; letter-spacing: normal; font-variant-numeric: tabular-nums; }
 @media (min-width: 640px) {
-  :root { --type-page: 2.25rem; --type-section: 1.75rem; --type-term: 1.5rem; --type-reading: 1.375rem; }
+  :root { --type-page: 2.25rem; --type-section: 1.75rem; --type-term: 1.5rem; --type-reading: 1.375rem; --type-meta: .8125rem; }
 }
 
 button, input, select, textarea, option {
@@ -629,6 +629,7 @@ main {
 
 .home-page__title h1 {
   margin: 0;
+  font-size: clamp(1.875rem, 3vw, 2.5rem);
 }
 
 .home-workspace {
@@ -667,6 +668,7 @@ main {
 
 .home-composer__submit {
   min-width: 9.5rem;
+  font-size: 1rem;
 }
 
 .home-prompts {
@@ -729,7 +731,7 @@ main {
 .practice-entry--rewrite { background: #ECEEDF; }
 .practice-entry--wordbook { background: #F6F0E5; }
 .practice-entry-icon { width: 2rem; height: 2rem; color: var(--accent-primary); }
-.practice-entry h2 { font-size: clamp(1.75rem, 2.8vw, 2.5rem); line-height: 1.2; overflow-wrap: anywhere; }
+.practice-entry h2 { font-size: clamp(1.5rem, 2.2vw, 2rem); line-height: 1.25; overflow-wrap: anywhere; }
 .practice-entry-action { display: inline-flex; min-height: 44px; align-items: center; gap: 1rem; margin-top: auto; padding: 0.75rem 1.25rem; background: var(--accent-primary); color: #FAF7F2; border-radius: 999px; font-family: var(--font-app); }
 .practice-entry-action:hover { background: #4E563C; }
 .practice-review { min-width: 0; border-top: 1px solid var(--border-subtle); padding-top: 2rem; scroll-margin-top: 7rem; }
@@ -790,7 +792,7 @@ main {
   .practice-hub { gap: 2rem; }
   .practice-entry-grid { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
   .practice-entry { gap: 1rem; padding: 1.5rem; }
-  .practice-entry h2 { font-size: 1.75rem; }
+  .practice-entry h2 { font-size: 1.5rem; }
   .practice-review { padding-top: 1.5rem; scroll-margin-top: 5rem; }
   .practice-back-bar { padding-inline: 1rem; }
 }
@@ -805,7 +807,7 @@ main {
 .reading-page-title {
   max-width: 30ch;
   margin: 0;
-  font-size: clamp(2rem, 3.5vw, 3rem);
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
   line-height: 1.15;
   text-wrap: balance;
 }
@@ -867,7 +869,7 @@ main {
 .wordbook-add-disclosure .wordbook-search-tools { margin-top: .75rem; padding-bottom: .5rem; }
 .wordbook-inspector { min-width: 0; border: 1px solid var(--border-subtle); border-radius: 16px; background: #FAF7F2; }
 .wordbook-inspector .wordbook-detail-panel { position: static; border: 0; border-radius: 0; background: transparent; }
-.wordbook-inspector .wordbook-detail-disclosure > summary { font-size: 2rem; line-height: 1.2; }
+.wordbook-inspector .wordbook-detail-disclosure > summary { font-size: 1.75rem; line-height: 1.3; }
 .wordbook-inspector .wordbook-detail-content { padding-top: .75rem; }
 .wordbook-inspector-status { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin: 0 1.5rem 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); font-size: .875rem; }
 @media (min-width: 1024px) {
@@ -908,9 +910,10 @@ main {
 .rewrite-show-answer { justify-self: end; }
 .rewrite-feedback { padding: 1.25rem; border: 1px solid var(--border-subtle); border-radius: 12px; background: #FAF7F2; }
 .review-page { max-width: 68rem; }
-.review-page h1, .history-page h1 { font-size: clamp(1.875rem, 3.5vw, 3rem); line-height: 1.2; }
+.review-page h1, .history-page h1 { font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.2; }
 .review-flashcard { max-width: 61rem; margin-inline: auto; border-radius: 16px; background: #FAF7F2; }
 .review-flashcard { position: relative; }
+.review-flashcard h2 { font-size: 2.5rem; line-height: 1.3; }
 .review-flashcard > .space-y-4 > .flex:first-child { position: absolute; top: 1.5rem; right: 1.5rem; }
 .review-flashcard > .space-y-4 > .text-center { padding-block: 0.5rem; margin-top: 0; padding-inline: 2.5rem; }
 .review-flashcard .type-meta { font-size: 0.875rem; }
@@ -921,12 +924,12 @@ main {
 .history-page { max-width: 68rem; }
 .history-page input[type="search"] { min-height: 3.5rem; border-radius: 8px; font-size: 1rem; }
 .history-entry { padding: 1.5rem; border-radius: 12px; }
-.history-entry h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); line-height: 1.2; }
+.history-entry h2 { font-size: clamp(1.375rem, 2vw, 1.75rem); line-height: 1.3; }
 .history-entry .type-meta { font-size: 0.875rem; }
 @media (min-width: 1024px) {
   .wordbook-controls { grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 1.25rem; }
   .wordbook-controls > div:last-child { flex-direction: column; align-items: end; gap: 0.25rem; }
-  .review-flashcard h2 { font-size: 3.5rem; }
+  .review-flashcard h2 { font-size: 2.5rem; }
   .wordbook-entry-copy { display: grid; grid-template-columns: minmax(9rem, 1fr) minmax(8rem, 1.1fr); column-gap: 1.25rem; align-items: center; width: 100%; }
   .wordbook-entry-copy > div, .wordbook-entry-copy > p:first-of-type { grid-column: 1; }
   .wordbook-entry-copy > p:last-child { grid-column: 2; grid-row: 1 / 3; margin-top: 0; }
@@ -936,7 +939,7 @@ main {
 }
 @media (max-width: 639px) {
   .page-stack { margin-block: 1rem; }
-  .home-page__title h1 { font-size: clamp(1.875rem, 8vw, 2.25rem); }
+  .home-page__title h1 { font-size: 1.75rem; }
   .wordbook-heading-row { align-items: stretch; }
   .wordbook-heading-row > div { width: 100%; }
   .wordbook-heading-row > button { width: 100%; justify-content: center; }
@@ -946,11 +949,14 @@ main {
   .wordbook-selection-panel > div:last-child > button { width: 100%; margin-left: 0; justify-content: center; }
   .reading-toolbar .reading-actions { justify-content: flex-start; gap: 0.5rem; }
   .reading-panel { border-radius: 12px; }
-  .reading-panel .reading-prose { font-size: 1.25rem; line-height: 1.8; }
+  .reading-panel .reading-prose { font-size: 1.125rem; line-height: 1.75; }
+  .reading-translation .reading-prose { font-size: 1rem; line-height: 1.75; }
+  #word-detail-title { font-size: 1.5rem; line-height: 1.3; }
+  .rewrite-question-panel .rewrite-target-term { font-size: 1.125rem; }
   .review-flashcard { padding: 1.25rem; }
   .review-flashcard > .space-y-4 > .flex:first-child { top: 0.75rem; right: 0.75rem; }
   .review-flashcard > .space-y-4 > .text-center { padding: 2.5rem 0 0.5rem; }
-  .review-flashcard h2 { font-size: clamp(2rem, 9vw, 2.75rem); line-height: 1.15; }
+  .review-flashcard h2 { font-size: 1.75rem; line-height: 1.3; overflow-wrap: anywhere; }
   .review-progress { flex-wrap: wrap; gap: 0.5rem; }
   .rewrite-exercise-heading { grid-template-columns: minmax(0, 1fr); }
   .rewrite-target-term { font-size: 1.75rem; }
@@ -999,7 +1005,7 @@ main {
   }
 
   .home-page__title h1 {
-    font-size: 2.25rem;
+    font-size: 1.75rem;
   }
 
   .home-composer {
