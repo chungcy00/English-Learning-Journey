@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { currentReadingSavedVocabulary } from './utils/savedVocabulary';
 import { Navbar, NavTab } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -19,6 +20,8 @@ import { isAppleMobileDevice, isManualUpdateApp } from './utils/pwa';
 import { normalizeEnglishTerm } from './utils/englishSearch';
 import { useReadingExpressions } from './hooks/useReadingExpressions';
 import { WordbookRemovalDialog } from './components/WordbookRemovalDialog';
+import { PracticeHubView } from './views/PracticeHubView';
+import { RewritePracticeView } from './views/RewritePracticeView';
 
 import {
   ReadingRecord,
@@ -55,8 +58,17 @@ import {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('home');
+  const reviewRequested = useRef(false);
+  const openHubReview = () => {
+    reviewRequested.current = true;
+    setActiveTab('practice');
+  };
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    if (activeTab === 'practice' && reviewRequested.current) {
+      document.getElementById('practice-review')?.scrollIntoView({ block: 'start' });
+      reviewRequested.current = false;
+    }
   }, [activeTab]);
   const [currentReading, setCurrentReading] = useState<ReadingRecord | null>(null);
   // Prepare once when a passage is ready, independently of opening a search menu.
@@ -387,7 +399,7 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col bg-[#F2EEE4] text-[#292B25] selection:bg-[#62694D]/20 ${activeTab === 'review' ? 'review-shell' : ''}`}
+    <div className="min-h-screen flex flex-col bg-[#F2EEE4] text-[#292B25] selection:bg-[#62694D]/20"
       style={{ '--review-nav-offset': isInstalledApp ? '4.5rem' : undefined } as React.CSSProperties}>
       {/* Web navigation; installed phone/tablet software uses the bottom tabs. */}
       {!isInstalledApp && (
@@ -443,6 +455,7 @@ export default function App() {
             }}
             onRewrite={handleRewrite}
             onOpenHistory={() => setActiveTab('history')}
+            onOpenPractice={() => setActiveTab('rewrite')}
             isRewriting={isRewriting}
             targetLanguage={settings.targetLanguage || 'zh-CN'}
             onLanguageChange={handleLanguageChange}
@@ -450,6 +463,8 @@ export default function App() {
         )}
 
         {activeTab === 'wordbook' && (
+          <>
+          <div className="practice-back-bar"><button type="button" className="practice-back" onClick={() => setActiveTab('practice')}><ArrowLeft aria-hidden="true" className="w-4 h-4" />练习与生词</button></div>
           <WordbookView
             vocabularyList={reviewVocabulary}
             readings={readings}
@@ -474,12 +489,18 @@ export default function App() {
               } : vocab);
               await loadData();
             }}
-            onOpenReview={() => setActiveTab('review')}
+            onOpenReview={openHubReview}
           />
+          </>
         )}
 
-        {activeTab === 'review' && (
+        {activeTab === 'rewrite' && <RewritePracticeView reading={currentReading} targetLanguage={settings.targetLanguage || 'zh-CN'} onBack={() => setActiveTab('practice')} />}
+
+        {activeTab === 'practice' && (
+          <PracticeHubView exerciseCount={currentReading?.rewritePractice?.length || 0} vocabularyCount={reviewVocabulary.length}
+            onOpenRewrite={() => setActiveTab('rewrite')} onOpenWordbook={() => setActiveTab('wordbook')}>
           <ReviewView
+            embedded
             allVocabularies={reviewVocabulary}
             onRate={handleRateReview}
             onRefresh={loadData}
@@ -487,6 +508,7 @@ export default function App() {
             onLanguageChange={handleLanguageChange}
             onBatchUpdateVocabularies={handleBatchUpdateVocabularies}
           />
+          </PracticeHubView>
         )}
 
         {activeTab === 'history' && (

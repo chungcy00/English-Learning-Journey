@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { ReadingRecord, VocabularyItem, RewritePracticeItem, ReadingTranslation } from '../types';
 import { WordDetailModal } from '../components/WordDetailModal';
-import { RewritePracticeCard } from '../components/RewritePracticeCard';
 import { ReadingVocabularyEditor } from '../components/ReadingVocabularyEditor';
 import { generateReadingPDF } from '../services/pdfGenerator';
 import {
@@ -50,6 +49,7 @@ interface ReadingViewProps {
   onUpdateVocabulary: (updatedReading: ReadingRecord) => Promise<void>;
   onRewrite: (mode: string, keepVocab: boolean) => void;
   onOpenHistory: () => void;
+  onOpenPractice?: () => void;
   isRewriting: boolean;
   targetLanguage?: string;
   onLanguageChange?: (lang: string) => void;
@@ -195,6 +195,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   onUpdateVocabulary,
   onRewrite,
   onOpenHistory,
+  onOpenPractice,
   isRewriting,
   targetLanguage: propTargetLanguage = 'zh-CN',
   onLanguageChange,
@@ -1223,33 +1224,9 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         </div>
       </section>
 
-      {/* Rewrite the Sentence Practice Section (PRD Section 22-27) */}
-      {reading.rewritePractice && reading.rewritePractice.length > 0 && (
-        <section className="rewrite-practice-section space-y-4 pt-4">
-          <div className="pb-2 border-b border-[#D4CCBC]">
-            <h2 className="type-section font-editorial font-semibold text-[#292B25]">
-              {getI18nText(targetLanguage, 'rewriteSectionTitle')}
-            </h2>
-            <p className="type-body font-ui text-[#555848]">
-              {getI18nText(targetLanguage, 'rewriteSectionSub')}
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {reading.rewritePractice.map((item, idx) => (
-              <RewritePracticeCard
-                key={`${reading.id}:${item.id || idx}:${item.originalSentence}:${item.target}:${item.referenceAnswer}`}
-                readingId={reading.id}
-                item={item}
-                index={idx}
-                cefrLevel={reading.cefrLevel}
-                targetLanguage={targetLanguage}
-                currentTranslation={currentTranslation}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+      {onOpenPractice && <button type="button" onClick={onOpenPractice} className="practice-back">
+        进入句子改写练习 <ChevronDown aria-hidden="true" className="w-4 h-4 -rotate-90" />
+      </button>}
 
       {/* Modals */}
       <WordDetailModal

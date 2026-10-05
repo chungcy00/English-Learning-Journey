@@ -1,9 +1,9 @@
-export const APP_VERSION = 'V2.4.20';
+export const APP_VERSION = 'V2.4.21';
 
-export const VERSION_HISTORY_COUNT = 40;
+export const VERSION_HISTORY_COUNT = 41;
 
 export const CURRENT_RELEASE_NOTES = [
-  '手机状态筛选自动换行，所有选项完整显示',
-  '恢复桌面列表和手机展开详情中的简单状态下拉框',
-  '状态保存失败时提示重试，保留原有复习进度',
+  '合并为练习与生词页面，改写与生词本使用卡片入口',
+  '词汇复习直接展示在入口卡片下方',
+  '改写练习独立展示，保留草稿与评估结果',
 ];

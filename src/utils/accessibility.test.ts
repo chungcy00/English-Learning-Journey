@@ -10,11 +10,11 @@ import type { VocabularyItem } from '../types';
 
 const vocab = { id: 'test', term: 'break the ice', type: 'idiom', partOfSpeech: 'idiom', collocations: [] } as unknown as VocabularyItem;
 
-test('all five navigation destinations have names and current-state semantics on every viewport', () => {
+test('four navigation destinations consolidate study tasks and retain current-state semantics', () => {
   const html = renderToStaticMarkup(React.createElement(Navbar, { activeTab: 'reading', setActiveTab: () => {}, reviewCount: 22, hasCurrentReading: true, targetLanguage: 'zh-CN' }));
-  assert.equal((html.match(/aria-label=/g) || []).length, 6); // nav + five destinations
+  assert.equal((html.match(/aria-label=/g) || []).length, 5); // nav + four destinations
   assert.match(html, /aria-label="当前阅读" aria-current="page"/);
-  assert.match(html, /aria-label="复习，22 个词条"/);
+  assert.match(html, /aria-label="练习与生词，22 个词条"/);
   assert.doesNotMatch(html, /hidden md:inline/);
 });
 

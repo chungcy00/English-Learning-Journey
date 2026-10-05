@@ -687,6 +687,37 @@ main {
 .wordbook-saved-search summary::-webkit-details-marker { display: none; }
 .wordbook-saved-search[open] summary svg { transform: rotate(90deg); }
 .wordbook-status-filters button { border-radius: 999px; }
+
+/* One study destination: two gateways, followed by the live review session. */
+.practice-hub { max-width: 76rem; display: grid; gap: 2.5rem; }
+.practice-hub-heading { padding-bottom: 0.5rem; }
+.practice-entry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+.practice-entry { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1.5rem; padding: 2rem; border: 1px solid var(--border-subtle); border-radius: 16px; }
+.practice-entry--rewrite { background: #ECEEDF; }
+.practice-entry--wordbook { background: #F6F0E5; }
+.practice-entry-icon { width: 2rem; height: 2rem; color: var(--accent-primary); }
+.practice-entry h2 { font-size: clamp(1.75rem, 2.8vw, 2.5rem); line-height: 1.2; overflow-wrap: anywhere; }
+.practice-entry-action { display: inline-flex; min-height: 44px; align-items: center; gap: 1rem; margin-top: auto; padding: 0.75rem 1.25rem; background: var(--accent-primary); color: #FAF7F2; border-radius: 999px; font-family: var(--font-app); }
+.practice-entry-action:hover { background: #4E563C; }
+.practice-review { min-width: 0; border-top: 1px solid var(--border-subtle); padding-top: 2rem; scroll-margin-top: 7rem; }
+.review-embedded { width: 100%; max-width: none; margin: 0; }
+.review-embedded > div:first-child h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); }
+.review-embedded .review-rating-bar { position: static; margin-top: 1.5rem; padding: 1rem 0 0; background: transparent; }
+.practice-back { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; font-family: var(--font-app); color: var(--accent-primary); }
+.practice-back:hover { text-decoration: underline; text-underline-offset: 4px; }
+.practice-back-bar { max-width: 78rem; margin-inline: auto; padding: 1rem 1.5rem 0; }
+.practice-detail-heading { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); }
+.rewrite-page { max-width: 72rem; }
+.rewrite-page .rewrite-practice-section { width: 100%; }
+.practice-empty { padding-block: 2rem; color: var(--text-secondary); }
+@media (max-width: 639px) {
+  .practice-hub { gap: 2rem; }
+  .practice-entry-grid { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .practice-entry { gap: 1rem; padding: 1.5rem; }
+  .practice-entry h2 { font-size: 1.75rem; }
+  .practice-review { padding-top: 1.5rem; scroll-margin-top: 5rem; }
+  .practice-back-bar { padding-inline: 1rem; }
+}
 .reading-page > * + * { margin-top: 1.5rem; }
 .reading-page .mobile-reading-switch { margin-bottom: 0; }
 

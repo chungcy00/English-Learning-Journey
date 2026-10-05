@@ -12,6 +12,7 @@ import { translateVocabularies } from '../services/api';
 import { speakEnglishTerm } from '../utils/speech';
 
 interface ReviewViewProps {
+  embedded?: boolean;
   allVocabularies: VocabularyItem[];
   onRate: (vocabId: string, rating: ReviewRating) => Promise<void>;
   onRefresh: () => void;
@@ -27,6 +28,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   targetLanguage,
   onLanguageChange,
   onBatchUpdateVocabularies,
+  embedded = false,
 }) => {
   const [initialProgress] = useState(readReviewProgress);
   const restored = restoreReviewProgress(allVocabularies.map(v => v.id), initialProgress);
@@ -176,14 +178,15 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
     };
   }, [isRevealed, sessionCompleted, reviewList.length]);
 
+  const Heading = embedded ? 'h2' : 'h1';
   return (
-    <div className="page-shell page-shell--review page-stack review-page">
+    <div className={`${embedded ? 'review-embedded' : 'page-shell page-shell--review'} page-stack review-page`}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#D4CCBC]">
         <div>
-          <h1 className="type-page font-editorial font-semibold text-[#292B25]">
-            {getI18nText(targetLanguage, 'reviewTitle')}
-          </h1>
+          <Heading className="type-page font-editorial font-semibold text-[#292B25]">
+            {embedded ? '词汇复习' : getI18nText(targetLanguage, 'reviewTitle')}
+          </Heading>
           <p className="type-body font-ui text-[#555848] mt-2">当前短文已添加词条：{reviewList.length} 项</p>
         </div>
 

@@ -14,7 +14,7 @@ test('shared layout gives every page the same gutters and task-specific widths',
   assert.match(css, /--page-gutter: 2rem/);
   for (const name of ['HomeView', 'ReadingView', 'WordbookView', 'ReviewView', 'ReadingHistoryView']) {
     const source = readFileSync(new URL(`../views/${name}.tsx`, import.meta.url), 'utf8');
-    assert.match(source, /className="page-shell/);
+    assert.match(source, /page-shell/);
   }
   assert.match(css, /\.reading-prose[^}]*max-width: 70ch/);
   assert.match(css, /\.app-dialog[^}]*100dvh/);

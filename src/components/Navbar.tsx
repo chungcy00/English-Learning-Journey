@@ -1,7 +1,7 @@
 import React from 'react';
-import { BookOpen, Bookmark, History, RotateCcw, Sparkles } from 'lucide-react';
+import { BookOpen, Bookmark, History, Sparkles } from 'lucide-react';
 
-export type NavTab = 'home' | 'reading' | 'history' | 'wordbook' | 'review';
+export type NavTab = 'home' | 'reading' | 'history' | 'practice' | 'wordbook' | 'rewrite';
 
 interface NavbarProps {
   activeTab: NavTab | 'settings'; // keep 'settings' literal here just in case App passes it
@@ -21,8 +21,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const tabs = [
     { id: 'home' as NavTab, label: targetLanguage === 'zh-CN' ? '生成短文' : targetLanguage === 'zh-TW' ? '生成短文' : targetLanguage === 'ja' ? '文章生成' : targetLanguage === 'ko' ? '지문 생성' : targetLanguage === 'es' ? 'Generar' : targetLanguage === 'fr' ? 'Générer' : targetLanguage === 'de' ? 'Generieren' : targetLanguage === 'vi' ? 'Tạo bài' : targetLanguage === 'ru' ? 'Генерация' : 'Generate', icon: Sparkles },
     { id: 'reading' as NavTab, label: targetLanguage === 'zh-CN' ? '当前阅读' : targetLanguage === 'zh-TW' ? '當前閱讀' : targetLanguage === 'ja' ? '現在の文章' : targetLanguage === 'ko' ? '현재 읽기' : targetLanguage === 'es' ? 'Lectura actual' : targetLanguage === 'fr' ? 'Lecture' : targetLanguage === 'de' ? 'Aktuell' : targetLanguage === 'vi' ? 'Đang đọc' : targetLanguage === 'ru' ? 'Текущее' : 'Reading', icon: BookOpen, disabled: !hasCurrentReading },
-    { id: 'wordbook' as NavTab, label: targetLanguage === 'zh-CN' ? '生词本' : targetLanguage === 'zh-TW' ? '生詞本' : targetLanguage === 'ja' ? '単語帳' : targetLanguage === 'ko' ? '단어장' : targetLanguage === 'es' ? 'Vocabulario' : targetLanguage === 'fr' ? 'Vocabulaire' : targetLanguage === 'de' ? 'Wortschatz' : targetLanguage === 'vi' ? 'Sổ từ' : targetLanguage === 'ru' ? 'Словарь' : 'Wordbook', icon: Bookmark },
-    { id: 'review' as NavTab, label: targetLanguage === 'zh-CN' ? '复习' : targetLanguage === 'zh-TW' ? '複習' : targetLanguage === 'ja' ? '復習' : targetLanguage === 'ko' ? '복습' : targetLanguage === 'es' ? 'Repaso' : targetLanguage === 'fr' ? 'Révision' : targetLanguage === 'de' ? 'Wiederholung' : targetLanguage === 'vi' ? 'Ôn tập' : targetLanguage === 'ru' ? 'Повторение' : 'Review', icon: RotateCcw, badge: reviewCount },
+    { id: 'practice' as NavTab, label: targetLanguage === 'zh-TW' ? '練習與生詞' : targetLanguage === 'zh-CN' ? '练习与生词' : 'Practice & Wordbook', icon: Bookmark, badge: reviewCount },
     { id: 'history' as NavTab, label: '历史记录', icon: History },
   ];
 
@@ -48,10 +47,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
 
         {/* Navigation Tabs */}
-        <nav aria-label="主导航" className="grid grid-cols-5 lg:flex lg:items-center gap-1 sm:gap-2">
+        <nav aria-label="主导航" className="grid grid-cols-4 lg:flex lg:items-center gap-1 sm:gap-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
+            const isActive = activeTab === tab.id || (tab.id === 'practice' && (activeTab === 'wordbook' || activeTab === 'rewrite'));
             return (
               <button
                 key={tab.id}

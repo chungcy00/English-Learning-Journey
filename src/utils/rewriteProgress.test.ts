@@ -100,9 +100,9 @@ test('corrupt stored data does not crash or restore malformed feedback', () => {
   assert.equal(progress.evaluation, undefined);
 });
 
-test('reading cards subscribe to shared progress with a passage identity and save-failure affordance', () => {
+test('practice cards subscribe to shared progress with a passage identity and save-failure affordance', () => {
   const card = readFileSync(new URL('../components/RewritePracticeCard.tsx', import.meta.url), 'utf8');
-  const reading = readFileSync(new URL('../views/ReadingView.tsx', import.meta.url), 'utf8');
+  const reading = readFileSync(new URL('../views/RewritePracticeView.tsx', import.meta.url), 'utf8');
   assert.match(card, /useSyncExternalStore/);
   assert.match(card, /rewriteProgressStore\.edit/);
   assert.match(card, /rewriteProgressStore\.evaluate/);
