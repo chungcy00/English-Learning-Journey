@@ -39,3 +39,15 @@ test('reading no longer duplicates exercises; empty practice and embedded review
   assert.match(review, /<h2[^>]*>词汇复习<\/h2>/);
   assert.doesNotMatch(review, /<h1/);
 });
+
+test('rewrite workspace presents real progress and anchors without destructive or batch controls', () => {
+  const source = readFileSync(new URL('../views/RewritePracticeView.tsx', import.meta.url), 'utf8');
+  const card = readFileSync(new URL('../components/RewritePracticeCard.tsx', import.meta.url), 'utf8');
+  assert.match(source, /rewrite-question-panel/);
+  assert.match(source, /rewrite-progress-panel/);
+  assert.match(source, /entry\.pending.*entry\.evaluation.*entry\.answer\.trim\(\)/);
+  assert.match(source, /<progress[^>]*value=\{completed\}[^>]*max=\{exercises.length\}/);
+  assert.match(source, /href=\{`#rewrite-exercise-\$\{item.id\}`\}/);
+  assert.match(card, /id=\{`rewrite-exercise-\$\{item.id\}`\}/);
+  assert.doesNotMatch(source, /重置练习|提交本组练习/);
+});

@@ -58,7 +58,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
   };
 
   return (
-    <div className="rewrite-exercise">
+    <div className="rewrite-exercise" id={`rewrite-exercise-${item.id}`}>
       {error && <p role="alert" className="type-body font-ui text-red-700 mb-3">{error}</p>}
       {/* Question Header */}
       <div className="rewrite-exercise-heading exercise-heading mb-3">
@@ -87,7 +87,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
         <div className="rewrite-answer-controls">
           <textarea
             id={`rewrite-answer-${item.id}`}
-            rows={3}
+            rows={2}
             value={answer}
             onChange={(e) => rewriteProgressStore.edit(progressKey, item, e.target.value)}
             disabled={loading}
