@@ -1,5 +1,38 @@
 @import "tailwindcss";
 
+/* Device adaptation shared by the website and installed web shell. */
+html { scroll-padding-block: 6rem; }
+body { padding-inline: env(safe-area-inset-left) env(safe-area-inset-right); }
+input, textarea, select { scroll-margin-block: 6rem; }
+.app-dialog { scroll-padding-block: 1rem; }
+.app-install-prompt { max-height: calc(100dvh - 2rem); overflow-y: auto; overscroll-behavior: contain; }
+.software-keyboard-open .installed-bottom-nav { display: none; }
+@media (max-width: 639px) {
+  html .app-header { padding-top: calc(.5rem + env(safe-area-inset-top)); }
+  .app-install-prompt { bottom: calc(5rem + env(safe-area-inset-bottom)); max-height: calc(100dvh - 7rem - env(safe-area-inset-bottom)); }
+  main input:not([type="checkbox"]):not([type="radio"]), main textarea { font-size: max(1rem, 16px); }
+  .software-keyboard-open .app-header nav,
+  .software-keyboard-open .installed-bottom-nav { display: none; }
+  .software-keyboard-open .app-install-prompt { display: none; }
+  .software-keyboard-open main { padding-bottom: 1rem; }
+  .reading-vocabulary-editor__tool button[role="combobox"] { min-height: 44px; }
+  .history-entry > button { overflow-wrap: anywhere; }
+  .history-entry .type-meta { flex-wrap: wrap; }
+  .wordbook-inspector-status, .wordbook-accordion-content { min-width: 0; }
+  .rewrite-progress-target { overflow-wrap: anywhere; }
+}
+@media (max-width: 399px) {
+  .review-embedded .review-rating-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .history-page .history-entry { flex-wrap: wrap; }
+  .history-page .history-entry > button { flex-basis: 100%; }
+  .history-page .history-entry > div:last-child { flex-direction: row; justify-content: flex-end; width: 100%; }
+}
+@media (max-height: 500px) {
+  .app-dialog { max-height: calc(100dvh - 1rem); }
+  html .word-detail-dialog[open] { inset: .5rem 0; margin: 0 auto; max-height: calc(100dvh - 1rem); }
+  html .wordbook-inspector, html .rewrite-progress-panel { position: static; }
+}
+
 
 @layer base {
   :root {
@@ -270,7 +303,7 @@ button.vocab-highlight {
 }
 
 .reading-vocabulary__term {
-  min-height: 2.5rem;
+  min-height: 2.75rem;
   padding: 0.35rem 0;
 }
 

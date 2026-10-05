@@ -66,7 +66,7 @@ export const AppInstallPrompt: React.FC = () => {
     <div
       role="dialog"
       aria-label="添加 Mine English 到主屏幕"
-      className="fixed z-50 left-4 right-4 bottom-4 sm:left-auto sm:right-6 sm:w-[25rem] bg-[#FAF7F2] border border-[#62694D]/40 rounded-sm shadow-xl p-4 font-ui"
+      className="app-install-prompt fixed z-50 left-4 right-4 bottom-4 sm:left-auto sm:right-6 sm:w-[25rem] bg-[#FAF7F2] border border-[#62694D]/40 rounded-sm shadow-xl p-4 font-ui"
     >
       <div className="flex items-start gap-3">
         <img src="/site-icon.png" alt="" className="w-12 h-12 object-contain flex-shrink-0" />
@@ -80,7 +80,7 @@ export const AppInstallPrompt: React.FC = () => {
             <button
               type="button"
               onClick={() => void install()}
-              className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#62694D] text-[#F2EEE4] rounded-sm text-xs font-medium"
+              className="min-h-11 mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#62694D] text-[#F2EEE4] rounded-sm text-xs font-medium"
             >
               <Download className="w-3.5 h-3.5" />
               添加到主屏幕
@@ -100,7 +100,7 @@ export const AppInstallPrompt: React.FC = () => {
           type="button"
           onClick={dismiss}
           aria-label="关闭安装提示"
-          className="text-[#555848] hover:text-[#292B25]"
+          className="min-h-11 min-w-11 flex items-center justify-center shrink-0 text-[#555848] hover:text-[#292B25]"
         >
           <X className="w-4 h-4" />
         </button>

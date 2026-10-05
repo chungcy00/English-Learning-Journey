@@ -22,6 +22,7 @@ import { useReadingExpressions } from './hooks/useReadingExpressions';
 import { WordbookRemovalDialog } from './components/WordbookRemovalDialog';
 import { PracticeHubView } from './views/PracticeHubView';
 import { RewritePracticeView } from './views/RewritePracticeView';
+import { useSoftwareKeyboard } from './hooks/useSoftwareKeyboard';
 
 import {
   ReadingRecord,
@@ -57,6 +58,7 @@ import {
 } from './services/api';
 
 export default function App() {
+  const softwareKeyboardOpen = useSoftwareKeyboard();
   const [activeTab, setActiveTab] = useState<NavTab>('home');
   const reviewRequested = useRef(false);
   const openHubReview = () => {
@@ -399,7 +401,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F2EEE4] text-[#292B25] selection:bg-[#62694D]/20"
+    <div className={`min-h-screen flex flex-col bg-[#F2EEE4] text-[#292B25] selection:bg-[#62694D]/20 ${softwareKeyboardOpen ? 'software-keyboard-open' : ''}`}
       style={{ '--review-nav-offset': isInstalledApp ? '4.5rem' : undefined } as React.CSSProperties}>
       {/* Web navigation; installed phone/tablet software uses the bottom tabs. */}
       {!isInstalledApp && (
@@ -421,7 +423,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setErrorMessage(null)}
-                className="text-[#7D3220] hover:text-[#521E12] text-xs font-semibold px-2 py-1 ml-3 transition-colors"
+                className="min-h-11 min-w-11 shrink-0 text-[#7D3220] hover:text-[#521E12] text-xs font-semibold px-2 py-1 ml-3 transition-colors"
               >
                 ✕ 关闭
               </button>

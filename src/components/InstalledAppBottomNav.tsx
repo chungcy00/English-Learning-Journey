@@ -25,7 +25,7 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
   return (
     <nav
       aria-label="软件主导航"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-[#D4CCBC] bg-[#FAF7F2]/95 backdrop-blur-md shadow-[0_-4px_18px_rgba(41,43,37,0.08)]"
+      className="installed-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-[#D4CCBC] bg-[#FAF7F2]/95 backdrop-blur-md shadow-[0_-4px_18px_rgba(41,43,37,0.08)]"
     >
       <div className="mx-auto grid max-w-3xl grid-cols-4 px-1 pt-1.5 pb-[calc(0.4rem+env(safe-area-inset-bottom))]">
         {tabs.map((tab) => {
