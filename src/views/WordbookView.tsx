@@ -241,6 +241,8 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         </div>
 
         {/* Search Bar & Target Language Picker */}
+        <details className="wordbook-add-disclosure font-ui">
+        <summary className="wordbook-add-summary"><Plus aria-hidden="true" className="w-4 h-4" />添加当前短文的表达<ChevronDown aria-hidden="true" className="w-4 h-4" /></summary>
         <div className="wordbook-search-tools">
           <div className="min-w-0">
             <label htmlFor="wordbook-expression-search" className="type-label block mb-1.5 font-ui text-[#555848]">搜索并添加当前短文的表达</label>
@@ -364,17 +366,20 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
             </select>
           </div>
         </div>
+        </details>
       </div>
 
+      <div className="wordbook-workspace">
+      <div className="wordbook-collection-panel">
       {/* Filter Tabs & Multi-select Toolbar */}
       <section className="wordbook-controls" aria-label="筛选生词本">
-      <details className="wordbook-saved-search space-y-2 font-ui" open={isWideLayout || undefined}>
-        <summary className="min-h-11 flex items-center cursor-pointer type-label text-[#292B25]">筛选已添加词条 <ChevronRight aria-hidden="true" className="w-4 h-4 ml-2" /></summary>
+      <div className="wordbook-saved-search font-ui">
+        <Search aria-hidden="true" className="w-4 h-4" />
         <label htmlFor="saved-vocabulary-search" className="sr-only">筛选已添加词条</label>
         <input id="saved-vocabulary-search" value={collectionSearch} onChange={event => setCollectionSearch(event.target.value)}
-          placeholder="单词、短语或习语"
+          placeholder="搜索已添加的单词、短语或习语"
           className="w-full min-h-11 px-3 py-2 text-base bg-[#F2EEE4] border border-[#D4CCBC] rounded-sm text-[#292B25] placeholder:text-[#646657]" />
-      </details>
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="wordbook-status-filters flex flex-wrap items-center gap-1.5" role="group" aria-label="按学习状态筛选">
           {filterOptions.map((status) => (
@@ -389,7 +394,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                   : 'bg-[#E5DED0]/50 text-[#555848] border-[#D4CCBC] hover:bg-[#E5DED0]'
               }`}
             >
-              {status === 'All' ? '全部状态' : status}
+              {status === 'All' ? '全部状态' : status} <span className="wordbook-filter-count">{status === 'All' ? vocabularyList.length : vocabularyList.filter(item => item.status === status).length}</span>
             </button>
           ))}
         </div>
@@ -416,7 +421,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
       </section>
 
       {/* Vocabulary List */}
-      <div className="wordbook-workspace">
       <div className="wordbook-list" role="list" aria-label="已添加词条">
         {filtered.length === 0 ? (
           <div className="text-center py-12 bg-[#E5DED0]/20 border border-[#D4CCBC] rounded-sm">
@@ -523,9 +527,11 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
           })
         )}
       </div>
+      <footer className="wordbook-list-footer font-ui"><span>显示 {filtered.length} 个词条{filtered.length !== vocabularyList.length ? `（共 ${vocabularyList.length} 个）` : ''}</span><span>按字母排序</span></footer>
+      </div>
 
       {/* Detail Modal */}
-      {isWideLayout && <WordDetailModal
+      {isWideLayout && <div className="wordbook-inspector"><WordDetailModal
         vocab={vocabularyList.find(v => v.id === detailVocab?.id) || (isWideLayout ? filtered[0] : null)}
         isOpen={!!detailVocab || (isWideLayout && filtered.length > 0)}
         inline={isWideLayout}
@@ -537,7 +543,9 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
           setDetailVocab(null);
         }}
         targetLanguage={targetLanguage}
-      />}
+      />
+      {(vocabularyList.find(v => v.id === detailVocab?.id) || filtered[0]) && <div className="wordbook-inspector-status font-ui"><span>学习状态</span><VocabularyStatusSelect vocab={vocabularyList.find(v => v.id === detailVocab?.id) || filtered[0]} onUpdate={onUpdateStatus} /></div>}
+      </div>}
       </div>
       {selectedTerms.length > 0 && (
         <div className="wordbook-selection-panel bg-[#E5DED0] border border-[#D4CCBC] rounded-sm p-4 space-y-3">

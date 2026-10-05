@@ -24,6 +24,12 @@ test('wordbook shows all saved degrees, distinguishes passage addition from coll
   assert.match(html, /开始复习/);
   assert.match(html, /搜索并添加当前短文的表达/);
   assert.match(html, /全部状态/);
+  assert.match(html, /wordbook-collection-panel/);
+  assert.match(html, /wordbook-filter-count[^>]*>2</);
+  assert.match(html, /显示 2 个词条/);
+  assert.match(html, /按字母排序/);
+  assert.match(html, /<details class="wordbook-add-disclosure/);
+  assert.doesNotMatch(html, /<details class="wordbook-saved-search/);
   assert.doesNotMatch(html.replace(/<[^>]*>/g, ''), /B1|B2|CEFR|搜索与添加提示/);
 });
 
