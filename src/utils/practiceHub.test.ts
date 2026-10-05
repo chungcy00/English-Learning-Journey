@@ -50,4 +50,7 @@ test('rewrite workspace presents real progress and anchors without destructive o
   assert.match(source, /href=\{`#rewrite-exercise-\$\{item.id\}`\}/);
   assert.match(card, /id=\{`rewrite-exercise-\$\{item.id\}`\}/);
   assert.doesNotMatch(source, /重置练习|提交本组练习/);
+  assert.ok(source.indexOf('<aside className="rewrite-progress-panel"') < source.indexOf('<section className="rewrite-question-panel"'));
+  const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8');
+  assert.match(css, /@media \(max-width: 639px\) \{\s*\.rewrite-workspace \{ grid-template-areas: "progress" "questions";/);
 });

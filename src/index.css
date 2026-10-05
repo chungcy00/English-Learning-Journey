@@ -709,7 +709,9 @@ main {
 .practice-detail-heading { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); }
 .rewrite-page { max-width: 78rem; }
 .rewrite-page .rewrite-practice-section { width: 100%; }
-.rewrite-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; gap: 1.5rem; align-items: start; }
+.rewrite-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; grid-template-areas: "questions progress"; gap: 1.5rem; align-items: start; }
+.rewrite-question-panel { grid-area: questions; }
+.rewrite-progress-panel { grid-area: progress; }
 .rewrite-question-panel, .rewrite-progress-panel { min-width: 0; padding: 1.5rem; border: 1px solid var(--border-subtle); border-radius: 16px; background: #FAF7F2; }
 .rewrite-panel-heading { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.5rem; }
 .rewrite-panel-heading > svg { color: #5F654D; width: 24px; height: 24px; flex-shrink: 0; }
@@ -738,11 +740,12 @@ main {
 .rewrite-progress-target { font-size: .875rem; overflow-wrap: anywhere; }
 .rewrite-progress-state { font-size: .75rem; }
 @media (max-width: 1023px) {
-  .rewrite-workspace { grid-template-columns: minmax(0, 1fr); }
+  .rewrite-workspace { grid-template-columns: minmax(0, 1fr); grid-template-areas: "questions" "progress"; }
   .rewrite-progress-panel { position: static; }
   .rewrite-progress-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 639px) {
+  .rewrite-workspace { grid-template-areas: "progress" "questions"; }
   .rewrite-question-panel, .rewrite-progress-panel { padding: 1rem; }
   .rewrite-question-panel .rewrite-exercise { padding: 1rem; }
   .rewrite-panel-heading h2 { font-size: 1.25rem; }

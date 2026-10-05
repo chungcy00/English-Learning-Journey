@@ -21,17 +21,6 @@ export function RewritePracticeView({ reading, targetLanguage, onBack }: { readi
         <p className="type-body font-ui text-[#555848] mt-2">使用指定词汇，用自己的方式重新表达原句。</p></div>
     </header>
     {reading && exercises.length ? <div className="rewrite-workspace">
-      <section className="rewrite-question-panel" aria-labelledby="rewrite-questions-title">
-        <header className="rewrite-panel-heading"><FilePenLine aria-hidden="true" />
-          <h2 id="rewrite-questions-title" className="font-editorial">改写练习</h2>
-          <span className="rewrite-count font-ui">共 {exercises.length} 题</span>
-        </header>
-        <div className="rewrite-practice-section">
-      {exercises.map((item, index) => <RewritePracticeCard key={`${reading.id}:${item.id}:${item.originalSentence}:${item.target}:${item.referenceAnswer}`}
-        readingId={reading.id} item={item} index={index} cefrLevel={reading.cefrLevel}
-        targetLanguage={targetLanguage} currentTranslation={reading.translations?.[targetLanguage]} />)}
-        </div>
-      </section>
       <aside className="rewrite-progress-panel" aria-labelledby="rewrite-progress-title">
         <header className="rewrite-panel-heading"><ChartNoAxesColumnIncreasing aria-hidden="true" />
           <h2 id="rewrite-progress-title" className="font-ui">学习进度</h2>
@@ -47,6 +36,17 @@ export function RewritePracticeView({ reading, targetLanguage, onBack }: { readi
           </li>)}
         </ol>
       </aside>
+      <section className="rewrite-question-panel" aria-labelledby="rewrite-questions-title">
+        <header className="rewrite-panel-heading"><FilePenLine aria-hidden="true" />
+          <h2 id="rewrite-questions-title" className="font-editorial">改写练习</h2>
+          <span className="rewrite-count font-ui">共 {exercises.length} 题</span>
+        </header>
+        <div className="rewrite-practice-section">
+          {exercises.map((item, index) => <RewritePracticeCard key={`${reading.id}:${item.id}:${item.originalSentence}:${item.target}:${item.referenceAnswer}`}
+            readingId={reading.id} item={item} index={index} cefrLevel={reading.cefrLevel}
+            targetLanguage={targetLanguage} currentTranslation={reading.translations?.[targetLanguage]} />)}
+        </div>
+      </section>
     </div> : <p className="practice-empty type-body font-ui">{reading ? '这篇短文暂无改写练习，可选择其他短文。' : '请先生成或打开一篇短文。'}</p>}
   </div>;
 }
