@@ -26,7 +26,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <header className="app-header sticky top-0 z-30 bg-[#F2EEE4]/90 backdrop-blur-sm border-b border-[#D4CCBC] px-4 sm:px-6 lg:px-8 py-3.5 transition-colors">
+    <header className="app-header sticky top-0 z-30 bg-[var(--bg-primary)]/90 backdrop-blur-sm border-b border-[var(--border-subtle)] px-4 sm:px-6 lg:px-8 py-3.5 transition-colors">
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2 lg:gap-4">
         {/* Brand & Editorial Title */}
         <button
@@ -40,7 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="w-10 h-10 object-contain flex-shrink-0"
           />
           <div>
-            <span className="font-editorial text-xl sm:text-2xl font-semibold text-[#292B25] tracking-tight group-hover:text-[#5F654D] transition-colors">
+            <span className="font-editorial text-xl sm:text-2xl font-semibold text-[var(--text-primary)] tracking-tight group-hover:text-[var(--accent-vocab)] transition-colors">
               Mine English
             </span>
           </div>
@@ -61,16 +61,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                 disabled={tab.disabled}
                 className={`relative flex flex-col lg:flex-row items-center justify-center gap-1 lg:gap-1.5 min-h-12 lg:min-h-11 min-w-0 px-1 lg:px-3 py-1.5 text-[11px] lg:text-sm font-medium transition-all rounded-sm ${
                   isActive
-                    ? 'text-[#292B25] bg-[#E5DED0] border-b-2 border-[#62694D]'
+                    ? 'text-[var(--text-primary)] bg-[var(--bg-alt)] border-b-2 border-[var(--accent-primary)]'
                     : tab.disabled
-                    ? 'text-[#A5AA91] opacity-50 cursor-not-allowed'
-                    : 'text-[#555848] hover:text-[#292B25] hover:bg-[#E5DED0]/50'
+                    ? 'text-[var(--accent-secondary)] opacity-50 cursor-not-allowed'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-alt)]/50'
                 }`}
               >
                 <Icon aria-hidden="true" className="w-4 h-4 shrink-0" />
                 <span className="text-center leading-tight break-words">{tab.label}</span>
                 {tab.badge !== undefined && tab.badge > 0 && (
-                  <span aria-hidden="true" className="absolute top-0 right-0 lg:static lg:ml-1 px-1.5 text-[10px] rounded-full bg-[#B49379] text-[#292B25] font-semibold">
+                  <span aria-hidden="true" className="absolute top-0 right-0 lg:static lg:ml-1 px-1.5 text-[10px] rounded-full bg-[#B49379] text-[var(--text-primary)] font-semibold">
                     {tab.badge}
                   </span>
                 )}

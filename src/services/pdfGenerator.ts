@@ -121,15 +121,15 @@ export function createReadingPDFContainer(reading: ReadingRecord, options?: Read
   reading.selectedVocabulary?.forEach((vocab, i) => {
     const trans = options?.vocabTranslations?.[vocab.id];
     const meaning = options?.showTranslation && trans?.meaning ? trans.meaning : vocab.meaningZh;
-    const exampleTrans = options?.showTranslation && trans?.exampleTranslation ? `<div style="margin-top: 4px; font-size: 12px; line-height: 1.45; color: #5F654D; font-family: system-ui, -apple-system, sans-serif;">${escapeHtml(trans.exampleTranslation)}</div>` : '';
+    const exampleTrans = options?.showTranslation && trans?.exampleTranslation ? `<div style="margin-top: 4px; font-size: 12px; line-height: 1.45; color: #264F3E; font-family: system-ui, -apple-system, sans-serif;">${escapeHtml(trans.exampleTranslation)}</div>` : '';
     
     vocabHtml += `
-      <div style="margin-bottom: 24px; padding: 16px; background-color: #F2EEE4; border: 1px solid #D4CCBC; border-radius: 6px; page-break-inside: avoid;">
-        <div style="font-weight: bold; font-size: 18px; color: #5F654D; margin-bottom: 8px;">
+      <div style="margin-bottom: 24px; padding: 16px; background-color: #F8F7F2; border: 1px solid #DEDACE; border-radius: 6px; page-break-inside: avoid;">
+        <div style="font-weight: bold; font-size: 18px; color: #264F3E; margin-bottom: 8px;">
           ${escapeHtml(vocab.term)} <span style="font-size: 12px; font-weight: normal; color: #717265; font-family: system-ui, -apple-system, sans-serif; margin-left: 6px;">${escapeHtml(vocab.phonetic || '')} [${escapeHtml(vocab.partOfSpeech)}] &mdash; ${escapeHtml(meaning)}</span>
         </div>
         <div style="font-size: 12px; line-height: 1.45; margin-bottom: 7px; font-family: system-ui, -apple-system, sans-serif;"><strong>Definition:</strong> ${escapeHtml(vocab.definitionEn)}</div>
-        <div style="font-size: 13px; line-height: 1.45; font-style: italic; color: #5F654D;">&ldquo;${escapeHtml(vocab.example)}&rdquo;</div>
+        <div style="font-size: 13px; line-height: 1.45; font-style: italic; color: #264F3E;">&ldquo;${escapeHtml(vocab.example)}&rdquo;</div>
         ${exampleTrans}
         ${vocab.collocations?.length ? `<div style="margin-top: 9px; font-size: 11px; line-height: 1.4; color: #717265; font-family: system-ui, -apple-system, sans-serif;">Collocations: ${vocab.collocations.map(escapeHtml).join(' &bull; ')}</div>` : ''}
       </div>
@@ -142,19 +142,19 @@ export function createReadingPDFContainer(reading: ReadingRecord, options?: Read
     const translation = options?.exerciseTranslations?.[ex.id] || options?.exerciseTranslations?.[String(i)];
     const meaning = typeof translation === 'string' ? translation : translation?.originalSentenceMeaning;
     const trans = options?.showTranslation && meaning
-      ? `<div style="margin-top: 4px; font-size: 13px; color: #5F654D; font-family: system-ui, -apple-system, sans-serif;">${escapeHtml(meaning)}</div>`
+      ? `<div style="margin-top: 4px; font-size: 13px; color: #264F3E; font-family: system-ui, -apple-system, sans-serif;">${escapeHtml(meaning)}</div>`
       : '';
       
     exerciseHtml += `
       <div style="margin-bottom: 32px; page-break-inside: avoid;">
         <div style="font-size: 16px; margin-bottom: 4px;">${i + 1}. Original: "${escapeHtml(ex.originalSentence)}"</div>
         ${trans}
-        <div style="font-size: 15px; font-weight: bold; color: #73785E; margin-top: 12px; margin-bottom: 24px;">Rewrite using "${escapeHtml(ex.target)}":</div>
+        <div style="font-size: 15px; font-weight: bold; color: #2C5945; margin-top: 12px; margin-bottom: 24px;">Rewrite using "${escapeHtml(ex.target)}":</div>
         <div style="border-bottom: 1px solid #B49379; height: 30px; margin-bottom: 16px;"></div>
       </div>
     `;
     answersHtml += `<div class="pdf-reference-answer" style="margin-bottom: 22px; break-inside: avoid; page-break-inside: avoid;">
-      <div style="font-size: 15px; font-weight: bold; color: #73785E; margin-bottom: 6px;">${i + 1}. ${escapeHtml(ex.target)}</div>
+      <div style="font-size: 15px; font-weight: bold; color: #2C5945; margin-bottom: 6px;">${i + 1}. ${escapeHtml(ex.target)}</div>
       <p style="margin: 0; font-size: 15px; line-height: 1.6;">${escapeHtml(ex.referenceAnswer)}</p>
     </div>`;
   });
@@ -163,7 +163,7 @@ export function createReadingPDFContainer(reading: ReadingRecord, options?: Read
 
   container.innerHTML = `
     <!-- Header -->
-    <div style="margin-bottom: 40px; border-bottom: 2px solid #D4CCBC; padding-bottom: 16px;">
+    <div style="margin-bottom: 40px; border-bottom: 2px solid #DEDACE; padding-bottom: 16px;">
       <h1 style="font-size: 32px; font-weight: bold; margin: 0 0 8px 0; color: #292B25;">${escapeHtml(title)}</h1>
       <div style="font-size: 13px; color: #717265; font-family: system-ui, -apple-system, sans-serif;">
         CEFR: ${escapeHtml(reading.cefrLevel)} | Type: ${escapeHtml(reading.readingType.toUpperCase())}${escapeHtml(languageLabel)}
@@ -172,24 +172,24 @@ export function createReadingPDFContainer(reading: ReadingRecord, options?: Read
 
     <!-- Part 1: Reading -->
     <div style="margin-bottom: 60px;">
-      <h2 style="font-size: 20px; font-weight: bold; color: #73785E; margin-bottom: 24px; font-family: system-ui, -apple-system, sans-serif;">Part 1 &mdash; Reading</h2>
+      <h2 style="font-size: 20px; font-weight: bold; color: #2C5945; margin-bottom: 24px; font-family: system-ui, -apple-system, sans-serif;">Part 1 &mdash; Reading</h2>
       ${readingHtml}
     </div>
 
     <!-- Part 2: Vocabulary -->
     <div style="margin-bottom: 60px; page-break-before: always;">
-      <h2 style="font-size: 20px; font-weight: bold; color: #73785E; margin-bottom: 24px; font-family: system-ui, -apple-system, sans-serif;">Part 2 &mdash; Vocabulary & Key Expressions</h2>
+      <h2 style="font-size: 20px; font-weight: bold; color: #2C5945; margin-bottom: 24px; font-family: system-ui, -apple-system, sans-serif;">Part 2 &mdash; Vocabulary & Key Expressions</h2>
       <div class="pdf-vocabulary-grid">${vocabHtml}</div>
     </div>
 
     <!-- Part 3: Exercises -->
     <div style="margin-bottom: 40px; page-break-before: always;">
-      <h2 style="font-size: 20px; font-weight: bold; color: #73785E; margin-bottom: 8px; font-family: system-ui, -apple-system, sans-serif;">Part 3 &mdash; Rewrite the Sentence Practice</h2>
+      <h2 style="font-size: 20px; font-weight: bold; color: #2C5945; margin-bottom: 8px; font-family: system-ui, -apple-system, sans-serif;">Part 3 &mdash; Rewrite the Sentence Practice</h2>
       <p style="font-size: 14px; color: #717265; margin-bottom: 32px; font-family: system-ui, -apple-system, sans-serif;">Rewrite each sentence using the designated target word or phrase to express the idea naturally.</p>
       ${exerciseHtml}
     </div>
     ${answersHtml ? `<section class="pdf-reference-answers" style="page-break-before: always; break-before: page;">
-      <h2 style="font-size: 20px; font-weight: bold; color: #73785E; margin-bottom: 24px; font-family: system-ui, -apple-system, sans-serif;">Reference Answers</h2>
+      <h2 style="font-size: 20px; font-weight: bold; color: #2C5945; margin-bottom: 24px; font-family: system-ui, -apple-system, sans-serif;">Reference Answers</h2>
       ${answersHtml}
     </section>` : ''}
   `;
@@ -199,14 +199,14 @@ export function createReadingPDFContainer(reading: ReadingRecord, options?: Read
     #pdf-container { box-sizing: border-box; }
     #pdf-container * { box-sizing: border-box; overflow-wrap: anywhere; }
     .pdf-reading-paragraph { margin: 0 0 16px; font-size: 16px; line-height: 1.65; }
-    .pdf-complete-translation { margin-top: 26px; padding-top: 18px; border-top: 1px solid #D4CCBC; }
-    .pdf-complete-translation h3 { margin: 0 0 14px; color: #73785E; font: 700 14px/1.4 system-ui, -apple-system, sans-serif; }
-    .pdf-translation-paragraph { margin: 0 0 14px; color: #5F654D; font: 14px/1.7 system-ui, -apple-system, sans-serif; }
+    .pdf-complete-translation { margin-top: 26px; padding-top: 18px; border-top: 1px solid #DEDACE; }
+    .pdf-complete-translation h3 { margin: 0 0 14px; color: #2C5945; font: 700 14px/1.4 system-ui, -apple-system, sans-serif; }
+    .pdf-translation-paragraph { margin: 0 0 14px; color: #264F3E; font: 14px/1.7 system-ui, -apple-system, sans-serif; }
     .pdf-dialogue-list { display: block; }
     .pdf-dialogue-turn { display: flex; align-items: flex-start; gap: 14px; margin: 0 0 12px; break-inside: avoid; page-break-inside: avoid; }
-    .pdf-dialogue-speaker { width: 86px; flex: 0 0 86px; padding-top: 2px; color: #5F654D; font: 700 13px/1.5 system-ui, -apple-system, sans-serif; text-transform: uppercase; }
+    .pdf-dialogue-speaker { width: 86px; flex: 0 0 86px; padding-top: 2px; color: #264F3E; font: 700 13px/1.5 system-ui, -apple-system, sans-serif; text-transform: uppercase; }
     .pdf-dialogue-speech { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; font-size: 16px; line-height: 1.6; }
-    .pdf-dialogue-translation .pdf-dialogue-speech { color: #5F654D; font: 14px/1.7 system-ui, -apple-system, sans-serif; }
+    .pdf-dialogue-translation .pdf-dialogue-speech { color: #264F3E; font: 14px/1.7 system-ui, -apple-system, sans-serif; }
     .pdf-vocabulary-grid { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px 3%; }
     .pdf-vocabulary-grid > div { width: 48.5%; min-width: 0; overflow-wrap: anywhere; margin-bottom: 0 !important; break-inside: avoid; page-break-inside: avoid; }
   `;

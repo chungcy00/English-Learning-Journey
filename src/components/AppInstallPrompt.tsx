@@ -66,13 +66,13 @@ export const AppInstallPrompt: React.FC = () => {
     <div
       role="dialog"
       aria-label="添加 Mine English 到主屏幕"
-      className="app-install-prompt fixed z-50 left-4 right-4 bottom-4 sm:left-auto sm:right-6 sm:w-[25rem] bg-[#FAF7F2] border border-[#62694D]/40 rounded-sm shadow-xl p-4 font-ui"
+      className="app-install-prompt fixed z-50 left-4 right-4 bottom-4 sm:left-auto sm:right-6 sm:w-[25rem] bg-[var(--surface-paper)] border border-[var(--accent-primary)]/40 rounded-sm shadow-xl p-4 font-ui"
     >
       <div className="flex items-start gap-3">
         <img src="/site-icon.png" alt="" className="w-12 h-12 object-contain flex-shrink-0" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-[#292B25]">添加 Mine English 到主屏幕</p>
-          <p className="text-xs text-[#555848] mt-1 leading-relaxed">
+          <p className="text-sm font-semibold text-[var(--text-primary)]">添加 Mine English 到主屏幕</p>
+          <p className="text-xs text-[var(--text-secondary)] mt-1 leading-relaxed">
             这是联网网站的主屏幕入口，不是独立安装包。关闭后重新打开会加载线上版本，使用中不会主动刷新。
           </p>
 
@@ -80,13 +80,13 @@ export const AppInstallPrompt: React.FC = () => {
             <button
               type="button"
               onClick={() => void install()}
-              className="min-h-11 mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#62694D] text-[#F2EEE4] rounded-sm text-xs font-medium"
+              className="min-h-11 mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] rounded-sm text-xs font-medium"
             >
               <Download className="w-3.5 h-3.5" />
               添加到主屏幕
             </button>
           ) : (
-            <div className="mt-3 flex items-start gap-2 text-xs text-[#5F654D] bg-[#E5DED0]/60 px-3 py-2 rounded-sm">
+            <div className="mt-3 flex items-start gap-2 text-xs text-[var(--accent-vocab)] bg-[var(--bg-alt)]/60 px-3 py-2 rounded-sm">
               <Share className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
               <span>
                 {isAppleDevice
@@ -100,7 +100,7 @@ export const AppInstallPrompt: React.FC = () => {
           type="button"
           onClick={dismiss}
           aria-label="关闭安装提示"
-          className="min-h-11 min-w-11 flex items-center justify-center shrink-0 text-[#555848] hover:text-[#292B25]"
+          className="min-h-11 min-w-11 flex items-center justify-center shrink-0 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
         >
           <X className="w-4 h-4" />
         </button>

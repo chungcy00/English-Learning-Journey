@@ -1,0 +1,532 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-07T00:21:30+08:00",
+  "title": "Design System: Mine English",
+  "extensions": {
+    "colorMeta": {
+      "bg-primary": {
+        "role": "neutral",
+        "displayName": "bg primary",
+        "tonalRamp": [
+          "oklch(0.15 0.00670 97.35)",
+          "oklch(0.26 0.00670 97.35)",
+          "oklch(0.38 0.00670 97.35)",
+          "oklch(0.49 0.00670 97.35)",
+          "oklch(0.61 0.00670 97.35)",
+          "oklch(0.72 0.00670 97.35)",
+          "oklch(0.84 0.00670 97.35)",
+          "oklch(0.95 0.00670 97.35)"
+        ]
+      },
+      "bg-alt": {
+        "role": "neutral",
+        "displayName": "bg alt",
+        "tonalRamp": [
+          "oklch(0.15 0.00937 99.99)",
+          "oklch(0.26 0.00937 99.99)",
+          "oklch(0.38 0.00937 99.99)",
+          "oklch(0.49 0.00937 99.99)",
+          "oklch(0.61 0.00937 99.99)",
+          "oklch(0.72 0.00937 99.99)",
+          "oklch(0.84 0.00937 99.99)",
+          "oklch(0.95 0.00937 99.99)"
+        ]
+      },
+      "text-primary": {
+        "role": "neutral",
+        "displayName": "text primary",
+        "tonalRamp": [
+          "oklch(0.15 0.01025 164.07)",
+          "oklch(0.26 0.01025 164.07)",
+          "oklch(0.38 0.01025 164.07)",
+          "oklch(0.49 0.01025 164.07)",
+          "oklch(0.61 0.01025 164.07)",
+          "oklch(0.72 0.01025 164.07)",
+          "oklch(0.84 0.01025 164.07)",
+          "oklch(0.95 0.01025 164.07)"
+        ]
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "text secondary",
+        "tonalRamp": [
+          "oklch(0.15 0.02133 150.24)",
+          "oklch(0.26 0.02133 150.24)",
+          "oklch(0.38 0.02133 150.24)",
+          "oklch(0.49 0.02133 150.24)",
+          "oklch(0.61 0.02133 150.24)",
+          "oklch(0.72 0.02133 150.24)",
+          "oklch(0.84 0.02133 150.24)",
+          "oklch(0.95 0.02133 150.24)"
+        ]
+      },
+      "accent-primary": {
+        "role": "primary",
+        "displayName": "accent primary",
+        "tonalRamp": [
+          "oklch(0.15 0.06062 163.14)",
+          "oklch(0.26 0.06062 163.14)",
+          "oklch(0.38 0.06062 163.14)",
+          "oklch(0.49 0.06062 163.14)",
+          "oklch(0.61 0.06062 163.14)",
+          "oklch(0.72 0.06062 163.14)",
+          "oklch(0.84 0.06062 163.14)",
+          "oklch(0.95 0.06062 163.14)"
+        ]
+      },
+      "accent-vocab": {
+        "role": "primary",
+        "displayName": "accent vocab",
+        "tonalRamp": [
+          "oklch(0.15 0.05515 164.74)",
+          "oklch(0.26 0.05515 164.74)",
+          "oklch(0.38 0.05515 164.74)",
+          "oklch(0.49 0.05515 164.74)",
+          "oklch(0.61 0.05515 164.74)",
+          "oklch(0.72 0.05515 164.74)",
+          "oklch(0.84 0.05515 164.74)",
+          "oklch(0.95 0.05515 164.74)"
+        ]
+      },
+      "accent-secondary": {
+        "role": "primary",
+        "displayName": "accent secondary",
+        "tonalRamp": [
+          "oklch(0.15 0.03361 159.83)",
+          "oklch(0.26 0.03361 159.83)",
+          "oklch(0.38 0.03361 159.83)",
+          "oklch(0.49 0.03361 159.83)",
+          "oklch(0.61 0.03361 159.83)",
+          "oklch(0.72 0.03361 159.83)",
+          "oklch(0.84 0.03361 159.83)",
+          "oklch(0.95 0.03361 159.83)"
+        ]
+      },
+      "accent-warm": {
+        "role": "neutral",
+        "displayName": "accent warm",
+        "tonalRamp": [
+          "oklch(0.15 0.05409 59.95)",
+          "oklch(0.26 0.05409 59.95)",
+          "oklch(0.38 0.05409 59.95)",
+          "oklch(0.49 0.05409 59.95)",
+          "oklch(0.61 0.05409 59.95)",
+          "oklch(0.72 0.05409 59.95)",
+          "oklch(0.84 0.05409 59.95)",
+          "oklch(0.95 0.05409 59.95)"
+        ]
+      },
+      "border-subtle": {
+        "role": "neutral",
+        "displayName": "border subtle",
+        "tonalRamp": [
+          "oklch(0.15 0.01676 91.57)",
+          "oklch(0.26 0.01676 91.57)",
+          "oklch(0.38 0.01676 91.57)",
+          "oklch(0.49 0.01676 91.57)",
+          "oklch(0.61 0.01676 91.57)",
+          "oklch(0.72 0.01676 91.57)",
+          "oklch(0.84 0.01676 91.57)",
+          "oklch(0.95 0.01676 91.57)"
+        ]
+      },
+      "surface-paper": {
+        "role": "neutral",
+        "displayName": "surface paper",
+        "tonalRamp": [
+          "oklch(0.15 0.00526 106.50)",
+          "oklch(0.26 0.00526 106.50)",
+          "oklch(0.38 0.00526 106.50)",
+          "oklch(0.49 0.00526 106.50)",
+          "oklch(0.61 0.00526 106.50)",
+          "oklch(0.72 0.00526 106.50)",
+          "oklch(0.84 0.00526 106.50)",
+          "oklch(0.95 0.00526 106.50)"
+        ]
+      },
+      "surface-white": {
+        "role": "neutral",
+        "displayName": "surface white",
+        "tonalRamp": [
+          "oklch(0.15 0.00000 89.88)",
+          "oklch(0.26 0.00000 89.88)",
+          "oklch(0.38 0.00000 89.88)",
+          "oklch(0.49 0.00000 89.88)",
+          "oklch(0.61 0.00000 89.88)",
+          "oklch(0.72 0.00000 89.88)",
+          "oklch(0.84 0.00000 89.88)",
+          "oklch(0.95 0.00000 89.88)"
+        ]
+      },
+      "surface-selected": {
+        "role": "neutral",
+        "displayName": "surface selected",
+        "tonalRamp": [
+          "oklch(0.15 0.00955 140.52)",
+          "oklch(0.26 0.00955 140.52)",
+          "oklch(0.38 0.00955 140.52)",
+          "oklch(0.49 0.00955 140.52)",
+          "oklch(0.61 0.00955 140.52)",
+          "oklch(0.72 0.00955 140.52)",
+          "oklch(0.84 0.00955 140.52)",
+          "oklch(0.95 0.00955 140.52)"
+        ]
+      },
+      "accent-hover": {
+        "role": "primary",
+        "displayName": "accent hover",
+        "tonalRamp": [
+          "oklch(0.15 0.05332 161.03)",
+          "oklch(0.26 0.05332 161.03)",
+          "oklch(0.38 0.05332 161.03)",
+          "oklch(0.49 0.05332 161.03)",
+          "oklch(0.61 0.05332 161.03)",
+          "oklch(0.72 0.05332 161.03)",
+          "oklch(0.84 0.05332 161.03)",
+          "oklch(0.95 0.05332 161.03)"
+        ]
+      },
+      "border-control": {
+        "role": "neutral",
+        "displayName": "border control",
+        "tonalRamp": [
+          "oklch(0.15 0.02438 159.88)",
+          "oklch(0.26 0.02438 159.88)",
+          "oklch(0.38 0.02438 159.88)",
+          "oklch(0.49 0.02438 159.88)",
+          "oklch(0.61 0.02438 159.88)",
+          "oklch(0.72 0.02438 159.88)",
+          "oklch(0.84 0.02438 159.88)",
+          "oklch(0.95 0.02438 159.88)"
+        ]
+      },
+      "border-selected": {
+        "role": "neutral",
+        "displayName": "border selected",
+        "tonalRamp": [
+          "oklch(0.15 0.03233 155.74)",
+          "oklch(0.26 0.03233 155.74)",
+          "oklch(0.38 0.03233 155.74)",
+          "oklch(0.49 0.03233 155.74)",
+          "oklch(0.61 0.03233 155.74)",
+          "oklch(0.72 0.03233 155.74)",
+          "oklch(0.84 0.03233 155.74)",
+          "oklch(0.95 0.03233 155.74)"
+        ]
+      },
+      "surface-warm": {
+        "role": "neutral",
+        "displayName": "surface warm",
+        "tonalRamp": [
+          "oklch(0.15 0.01237 91.52)",
+          "oklch(0.26 0.01237 91.52)",
+          "oklch(0.38 0.01237 91.52)",
+          "oklch(0.49 0.01237 91.52)",
+          "oklch(0.61 0.01237 91.52)",
+          "oklch(0.72 0.01237 91.52)",
+          "oklch(0.84 0.01237 91.52)",
+          "oklch(0.95 0.01237 91.52)"
+        ]
+      },
+      "surface-track": {
+        "role": "neutral",
+        "displayName": "surface track",
+        "tonalRamp": [
+          "oklch(0.15 0.01145 128.60)",
+          "oklch(0.26 0.01145 128.60)",
+          "oklch(0.38 0.01145 128.60)",
+          "oklch(0.49 0.01145 128.60)",
+          "oklch(0.61 0.01145 128.60)",
+          "oklch(0.72 0.01145 128.60)",
+          "oklch(0.84 0.01145 128.60)",
+          "oklch(0.95 0.01145 128.60)"
+        ]
+      },
+      "chart-a2": {
+        "role": "neutral",
+        "displayName": "chart a2",
+        "tonalRamp": [
+          "oklch(0.15 0.06062 163.14)",
+          "oklch(0.26 0.06062 163.14)",
+          "oklch(0.38 0.06062 163.14)",
+          "oklch(0.49 0.06062 163.14)",
+          "oklch(0.61 0.06062 163.14)",
+          "oklch(0.72 0.06062 163.14)",
+          "oklch(0.84 0.06062 163.14)",
+          "oklch(0.95 0.06062 163.14)"
+        ]
+      },
+      "chart-b1": {
+        "role": "neutral",
+        "displayName": "chart b1",
+        "tonalRamp": [
+          "oklch(0.15 0.05961 161.96)",
+          "oklch(0.26 0.05961 161.96)",
+          "oklch(0.38 0.05961 161.96)",
+          "oklch(0.49 0.05961 161.96)",
+          "oklch(0.61 0.05961 161.96)",
+          "oklch(0.72 0.05961 161.96)",
+          "oklch(0.84 0.05961 161.96)",
+          "oklch(0.95 0.05961 161.96)"
+        ]
+      },
+      "chart-b2": {
+        "role": "neutral",
+        "displayName": "chart b2",
+        "tonalRamp": [
+          "oklch(0.15 0.03361 159.83)",
+          "oklch(0.26 0.03361 159.83)",
+          "oklch(0.38 0.03361 159.83)",
+          "oklch(0.49 0.03361 159.83)",
+          "oklch(0.61 0.03361 159.83)",
+          "oklch(0.72 0.03361 159.83)",
+          "oklch(0.84 0.03361 159.83)",
+          "oklch(0.95 0.03361 159.83)"
+        ]
+      },
+      "chart-c1": {
+        "role": "neutral",
+        "displayName": "chart c1",
+        "tonalRamp": [
+          "oklch(0.15 0.02236 149.66)",
+          "oklch(0.26 0.02236 149.66)",
+          "oklch(0.38 0.02236 149.66)",
+          "oklch(0.49 0.02236 149.66)",
+          "oklch(0.61 0.02236 149.66)",
+          "oklch(0.72 0.02236 149.66)",
+          "oklch(0.84 0.02236 149.66)",
+          "oklch(0.95 0.02236 149.66)"
+        ]
+      },
+      "chart-unknown": {
+        "role": "neutral",
+        "displayName": "chart unknown",
+        "tonalRamp": [
+          "oklch(0.15 0.02893 85.67)",
+          "oklch(0.26 0.02893 85.67)",
+          "oklch(0.38 0.02893 85.67)",
+          "oklch(0.49 0.02893 85.67)",
+          "oklch(0.61 0.02893 85.67)",
+          "oklch(0.72 0.02893 85.67)",
+          "oklch(0.84 0.02893 85.67)",
+          "oklch(0.95 0.02893 85.67)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "page": {
+        "displayName": "Page title",
+        "purpose": "Editorial page heading; component overrides and responsive sizes are documented in DESIGN.md."
+      },
+      "section": {
+        "displayName": "Section heading",
+        "purpose": "UI headings; chart retains compact section sizing."
+      },
+      "term": {
+        "displayName": "Learning term",
+        "purpose": "Editorial vocabulary titles."
+      },
+      "reading": {
+        "displayName": "Reading",
+        "purpose": "Editorial English passage text."
+      },
+      "example": {
+        "displayName": "Example",
+        "purpose": "Editorial learning examples."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "UI prose and topic input."
+      },
+      "translation": {
+        "displayName": "Translation",
+        "purpose": "UI-family translations with longer line height."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Compact helper and control text."
+      },
+      "meta": {
+        "displayName": "Metadata",
+        "purpose": "Dates and counts; tabular figures where implemented."
+      }
+    },
+    "shadows": [
+      {
+        "name": "selected-cefr",
+        "value": "0 2px 6px rgb(32 38 35 / 9%)",
+        "purpose": "Selected CEFR segment only."
+      },
+      {
+        "name": "generate-action",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 5%)",
+        "purpose": "Incumbent Tailwind extra-small generation action shadow."
+      },
+      {
+        "name": "reading-tab",
+        "value": "0 1px 4px rgb(41 43 37 / 8%)",
+        "purpose": "Incumbent selected reading tab; outside the batch finish review."
+      }
+    ],
+    "motion": [
+      {
+        "name": "native-choice",
+        "value": "border-color 160ms ease, background-color 160ms ease",
+        "purpose": "Native select state changes."
+      },
+      {
+        "name": "vocabulary-highlight",
+        "value": "background-color 0.15s ease-in-out, color 0.15s ease-in-out",
+        "purpose": "Incumbent interactive vocabulary emphasis."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact",
+        "value": "640px"
+      },
+      {
+        "name": "wide",
+        "value": "1024px"
+      },
+      {
+        "name": "wide-collection",
+        "value": "1280px"
+      }
+    ],
+    "focus": {
+      "outline": "2px solid var(--accent-vocab)",
+      "outlineOffset": "3px",
+      "selectOutline": "2px solid var(--accent-primary)"
+    },
+    "provenance": {
+      "source": "src/index.css CSS custom properties and implemented HomeView, ReadingHistoryView, ReadingLevelPieChart, Navbar",
+      "documentedAtLocalDate": "2026-10-07",
+      "reviewScope": "First batch only: shared palette, Home, learning settings, History, saved-reading distribution.",
+      "screenshots": [
+        ".impeccable/review/desktop.png",
+        ".impeccable/review/mobile.png",
+        ".impeccable/review/history-desktop.png",
+        ".impeccable/review/history-mobile.png"
+      ],
+      "rasterAssetsGenerated": false,
+      "deviceEvidence": "Browser desktop/mobile layouts; no claim of physical-device verification.",
+      "tonalRampPurpose": "Synthesized OKLCH dark-to-light preview strips; same source hue/chroma. Not shipping CSS tokens."
+    }
+  },
+  "components": [
+    {
+      "name": "Generate button",
+      "kind": "button",
+      "refersTo": "button-generate",
+      "description": "Integrated composer action; disabled until topic input is available.",
+      "html": "<div class=\"ds-scope\"><button class=\"ds-generate\" type=\"button\">生成短文</button></div>",
+      "css": ".ds-scope{font-family:var(--font-app);color:var(--text-primary)}.ds-generate{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:9.5rem;padding:.625rem 1.25rem;background:var(--accent-primary);color:var(--bg-primary);font:500 1rem/1.5 var(--font-app);border:0;border-radius:4px;box-shadow:0 1px 2px 0 rgb(0 0 0 / 5%);transition:all 150ms}.ds-generate:hover{background:var(--accent-vocab)}.ds-generate:disabled{opacity:.5}.ds-scope :is(button,textarea,select):focus-visible{outline:2px solid var(--accent-vocab);outline-offset:3px}"
+    },
+    {
+      "name": "Continue button",
+      "kind": "button",
+      "refersTo": "button-continue",
+      "description": "Pill action used in saved-reading cards.",
+      "html": "<div class=\"ds-scope\"><button class=\"ds-continue\" type=\"button\">继续阅读<svg aria-hidden=\"true\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></button></div>",
+      "css": ".ds-scope{font-family:var(--font-app);color:var(--text-primary)}.ds-continue{display:inline-flex;align-items:center;justify-content:center;gap:.75rem;min-height:44px;padding:.5rem 1rem;border:0;border-radius:999px;background:var(--accent-primary);color:var(--surface-paper);font:1rem var(--font-app)}.ds-continue:hover{background:var(--accent-hover)}.ds-scope :is(button,textarea,select):focus-visible{outline:2px solid var(--accent-vocab);outline-offset:3px}"
+    },
+    {
+      "name": "Topic composer",
+      "kind": "input",
+      "refersTo": "composer",
+      "description": "Visible label and UI-font textarea on a paper surface; preview omits the separately rendered generation action.",
+      "html": "<div class=\"ds-scope\"><section class=\"ds-composer\"><label for=\"ds-topic\">学习主题或英文词汇</label><textarea id=\"ds-topic\" rows=\"3\" placeholder=\"例如：Small talk at work 或 genuine, break the ice\"></textarea></section></div>",
+      "css": ".ds-scope{font-family:var(--font-app);color:var(--text-primary)}.ds-composer{display:grid;gap:.25rem;min-height:12.75rem;padding:1.25rem 1.375rem;background:var(--surface-paper);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:none}.ds-composer label{font:500 .875rem/1.5 var(--font-app)}.ds-composer textarea{width:100%;min-height:5.5rem;padding:.25rem 0;resize:none;border:0;background:transparent;color:var(--text-primary);font:1rem/1.625 var(--font-app)}.ds-composer textarea::placeholder{font:1rem var(--font-app);color:var(--text-secondary);opacity:1}.ds-composer:focus-within{border-color:var(--accent-primary);box-shadow:0 0 0 1px color-mix(in srgb,var(--accent-primary) 30%,transparent)}@media(max-width:639px){.ds-composer{padding:1rem;min-height:14rem}}.ds-scope :is(button,textarea,select):focus-visible{outline:2px solid var(--accent-vocab);outline-offset:3px}"
+    },
+    {
+      "name": "Main navigation",
+      "kind": "nav",
+      "refersTo": "nav-active",
+      "description": "Representative tabs from the existing sticky header; full application contains four tabs.",
+      "html": "<div class=\"ds-scope\"><nav class=\"ds-nav\" aria-label=\"主导航\"><button type=\"button\" aria-current=\"page\">生成短文</button><button type=\"button\">当前阅读</button><button type=\"button\">练习与生词</button><button type=\"button\">历史记录</button></nav></div>",
+      "css": ".ds-scope{font-family:var(--font-app);color:var(--text-primary)}.ds-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.25rem}.ds-nav button{min-height:48px;min-width:0;padding:.375rem .25rem;border:0;border-radius:4px;background:transparent;color:var(--text-secondary);font:500 11px/1.25 var(--font-app)}.ds-nav button[aria-current=\"page\"]{background:var(--bg-alt);color:var(--text-primary);border-bottom:2px solid var(--accent-primary)}.ds-nav button:not([aria-current]):hover{background:color-mix(in srgb,var(--bg-alt) 50%,transparent);color:var(--text-primary)}.ds-nav button:disabled{color:var(--accent-secondary);opacity:.5;cursor:not-allowed}@media(min-width:1024px){.ds-nav{display:flex;gap:.5rem}.ds-nav button{min-height:44px;padding-inline:.75rem;font-size:.875rem}}.ds-scope :is(button,textarea,select):focus-visible{outline:2px solid var(--accent-vocab);outline-offset:3px}"
+    },
+    {
+      "name": "Parameter pills",
+      "kind": "chip",
+      "refersTo": "choice",
+      "description": "Single-choice pill group with explicit selected state.",
+      "html": "<div class=\"ds-scope\"><div class=\"ds-choices\" role=\"group\" aria-label=\"文体\"><button type=\"button\" aria-pressed=\"true\">故事</button><button type=\"button\" aria-pressed=\"false\">对话</button><button type=\"button\" aria-pressed=\"false\">说明</button><button type=\"button\" aria-pressed=\"false\">随机</button></div></div>",
+      "css": ".ds-scope{font-family:var(--font-app);color:var(--text-primary)}.ds-choices{display:flex;flex-wrap:wrap;gap:.5rem}.ds-choices button{min-height:44px;padding:.5rem .875rem;border:1px solid var(--border-subtle);border-radius:999px;background:transparent;color:var(--text-secondary);font:1rem var(--font-app)}.ds-choices button[aria-pressed=\"true\"]{background:var(--accent-primary);color:var(--surface-paper);border-color:var(--accent-primary)}.ds-choices button:not([aria-pressed=\"true\"]):hover{background:var(--bg-alt)}.ds-choices button:disabled{opacity:.45;cursor:not-allowed}.ds-scope :is(button,textarea,select):focus-visible{outline:2px solid var(--accent-vocab);outline-offset:3px}"
+    },
+    {
+      "name": "History card",
+      "kind": "card",
+      "refersTo": "history-card",
+      "description": "Illustrative saved-reading title and badges; application content always comes from actual records.",
+      "html": "<div class=\"ds-scope\"><article class=\"ds-history\"><h2>Small talk at work</h2><div class=\"ds-badges\"><span class=\"ds-level\">B1</span><span>对话</span><span>中 · 150–200 词</span></div><div class=\"ds-footer\"><span>保存日期</span><button type=\"button\">继续阅读</button></div></article></div>",
+      "css": ".ds-scope{font-family:var(--font-app);color:var(--text-primary)}.ds-history{padding:1.5rem;border:1px solid var(--border-subtle);border-radius:12px;background:var(--surface-paper)}.ds-history h2{margin:0;font:600 clamp(1.375rem,2vw,1.75rem)/1.3 var(--font-editorial);overflow-wrap:anywhere}.ds-badges{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0 1.25rem;font-size:.875rem}.ds-badges span{padding:.375rem .75rem;border-radius:999px;background:var(--bg-alt)}.ds-badges .ds-level{background:var(--accent-primary);color:var(--surface-paper)}.ds-footer{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.75rem;color:var(--text-secondary);font-size:.875rem}.ds-footer button{min-height:44px;padding:.5rem 1rem;border:0;border-radius:999px;background:var(--accent-primary);color:var(--surface-paper);font:1rem var(--font-app)}.ds-footer button:hover{background:var(--accent-hover)}@media(max-width:639px){.ds-history{padding:1rem}}.ds-scope :is(button,textarea,select):focus-visible{outline:2px solid var(--accent-vocab);outline-offset:3px}"
+    },
+    {
+      "name": "CEFR segments",
+      "kind": "custom",
+      "refersTo": "level-selected",
+      "description": "Four visible levels; pressed segment has paper fill, green text, and a small state shadow.",
+      "html": "<div class=\"ds-scope\"><div class=\"ds-levels\" role=\"group\" aria-label=\"CEFR 难度等级\"><button type=\"button\" aria-pressed=\"false\"><span>A2</span><span>入门</span></button><button type=\"button\" aria-pressed=\"true\"><span>B1</span><span>进阶</span></button><button type=\"button\" aria-pressed=\"false\"><span>B2</span><span>中高</span></button><button type=\"button\" aria-pressed=\"false\"><span>C1</span><span>高级</span></button></div></div>",
+      "css": ".ds-scope{font-family:var(--font-app);color:var(--text-primary)}.ds-levels{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.25rem;padding:.375rem;border-radius:16px;background:var(--bg-alt)}.ds-levels button{display:grid;gap:.125rem;min-height:64px;padding:.5rem .25rem;border:0;border-radius:12px;background:transparent;color:var(--text-primary);font:1rem var(--font-app)}.ds-levels button>span:first-child{font-weight:700}.ds-levels button[aria-pressed=\"true\"]{background:var(--surface-paper);color:var(--accent-primary);box-shadow:0 2px 6px rgb(32 38 35 / 9%)}.ds-levels button:disabled{opacity:.45;cursor:not-allowed}.ds-scope :is(button,textarea,select):focus-visible{outline:2px solid var(--accent-vocab);outline-offset:3px}"
+    },
+    {
+      "name": "Vocabulary stepper",
+      "kind": "custom",
+      "refersTo": "stepper-button",
+      "description": "Circular decrement/increment controls; application disables boundaries at 1 and 20.",
+      "html": "<div class=\"ds-scope\"><div class=\"ds-stepper\" role=\"group\" aria-label=\"精选词汇\"><button type=\"button\" aria-label=\"减少精选词汇\"><svg aria-hidden=\"true\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M5 12h14\"/></svg></button><output aria-label=\"精选词汇数量\">8</output><button type=\"button\" aria-label=\"增加精选词汇\"><svg aria-hidden=\"true\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M5 12h14M12 5v14\"/></svg></button><span>个</span></div></div>",
+      "css": ".ds-scope{font-family:var(--font-app);color:var(--text-primary)}.ds-stepper{display:flex;align-items:center;gap:var(--space-control);font-size:1rem}.ds-stepper button{display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid var(--border-subtle);border-radius:50%;background:transparent;color:var(--text-primary)}.ds-stepper output{min-width:2ch;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}.ds-stepper button:disabled{opacity:.45;cursor:not-allowed}.ds-scope :is(button,textarea,select):focus-visible{outline:2px solid var(--accent-vocab);outline-offset:3px}"
+    },
+    {
+      "name": "Native style select",
+      "kind": "input",
+      "refersTo": "select",
+      "description": "Native menu retains keyboard and touch behavior; chevron is inline SVG.",
+      "html": "<div class=\"ds-scope\"><div class=\"ds-select-wrap\"><select class=\"ds-select\" aria-label=\"风格\"><option>Auto（自动匹配）</option><option>Natural（日常自然）</option></select><svg aria-hidden=\"true\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><path d=\"m6 9 6 6 6-6\"/></svg></div></div>",
+      "css": ".ds-scope{font-family:var(--font-app);color:var(--text-primary)}.ds-select-wrap{position:relative;display:inline-block;max-width:100%}.ds-select-wrap>svg{position:absolute;right:.75rem;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--accent-vocab)}.ds-select{appearance:none;min-height:44px;max-width:100%;padding:.625rem 2.5rem .625rem .875rem;border:1px solid var(--border-control);border-radius:10px;background:var(--surface-paper);color:var(--text-primary);font:1rem/1.5 var(--font-app);cursor:pointer;transition:border-color 160ms ease,background-color 160ms ease}.ds-select:enabled:hover{border-color:var(--accent-primary);background:var(--bg-primary)}.ds-select:focus-visible{outline:2px solid var(--accent-primary);outline-offset:3px;border-color:var(--accent-primary)}.ds-select:disabled{opacity:.55;cursor:not-allowed}@media(forced-colors:active){.ds-select{appearance:auto;padding-right:.875rem}.ds-select-wrap>svg{display:none}}.ds-scope :is(button,textarea,select):focus-visible{outline:2px solid var(--accent-vocab);outline-offset:3px}"
+    },
+    {
+      "name": "Saved-reading distribution",
+      "kind": "custom",
+      "description": "Illustrative two-series data for component preview only; shipping counts and percentages derive from saved records.",
+      "html": "<div class=\"ds-scope\"><section class=\"ds-chart\"><h2>已保存短文等级分布</h2><div class=\"ds-chart-body\"><svg class=\"ds-pie\" viewBox=\"0 0 200 200\" role=\"img\" aria-label=\"示例等级分布，具体篇数和占比见文字图例\"><path class=\"ds-a2\" d=\"M100 100L100 6A94 94 0 1 1 100 194Z\"/><path class=\"ds-b1\" d=\"M100 100L100 194A94 94 0 1 1 100 6Z\"/></svg><ul class=\"ds-legend\"><li><span class=\"ds-key ds-a2\"></span><span>A2</span><span>1 篇</span><span>50%</span></li><li><span class=\"ds-key ds-b1\"></span><span>B1</span><span>1 篇</span><span>50%</span></li></ul></div></section></div>",
+      "css": ".ds-scope{font-family:var(--font-app);color:var(--text-primary)}.ds-chart{border-top:1px solid var(--border-subtle);padding-block:var(--space-group)}.ds-chart h2{margin:0 0 1.25rem;font:600 1.375rem/1.3 var(--font-app)}.ds-chart-body{display:flex;flex-wrap:wrap;align-items:center;gap:1.5rem 2rem}.ds-pie{width:160px;height:160px;flex-shrink:0}.ds-pie path{stroke:var(--surface-paper);stroke-width:2}.ds-legend{display:grid;gap:var(--space-control);list-style:none;padding:0;margin:0;font-size:.875rem}.ds-legend li{display:grid;grid-template-columns:1rem 3ch 5ch 6ch;gap:var(--space-control);align-items:center;font-variant-numeric:tabular-nums}.ds-key{width:.75rem;height:.75rem;border-radius:50%}.ds-a2{fill:var(--chart-a2);background:var(--chart-a2)}.ds-b1{fill:var(--chart-b1);background:var(--chart-b1)}.ds-scope :is(button,textarea,select):focus-visible{outline:2px solid var(--accent-vocab);outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Compact learning workspace",
+    "overview": "Mine English uses warm white surfaces, forest green actions, and green-gray supporting text. The confirmed compact type sizes and existing Inter/Cormorant Garamond pairing remain part of the system. Interface controls support the learning task through visible labels, clear selected states, and accessible focus outlines.\n\nThis document captures the implemented shared palette and the first reviewed batch: Home, learning settings, reading history, and the saved-reading level chart. Other existing screens provide incumbent evidence, but their presence here does not claim completion or finish review of later implementation phases. CSS custom properties in `src/index.css` are the source of truth; frontmatter records their current values and observed component dimensions.",
+    "keyCharacteristics": [
+      "Warm white backgrounds and forest green actions.",
+      "Compact controls with room for readable learning text.",
+      "Rounded surfaces, pill choices, and visible keyboard focus.",
+      "Factual saved-reading metadata and labeled chart values."
+    ],
+    "rules": [
+      {
+        "name": "The Source of Truth Rule",
+        "body": "Reuse the root CSS custom properties for shared palette decisions; preserve the chart's semantic series names.",
+        "section": "colors"
+      },
+      {
+        "name": "The Confirmed Type Rule",
+        "body": "Preserve the existing font pairing and confirmed compact sizes; keep the composer input and placeholder in the UI family at (1rem).",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do reuse the root CSS palette and existing UI/editorial font families.",
+      "Do preserve visible focus outlines, actual pressed states, and implemented disabled boundaries.",
+      "Do use wrapping content and the observed responsive spacing for compact screens.",
+      "Do pair chart colors with textual levels, counts, and percentages from actual saved data."
+    ],
+    "donts": [
+      "Don't reintroduce the replaced olive palette or borrow the demo's colors.",
+      "Don't enlarge the confirmed compact type scale or style the topic placeholder as editorial text.",
+      "Don't interpret incumbent local radii or semantic status colors as permission to normalize unrelated screens.",
+      "Don't describe saved-reading distribution as completion, ability, or mastery."
+    ]
+  }
+}

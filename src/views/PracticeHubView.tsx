@@ -19,7 +19,7 @@ export function PracticeHubView({ exerciseCount, vocabularyCount, onOpenRewrite,
         <FilePenLine aria-hidden="true" className="practice-entry-icon" />
         <div>
           <h2 id="practice-rewrite-title" className="font-editorial font-semibold">Rewrite the Sentence</h2>
-          <p className="type-label font-ui text-[#555848] mt-2">{exerciseCount ? `${exerciseCount} 道改写练习` : '当前短文暂无改写练习'}</p>
+          <p className="type-label font-ui text-[var(--text-secondary)] mt-2">{exerciseCount ? `${exerciseCount} 道改写练习` : '当前短文暂无改写练习'}</p>
         </div>
         <button type="button" onClick={onOpenRewrite} className="practice-entry-action">
           进入练习 <ArrowRight aria-hidden="true" className="w-4 h-4" />
@@ -29,7 +29,7 @@ export function PracticeHubView({ exerciseCount, vocabularyCount, onOpenRewrite,
         <BookOpen aria-hidden="true" className="practice-entry-icon" />
         <div>
           <h2 id="practice-wordbook-title" className="font-editorial font-semibold">我的生词本</h2>
-          <p className="type-label font-ui text-[#555848] mt-2">已添加 {vocabularyCount} 个表达</p>
+          <p className="type-label font-ui text-[var(--text-secondary)] mt-2">已添加 {vocabularyCount} 个表达</p>
         </div>
         <button type="button" onClick={onOpenWordbook} className="practice-entry-action">
           查看生词本 <ArrowRight aria-hidden="true" className="w-4 h-4" />

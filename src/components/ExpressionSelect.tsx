@@ -24,13 +24,13 @@ export function ExpressionSelect({ options, value, disabled, loading, onOpen, on
   }, [open, active, id]);
   const choose = (term: string) => { setOpen(false); trigger.current?.focus(); onChange(term); };
   const label = (option: ExpressionOption) => <>
-    <span className="type-example">{option.term}</span> <span className="type-label italic text-[#555848]">{option.type}</span>
+    <span className="type-example">{option.term}</span> <span className="type-label italic text-[var(--text-secondary)]">{option.type}</span>
     {option.selected && <span aria-label="已选"> ☑️</span>}
   </>;
   return <div ref={root} className="relative min-w-0 flex-1 basis-64" onBlur={event => {
     if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false);
   }}>
-    <span id={`${id}-label`} className="block mb-1.5 text-[#292B25]">选择文中的单词、短语或习语</span>
+    <span id={`${id}-label`} className="block mb-1.5 text-[var(--text-primary)]">选择文中的单词、短语或习语</span>
     <button ref={trigger} type="button" role="combobox" aria-label="选择当前短文的同级表达"
       aria-haspopup="listbox" aria-controls={`${id}-list`} aria-expanded={open}
       aria-activedescendant={open && options[active] ? `${id}-${active}` : undefined}
@@ -46,18 +46,18 @@ export function ExpressionSelect({ options, value, disabled, loading, onOpen, on
         else if (open && ['Enter', ' '].includes(event.key)) {
           event.preventDefault(); if (options[active]) choose(options[active].term);
         }
-      }} className="w-full min-h-11 flex items-center justify-between gap-3 px-3 py-2 text-base text-left border border-[#D4CCBC] rounded-sm bg-[#F2EEE4] text-[#292B25] focus-visible:outline-2 focus-visible:outline-[#5F654D] disabled:opacity-50">
+      }} className="w-full min-h-11 flex items-center justify-between gap-3 px-3 py-2 text-base text-left border border-[var(--border-subtle)] rounded-sm bg-[var(--bg-primary)] text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--accent-vocab)] disabled:opacity-50">
       <span className="min-w-0 break-words">{chosen ? label(chosen) : '请选择文中的表达'}</span>
       <ChevronDown aria-hidden="true" className="w-4 h-4 shrink-0" />
     </button>
     {open && <div id={`${id}-list`} role="listbox" aria-labelledby={`${id}-label`}
-      className="expression-options absolute top-full left-0 right-0 mt-2 z-30 max-h-72 overflow-y-auto border border-[#D4CCBC] bg-[#FAF7F2] shadow-lg">
-      {loading && <p role="status" className="p-3 text-sm text-[#555848]">正在识别短文中的表达…</p>}
-      {!loading && !options.length && <p className="p-3 text-sm text-[#555848]">暂无可选的同级表达</p>}
+      className="expression-options absolute top-full left-0 right-0 mt-2 z-30 max-h-72 overflow-y-auto border border-[var(--border-subtle)] bg-[var(--surface-paper)] shadow-lg">
+      {loading && <p role="status" className="p-3 text-sm text-[var(--text-secondary)]">正在识别短文中的表达…</p>}
+      {!loading && !options.length && <p className="p-3 text-sm text-[var(--text-secondary)]">暂无可选的同级表达</p>}
       {options.map((option, index) => <button key={option.term} id={`${id}-${index}`} type="button"
         role="option" aria-selected={option.term === value} tabIndex={-1}
         onPointerMove={() => { keyboardNavigation.current = false; setActive(index); }} onClick={() => choose(option.term)}
-        className={`w-full text-left px-3 py-2.5 text-base break-words border-b border-[#D4CCBC]/50 last:border-0 ${active === index ? 'bg-[#E5DED0]' : 'hover:bg-[#E5DED0]/60'}`}>
+        className={`w-full text-left px-3 py-2.5 text-base break-words border-b border-[var(--border-subtle)]/50 last:border-0 ${active === index ? 'bg-[var(--bg-alt)]' : 'hover:bg-[var(--bg-alt)]/60'}`}>
         {label(option)}
       </button>)}
     </div>}

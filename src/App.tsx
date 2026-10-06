@@ -401,7 +401,7 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col bg-[#F2EEE4] text-[#292B25] selection:bg-[#62694D]/20 ${softwareKeyboardOpen ? 'software-keyboard-open' : ''}`}
+    <div className={`min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] selection:bg-[var(--accent-primary)]/20 ${softwareKeyboardOpen ? 'software-keyboard-open' : ''}`}
       style={{ '--review-nav-offset': isInstalledApp ? '4.5rem' : undefined } as React.CSSProperties}>
       {/* Web navigation; installed phone/tablet software uses the bottom tabs. */}
       {!isInstalledApp && (
@@ -521,6 +521,7 @@ export default function App() {
               setActiveTab('reading');
             }}
             onDeleteReading={handleDeleteReading}
+            onCreateReading={() => setActiveTab('home')}
           />
         )}
 

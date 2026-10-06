@@ -18,7 +18,7 @@ export function RewritePracticeView({ reading, targetLanguage, onBack }: { readi
     <button type="button" onClick={onBack} className="practice-back"><ArrowLeft aria-hidden="true" className="w-4 h-4" />练习与生词</button>
     <header className="practice-detail-heading">
       <div><h1 className="type-page font-editorial font-semibold">Rewrite the Sentence</h1>
-        <p className="type-body font-ui text-[#555848] mt-2">使用指定词汇，用自己的方式重新表达原句。</p></div>
+        <p className="type-body font-ui text-[var(--text-secondary)] mt-2">使用指定词汇，用自己的方式重新表达原句。</p></div>
     </header>
     {reading && exercises.length ? <div className="rewrite-workspace">
       <aside className="rewrite-progress-panel" aria-labelledby="rewrite-progress-title">

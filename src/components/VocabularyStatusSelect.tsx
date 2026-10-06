@@ -6,7 +6,7 @@ export function VocabularyStatusSelect({ vocab, onUpdate }: { vocab: VocabularyI
   const [error, setError] = useState('');
   return <div className="font-ui" onClick={event => event.stopPropagation()}>
     <select aria-label={`${vocab.term} 的学习状态`} value={vocab.status} disabled={pending}
-      className="min-h-11 max-w-full text-sm px-3 py-2 rounded-sm border border-[#9B9D8F] bg-[#FAF7F2] text-[#292B25] disabled:opacity-60"
+      className="min-h-11 max-w-full text-sm px-3 py-2 rounded-sm border border-[#9B9D8F] bg-[var(--surface-paper)] text-[var(--text-primary)] disabled:opacity-60"
       onChange={async event => {
         const status = event.target.value as VocabStatus;
         setPending(true);

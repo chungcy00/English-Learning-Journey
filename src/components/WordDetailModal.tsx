@@ -47,22 +47,22 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
   const content = (
     <>
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 border-b border-[#D4CCBC] pb-4 mb-5">
+        <div className="flex items-start justify-between gap-3 border-b border-[var(--border-subtle)] pb-4 mb-5">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-3">
-              <h2 id="word-detail-title" className="type-section font-editorial font-semibold text-[#5F654D] break-words">
+              <h2 id="word-detail-title" className="type-section font-editorial font-semibold text-[var(--accent-vocab)] break-words">
                 {vocab.term}
               </h2>
               <button
                 onClick={playPronunciation}
                 title="Listen to pronunciation"
                 aria-label={`播放 ${vocab.term} 的发音`}
-                className="min-h-11 min-w-11 flex items-center justify-center p-2 rounded-full hover:bg-[#E5DED0] text-[#5F654D] transition-colors shrink-0"
+                className="min-h-11 min-w-11 flex items-center justify-center p-2 rounded-full hover:bg-[var(--bg-alt)] text-[var(--accent-vocab)] transition-colors shrink-0"
               >
                 <Volume2 className="w-4 h-4" />
               </button>
             </div>
-            <div className="type-label flex flex-wrap items-center gap-2 mt-1 text-[#555848] font-ui">
+            <div className="type-label flex flex-wrap items-center gap-2 mt-1 text-[var(--text-secondary)] font-ui">
               {vocab.phonetic && <span>{vocab.phonetic}</span>}
               <span>•</span>
               <span className="italic">{vocab.partOfSpeech}</span>
@@ -75,7 +75,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
             data-dialog-initial-focus
             aria-label="关闭词汇详情"
             onClick={onClose}
-            className="min-h-11 min-w-11 flex items-center justify-center p-2 rounded-sm text-[#555848] hover:text-[#292B25] hover:bg-[#E5DED0] transition-colors shrink-0"
+            className="min-h-11 min-w-11 flex items-center justify-center p-2 rounded-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-alt)] transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>}
@@ -85,35 +85,35 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
         <div className="space-y-5 text-sm">
           {/* Target Language Meaning */}
           <div>
-            <span className="text-xs uppercase tracking-wider text-[#555848] font-ui block mb-1 font-medium">
+            <span className="text-xs uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-1 font-medium">
               {getI18nText(targetLanguage, 'targetMeaningLabel')}
             </span>
-            <p className="font-ui text-base font-medium text-[#292B25] bg-[#E5DED0]/50 p-2.5 rounded-sm border border-[#D4CCBC]/50">
+            <p className="font-ui text-base font-medium text-[var(--text-primary)] bg-[var(--bg-alt)]/50 p-2.5 rounded-sm border border-[var(--border-subtle)]/50">
               {localizedMeaning || '暂无释义'}
             </p>
           </div>
 
           {/* English Definition */}
           <div>
-            <span className="text-xs uppercase tracking-wider text-[#555848] font-ui block mb-1">
+            <span className="text-xs uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-1">
               {getI18nText(targetLanguage, 'enDefinitionLabel')}
             </span>
-            <p className="type-example font-editorial text-[#292B25]">
+            <p className="type-example font-editorial text-[var(--text-primary)]">
               {vocab.definitionEn}
             </p>
           </div>
 
           {/* Example Sentence */}
           <div>
-            <span className="text-xs uppercase tracking-wider text-[#555848] font-ui block mb-1">
+            <span className="text-xs uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-1">
               {getI18nText(targetLanguage, 'exampleLabel')}
             </span>
-            <div className="bg-[#E5DED0]/30 p-3 rounded-sm border-l border-[#62694D] space-y-1.5">
-              <p className="type-example font-editorial italic text-[#5F654D]">
+            <div className="bg-[var(--bg-alt)]/30 p-3 rounded-sm border-l border-[var(--accent-primary)] space-y-1.5">
+              <p className="type-example font-editorial italic text-[var(--accent-vocab)]">
                 "{vocab.example}"
               </p>
               {localizedExample && (
-                <p className="type-body font-ui text-[#555848] pt-1 border-t border-[#D4CCBC]/40">
+                <p className="type-body font-ui text-[var(--text-secondary)] pt-1 border-t border-[var(--border-subtle)]/40">
                   {localizedExample}
                 </p>
               )}
@@ -123,14 +123,14 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
           {/* Collocations */}
           {vocab.collocations && vocab.collocations.length > 0 && (
             <div>
-              <span className="text-xs uppercase tracking-wider text-[#555848] font-ui block mb-2">
+              <span className="text-xs uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-2">
                 {getI18nText(targetLanguage, 'collocationsLabel')}
               </span>
               <div className="flex flex-wrap gap-2">
                 {vocab.collocations.map((col, idx) => (
                   <span
                     key={idx}
-                    className="type-example font-editorial px-2.5 py-1 bg-[#E5DED0] text-[#292B25] rounded-sm border border-[#D4CCBC]"
+                    className="type-example font-editorial px-2.5 py-1 bg-[var(--bg-alt)] text-[var(--text-primary)] rounded-sm border border-[var(--border-subtle)]"
                   >
                     {col}
                   </span>
@@ -141,15 +141,15 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="mt-8 pt-4 border-t border-[#D4CCBC] flex flex-wrap gap-3 items-center justify-between">
-          {isInWordbook && <span className="type-label flex items-center gap-1 text-[#5F654D] font-ui"><Check aria-hidden="true" className="w-4 h-4" />{getI18nText(targetLanguage, 'inWordbook')}</span>}
+        <div className="mt-8 pt-4 border-t border-[var(--border-subtle)] flex flex-wrap gap-3 items-center justify-between">
+          {isInWordbook && <span className="type-label flex items-center gap-1 text-[var(--accent-vocab)] font-ui"><Check aria-hidden="true" className="w-4 h-4" />{getI18nText(targetLanguage, 'inWordbook')}</span>}
           <button
             onClick={() => onToggleWordbook(vocab)}
             aria-label={`${isInWordbook ? '移出生词本' : '加入生词本'}：${vocab.term}`}
             className={`type-label flex items-center gap-2 min-h-11 px-4 py-2 rounded-sm  font-medium font-ui transition-all ${
               isInWordbook
-                ? 'bg-[#5F654D] text-[#F2EEE4] hover:bg-[#555848]'
-                : 'bg-[#62694D] text-[#F2EEE4] hover:bg-[#5F654D]'
+                ? 'bg-[var(--accent-vocab)] text-[var(--bg-primary)] hover:bg-[var(--text-secondary)]'
+                : 'bg-[var(--accent-primary)] text-[var(--bg-primary)] hover:bg-[var(--accent-vocab)]'
             }`}
           >
             {isInWordbook ? (
@@ -167,7 +167,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
 
           {!inline && !embedded && <button
             onClick={onClose}
-            className="type-label min-h-11 px-4 py-2 font-ui text-[#555848] hover:text-[#292B25] hover:bg-[#E5DED0] rounded-sm transition-colors"
+            className="type-label min-h-11 px-4 py-2 font-ui text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-alt)] rounded-sm transition-colors"
           >
             {getI18nText(targetLanguage, 'close')}
           </button>}
@@ -185,6 +185,6 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
       </details>
     </aside>
   ) : (
-    <dialog ref={dialogRef} aria-labelledby="word-detail-title" onCancel={onClose} className="app-dialog word-detail-dialog w-[calc(100%_-_2rem)] max-w-lg bg-[#F2EEE4] text-[#292B25] border border-[#D4CCBC] rounded-sm p-6 sm:p-8 shadow-lg m-auto break-words">{content}</dialog>
+    <dialog ref={dialogRef} aria-labelledby="word-detail-title" onCancel={onClose} className="app-dialog word-detail-dialog w-[calc(100%_-_2rem)] max-w-lg bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-subtle)] rounded-sm p-6 sm:p-8 shadow-lg m-auto break-words">{content}</dialog>
   );
 };

@@ -29,27 +29,35 @@ test('continue reading only appears for a real current passage and uses its actu
   assert.match(html, /B1 · 1 个精选词汇/);
 });
 
-test('all reading parameters stay available inside a closed native disclosure', () => {
+test('all reading parameters are directly available without a disclosure', () => {
   const html = render();
-  const details = html.match(/<details\b[^>]*>[\s\S]*?<\/details>/)![0];
-  assert.doesNotMatch(details, /^<details[^>]*\bopen(?:=|\s|>)/);
-  assert.match(details, /aria-labelledby="cefr-label"/);
-  assert.match(details, /aria-labelledby="vocab-count-label"/);
-  for (const id of ['reading-type', 'reading-length', 'reading-style']) assert.match(details, new RegExp(`id="${id}"`));
-  for (const style of READING_STYLES) assert.match(details, new RegExp(`value="${style.value}"`));
+  assert.doesNotMatch(html, /<details|<summary/);
+  assert.match(html, /aria-labelledby="cefr-label"/);
+  assert.match(html, /aria-labelledby="vocab-count-label"/);
+  for (const id of ['reading-type', 'reading-length', 'reading-style']) assert.match(html, new RegExp(`id="${id}"`));
+  for (const style of READING_STYLES) assert.match(html, new RegExp(`value="${style.value}"`));
 });
 
-test('saved parameters and the collapsed summary agree without resetting defaults', () => {
+test('saved parameters stay selected without resetting defaults', () => {
   const html = render();
-  assert.match(html, /aria-pressed="true"[^>]*>B2<\/button>/);
-  assert.match(html, /aria-pressed="true"[^>]*>10<\/button>/);
-  assert.match(html, /value="dialogue" selected=""/);
-  assert.match(html, /value="long" selected=""/);
+  assert.match(html, /aria-pressed="true"[^>]*><span>B2<\/span>/);
+  assert.match(html, /aria-label="精选词汇数量">10<\/output>/);
+  assert.match(html, /aria-pressed="true"[^>]*>对话<\/button>/);
+  assert.match(html, /aria-pressed="true"[^>]*>长 · 250–350 词<\/button>/);
   assert.match(html, /value="warm" selected=""/);
-  assert.match(html, /B2 · 情境对话 · 250–350 词 · 10 个词 · Warm（温暖治愈）/);
   assert.match(html, /能力参考：理解较复杂内容，清楚表达观点与理由。/);
   assert.match(html, /aria-describedby="cefr-ability-hint"/);
   assert.match(html, /<label for="generation-input"/);
   assert.doesNotMatch(html, /将按词表处理/);
   assert.doesNotMatch(html, /Generation Settings|自然叙述与对话|自动 Humanise|语境记忆与AI反馈|学习册随身练习/);
+});
+
+test('loading blocks parameter changes and vocabulary controls expose bounded steps', () => {
+  const html = render(true);
+  assert.match(html, /aria-label="减少精选词汇" disabled=""/);
+  assert.match(html, /aria-label="增加精选词汇" disabled=""/);
+  assert.match(html, /生成中…/);
+  const source = readFileSync(new URL('../views/HomeView.tsx', import.meta.url), 'utf8');
+  assert.match(source, /vocabCount <= 1/);
+  assert.match(source, /vocabCount >= 20/);
 });

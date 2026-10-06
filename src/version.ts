@@ -1,9 +1,9 @@
-export const APP_VERSION = 'V2.4.26';
+export const APP_VERSION = 'V2.4.27';
 
-export const VERSION_HISTORY_COUNT = 45;
+export const VERSION_HISTORY_COUNT = 46;
 
 export const CURRENT_RELEASE_NOTES = [
-  '全站完善手机安全区、输入与键盘遮挡适配',
-  '极窄屏复习评分与历史操作重新排布',
-  '改善短屏弹窗及阅读词条触控尺寸',
+  '全站采用暖白与深森林绿配色',
+  '学习参数全部展开，支持 1–20 个精选词汇',
+  '历史卡片精简展示，新增真实短文等级分布',
 ];

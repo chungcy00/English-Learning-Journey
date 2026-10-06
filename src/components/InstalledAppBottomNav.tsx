@@ -25,7 +25,7 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
   return (
     <nav
       aria-label="软件主导航"
-      className="installed-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-[#D4CCBC] bg-[#FAF7F2]/95 backdrop-blur-md shadow-[0_-4px_18px_rgba(41,43,37,0.08)]"
+      className="installed-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border-subtle)] bg-[var(--surface-paper)]/95 backdrop-blur-md shadow-[0_-4px_18px_rgba(41,43,37,0.08)]"
     >
       <div className="mx-auto grid max-w-3xl grid-cols-4 px-1 pt-1.5 pb-[calc(0.4rem+env(safe-area-inset-bottom))]">
         {tabs.map((tab) => {
@@ -41,18 +41,18 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
               aria-current={isActive ? 'page' : undefined}
               className={`relative flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-lg font-ui transition-colors ${
                 isActive
-                  ? 'text-[#292B25]'
+                  ? 'text-[var(--text-primary)]'
                   : tab.disabled
-                    ? 'text-[#A5AA91] opacity-45'
-                    : 'text-[#555848] active:bg-[#E5DED0]/70'
+                    ? 'text-[var(--accent-secondary)] opacity-45'
+                    : 'text-[var(--text-secondary)] active:bg-[var(--bg-alt)]/70'
               }`}
             >
               <span className={`relative flex h-7 min-w-11 items-center justify-center rounded-full ${
-                isActive ? 'bg-[#62694D]/15' : ''
+                isActive ? 'bg-[var(--accent-primary)]/15' : ''
               }`}>
                 <Icon aria-hidden="true" className={`h-5 w-5 ${isActive ? 'stroke-[2.4]' : ''}`} />
                 {tab.badge !== undefined && tab.badge > 0 ? (
-                  <span aria-hidden="true" className="absolute -right-1 -top-1 min-w-4 rounded-full bg-[#B49379] px-1 text-[9px] font-semibold leading-4 text-[#292B25]">
+                  <span aria-hidden="true" className="absolute -right-1 -top-1 min-w-4 rounded-full bg-[#B49379] px-1 text-[9px] font-semibold leading-4 text-[var(--text-primary)]">
                     {tab.badge > 99 ? '99+' : tab.badge}
                   </span>
                 ) : null}

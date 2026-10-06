@@ -43,5 +43,5 @@ test('generation selectors and history card actions have concise accessible name
   const wordbook = read('../views/WordbookView.tsx');
   assert.match(wordbook, /aria-label="生成短文的类型"/);
   assert.match(wordbook, /aria-label="生成短文的篇幅"/);
-  assert.match(read('../views/ReadingHistoryView.tsx'), /aria-label=\{`打开短文：\$\{item.title\}`\}/);
+  assert.match(read('../views/ReadingHistoryView.tsx'), /aria-label=\{`继续阅读：\$\{item.title\}`\}/);
 });

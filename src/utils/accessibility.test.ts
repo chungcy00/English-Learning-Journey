@@ -48,9 +48,9 @@ test('normal-size secondary text, button text, placeholders and warm badge text 
   const token = (name: string) => css.match(new RegExp(`--${name}: (#[A-Fa-f0-9]{6})`))![1];
   for (const [foreground, background] of [
     [token('text-secondary'), token('bg-primary')], [token('text-secondary'), token('bg-alt')],
-    [token('bg-primary'), token('accent-primary')], ['#646657', token('bg-primary')],
+    [token('bg-primary'), token('accent-primary')], [token('text-secondary'), token('surface-paper')],
     [token('text-primary'), token('accent-warm')], ['#77543D', token('bg-alt')],
-    ...['#5F654D', '#77543D', '#4B6B6E', '#7A5868'].map(background => ['#FAF7F2', background]),
+    ...[token('accent-vocab'), '#77543D', '#4B6B6E', '#7A5868'].map(background => [token('surface-paper'), background]),
   ]) {
     const levels = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
     assert.ok((levels[0] + 0.05) / (levels[1] + 0.05) >= 4.5, `${foreground} on ${background}`);

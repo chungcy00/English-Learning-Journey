@@ -9,12 +9,12 @@ interface LanguageSelectorProps {
 export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ targetLanguage, onLanguageChange }) => {
   return (
     <div className="select-with-icon inline-flex items-center">
-      <Languages aria-hidden="true" className="w-4 h-4 text-[#555848]" />
+      <Languages aria-hidden="true" className="w-4 h-4 text-[var(--text-secondary)]" />
       <select
         aria-label="选择释义语言"
         value={targetLanguage}
         onChange={(e) => onLanguageChange(e.target.value)}
-        className="pl-9 pr-8 py-2 bg-[#F2EEE4] hover:bg-[#E5DED0] border border-[#D4CCBC] text-xs font-ui text-[#292B25] rounded-sm appearance-none cursor-pointer transition-colors focus:outline-none focus:border-[#62694D]"
+        className="pl-9 pr-8 py-2 bg-[var(--bg-primary)] hover:bg-[var(--bg-alt)] border border-[var(--border-subtle)] text-xs font-ui text-[var(--text-primary)] rounded-sm appearance-none cursor-pointer transition-colors focus:outline-none focus:border-[var(--accent-primary)]"
       >
         <option value="zh-CN">🇨🇳 中文 (简体)</option>
         <option value="zh-TW">🇹🇼 中文 (繁體)</option>
