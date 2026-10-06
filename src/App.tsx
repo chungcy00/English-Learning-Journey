@@ -12,6 +12,7 @@ import { ProcessingModal } from './components/ProcessingModal';
 import { AppInstallPrompt } from './components/AppInstallPrompt';
 import { InstalledAppBottomNav } from './components/InstalledAppBottomNav';
 import { HomeView } from './views/HomeView';
+import { RecoveryNotice } from './components/RecoveryNotice';
 import { ReadingView } from './views/ReadingView';
 import { WordbookView } from './views/WordbookView';
 import { ReviewView } from './views/ReviewView';
@@ -93,6 +94,7 @@ export default function App() {
   const [isRewriting, setIsRewriting] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [storageError, setStorageError] = useState('');
   const [isInstalledApp, setIsInstalledApp] = useState(
     () => isManualUpdateApp()
   );
@@ -137,12 +139,14 @@ export default function App() {
       setAppSettings(savedSettings);
       setReadings(allR);
       setVocabularies(allV);
+      setStorageError('');
 
       if (allR.length > 0 && !currentReading) {
         setCurrentReading(allR[0]);
       }
     } catch (err) {
       console.error('Error loading database data:', err);
+      setStorageError('本机学习数据读取失败。请检查浏览器存储权限后重试，不要清除网站数据。');
     }
   }, [currentReading]);
 
@@ -416,6 +420,7 @@ export default function App() {
 
       {/* Main Content Router */}
       <main className={`min-w-0 flex-1 ${isInstalledApp ? 'pb-[calc(5rem+env(safe-area-inset-bottom))]' : ''}`}>
+        {storageError && <div className="max-w-3xl mx-auto px-4 pt-4"><RecoveryNotice message={storageError} onRetry={() => void loadData()} /></div>}
         {errorMessage && (
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4">
             <div role="alert" className="bg-[#FAF3F0] border border-[#D98E7B]/40 text-[#7D3220] px-4 py-3 rounded-sm text-sm font-ui flex items-center justify-between shadow-xs">

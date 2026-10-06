@@ -12,6 +12,7 @@ import { translateVocabularies } from '../services/api';
 import { speakEnglishTerm } from '../utils/speech';
 import { ReviewFlipCard } from '../components/ReviewFlipCard';
 import { reviewIntervalDays } from '../utils/reviewSchedule';
+import { RecoveryNotice } from '../components/RecoveryNotice';
 
 interface ReviewViewProps {
   embedded?: boolean;
@@ -49,6 +50,8 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   activeId.current = reviewList[currentIndex]?.id;
   const previousIds = useRef(allVocabularies.map(item => item.id));
   const [isTranslatingCurrent, setIsTranslatingCurrent] = useState(false);
+  const [translationError, setTranslationError] = useState('');
+  const [translationRetry, setTranslationRetry] = useState(0);
 
   // Keep this session's order stable. Rating moves an item's due date forward;
   // replacing the list with the shortened due list here would skip the next card.
@@ -80,6 +83,8 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
 
   // Auto translate current vocabulary item if targetLanguage is not zh-CN and translation is missing
   useEffect(() => {
+    setTranslationError('');
+    setIsTranslatingCurrent(false);
     if (!currentVocab || !targetLanguage || targetLanguage === 'zh-CN') return;
     if (currentVocab.translations?.[targetLanguage]?.meaning) return;
 
@@ -88,8 +93,10 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
 
     translateVocabularies([currentVocab], targetLanguage)
       .then((results) => {
-        if (!isMounted || !results) return;
+        if (!isMounted) return;
+        if (!results) throw new Error('未返回释义翻译');
         const tr = results[currentVocab.id] || results[currentVocab.term.toLowerCase()];
+        if (!tr?.meaning) throw new Error('未返回有效释义');
         if (tr) {
           const updatedItem: VocabularyItem = {
             ...currentVocab,
@@ -104,7 +111,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
           );
         }
       })
-      .catch((err) => console.warn('Review vocab translate failed:', err))
+      .catch(() => { if (isMounted) setTranslationError('释义翻译失败，已有释义仍可使用。请稍后重试。'); })
       .finally(() => {
         if (isMounted) setIsTranslatingCurrent(false);
       });
@@ -112,7 +119,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [currentVocab?.id, targetLanguage]);
+  }, [currentVocab?.id, targetLanguage, translationRetry]);
 
   const handleStartReviewAll = () => {
     setReviewList(allVocabularies);
@@ -210,6 +217,8 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
           </select>
         </div>
       </div>
+
+      {translationError && <RecoveryNotice message={translationError} pending={isTranslatingCurrent} onRetry={() => setTranslationRetry(value => value + 1)} />}
 
       {/* When finished or the wordbook is empty */}
       {sessionCompleted || reviewList.length === 0 ? (

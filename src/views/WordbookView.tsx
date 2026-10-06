@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { RecoveryNotice } from '../components/RecoveryNotice';
 import {
   Search,
   CheckSquare,
@@ -71,6 +72,8 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   const [detailVocab, setDetailVocab] = useState<VocabularyItem | null>(null);
   const isWideLayout = useWideLayout();
   const [isTranslating, setIsTranslating] = useState(false);
+  const [translationError, setTranslationError] = useState('');
+  const [translationRetry, setTranslationRetry] = useState(0);
   const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [isAdding, setIsAdding] = useState(false);
@@ -122,6 +125,8 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
   // Auto-translate vocabulary items for the selected target language if needed
   useEffect(() => {
+    setTranslationError('');
+    setIsTranslating(false);
     if (!targetLanguage || targetLanguage === 'zh-CN') return;
 
     const needsTranslation = vocabularyList.filter(
@@ -136,7 +141,8 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
     const batch = needsTranslation.slice(0, 30);
     translateVocabularies(batch, targetLanguage)
       .then((results) => {
-        if (!isMounted || !results || Object.keys(results).length === 0) return;
+        if (!isMounted) return;
+        if (!results || !batch.some(item => (results[item.id] || results[item.term.toLowerCase()])?.meaning)) throw new Error('未返回有效释义翻译');
         const updatedList = vocabularyList.map((item) => {
           const tr = results[item.id] || results[item.term.toLowerCase()];
           if (tr) {
@@ -152,7 +158,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         });
         onBatchUpdateVocabularies(updatedList);
       })
-      .catch((err) => console.warn('Vocab batch translate failed:', err))
+      .catch(() => { if (isMounted) setTranslationError('释义翻译失败，已保存词条没有改变。请稍后重试。'); })
       .finally(() => {
         if (isMounted) setIsTranslating(false);
       });
@@ -160,7 +166,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [targetLanguage, vocabularyList]);
+  }, [targetLanguage, vocabularyList, translationRetry]);
 
   // Generation parameters when generating from Wordbook (PRD Section 20)
   const [readingType, setReadingType] = useState<ReadingType>('story');
@@ -371,6 +377,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
 
       <div className="wordbook-workspace">
       <div className="wordbook-collection-panel">
+      {translationError && <RecoveryNotice message={translationError} pending={isTranslating} onRetry={() => setTranslationRetry(value => value + 1)} />}
       {/* Filter Tabs & Multi-select Toolbar */}
       <section className="wordbook-controls" aria-label="筛选生词本">
       <div className="wordbook-saved-search font-ui">
@@ -425,8 +432,9 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         {filtered.length === 0 ? (
           <div className="text-center py-12 bg-[var(--bg-alt)]/20 border border-[var(--border-subtle)] rounded-sm">
             <p className="type-body font-ui text-[var(--text-secondary)]">
-              {vocabularyList.length === 0 ? '暂无词条，可在上方搜索添加。' : '没有匹配的词条，请清空筛选文字或选择全部状态。'}
+              {vocabularyList.length === 0 ? '暂无词条，可在上方搜索添加。' : '没有匹配的词条。'}
             </p>
+            {vocabularyList.length > 0 && <button type="button" onClick={() => { setCollectionSearch(''); setStatusFilter('All'); }} className="type-label font-ui min-h-11 mt-3 px-4 py-2 border border-[var(--border-control)] rounded-sm">清除筛选</button>}
           </div>
         ) : (
           filtered.map((vocab) => {

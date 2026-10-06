@@ -225,6 +225,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [translationError, setTranslationError] = useState<string | null>(null);
   const [copiedTranslation, setCopiedTranslation] = useState<boolean>(false);
+  const [copyError, setCopyError] = useState('');
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
@@ -655,12 +656,14 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
   const handleCopyTranslation = async () => {
     if (!currentTranslation) return;
+    setCopyError('');
     try {
       await navigator.clipboard.writeText(`${currentTranslation.title}\n\n${currentTranslation.translatedContent}`);
       setCopiedTranslation(true);
       setTimeout(() => setCopiedTranslation(false), 2000);
     } catch (e) {
       console.error('Copy failed:', e);
+      setCopyError('复制失败，请允许剪贴板访问，或直接选择译文复制。');
     }
   };
 
@@ -1197,6 +1200,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
             {/* Translation Content */}
             <div className="reading-prose text-[var(--text-primary)] flex-1">
+              {copyError && <p role="alert" className="type-label font-ui text-red-700 mb-3">{copyError}</p>}
+              {copiedTranslation && <p role="status" className="type-label font-ui text-[var(--accent-vocab)] mb-3">译文已复制</p>}
               {currentTranslation && isTranslating && <p role="status" className="type-label font-ui mb-4 text-[var(--text-secondary)]">正在更新翻译，原译文仍可阅读…</p>}
               {currentTranslation && translationError && <div className="mb-4">
                 <p role="alert" className="type-label font-ui text-red-700">{translationError}</p>
