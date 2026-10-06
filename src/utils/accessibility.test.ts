@@ -24,6 +24,8 @@ test('word details use a named native dialog and explicit removal, not a mislead
   assert.match(html, /aria-label="关闭词汇详情"/);
   assert.match(html, /aria-label="移出生词本：break the ice"/);
   assert.match(html, /移出生词本<\/span>/);
+  assert.match(html, /class="word-detail-body[^\"]*" tabindex="0" aria-label="词汇释义、例句与搭配"/);
+  assert.match(html, /class="word-detail-actions/);
 });
 
 test('rendering a removal request does not delete anything and provides a safe cancel-first choice', () => {

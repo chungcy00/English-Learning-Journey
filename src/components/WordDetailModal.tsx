@@ -63,8 +63,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
               </button>
             </div>
             <div className="type-label flex flex-wrap items-center gap-2 mt-1 text-[var(--text-secondary)] font-ui">
-              {vocab.phonetic && <span>{vocab.phonetic}</span>}
-              <span>•</span>
+              {vocab.phonetic && <><span>{vocab.phonetic}</span><span aria-hidden="true">·</span></>}
               <span className="italic">{vocab.partOfSpeech}</span>
               <span>•</span>
               <span className="italic">{vocab.type}</span>
@@ -82,7 +81,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <div className="space-y-5 text-sm">
+        <div className="word-detail-body space-y-5 text-sm" tabIndex={0} aria-label="词汇释义、例句与搭配">
           {/* Target Language Meaning */}
           <div>
             <span className="text-xs uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-1 font-medium">
@@ -141,7 +140,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="mt-8 pt-4 border-t border-[var(--border-subtle)] flex flex-wrap gap-3 items-center justify-between">
+        <div className="word-detail-actions mt-8 pt-4 border-t border-[var(--border-subtle)] flex flex-wrap gap-3 items-center justify-between">
           {isInWordbook && <span className="type-label flex items-center gap-1 text-[var(--accent-vocab)] font-ui"><Check aria-hidden="true" className="w-4 h-4" />{getI18nText(targetLanguage, 'inWordbook')}</span>}
           <button
             onClick={() => onToggleWordbook(vocab)}
