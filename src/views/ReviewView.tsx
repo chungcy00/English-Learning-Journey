@@ -10,6 +10,8 @@ import {
 } from '../utils/i18n';
 import { translateVocabularies } from '../services/api';
 import { speakEnglishTerm } from '../utils/speech';
+import { ReviewFlipCard } from '../components/ReviewFlipCard';
+import { reviewIntervalDays } from '../utils/reviewSchedule';
 
 interface ReviewViewProps {
   embedded?: boolean;
@@ -198,6 +200,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
             onChange={(e) => onLanguageChange(e.target.value)}
             className="type-label bg-transparent min-h-11 font-ui font-medium text-[var(--text-primary)] focus:outline-none cursor-pointer"
             title="切换复习释义语言"
+            aria-label="切换复习释义语言"
           >
             {SUPPORTED_LANGUAGES.map((lang) => (
               <option key={lang.code} value={lang.code}>
@@ -272,7 +275,14 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
           </div>
 
           {/* Flashcard Card (PRD Section 28) */}
-          <div className="review-flashcard bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-sm p-6 sm:p-10 min-h-[320px] flex flex-col justify-between">
+          <ReviewFlipCard revealed={isRevealed} front={<div className="review-flashcard review-front-card p-6 sm:p-10">
+            <button type="button" aria-label={`播放 ${currentVocab.term} 的发音`} onClick={() => playVoice(currentVocab.term)} className="min-h-11 min-w-11 flex items-center justify-center ml-auto rounded-sm hover:bg-[var(--bg-alt)]"><Volume2 aria-hidden="true" className="w-4 h-4" /></button>
+            <h2 className="font-editorial font-semibold text-[var(--accent-vocab)] text-center break-words">{currentVocab.term}</h2>
+            <p className="type-label font-ui text-[var(--text-secondary)] text-center mt-2">{currentVocab.phonetic} · {currentVocab.partOfSpeech}</p>
+            <button type="button" data-flip-focus onClick={() => setIsRevealed(true)} className="review-flip-button type-label font-ui min-h-11 px-5 py-2 bg-[var(--accent-primary)] text-[var(--surface-paper)] rounded-sm">翻转查看释义</button>
+          </div>}>
+          <div className="review-flashcard bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-sm p-6 sm:p-10 flex flex-col justify-between">
+            <button type="button" data-flip-focus onClick={() => setIsRevealed(false)} disabled={isSaving} className="type-label min-h-11 font-ui px-3 py-2 self-start rounded-sm border border-[var(--border-subtle)] mb-3">翻回词条</button>
             {/* Front: Term & Phonetic */}
             <div className="space-y-4">
               <div className="flex items-center justify-end">
@@ -305,7 +315,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
               </div>
 
               {/* Revealable Details */}
-              {isRevealed ? (
+              {(
                 <div className="space-y-4 pt-4 border-t border-[var(--border-subtle)] text-left animate-fadeIn">
                   {/* Localized Meaning */}
                   <div>
@@ -369,15 +379,6 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                     </details>
                   )}
                 </div>
-              ) : (
-                <div className="text-center py-6">
-                  <button
-                    onClick={() => setIsRevealed(true)}
-                    className="type-label min-h-11 px-6 py-2.5 bg-[var(--bg-alt)] hover:bg-[var(--bg-alt)]/80 text-[var(--text-primary)] font-ui font-medium border border-[var(--border-subtle)] rounded-sm transition-colors"
-                  >
-                    {getI18nText(targetLanguage, 'revealDetails', '显示详细释义与例句 (Reveal Details)')}
-                  </button>
-                </div>
               )}
             </div>
 
@@ -390,7 +391,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                 >
                   <span className="type-label font-ui font-semibold text-[#854C3C] block">Again</span>
                   <span className="type-meta text-[var(--text-secondary)] font-ui block">
-                    {getI18nText(targetLanguage, 'againHint', '今天再复习')}
+                    30 分钟后
                   </span>
                 </button>
 
@@ -410,7 +411,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                 >
                   <span className="type-label font-ui font-semibold text-[var(--accent-vocab)] block">Good</span>
                   <span className="type-meta text-[var(--text-secondary)] font-ui block">
-                    {getI18nText(targetLanguage, 'goodHint', '3 天后')}
+                    {reviewIntervalDays('Good', currentVocab.currentInterval)} 天后
                   </span>
                 </button>
 
@@ -420,7 +421,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                 >
                   <span className="type-label font-ui font-semibold text-[var(--bg-primary)] block">Easy</span>
                   <span className="type-meta text-[var(--bg-primary)] font-ui block">
-                    {getI18nText(targetLanguage, 'easyHint', '7 天后')}
+                    {reviewIntervalDays('Easy', currentVocab.currentInterval)} 天后
                   </span>
                 </button>
               </fieldset>
@@ -431,6 +432,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
               <button onClick={() => handleRating(failedRating)} className="min-h-11 px-3 border rounded-sm mt-2">重试保存</button>
             </div>}
           </div>
+          </ReviewFlipCard>
         </div>
       )}
     </div>

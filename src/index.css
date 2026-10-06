@@ -976,6 +976,18 @@ main {
 .review-page h1, .history-page h1 { font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.2; }
 .review-flashcard { max-width: 61rem; margin-inline: auto; border-radius: 16px; background: var(--surface-paper); }
 .review-flashcard { position: relative; }
+.review-flip-stage { perspective: 1400px; max-width: 61rem; margin-inline: auto; }
+.review-flip-inner { position: relative; transform-style: preserve-3d; transition: transform 450ms cubic-bezier(.16, 1, .3, 1); }
+.review-flip-inner.is-revealed { transform: rotateY(180deg); }
+.review-flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; min-width: 0; }
+.review-flip-back { transform: rotateY(180deg); }
+.review-flip-face[aria-hidden="true"] { position: absolute; inset: 0; visibility: hidden; pointer-events: none; }
+.review-front-card { border: 1px solid var(--border-subtle); min-height: 18rem; display: flex; flex-direction: column; justify-content: center; gap: 1rem; }
+.review-flip-button { align-self: center; margin-top: 1rem; }
+.review-flip-stage .review-rating-bar { position: static; background: transparent; }
+@media (prefers-reduced-motion: reduce) {
+  .review-flip-inner, .review-flip-inner.is-revealed, .review-flip-back { transform: none; transition: none; }
+}
 .review-flashcard h2 { font-size: 2.5rem; line-height: 1.3; }
 .review-flashcard > .space-y-4 > .flex:first-child { position: absolute; top: 1.5rem; right: 1.5rem; }
 .review-flashcard > .space-y-4 > .text-center { padding-block: 0.5rem; margin-top: 0; padding-inline: 2.5rem; }

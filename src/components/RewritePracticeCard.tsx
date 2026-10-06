@@ -185,9 +185,9 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
               {evaluation.issues.map((issue, idx) => (
                 <div key={idx} className="type-body font-ui space-y-0.5">
                   <div className="flex flex-wrap items-center gap-3 break-words">
-                    <span className="text-[#854C3C]">❌ {issue.original}</span>
+                    <span className="text-[#854C3C]">原表达：{issue.original}</span>
                     <ArrowRight className="w-3 h-3 text-[var(--text-secondary)]" />
-                    <span className="text-[var(--accent-vocab)] font-medium">✅ {issue.correction}</span>
+                    <span className="text-[var(--accent-vocab)] font-medium">建议：{issue.correction}</span>
                   </div>
                   {issue.explanation && (
                     <p className="type-body text-[var(--text-secondary)] pl-1">

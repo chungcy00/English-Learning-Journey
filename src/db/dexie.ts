@@ -2,6 +2,7 @@ import Dexie, { Table } from 'dexie';
 import { ReadingRecord, VocabularyItem, ReviewLog, AppSettings, VocabStatus, ReviewRating } from '../types';
 import { planReadingVocabularySync } from '../utils/readingVocabulary';
 import { preserveCatalogue } from '../utils/expressionCache';
+import { reviewIntervalDays } from '../utils/reviewSchedule';
 
 export interface RewriteRecord {
   id?: number;
@@ -277,20 +278,16 @@ export async function updateVocabularyReview(vocabId: string, rating: ReviewRati
   if (!vocab) throw new Error('词条已不存在，请刷新复习列表');
 
   const now = Date.now();
-  let intervalDays = 0;
+  const intervalDays = reviewIntervalDays(rating, vocab.currentInterval);
   let newStatus: VocabStatus = vocab.status;
 
   if (rating === 'Again') {
-    intervalDays = 0;
     newStatus = 'Difficult';
   } else if (rating === 'Hard') {
-    intervalDays = 1;
     newStatus = vocab.status === 'New' ? 'Learning' : vocab.status;
   } else if (rating === 'Good') {
-    intervalDays = vocab.currentInterval === 0 ? 3 : Math.max(3, vocab.currentInterval * 1.5);
     newStatus = vocab.reviewCount >= 3 ? 'Mastered' : 'Learning';
   } else if (rating === 'Easy') {
-    intervalDays = vocab.currentInterval === 0 ? 7 : Math.max(7, vocab.currentInterval * 2);
     newStatus = 'Mastered';
   }
 
