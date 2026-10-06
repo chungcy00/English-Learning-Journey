@@ -194,6 +194,9 @@ export function selectVocabularyVoice(
 export function stopEnglishSpeech(): void {
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     window.speechSynthesis.cancel();
+    // cancel() clears the queue but does not reset the engine's paused flag.
+    // Otherwise stopping a paused reading can silence the next pronunciation.
+    window.speechSynthesis.resume();
   }
 }
 
