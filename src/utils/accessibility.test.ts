@@ -45,7 +45,7 @@ function luminance(hex: string) {
     .map(channel => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
   return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
 }
-test('normal-size secondary text, button text, placeholders and warm badge text meet 4.5:1', () => {
+test('primary content, actions and semantic feedback meet 4.5:1', () => {
   const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8');
   const token = (name: string): string => {
     const value = css.match(new RegExp(`--${name}: ([^;]+);`))![1];
@@ -53,13 +53,22 @@ test('normal-size secondary text, button text, placeholders and warm badge text 
     return alias ? token(alias[1]) : value;
   };
   for (const [foreground, background] of [
-    [token('text-secondary'), token('bg-primary')], [token('text-secondary'), token('bg-alt')],
-    [token('bg-primary'), token('accent-primary')], [token('text-secondary'), token('surface-paper')],
+    [token('text-primary'), token('bg-primary')], [token('text-primary'), token('bg-alt')],
+    [token('bg-primary'), token('accent-primary')], [token('text-primary'), token('surface-paper')],
     [token('text-primary'), token('accent-warm')], [token('status-warning'), token('bg-alt')],
-    [token('text-secondary'), token('surface-selected')], [token('status-error'), token('status-error-soft')],
+    [token('text-primary'), token('surface-selected')], [token('status-error'), token('status-error-soft')],
     ...[token('accent-vocab'), token('status-warning'), token('status-info'), token('text-ink')].map(background => [token('surface-paper'), background]),
   ]) {
     const levels = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
     assert.ok((levels[0] + 0.05) / (levels[1] + 0.05) >= 4.5, `${foreground} on ${background}`);
   }
+});
+
+test('requested text palette separates readable metadata from placeholders and disabled content', () => {
+  const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8');
+  for (const [name, value] of Object.entries({ 'text-primary': '#20251F', 'text-secondary': '#74796F', 'text-muted': '#9A9C94', 'text-placeholder': '#8E928B' })) {
+    assert.ok(css.includes(`--${name}: ${value};`));
+  }
+  assert.match(css, /--text-disabled: var\(--text-placeholder\)/);
+  assert.match(css, /input::placeholder, textarea::placeholder\s*\{\s*color: var\(--text-placeholder\)/);
 });

@@ -770,7 +770,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           return (
             <div
               key={tIdx}
-              className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-sm bg-[var(--surface-paper)]/80 hover:bg-[var(--surface-paper)] border transition-all ${
+              className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-sm bg-[var(--surface-paper)]/80 hover:bg-[var(--surface-paper)] border transition-colors ${
                 isSpeaking && activeSpeechTurn === tIdx
                   ? 'border-[var(--accent-primary)] ring-2 ring-[var(--accent-primary)]/20 shadow-sm'
                   : 'border-[var(--border-subtle)]/50'
@@ -972,7 +972,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           {isSpeechPaused ? '继续朗读' : '暂停朗读'}
         </button>}
         </div>
-        {isSpeaking && <span role="status" className="type-meta font-ui text-[var(--text-secondary)]">{isSpeechPaused ? '朗读已暂停' : '正在朗读'}</span>}
+        {isSpeaking && <span role="status" className="type-meta font-ui text-[var(--text-muted)]">{isSpeechPaused ? '朗读已暂停' : '正在朗读'}</span>}
         {speechError ? (
           <span className="type-meta max-w-56 text-[var(--status-error)] font-ui" role="alert">
             {speechError}
@@ -1277,7 +1277,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 <button type="button" aria-haspopup="dialog" aria-label={`查看 ${vocab.term} 的词汇释义`} onClick={(e) => { e.stopPropagation(); setSelectedVocab(vocab); setIsDetailOpen(true); }} className="reading-vocabulary__term type-term font-editorial font-semibold text-[var(--accent-vocab)] group-hover:text-[var(--text-primary)] transition-colors text-left">
                   {vocab.term}
                 </button>
-                <div className="reading-vocabulary__meta type-meta font-ui text-[var(--text-secondary)]">
+                <div className="reading-vocabulary__meta type-meta font-ui text-[var(--text-muted)]">
                   {vocab.phonetic && <span>{vocab.phonetic}</span>}
                   {vocab.partOfSpeech && <span className="italic">{vocab.partOfSpeech}</span>}
                 </div>

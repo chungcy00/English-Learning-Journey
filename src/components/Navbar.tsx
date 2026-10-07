@@ -59,7 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 aria-current={isActive ? 'page' : undefined}
                 onClick={() => setActiveTab(tab.id)}
                 disabled={tab.disabled}
-                className={`relative flex flex-col lg:flex-row items-center justify-center gap-1 lg:gap-1.5 min-h-12 lg:min-h-11 min-w-0 px-1 lg:px-3 py-1.5 text-[length:var(--type-meta)] leading-[1.4]  font-medium transition-all rounded-sm ${
+                className={`relative flex flex-col lg:flex-row items-center justify-center gap-1 lg:gap-1.5 min-h-12 lg:min-h-11 min-w-0 px-1 lg:px-3 py-1.5 text-[length:var(--type-meta)] leading-[1.4]  font-medium transition-colors rounded-sm ${
                   isActive
                     ? 'text-[var(--accent-primary)] bg-[var(--surface-selected)] border-b-2 border-[var(--accent-primary)]'
                     : tab.disabled

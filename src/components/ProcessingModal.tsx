@@ -1,13 +1,15 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 import { useModalDialog } from '../hooks/useModalDialog';
+import { useMotionPresence } from '../hooks/useMotionPresence';
 
 interface ProcessingModalProps { isOpen: boolean; status: string; canCancel: boolean; onCancel: () => void }
 export const ProcessingModal: React.FC<ProcessingModalProps> = ({ isOpen, status, canCancel, onCancel }) => {
-  const ref = useModalDialog(isOpen);
-  if (!isOpen) return null;
+  const { present, closing } = useMotionPresence(isOpen);
+  const ref = useModalDialog(present);
+  if (!present) return null;
   const saving = status === 'Saving';
-  return <dialog ref={ref} aria-labelledby="processing-title" aria-describedby="processing-note"
+  return <dialog ref={ref} data-closing={closing || undefined} inert={closing} aria-labelledby="processing-title" aria-describedby="processing-note"
     onCancel={event => { event.preventDefault(); if (canCancel) onCancel(); }}
     className="app-dialog m-auto w-[calc(100%_-_2rem)] max-w-md bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-subtle)] rounded-sm p-6 sm:p-8 shadow-md backdrop:bg-[var(--text-primary)]/40">
     <h2 id="processing-title" role="status" className="type-section font-editorial font-semibold flex items-center gap-2 mb-6">

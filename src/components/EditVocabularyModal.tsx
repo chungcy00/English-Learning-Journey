@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Trash2, X, Sparkles, Loader2 } from 'lucide-react';
 import { VocabularyItem } from '../types';
 import { explainVocabularyTerm } from '../services/api';
 import { getLocalizedVocabMeaning } from '../utils/i18n';
+import { useMotionPresence } from '../hooks/useMotionPresence';
 import {
   extractEnglishWords,
   getEnglishTermMatchRank,
@@ -34,6 +35,7 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
+  const { present, closing } = useMotionPresence(isOpen);
 
   const readingSuggestions = useMemo(() => {
     const query = normalizeEnglishTerm(newTerm);
@@ -85,7 +87,12 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
       .slice(0, 8);
   }, [newTerm, readingContent, list]);
 
-  if (!isOpen) return null;
+  const suggestionPresence = useMotionPresence(isSuggestionOpen && readingSuggestions.length > 0);
+  const lastSuggestions = useRef<string[]>([]);
+  useEffect(() => { if (readingSuggestions.length) lastSuggestions.current = readingSuggestions; }, [readingSuggestions]);
+  const visibleSuggestions = readingSuggestions.length ? readingSuggestions : lastSuggestions.current;
+
+  if (!present) return null;
 
   const handleRemove = (id: string) => {
     setList(prev => prev.filter(item => item.id !== id));
@@ -140,8 +147,8 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--text-primary)]/40 backdrop-blur-xs">
-      <div className="w-full max-w-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-sm p-6 shadow-xl max-h-[90vh] flex flex-col">
+    <div data-closing={closing || undefined} inert={closing} className="motion-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--text-primary)]/40 backdrop-blur-xs">
+      <div className="motion-modal-panel w-full max-w-lg bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-sm p-6 shadow-xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
           <div>
@@ -207,15 +214,18 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
               className="w-full px-3 py-2 text-[length:var(--type-body)] leading-[1.6] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-sm focus:outline-none focus:border-[var(--accent-primary)] font-ui text-[var(--text-primary)]"
             />
 
-            {isSuggestionOpen && readingSuggestions.length > 0 && (
+            {suggestionPresence.present && (
               <div
+                data-closing={suggestionPresence.closing || undefined}
+                inert={suggestionPresence.closing}
+                aria-hidden={suggestionPresence.closing}
                 role="listbox"
                 className="absolute z-30 left-0 right-0 top-full mt-1 max-h-56 overflow-y-auto bg-[var(--surface-paper)] border border-[var(--border-subtle)] rounded-sm shadow-lg"
               >
                 <p className="px-3 pt-2 pb-1 text-[length:var(--type-label)] leading-[1.4] uppercase tracking-wider text-[var(--text-secondary)] font-ui">
                   来自当前短文
                 </p>
-                {readingSuggestions.map((suggestion, index) => (
+                {visibleSuggestions.map((suggestion, index) => (
                   <button
                     key={suggestion.toLowerCase()}
                     type="button"
@@ -234,7 +244,7 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
                     }`}
                   >
                     <span className="font-editorial text-[length:var(--type-term)] leading-[1.4] font-semibold">{suggestion}</span>
-                    <span className="ml-2 text-[length:var(--type-meta)] leading-[1.4] font-ui text-[var(--text-secondary)]">
+                    <span className="ml-2 text-[length:var(--type-meta)] leading-[1.4] font-ui text-[var(--text-muted)]">
                       {suggestion.includes(' ') ? '短语' : '单词'}
                     </span>
                   </button>
@@ -277,7 +287,7 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
                     <span className="font-editorial text-[length:var(--type-term)] leading-[1.4] font-semibold text-[var(--accent-vocab)]">
                       {vocab.term}
                     </span>
-                    <span className="text-[length:var(--type-meta)] leading-[1.4] text-[var(--text-secondary)] font-ui">
+                    <span className="text-[length:var(--type-meta)] leading-[1.4] text-[var(--text-muted)] font-ui">
                       {vocab.partOfSpeech}
                     </span>
                   </div>

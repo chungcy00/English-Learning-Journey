@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useModalDialog } from '../hooks/useModalDialog';
 
 export const WordbookRemovalDialog: React.FC<{
-  term: string; onCancel: () => void; onConfirm: () => Promise<void>;
-}> = ({ term, onCancel, onConfirm }) => {
+  term: string; onCancel: () => void; onConfirm: () => Promise<void>; closing?: boolean;
+}> = ({ term, onCancel, onConfirm, closing = false }) => {
   const ref = useModalDialog(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -13,7 +13,7 @@ export const WordbookRemovalDialog: React.FC<{
     try { await onConfirm(); }
     catch { setError('移除未完成，请稍后重试。'); setBusy(false); }
   };
-  return <dialog ref={ref} aria-labelledby="removal-title" aria-describedby="removal-description" onCancel={event => {
+  return <dialog ref={ref} data-closing={closing || undefined} inert={closing} aria-labelledby="removal-title" aria-describedby="removal-description" onCancel={event => {
     event.preventDefault();
     if (!busy) onCancel();
   }} className="app-dialog word-detail-dialog m-auto w-[calc(100%_-_2rem)] max-w-md border border-[var(--border-subtle)] rounded-sm bg-[var(--bg-primary)] text-[var(--text-primary)] p-6 shadow-lg">

@@ -334,7 +334,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                     <span className="block font-editorial text-[length:var(--type-term)] leading-[1.4] font-semibold text-[var(--accent-vocab)]">
                       {term}
                     </span>
-                    <span className="type-meta block font-ui text-[var(--text-secondary)] truncate">
+                    <span className="type-meta block font-ui text-[var(--text-muted)] truncate">
                       {item ? `${vocabularyList.some(saved => saved.id === item.id) ? '已在生词本 · ' : '当前精选 · '}${getLocalizedVocabMeaning(item, targetLanguage)} · ` : ''}
                       <span className="italic">{item?.type || expression?.type || ''}</span>
                     </span>
@@ -385,7 +385,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         <label htmlFor="saved-vocabulary-search" className="sr-only">筛选已添加词条</label>
         <input id="saved-vocabulary-search" value={collectionSearch} onChange={event => setCollectionSearch(event.target.value)}
           placeholder="搜索已添加的单词、短语或习语"
-          className="w-full min-h-11 px-3 py-2 text-[length:var(--type-body)] leading-[1.6] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]" />
+          className="w-full min-h-11 px-3 py-2 text-[length:var(--type-body)] leading-[1.6] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-sm text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)]" />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="wordbook-status-filters flex flex-wrap items-center gap-1.5" role="group" aria-label="按学习状态筛选">
@@ -452,9 +452,9 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                       <button type="button" id={`${panelId}-toggle`} aria-expanded={expanded} aria-controls={panelId} aria-label={`查看 ${vocab.term} 的词汇释义`} onClick={() => setDetailVocab(expanded ? null : vocab)} className="wordbook-accordion-toggle">
                         <span className="min-w-0 flex-1">
                           <span className="type-term font-editorial font-semibold text-[var(--accent-vocab)] block break-words">{vocab.term}</span>
-                          <span className="type-meta font-ui italic text-[var(--text-secondary)]">{vocab.partOfSpeech} · {vocab.type}</span>
+                          <span className="type-meta font-ui italic text-[var(--text-muted)]">{vocab.partOfSpeech} · {vocab.type}</span>
                         </span>
-                        <span className="type-meta font-ui text-[var(--text-secondary)] shrink-0">{vocab.status}</span>
+                        <span className="type-meta font-ui text-[var(--text-muted)] shrink-0">{vocab.status}</span>
                         <ChevronDown aria-hidden="true" className={`w-4 h-4 shrink-0 ${expanded ? 'rotate-180' : ''}`} />
                       </button>
                     </h3>
@@ -498,14 +498,14 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                         <Volume2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <p className="type-meta font-ui text-[var(--text-secondary)] flex flex-wrap gap-x-2">
+                    <p className="type-meta font-ui text-[var(--text-muted)] flex flex-wrap gap-x-2">
                       {vocab.phonetic && <span>{vocab.phonetic}</span>}
                       <span className="italic">{vocab.partOfSpeech} · {vocab.type}</span>
                     </p>
                     <p className="type-body font-ui font-medium text-[var(--text-primary)] mt-1 flex items-center gap-1.5 flex-wrap">
                       <span>{getLocalizedVocabMeaning(vocab, targetLanguage)}</span>
                       {targetLanguage !== 'zh-CN' && vocab.meaningZh && getLocalizedVocabMeaning(vocab, targetLanguage) !== vocab.meaningZh && (
-                        <span className="text-[length:var(--type-meta)] leading-[1.4] font-normal text-[var(--text-secondary)]">
+                        <span className="text-[length:var(--type-meta)] leading-[1.4] font-normal text-[var(--text-muted)]">
                           ({vocab.meaningZh})
                         </span>
                       )}

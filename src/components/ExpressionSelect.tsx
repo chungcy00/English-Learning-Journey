@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { useMotionPresence } from '../hooks/useMotionPresence';
 
 interface ExpressionOption { term: string; type: string; selected: boolean }
 export function ExpressionSelect({ options, value, disabled, loading, onOpen, onChange, identity }: {
@@ -11,6 +12,7 @@ export function ExpressionSelect({ options, value, disabled, loading, onOpen, on
   const trigger = useRef<HTMLButtonElement>(null);
   const keyboardNavigation = useRef(false);
   const [open, setOpen] = useState(false);
+  const { present, closing } = useMotionPresence(open);
   const [active, setActive] = useState(0);
   const chosen = options.find(option => option.term === value);
   useEffect(() => { setOpen(false); setActive(0); }, [identity]);
@@ -50,7 +52,7 @@ export function ExpressionSelect({ options, value, disabled, loading, onOpen, on
       <span className="min-w-0 break-words">{chosen ? label(chosen) : '请选择文中的表达'}</span>
       <ChevronDown aria-hidden="true" className="w-4 h-4 shrink-0" />
     </button>
-    {open && <div id={`${id}-list`} role="listbox" aria-labelledby={`${id}-label`}
+    {present && <div data-closing={closing || undefined} inert={closing} aria-hidden={closing} id={`${id}-list`} role="listbox" aria-labelledby={`${id}-label`}
       className="expression-options absolute top-full left-0 right-0 mt-2 z-30 max-h-72 overflow-y-auto border border-[var(--border-subtle)] bg-[var(--surface-paper)] shadow-lg">
       {loading && <p role="status" className="p-3 text-[length:var(--type-body)] leading-[1.6] text-[var(--text-secondary)]">正在识别短文中的表达…</p>}
       {!loading && !options.length && <p className="p-3 text-[length:var(--type-body)] leading-[1.6] text-[var(--text-secondary)]">暂无可选的同级表达</p>}

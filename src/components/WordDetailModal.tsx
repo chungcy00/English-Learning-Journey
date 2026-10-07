@@ -1,5 +1,6 @@
 import React from 'react';
 import { useModalDialog } from '../hooks/useModalDialog';
+import { useMotionPresence } from '../hooks/useMotionPresence';
 import { Volume2, Bookmark, Check, X, ChevronDown } from 'lucide-react';
 import { VocabularyItem, ReadingTranslation } from '../types';
 import {
@@ -34,8 +35,9 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
   inlineExpanded = false,
   embedded = false,
 }) => {
-  const dialogRef = useModalDialog(isOpen && !!vocab && !inline && !embedded);
-  if (!isOpen || !vocab) return null;
+  const { present, closing } = useMotionPresence(isOpen && !!vocab);
+  const dialogRef = useModalDialog(present && !inline && !embedded);
+  if (!(inline || embedded ? isOpen : present) || !vocab) return null;
 
   const playPronunciation = () => {
     speakEnglishTerm(vocab.term);
@@ -145,7 +147,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
           <button
             onClick={() => onToggleWordbook(vocab)}
             aria-label={`${isInWordbook ? '移出生词本' : '加入生词本'}：${vocab.term}`}
-            className={`type-label flex items-center gap-2 min-h-11 px-4 py-2 rounded-sm  font-medium font-ui transition-all ${
+            className={`type-label flex items-center gap-2 min-h-11 px-4 py-2 rounded-sm  font-medium font-ui transition-colors ${
               isInWordbook
                 ? 'bg-[var(--accent-vocab)] text-[var(--bg-primary)] hover:bg-[var(--text-secondary)]'
                 : 'bg-[var(--accent-primary)] text-[var(--bg-primary)] hover:bg-[var(--accent-hover)]'
@@ -184,6 +186,6 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
       </details>
     </aside>
   ) : (
-    <dialog ref={dialogRef} aria-labelledby="word-detail-title" onCancel={onClose} className="app-dialog word-detail-dialog w-[calc(100%_-_2rem)] max-w-lg bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-subtle)] rounded-sm p-6 sm:p-8 shadow-lg m-auto break-words">{content}</dialog>
+    <dialog ref={dialogRef} data-closing={closing || undefined} inert={closing} aria-labelledby="word-detail-title" onCancel={event => { event.preventDefault(); onClose(); }} className="app-dialog word-detail-dialog w-[calc(100%_-_2rem)] max-w-lg bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-subtle)] rounded-sm p-6 sm:p-8 shadow-lg m-auto break-words">{content}</dialog>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Download, Share, X } from 'lucide-react';
 import { isAppleMobileDevice, isMobileOrTablet, isStandaloneApp } from '../utils/pwa';
+import { useMotionPresence } from '../hooks/useMotionPresence';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -14,6 +15,7 @@ export const AppInstallPrompt: React.FC = () => {
   const [nativePrompt, setNativePrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const fallbackTimerRef = useRef<number | null>(null);
   const isAppleDevice = isAppleMobileDevice();
+  const { present, closing } = useMotionPresence(isVisible);
 
   useEffect(() => {
     if (!isMobileOrTablet() || isStandaloneApp()) return;
@@ -60,10 +62,12 @@ export const AppInstallPrompt: React.FC = () => {
     setNativePrompt(null);
   };
 
-  if (!isVisible || isStandaloneApp()) return null;
+  if (!present || isStandaloneApp()) return null;
 
   return (
     <div
+      data-closing={closing || undefined}
+      inert={closing}
       role="dialog"
       aria-label="添加 Mine English 到主屏幕"
       className="app-install-prompt fixed z-50 left-4 right-4 bottom-4 sm:left-auto sm:right-6 sm:w-[25rem] bg-[var(--surface-paper)] border border-[var(--accent-primary)]/40 rounded-sm shadow-xl p-4 font-ui"

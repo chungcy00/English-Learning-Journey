@@ -5,9 +5,10 @@ colors:
   bg-primary: "#F8F7F2"
   bg-alt: "#F0F3EC"
   text-primary: "#20251F"
-  text-secondary: "#646B60"
-  text-quiet: "#74796F"
+  text-secondary: "#74796F"
+  text-quiet: "#9A9C94"
   text-muted: "#9A9C94"
+  text-placeholder: "#8E928B"
   text-ink: "#253126"
   accent-primary: "#315E4C"
   accent-vocab: "#315E4C"
@@ -26,7 +27,7 @@ colors:
   surface-warm: "#F7F0E5"
   surface-track: "#E5EBE1"
   surface-disabled: "#F0F1ED"
-  text-disabled: "#A3A59F"
+  text-disabled: "#8E928B"
   status-success: "#315E4C"
   status-warning: "#795C32"
   status-error: "#854C49"
@@ -186,7 +187,7 @@ The palette combines warm white neutrals with a forest green accent and muted su
 
 - Warm white (`bg-primary`) is the page canvas and generation-button text; `surface-paper` is the slightly lighter composer, settings, and card surface.
 - Warm gray (`bg-alt`) groups controls, navigation selection, and metadata badges. `surface-white`, `surface-selected`, `surface-warm`, and `surface-track` serve existing collection, practice, and progress surfaces.
-- Deep green-gray (`text-primary`) carries main text; green-gray (`text-secondary`) carries helper text, dates, and placeholders.
+- Deep green-gray (`text-primary`) carries main text; `text-secondary` carries supporting content; `text-muted` carries readable dates and metadata. Only placeholders and disabled content use `text-placeholder` / `text-disabled`.
 - `border-subtle` separates surfaces and rows; `border-control` gives native selects stronger boundaries; `border-selected` marks existing collection selection.
 - Muted warm brown (`accent-warm`) is the incumbent navigation-count badge color.
 

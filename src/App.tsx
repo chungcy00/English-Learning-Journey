@@ -21,6 +21,7 @@ import { isAppleMobileDevice, isManualUpdateApp } from './utils/pwa';
 import { normalizeEnglishTerm } from './utils/englishSearch';
 import { useReadingExpressions } from './hooks/useReadingExpressions';
 import { WordbookRemovalDialog } from './components/WordbookRemovalDialog';
+import { useMotionPresence } from './hooks/useMotionPresence';
 import { PracticeHubView } from './views/PracticeHubView';
 import { RewritePracticeView } from './views/RewritePracticeView';
 import { useSoftwareKeyboard } from './hooks/useSoftwareKeyboard';
@@ -80,6 +81,10 @@ export default function App() {
   const [vocabularies, setVocabularies] = useState<VocabularyItem[]>([]);
   const reviewVocabulary = useMemo(() => currentReadingSavedVocabulary(vocabularies, currentReading), [vocabularies, currentReading]);
   const [removalTarget, setRemovalTarget] = useState<VocabularyItem | null>(null);
+  const removalPresence = useMotionPresence(!!removalTarget);
+  const lastRemovalTarget = useRef<VocabularyItem | null>(null);
+  useEffect(() => { if (removalTarget) lastRemovalTarget.current = removalTarget; }, [removalTarget]);
+  const visibleRemovalTarget = removalTarget || lastRemovalTarget.current;
   const [settings, setAppSettings] = useState<AppSettings>({
     cefr: 'B1',
     defaultReadingType: 'story',
@@ -533,9 +538,9 @@ export default function App() {
       </main>
 
       {/* Pipeline Status Modal */}
-      {removalTarget && <WordbookRemovalDialog key={removalTarget.id} term={removalTarget.term}
+      {removalPresence.present && visibleRemovalTarget && <WordbookRemovalDialog key={visibleRemovalTarget.id} term={visibleRemovalTarget.term} closing={removalPresence.closing}
         onCancel={() => setRemovalTarget(null)} onConfirm={async () => {
-          await deleteVocabulary(removalTarget.id);
+          await deleteVocabulary(visibleRemovalTarget.id);
           setVocabularies(await getAllVocabularies());
           setRemovalTarget(null);
         }} />}
