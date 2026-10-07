@@ -245,7 +245,7 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
           <button
             onClick={handleAddNewTerm}
             disabled={!newTerm.trim() || isLookingUp}
-            className="flex items-center gap-1 px-3.5 py-2 bg-[var(--accent-primary)] text-[var(--bg-primary)] text-xs font-medium font-ui rounded-sm hover:bg-[var(--accent-vocab)] disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1 px-3.5 py-2 bg-[var(--accent-primary)] text-[var(--bg-primary)] text-xs font-medium font-ui rounded-sm hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors"
           >
             {isLookingUp ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -288,7 +288,7 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
                 <button
                   onClick={() => handleRemove(vocab.id)}
                   title="移除词汇"
-                  className="p-1.5 text-[var(--text-secondary)] hover:text-[#77543D] hover:bg-[var(--bg-alt)] rounded-sm transition-colors"
+                  className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--status-warning)] hover:bg-[var(--bg-alt)] rounded-sm transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -307,7 +307,7 @@ export const EditVocabularyModal: React.FC<EditVocabularyModalProps> = ({
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-[var(--accent-primary)] text-[var(--bg-primary)] text-xs font-medium font-ui rounded-sm hover:bg-[var(--accent-vocab)] transition-colors"
+            className="px-4 py-2 bg-[var(--accent-primary)] text-[var(--bg-primary)] text-xs font-medium font-ui rounded-sm hover:bg-[var(--accent-hover)] transition-colors"
           >
             保存并同步
           </button>

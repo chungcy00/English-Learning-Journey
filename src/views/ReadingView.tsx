@@ -183,9 +183,9 @@ function parseDialogueTurns(text: string, knownSpeakers: string[] = []): Dialogu
 
 const SPEAKER_STYLES = [
   { bg: 'bg-[var(--accent-vocab)]', text: 'text-[var(--surface-paper)]', border: 'border-[var(--accent-vocab)]/30', label: 'text-[var(--accent-vocab)]' },
-  { bg: 'bg-[#77543D]', text: 'text-[var(--surface-paper)]', border: 'border-[#77543D]/30', label: 'text-[#77543D]' },
-  { bg: 'bg-[#4B6B6E]', text: 'text-[var(--surface-paper)]', border: 'border-[#4B6B6E]/30', label: 'text-[#4B6B6E]' },
-  { bg: 'bg-[#7A5868]', text: 'text-[var(--surface-paper)]', border: 'border-[#7A5868]/30', label: 'text-[#7A5868]' },
+  { bg: 'bg-[var(--status-warning)]', text: 'text-[var(--surface-paper)]', border: 'border-[var(--status-warning)]/30', label: 'text-[var(--status-warning)]' },
+  { bg: 'bg-[var(--status-info)]', text: 'text-[var(--surface-paper)]', border: 'border-[var(--status-info)]/30', label: 'text-[var(--status-info)]' },
+  { bg: 'bg-[var(--text-ink)]', text: 'text-[var(--surface-paper)]', border: 'border-[var(--text-ink)]/30', label: 'text-[var(--text-ink)]' },
 ];
 
 export const ReadingView: React.FC<ReadingViewProps> = ({
@@ -974,7 +974,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         </div>
         {isSpeaking && <span role="status" className="type-meta font-ui text-[var(--text-secondary)]">{isSpeechPaused ? '朗读已暂停' : '正在朗读'}</span>}
         {speechError ? (
-          <span className="type-meta max-w-56 text-red-700 font-ui" role="alert">
+          <span className="type-meta max-w-56 text-[var(--status-error)] font-ui" role="alert">
             {speechError}
           </span>
         ) : null}
@@ -1062,7 +1062,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           <button
             onClick={handleDownloadPDF}
             disabled={isExportingPdf}
-            className="type-label flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] hover:bg-[var(--accent-vocab)] font-ui rounded-sm transition-colors shadow-xs"
+            className="type-label flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] hover:bg-[var(--accent-hover)] font-ui rounded-sm transition-colors shadow-xs"
           >
             <Download className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{isExportingPdf ? '正在导出…' : '导出 PDF'}</span>
@@ -1082,7 +1082,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       </div>
 
       {/* Main Reading Area: switch between the original and translated reading modes */}
-      {pdfError && <p role="alert" className="type-body font-ui text-red-700">{pdfError}</p>}
+      {pdfError && <p role="alert" className="type-body font-ui text-[var(--status-error)]">{pdfError}</p>}
       <div className="mobile-reading-switch" role="tablist" aria-label="阅读内容模式">
         <button type="button" role="tab" aria-selected={mobileReadingMode === 'original'} onClick={() => setMobileReadingMode('original')}>原文</button>
         <button type="button" role="tab" aria-selected={mobileReadingMode === 'translation'} onClick={() => setMobileReadingMode('translation')}>翻译</button>
@@ -1190,7 +1190,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-alt)] border border-[var(--border-subtle)] rounded-sm transition-colors disabled:opacity-50"
                 >
                   {copiedTranslation ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <Check className="w-3.5 h-3.5 text-[var(--status-success)]" />
                   ) : (
                     <Copy className="w-3.5 h-3.5" />
                   )}
@@ -1200,11 +1200,11 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
             {/* Translation Content */}
             <div className="reading-prose text-[var(--text-primary)] flex-1">
-              {copyError && <p role="alert" className="type-label font-ui text-red-700 mb-3">{copyError}</p>}
+              {copyError && <p role="alert" className="type-label font-ui text-[var(--status-error)] mb-3">{copyError}</p>}
               {copiedTranslation && <p role="status" className="type-label font-ui text-[var(--accent-vocab)] mb-3">译文已复制</p>}
               {currentTranslation && isTranslating && <p role="status" className="type-label font-ui mb-4 text-[var(--text-secondary)]">正在更新翻译，原译文仍可阅读…</p>}
               {currentTranslation && translationError && <div className="mb-4">
-                <p role="alert" className="type-label font-ui text-red-700">{translationError}</p>
+                <p role="alert" className="type-label font-ui text-[var(--status-error)]">{translationError}</p>
                 <button type="button" onClick={() => fetchTranslation(targetLanguage, true)} disabled={isTranslating} className="type-label font-ui min-h-11 underline underline-offset-4">重试翻译</button>
               </div>}
               {isTranslating && !currentTranslation ? (
@@ -1217,12 +1217,12 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   </h4>
                 </div>
               ) : translationError && !currentTranslation ? (
-                <div className="p-4 rounded-sm bg-amber-50 border border-amber-200 text-center my-6">
-                  <p role="alert" className="type-body text-amber-800 font-ui mb-2">{translationError}</p>
+                <div className="p-4 rounded-sm bg-[var(--status-warning-soft)] border border-[var(--status-warning-border)] text-center my-6">
+                  <p role="alert" className="type-body text-[var(--status-warning)] font-ui mb-2">{translationError}</p>
                   <button
                     type="button"
                     onClick={() => fetchTranslation(targetLanguage, true)}
-                    className="type-label min-h-11 px-3 py-2 bg-amber-700 text-white rounded-xs font-ui hover:bg-amber-800"
+                    className="type-label min-h-11 px-3 py-2 bg-[var(--status-warning)] text-white rounded-xs font-ui hover:bg-[var(--status-warning)]"
                   >
                     重试翻译
                   </button>

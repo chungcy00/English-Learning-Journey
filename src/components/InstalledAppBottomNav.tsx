@@ -41,18 +41,18 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
               aria-current={isActive ? 'page' : undefined}
               className={`relative flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-lg font-ui transition-colors ${
                 isActive
-                  ? 'text-[var(--text-primary)]'
+                  ? 'text-[var(--accent-primary)]'
                   : tab.disabled
                     ? 'text-[var(--accent-secondary)] opacity-45'
                     : 'text-[var(--text-secondary)] active:bg-[var(--bg-alt)]/70'
               }`}
             >
               <span className={`relative flex h-7 min-w-11 items-center justify-center rounded-full ${
-                isActive ? 'bg-[var(--accent-primary)]/15' : ''
+                isActive ? 'bg-[var(--surface-selected)]' : ''
               }`}>
                 <Icon aria-hidden="true" className={`h-5 w-5 ${isActive ? 'stroke-[2.4]' : ''}`} />
                 {tab.badge !== undefined && tab.badge > 0 ? (
-                  <span aria-hidden="true" className="absolute -right-1 -top-1 min-w-4 rounded-full bg-[#B49379] px-1 text-[9px] font-semibold leading-4 text-[var(--text-primary)]">
+                  <span aria-hidden="true" className="absolute -right-1 -top-1 min-w-4 rounded-full bg-[var(--accent-warm)] px-1 text-[9px] font-semibold leading-4 text-[var(--text-primary)]">
                     {tab.badge > 99 ? '99+' : tab.badge}
                   </span>
                 ) : null}

@@ -423,12 +423,12 @@ export default function App() {
         {storageError && <div className="max-w-3xl mx-auto px-4 pt-4"><RecoveryNotice message={storageError} onRetry={() => void loadData()} /></div>}
         {errorMessage && (
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4">
-            <div role="alert" className="bg-[#FAF3F0] border border-[#D98E7B]/40 text-[#7D3220] px-4 py-3 rounded-sm text-sm font-ui flex items-center justify-between shadow-xs">
+            <div role="alert" className="bg-[var(--status-error-soft)] border border-[var(--status-error-border)] text-[var(--status-error)] px-4 py-3 rounded-sm text-sm font-ui flex items-center justify-between shadow-xs">
               <span>{errorMessage}</span>
               <button
                 type="button"
                 onClick={() => setErrorMessage(null)}
-                className="min-h-11 min-w-11 shrink-0 text-[#7D3220] hover:text-[#521E12] text-xs font-semibold px-2 py-1 ml-3 transition-colors"
+                className="min-h-11 min-w-11 shrink-0 text-[var(--status-error)] hover:text-[var(--status-error-hover)] text-xs font-semibold px-2 py-1 ml-3 transition-colors"
               >
                 ✕ 关闭
               </button>

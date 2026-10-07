@@ -19,6 +19,6 @@ export function VocabularyStatusSelect({ vocab, onUpdate }: { vocab: VocabularyI
       {(['New', 'Learning', 'Difficult', 'Mastered'] as const).map(status => <option key={status} value={status}>{status}</option>)}
     </select>
     {pending && <p role="status" className="type-meta text-[var(--text-secondary)] mt-1">正在保存…</p>}
-    {error && <p role="alert" className="text-sm mt-1 text-[#854C3C]">{error}</p>}
+    {error && <p role="alert" className="text-sm mt-1 text-[var(--status-error)]">{error}</p>}
   </div>;
 }

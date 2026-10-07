@@ -70,7 +70,7 @@ export const ReadingVocabularyEditor: React.FC<{
           selected: reading.selectedVocabulary.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(item.term)) }))} />
       <span className="reading-vocabulary-editor__count text-[var(--accent-vocab)]" aria-label={`当前短文已精选 ${reading.selectedVocabulary.length} 项，上限 ${limit} 项`}>已精选 {reading.selectedVocabulary.length}/{limit} 项</span>
     </div>
-    {catalogue.error && <p role="alert" className="reading-inline-status text-red-700">{catalogue.error} <button onClick={catalogue.retry} className="min-h-11 min-w-11 inline-flex items-center justify-center underline">重试</button></p>}
+    {catalogue.error && <p role="alert" className="reading-inline-status text-[var(--status-error)]">{catalogue.error} <button onClick={catalogue.retry} className="min-h-11 min-w-11 inline-flex items-center justify-center underline">重试</button></p>}
     {busy && <p role="status" className="reading-inline-status text-[var(--accent-vocab)]">{candidate ? '正在保存…' : '正在查询…'}</p>}
     {candidate && <div className="reading-vocabulary-editor__candidate p-3 border border-[var(--border-subtle)] rounded-sm space-y-2">
       <p><strong className="type-term">{candidate.term}</strong> · <span className="type-label italic">{candidate.partOfSpeech}</span></p>
@@ -81,7 +81,7 @@ export const ReadingVocabularyEditor: React.FC<{
       </select>}
       <button onClick={save} disabled={busy || (full && !replaceId)} className="min-h-11 px-3 py-2 bg-[var(--accent-primary)] text-white rounded-sm disabled:opacity-50">{full ? '替换并同步生词本' : '添加并同步生词本'}</button>
     </div>}
-    {error && <p role="alert" className="reading-inline-status text-red-700">{error}</p>}
+    {error && <p role="alert" className="reading-inline-status text-[var(--status-error)]">{error}</p>}
     {message && <p role="status" className="reading-inline-status text-[var(--accent-vocab)]">{message}</p>}
   </div>;
 };

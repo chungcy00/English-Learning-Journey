@@ -47,12 +47,17 @@ function luminance(hex: string) {
 }
 test('normal-size secondary text, button text, placeholders and warm badge text meet 4.5:1', () => {
   const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8');
-  const token = (name: string) => css.match(new RegExp(`--${name}: (#[A-Fa-f0-9]{6})`))![1];
+  const token = (name: string): string => {
+    const value = css.match(new RegExp(`--${name}: ([^;]+);`))![1];
+    const alias = value.match(/^var\(--([\w-]+)\)$/);
+    return alias ? token(alias[1]) : value;
+  };
   for (const [foreground, background] of [
     [token('text-secondary'), token('bg-primary')], [token('text-secondary'), token('bg-alt')],
     [token('bg-primary'), token('accent-primary')], [token('text-secondary'), token('surface-paper')],
-    [token('text-primary'), token('accent-warm')], ['#77543D', token('bg-alt')],
-    ...[token('accent-vocab'), '#77543D', '#4B6B6E', '#7A5868'].map(background => [token('surface-paper'), background]),
+    [token('text-primary'), token('accent-warm')], [token('status-warning'), token('bg-alt')],
+    [token('text-secondary'), token('surface-selected')], [token('status-error'), token('status-error-soft')],
+    ...[token('accent-vocab'), token('status-warning'), token('status-info'), token('text-ink')].map(background => [token('surface-paper'), background]),
   ]) {
     const levels = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
     assert.ok((levels[0] + 0.05) / (levels[1] + 0.05) >= 4.5, `${foreground} on ${background}`);

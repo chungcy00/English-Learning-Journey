@@ -243,7 +243,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
             </span>
           )}
         </div>
-        <button type="button" onClick={onOpenReview} className="type-label min-h-11 px-4 py-2 rounded-xl bg-[var(--accent-primary)] text-[var(--bg-primary)] font-ui hover:bg-[var(--accent-vocab)]">开始复习</button>
+        <button type="button" onClick={onOpenReview} className="type-label min-h-11 px-4 py-2 rounded-xl bg-[var(--accent-primary)] text-[var(--bg-primary)] font-ui hover:bg-[var(--accent-hover)]">开始复习</button>
         </div>
 
         {/* Search Bar & Target Language Picker */}
@@ -343,11 +343,11 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                 </div>
                 <div className="p-3 space-y-2 text-sm font-ui">
                   {catalogue.loading && <p role="status">正在识别表达…</p>}
-                  {catalogue.error && <p role="alert" className="text-red-700">{catalogue.error} <button onClick={catalogue.retry} className="underline">重试</button></p>}
+                  {catalogue.error && <p role="alert" className="text-[var(--status-error)]">{catalogue.error} <button onClick={catalogue.retry} className="underline">重试</button></p>}
                   {isEnglishTermQuery(search) && search.trim().length <= 160 && !vocabularyList.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(search)) && <button type="button" disabled={isAdding} onClick={() => void addToCurrentLevel()} className="border border-[var(--border-subtle)] rounded-sm px-3 py-1.5 disabled:opacity-50 break-words w-full text-left">
                     {isAdding ? '正在添加…' : `添加 “${search.trim()}”`}
                   </button>}
-                  {addError && <p role="alert" className="text-red-700">{addError}</p>}
+                  {addError && <p role="alert" className="text-[var(--status-error)]">{addError}</p>}
                   {addedTerm && <p role="status">已添加 “{addedTerm}”。 <button onClick={onOpenReview} className="underline">去复习</button></p>}
                 </div>
               </div>
@@ -397,7 +397,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
               onClick={() => setStatusFilter(status)}
               className={`type-label min-h-11 shrink-0 whitespace-nowrap px-3 py-1  font-ui rounded-xs border transition-colors ${
                 statusFilter === status
-                  ? 'bg-[var(--accent-primary)] text-[var(--bg-primary)] border-[var(--accent-primary)]'
+                  ? 'bg-[var(--surface-selected)] text-[var(--accent-primary)] border-[var(--border-selected)]'
                   : 'bg-[var(--bg-alt)]/50 text-[var(--text-secondary)] border-[var(--border-subtle)] hover:bg-[var(--bg-alt)]'
               }`}
             >
@@ -525,7 +525,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                     }}
                     title="删除"
                     aria-label={`移出生词本：${vocab.term}`}
-                    className="min-h-11 min-w-11 flex items-center justify-center p-2 text-[var(--text-secondary)] hover:text-[#854C3C] hover:bg-[var(--bg-alt)] rounded-xs transition-colors"
+                    className="min-h-11 min-w-11 flex items-center justify-center p-2 text-[var(--text-secondary)] hover:text-[var(--status-error)] hover:bg-[var(--bg-alt)] rounded-xs transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -605,7 +605,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
             <button
               onClick={handleGenerate}
               disabled={isGenerating}
-              className="type-label ml-auto flex items-center gap-1.5 px-4 py-1.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] hover:bg-[var(--accent-vocab)] font-ui font-medium rounded-sm shadow-xs transition-colors"
+              className="type-label ml-auto flex items-center gap-1.5 px-4 py-1.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] hover:bg-[var(--accent-hover)] font-ui font-medium rounded-sm shadow-xs transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>生成新短文 (Generate Reading)</span>

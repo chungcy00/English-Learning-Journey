@@ -110,7 +110,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="home-composer__submit min-h-11 flex items-center justify-center gap-2 px-5 py-2.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] font-ui text-sm font-medium rounded-sm hover:bg-[var(--accent-vocab)] disabled:opacity-50 transition-all shadow-xs"
+              className="home-composer__submit min-h-11 flex items-center justify-center gap-2 px-5 py-2.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] font-ui text-sm font-medium rounded-sm hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-all shadow-xs"
             >
               <Sparkles className="w-4 h-4" />
               <span>{isLoading ? '生成中…' : '生成短文'}</span>

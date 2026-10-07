@@ -50,16 +50,16 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
       case 'Very Good':
         return 'bg-[var(--accent-vocab)] text-[var(--bg-primary)]';
       case 'Good':
-        return 'bg-[#B49379]/20 text-[#77543D]';
+        return 'bg-[var(--accent-warm)]/20 text-[var(--status-warning)]';
       case 'Needs Improvement':
       default:
-        return 'bg-[#9E6554] text-[var(--bg-primary)]';
+        return 'bg-[var(--status-error)] text-[var(--bg-primary)]';
     }
   };
 
   return (
     <div className="rewrite-exercise" id={`rewrite-exercise-${item.id}`}>
-      {error && <p role="alert" className="type-body font-ui text-red-700 mb-3">{error}</p>}
+      {error && <p role="alert" className="type-body font-ui text-[var(--status-error)] mb-3">{error}</p>}
       {/* Question Header */}
       <div className="rewrite-exercise-heading exercise-heading mb-3">
         <span className="rewrite-exercise-number type-label font-ui text-[var(--text-secondary)]">
@@ -99,7 +99,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
           <button
             onClick={handleCheck}
             disabled={!answer.trim() || loading}
-            className="rewrite-check type-label min-h-11 flex items-center justify-center gap-1.5 px-4 py-2 bg-[var(--accent-primary)] text-[var(--bg-primary)] font-medium font-ui rounded-sm hover:bg-[var(--accent-vocab)] disabled:opacity-50 transition-colors shrink-0"
+            className="rewrite-check type-label min-h-11 flex items-center justify-center gap-1.5 px-4 py-2 bg-[var(--accent-primary)] text-[var(--bg-primary)] font-medium font-ui rounded-sm hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors shrink-0"
           >
             {loading ? (
               <>
@@ -179,13 +179,13 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
           {/* What Needs Improvement (❌ original vs ✅ correction + explanation) */}
           {evaluation.issues && evaluation.issues.length > 0 && (
             <div className="bg-[var(--bg-primary)]/80 p-3 rounded-sm border border-[var(--border-subtle)]/60 space-y-2">
-              <span className="type-label font-ui font-semibold text-[#77543D] block">
+              <span className="type-label font-ui font-semibold text-[var(--status-warning)] block">
                 {getI18nText(targetLanguage, 'issuesToImprove')}:
               </span>
               {evaluation.issues.map((issue, idx) => (
                 <div key={idx} className="type-body font-ui space-y-0.5">
                   <div className="flex flex-wrap items-center gap-3 break-words">
-                    <span className="text-[#854C3C]">原表达：{issue.original}</span>
+                    <span className="text-[var(--status-error)]">原表达：{issue.original}</span>
                     <ArrowRight className="w-3 h-3 text-[var(--text-secondary)]" />
                     <span className="text-[var(--accent-vocab)] font-medium">建议：{issue.correction}</span>
                   </div>

@@ -238,7 +238,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
             {allVocabularies.length > 0 && (
               <button
                 onClick={handleStartReviewAll}
-                className="type-label px-4 py-2 bg-[var(--accent-primary)] text-[var(--bg-primary)] font-ui font-medium rounded-sm hover:bg-[var(--accent-vocab)] transition-colors"
+                className="type-label px-4 py-2 bg-[var(--accent-primary)] text-[var(--bg-primary)] font-ui font-medium rounded-sm hover:bg-[var(--accent-hover)] transition-colors"
               >
                 重新复习当前短文 ({allVocabularies.length})
               </button>
@@ -396,9 +396,9 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
               <fieldset ref={ratingBarRef} disabled={isSaving} aria-label="评价记忆程度" className="review-rating-bar mt-8 pt-4 border-t border-[var(--border-subtle)] grid grid-cols-4 gap-2 disabled:opacity-60">
                 <button
                   onClick={() => handleRating('Again')}
-                  className="min-h-14 py-2.5 px-2 bg-[#9E6554]/10 hover:bg-[#9E6554]/20 border border-[#9E6554]/30 rounded-sm text-center transition-colors"
+                  className="min-h-14 py-2.5 px-2 bg-[var(--status-error)]/10 hover:bg-[var(--status-error)]/20 border border-[var(--status-error)]/30 rounded-sm text-center transition-colors"
                 >
-                  <span className="type-label font-ui font-semibold text-[#854C3C] block">Again</span>
+                  <span className="type-label font-ui font-semibold text-[var(--status-error)] block">Again</span>
                   <span className="type-meta text-[var(--text-secondary)] font-ui block">
                     30 分钟后
                   </span>
@@ -406,9 +406,9 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
 
                 <button
                   onClick={() => handleRating('Hard')}
-                  className="min-h-14 py-2.5 px-2 bg-[#B49379]/15 hover:bg-[#B49379]/25 border border-[#B49379]/30 rounded-sm text-center transition-colors"
+                  className="min-h-14 py-2.5 px-2 bg-[var(--accent-warm)]/15 hover:bg-[var(--accent-warm)]/25 border border-[var(--accent-warm)]/30 rounded-sm text-center transition-colors"
                 >
-                  <span className="type-label font-ui font-semibold text-[#77543D] block">Hard</span>
+                  <span className="type-label font-ui font-semibold text-[var(--status-warning)] block">Hard</span>
                   <span className="type-meta text-[var(--text-secondary)] font-ui block">
                     {getI18nText(targetLanguage, 'hardHint', '1 天后')}
                   </span>
@@ -426,7 +426,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
 
                 <button
                   onClick={() => handleRating('Easy')}
-                  className="min-h-14 py-2.5 px-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-vocab)] border border-[var(--accent-primary)] rounded-sm text-center transition-colors"
+                  className="min-h-14 py-2.5 px-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] border border-[var(--accent-primary)] rounded-sm text-center transition-colors"
                 >
                   <span className="type-label font-ui font-semibold text-[var(--bg-primary)] block">Easy</span>
                   <span className="type-meta text-[var(--bg-primary)] font-ui block">
@@ -436,7 +436,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
               </fieldset>
             )}
             {isSaving && <p role="status" className="type-body font-ui text-[var(--text-secondary)] mt-3">正在保存评分，请稍候…</p>}
-            {failedRating && <div role="alert" className="font-ui text-sm text-[#854C3C] mt-3">
+            {failedRating && <div role="alert" className="font-ui text-sm text-[var(--status-error)] mt-3">
               <p>评分未保存，当前词条已保留。请检查设备存储后重试。</p>
               <button onClick={() => handleRating(failedRating)} className="min-h-11 px-3 border rounded-sm mt-2">重试保存</button>
             </div>}

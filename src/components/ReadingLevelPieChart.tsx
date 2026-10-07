@@ -4,10 +4,10 @@ import { distributionSource, readingLevelDistribution, type DistributionDimensio
 import { activeDistributionLevel, donutSegmentPath } from '../utils/donutInteraction';
 
 const levels: Record<string, { name: string; color: string }> = {
-  A1: { name: 'Breakthrough', color: '#A5BBA2' }, A2: { name: 'Elementary', color: '#EBC78C' },
-  B1: { name: 'Intermediate', color: '#8FA38C' }, B2: { name: 'Upper-Intermediate', color: '#DDA99C' },
-  C1: { name: 'Advanced', color: '#9CB0BA' }, C2: { name: 'Mastery', color: '#C8BAAD' },
-  未知: { name: 'Unclassified', color: '#E3E0D7' },
+  A1: { name: 'Breakthrough', color: 'var(--chart-a1)' }, A2: { name: 'Elementary', color: 'var(--chart-a2)' },
+  B1: { name: 'Intermediate', color: 'var(--chart-b1)' }, B2: { name: 'Upper-Intermediate', color: 'var(--chart-b2)' },
+  C1: { name: 'Advanced', color: 'var(--chart-c1)' }, C2: { name: 'Mastery', color: 'var(--chart-c2)' },
+  未知: { name: 'Unclassified', color: 'var(--chart-unknown)' },
 };
 
 export function ReadingLevelPieChart({ readings, dimension: controlledDimension, selectedLevel = null, onDimensionChange, onLevelSelect }: {
@@ -50,7 +50,7 @@ export function ReadingLevelPieChart({ readings, dimension: controlledDimension,
     <div className="reading-distribution__body">
       <div className="reading-distribution__ring">
         <svg viewBox="0 0 240 240" role="group" aria-label={`${dimension === 'readings' ? '短文' : '精选词汇'}等级分布，可点击扇区筛选`}>
-          <circle cx="120" cy="120" r="100" fill="none" stroke="#F0F3EC" strokeWidth="28" />
+          <circle cx="120" cy="120" r="100" fill="none" stroke="var(--bg-alt)" strokeWidth="28" />
           {distribution.filter(item => item.count > 0).map(item => {
             const start = offset; offset += item.percentage;
             const interactive = item.level !== '未知';

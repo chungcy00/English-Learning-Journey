@@ -148,7 +148,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
             className={`type-label flex items-center gap-2 min-h-11 px-4 py-2 rounded-sm  font-medium font-ui transition-all ${
               isInWordbook
                 ? 'bg-[var(--accent-vocab)] text-[var(--bg-primary)] hover:bg-[var(--text-secondary)]'
-                : 'bg-[var(--accent-primary)] text-[var(--bg-primary)] hover:bg-[var(--accent-vocab)]'
+                : 'bg-[var(--accent-primary)] text-[var(--bg-primary)] hover:bg-[var(--accent-hover)]'
             }`}
           >
             {isInWordbook ? (
