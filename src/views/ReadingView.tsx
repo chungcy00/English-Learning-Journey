@@ -751,10 +751,10 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             return (
               <div
                 key={tIdx}
-                className="italic font-editorial text-sm sm:text-base text-[var(--text-secondary)] bg-[var(--bg-alt)]/40 border-l-2 border-[var(--accent-primary)] px-4 py-2.5 rounded-xs my-2"
+                className="italic font-editorial text-[length:var(--type-example)] leading-[1.6]  text-[var(--text-secondary)] bg-[var(--bg-alt)]/40 border-l-2 border-[var(--accent-primary)] px-4 py-2.5 rounded-xs my-2"
               >
                 {turn.speaker ? (
-                  <span className="not-italic font-ui font-semibold text-xs text-[var(--accent-vocab)] uppercase tracking-wider block mb-1">
+                  <span className="not-italic font-ui font-semibold text-[length:var(--type-label)] leading-[1.4] text-[var(--accent-vocab)] uppercase tracking-wider block mb-1">
                     {turn.speaker}:
                   </span>
                 ) : null}
@@ -784,7 +784,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   {initial}
                 </div>
                 <span
-                  className={`font-ui text-xs font-semibold mt-1.5 truncate max-w-full tracking-wide uppercase ${style.label}`}
+                  className={`font-ui text-[length:var(--type-label)] leading-[1.4] font-semibold mt-1.5 truncate max-w-full tracking-wide uppercase ${style.label}`}
                   title={turn.speaker}
                 >
                   {turn.speaker}
@@ -836,10 +836,10 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             return (
               <div
                 key={tIdx}
-                className="italic font-editorial text-sm sm:text-base text-[var(--text-secondary)] bg-[var(--bg-alt)]/40 border-l-2 border-[var(--accent-primary)] px-4 py-2.5 rounded-xs my-2"
+                className="italic font-editorial text-[length:var(--type-example)] leading-[1.6]  text-[var(--text-secondary)] bg-[var(--bg-alt)]/40 border-l-2 border-[var(--accent-primary)] px-4 py-2.5 rounded-xs my-2"
               >
                 {turn.speaker ? (
-                  <span className="not-italic font-ui font-semibold text-xs text-[var(--accent-vocab)] uppercase tracking-wider block mb-1">
+                  <span className="not-italic font-ui font-semibold text-[length:var(--type-label)] leading-[1.4] text-[var(--accent-vocab)] uppercase tracking-wider block mb-1">
                     {turn.speaker}:
                   </span>
                 ) : null}
@@ -868,7 +868,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   {initial}
                 </div>
                 <span
-                  className={`font-ui text-xs font-semibold mt-1.5 truncate max-w-full tracking-wide uppercase ${style.label}`}
+                  className={`font-ui text-[length:var(--type-label)] leading-[1.4] font-semibold mt-1.5 truncate max-w-full tracking-wide uppercase ${style.label}`}
                   title={turn.speaker}
                 >
                   {turn.speaker}
@@ -993,7 +993,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       {/* Top Controls Bar */}
       <div className="reading-toolbar flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[var(--border-subtle)]">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-ui font-semibold px-2 py-0.5 bg-[var(--bg-alt)] text-[var(--text-secondary)] rounded-xs uppercase">
+          <span className="text-[length:var(--type-label)] leading-[1.4] font-ui font-semibold px-2 py-0.5 bg-[var(--bg-alt)] text-[var(--text-secondary)] rounded-xs uppercase">
             {reading.cefrLevel}
           </span>
           <span className="type-label text-[var(--text-secondary)] font-ui capitalize">
@@ -1212,7 +1212,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[var(--accent-vocab)]/10 text-[var(--accent-vocab)] mb-3 animate-pulse">
                     <Sparkles className="w-5 h-5 animate-spin" style={{ animationDuration: '3s' }} />
                   </div>
-                  <h4 role="status" className="font-editorial text-base font-semibold text-[var(--text-primary)]">
+                  <h4 role="status" className="font-editorial text-[length:var(--type-body)] leading-[1.6] font-semibold text-[var(--text-primary)]">
                     正在翻译…
                   </h4>
                 </div>

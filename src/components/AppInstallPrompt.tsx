@@ -71,8 +71,8 @@ export const AppInstallPrompt: React.FC = () => {
       <div className="flex items-start gap-3">
         <img src="/site-icon.png" alt="" className="w-12 h-12 object-contain flex-shrink-0" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-[var(--text-primary)]">添加 Mine English 到主屏幕</p>
-          <p className="text-xs text-[var(--text-secondary)] mt-1 leading-relaxed">
+          <p className="text-[length:var(--type-body)] leading-[1.6] font-semibold text-[var(--text-primary)]">添加 Mine English 到主屏幕</p>
+          <p className="text-[length:var(--type-body)] leading-[1.6] text-[var(--text-secondary)] mt-1 leading-relaxed">
             这是联网网站的主屏幕入口，不是独立安装包。关闭后重新打开会加载线上版本，使用中不会主动刷新。
           </p>
 
@@ -80,13 +80,13 @@ export const AppInstallPrompt: React.FC = () => {
             <button
               type="button"
               onClick={() => void install()}
-              className="min-h-11 mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] rounded-sm text-xs font-medium"
+              className="min-h-11 mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] rounded-sm text-[length:var(--type-label)] leading-[1.4] font-medium"
             >
               <Download className="w-3.5 h-3.5" />
               添加到主屏幕
             </button>
           ) : (
-            <div className="mt-3 flex items-start gap-2 text-xs text-[var(--accent-vocab)] bg-[var(--bg-alt)]/60 px-3 py-2 rounded-sm">
+            <div className="mt-3 flex items-start gap-2 text-[length:var(--type-body)] leading-[1.6] text-[var(--accent-vocab)] bg-[var(--bg-alt)]/60 px-3 py-2 rounded-sm">
               <Share className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
               <span>
                 {isAppleDevice

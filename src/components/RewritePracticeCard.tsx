@@ -66,7 +66,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
           {getI18nText(targetLanguage, 'exerciseLabel')} {String(index + 1).padStart(2, '0')}
         </span>
         <div className="exercise-target flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span className="text-sm font-ui font-semibold text-[var(--accent-vocab)] block mb-1">
+          <span className="text-[length:var(--type-label)] leading-[1.4] font-ui font-semibold text-[var(--accent-vocab)] block mb-1">
             {getI18nText(targetLanguage, 'targetLabel')}:
           </span>
           <span className="rewrite-target-term inline-block font-editorial font-semibold text-[var(--accent-vocab)]">
@@ -78,7 +78,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
       <div className="rewrite-original">
         <span className="type-label font-ui text-[var(--text-secondary)]">原句</span>
         <p className="type-example font-editorial text-[var(--text-primary)]">{item.originalSentence}</p>
-        {localizedOriginalMeaning && <p className="type-body font-ui text-[var(--text-secondary)] mt-1.5">{localizedOriginalMeaning}</p>}
+        {localizedOriginalMeaning && <p className="type-translation font-ui text-[var(--text-secondary)] mt-1.5">{localizedOriginalMeaning}</p>}
       </div>
 
       {/* Answer Input */}
@@ -132,7 +132,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
         <div className="rewrite-reference mt-3">
           {showAnswer && (
             <div className="type-label mt-2 p-3 bg-[var(--bg-primary)] rounded-sm border border-[var(--border-subtle)] font-ui animate-in fade-in">
-              <span className="text-[11px] text-[var(--text-secondary)] block mb-1">
+              <span className="text-[length:var(--type-label)] leading-[1.4] text-[var(--text-secondary)] block mb-1">
                 {getI18nText(targetLanguage, 'referenceAnswer')}:
               </span>
               <p className="type-example font-editorial text-[var(--accent-vocab)]">
@@ -202,7 +202,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
           {/* Improved Version & Reference Answer */}
           <div className="type-label grid sm:grid-cols-2 gap-3 font-ui">
             <div className="p-2.5 bg-[var(--bg-primary)] rounded-sm border border-[var(--border-subtle)]">
-              <span className="text-[11px] text-[var(--text-secondary)] block mb-0.5">
+              <span className="text-[length:var(--type-label)] leading-[1.4] text-[var(--text-secondary)] block mb-0.5">
                 {getI18nText(targetLanguage, 'improvedVersion')}:
               </span>
               <p className="type-example font-editorial text-[var(--text-primary)] italic">
@@ -211,7 +211,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
             </div>
 
             <div className="p-2.5 bg-[var(--bg-primary)] rounded-sm border border-[var(--border-subtle)]">
-              <span className="text-[11px] text-[var(--text-secondary)] block mb-0.5">
+              <span className="text-[length:var(--type-label)] leading-[1.4] text-[var(--text-secondary)] block mb-0.5">
                 {getI18nText(targetLanguage, 'referenceAnswer')}:
               </span>
               <p className="type-example font-editorial text-[var(--accent-vocab)]">

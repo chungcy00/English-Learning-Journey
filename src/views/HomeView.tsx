@@ -82,14 +82,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
   return (
     <div className="page-shell page-shell--focus home-page">
       <div className="home-page__title">
-        <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-semibold text-[var(--text-primary)] tracking-tight">
+        <h1 className="font-editorial text-[length:var(--type-page)] leading-[1.2]   font-semibold text-[var(--text-primary)] tracking-tight">
           What do you want to learn?
         </h1>
       </div>
 
       <form onSubmit={handleSubmit} className="home-workspace">
         <section className="home-composer bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-sm shadow-sm focus-within:border-[var(--accent-primary)] focus-within:ring-1 focus-within:ring-[var(--accent-primary)]/30 transition-all">
-          <label htmlFor="generation-input" className="home-composer__label text-sm font-ui font-medium text-[var(--text-primary)]">学习主题或英文词汇</label>
+          <label htmlFor="generation-input" className="home-composer__label text-[length:var(--type-label)] leading-[1.4] font-ui font-medium text-[var(--text-primary)]">学习主题或英文词汇</label>
           <textarea
             id="generation-input"
             aria-label="学习主题或英文词汇"
@@ -98,7 +98,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             onChange={(e) => setInput(e.target.value)}
             rows={3}
             placeholder="例如：Small talk at work 或 genuine, break the ice"
-            className="home-composer__input w-full bg-transparent resize-none border-none outline-none font-ui text-base text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] leading-relaxed"
+            className="home-composer__input w-full bg-transparent resize-none border-none outline-none font-ui text-[length:var(--type-body)] leading-[1.6] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] leading-relaxed"
           />
 
           {specifiedVocabulary && <div id="generation-input-preview" className="type-label mb-3 font-ui text-[var(--text-secondary)] break-words">
@@ -110,7 +110,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="home-composer__submit min-h-11 flex items-center justify-center gap-2 px-5 py-2.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] font-ui text-sm font-medium rounded-sm hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-all shadow-xs"
+              className="home-composer__submit min-h-11 flex items-center justify-center gap-2 px-5 py-2.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] font-ui text-[length:var(--type-body)] leading-[1.6] font-medium rounded-sm hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-all shadow-xs"
             >
               <Sparkles className="w-4 h-4" />
               <span>{isLoading ? '生成中…' : '生成短文'}</span>

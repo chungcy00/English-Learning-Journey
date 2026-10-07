@@ -14,7 +14,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ targetLangua
         aria-label="选择释义语言"
         value={targetLanguage}
         onChange={(e) => onLanguageChange(e.target.value)}
-        className="pl-9 pr-8 py-2 bg-[var(--bg-primary)] hover:bg-[var(--bg-alt)] border border-[var(--border-subtle)] text-xs font-ui text-[var(--text-primary)] rounded-sm appearance-none cursor-pointer transition-colors focus:outline-none focus:border-[var(--accent-primary)]"
+        className="pl-9 pr-8 py-2 bg-[var(--bg-primary)] hover:bg-[var(--bg-alt)] border border-[var(--border-subtle)] text-[length:var(--type-label)] leading-[1.4] font-ui text-[var(--text-primary)] rounded-sm appearance-none cursor-pointer transition-colors focus:outline-none focus:border-[var(--accent-primary)]"
       >
         <option value="zh-CN">🇨🇳 中文 (简体)</option>
         <option value="zh-TW">🇹🇼 中文 (繁體)</option>

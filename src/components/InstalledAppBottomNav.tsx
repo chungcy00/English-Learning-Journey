@@ -52,12 +52,12 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
               }`}>
                 <Icon aria-hidden="true" className={`h-5 w-5 ${isActive ? 'stroke-[2.4]' : ''}`} />
                 {tab.badge !== undefined && tab.badge > 0 ? (
-                  <span aria-hidden="true" className="absolute -right-1 -top-1 min-w-4 rounded-full bg-[var(--accent-warm)] px-1 text-[9px] font-semibold leading-4 text-[var(--text-primary)]">
+                  <span aria-hidden="true" className="absolute -right-1 -top-1 min-w-4 rounded-full bg-[var(--accent-warm)] px-1 text-[length:var(--type-meta)] leading-[1.4] font-semibold leading-4 text-[var(--text-primary)]">
                     {tab.badge > 99 ? '99+' : tab.badge}
                   </span>
                 ) : null}
               </span>
-              <span className={`text-[10px] leading-4 ${isActive ? 'font-semibold' : 'font-medium'}`}>
+              <span className={`text-[length:var(--type-meta)] leading-[1.4] leading-4 ${isActive ? 'font-semibold' : 'font-medium'}`}>
                 {tab.label}
               </span>
             </button>

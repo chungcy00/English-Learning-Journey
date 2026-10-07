@@ -40,7 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="w-10 h-10 object-contain flex-shrink-0"
           />
           <div>
-            <span className="font-editorial text-xl sm:text-2xl font-semibold text-[var(--text-primary)] tracking-tight group-hover:text-[var(--accent-vocab)] transition-colors">
+            <span className="font-editorial text-[length:var(--type-section)] leading-[1.3]  font-semibold text-[var(--text-primary)] tracking-tight group-hover:text-[var(--accent-vocab)] transition-colors">
               Mine English
             </span>
           </div>
@@ -59,7 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 aria-current={isActive ? 'page' : undefined}
                 onClick={() => setActiveTab(tab.id)}
                 disabled={tab.disabled}
-                className={`relative flex flex-col lg:flex-row items-center justify-center gap-1 lg:gap-1.5 min-h-12 lg:min-h-11 min-w-0 px-1 lg:px-3 py-1.5 text-[11px] lg:text-sm font-medium transition-all rounded-sm ${
+                className={`relative flex flex-col lg:flex-row items-center justify-center gap-1 lg:gap-1.5 min-h-12 lg:min-h-11 min-w-0 px-1 lg:px-3 py-1.5 text-[length:var(--type-meta)] leading-[1.4]  font-medium transition-all rounded-sm ${
                   isActive
                     ? 'text-[var(--accent-primary)] bg-[var(--surface-selected)] border-b-2 border-[var(--accent-primary)]'
                     : tab.disabled
@@ -68,9 +68,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 <Icon aria-hidden="true" className="w-4 h-4 shrink-0" />
-                <span className="text-center leading-tight break-words">{tab.label}</span>
+                <span className="text-center leading-[1.4] break-words">{tab.label}</span>
                 {tab.badge !== undefined && tab.badge > 0 && (
-                  <span aria-hidden="true" className="absolute top-0 right-0 lg:static lg:ml-1 px-1.5 text-[10px] rounded-full bg-[var(--accent-warm)] text-[var(--text-primary)] font-semibold">
+                  <span aria-hidden="true" className="absolute top-0 right-0 lg:static lg:ml-1 px-1.5 text-[length:var(--type-meta)] leading-[1.4] rounded-full bg-[var(--accent-warm)] text-[var(--text-primary)] font-semibold">
                     {tab.badge}
                   </span>
                 )}

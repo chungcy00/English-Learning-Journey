@@ -16,7 +16,7 @@ export const ProcessingModal: React.FC<ProcessingModalProps> = ({ isOpen, status
     </h2>
     <p id="processing-note" className="type-body font-ui text-[var(--text-secondary)] mb-5">取消不会更改已有短文或清空输入。已发送的 AI 请求仍可能计入额度。</p>
     <button data-dialog-initial-focus disabled={!canCancel} onClick={onCancel}
-      className="font-ui min-h-11 px-4 border border-[var(--accent-primary)] rounded-sm text-sm disabled:opacity-60">
+      className="font-ui min-h-11 px-4 border border-[var(--accent-primary)] rounded-sm text-[length:var(--type-label)] leading-[1.4] disabled:opacity-60">
       {canCancel ? '取消本次操作' : '正在保存…'}
     </button>
   </dialog>;

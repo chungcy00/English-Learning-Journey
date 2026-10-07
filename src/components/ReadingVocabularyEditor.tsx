@@ -63,7 +63,7 @@ export const ReadingVocabularyEditor: React.FC<{
     } catch (err) { setError(err instanceof Error ? err.message : '保存失败，请重试。'); }
     finally { setBusy(false); }
   };
-  return <div className="reading-vocabulary-editor space-y-3 font-ui text-sm">
+  return <div className="reading-vocabulary-editor space-y-3 font-ui text-[length:var(--type-body)] leading-[1.6]">
     <div className="reading-vocabulary-editor__tool flex flex-wrap gap-3 items-center">
       <ExpressionSelect identity={identity} value={term} disabled={busy} loading={catalogue.loading} onOpen={catalogue.load}
         onChange={value => void lookup(value)} options={options.map(item => ({ term: item.term, type: item.type,
@@ -75,7 +75,7 @@ export const ReadingVocabularyEditor: React.FC<{
     {candidate && <div className="reading-vocabulary-editor__candidate p-3 border border-[var(--border-subtle)] rounded-sm space-y-2">
       <p><strong className="type-term">{candidate.term}</strong> · <span className="type-label italic">{candidate.partOfSpeech}</span></p>
       <p className="type-body">{candidate.meaningZh}</p>
-      {full && <select aria-label="选择要替换的精选词汇" value={replaceId} disabled={busy} onChange={e => setReplaceId(e.target.value)} className="w-full text-base border border-[var(--border-subtle)] bg-transparent px-2 py-2">
+      {full && <select aria-label="选择要替换的精选词汇" value={replaceId} disabled={busy} onChange={e => setReplaceId(e.target.value)} className="w-full text-[length:var(--type-body)] leading-[1.6] border border-[var(--border-subtle)] bg-transparent px-2 py-2">
         <option value="">已达 {limit} 项上限，请选择替换项</option>
         {reading.selectedVocabulary.map(v => <option key={v.id} value={v.id}>{v.term}</option>)}
       </select>}

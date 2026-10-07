@@ -81,30 +81,30 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <div className="word-detail-body space-y-5 text-sm" tabIndex={0} aria-label="词汇释义、例句与搭配">
+        <div className="word-detail-body space-y-5 text-[length:var(--type-body)] leading-[1.6]" tabIndex={0} aria-label="词汇释义、例句与搭配">
           {/* Target Language Meaning */}
           <div>
-            <span className="text-xs uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-1 font-medium">
+            <span className="text-[length:var(--type-label)] leading-[1.4] uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-1 font-medium">
               {getI18nText(targetLanguage, 'targetMeaningLabel')}
             </span>
-            <p className="font-ui text-base font-medium text-[var(--text-primary)] bg-[var(--bg-alt)]/50 p-2.5 rounded-sm border border-[var(--border-subtle)]/50">
+            <p className="font-ui text-[length:var(--type-translation)] leading-[1.6] font-medium text-[var(--text-primary)] bg-[var(--bg-alt)]/50 p-2.5 rounded-sm border border-[var(--border-subtle)]/50">
               {localizedMeaning || '暂无释义'}
             </p>
           </div>
 
           {/* English Definition */}
           <div>
-            <span className="text-xs uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-1">
+            <span className="text-[length:var(--type-label)] leading-[1.4] uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-1">
               {getI18nText(targetLanguage, 'enDefinitionLabel')}
             </span>
-            <p className="type-example font-editorial text-[var(--text-primary)]">
+            <p className="text-[length:var(--type-body)] leading-[1.6] font-editorial text-[var(--text-primary)]">
               {vocab.definitionEn}
             </p>
           </div>
 
           {/* Example Sentence */}
           <div>
-            <span className="text-xs uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-1">
+            <span className="text-[length:var(--type-label)] leading-[1.4] uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-1">
               {getI18nText(targetLanguage, 'exampleLabel')}
             </span>
             <div className="bg-[var(--bg-alt)]/30 p-3 rounded-sm border-l border-[var(--accent-primary)] space-y-1.5">
@@ -112,7 +112,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
                 "{vocab.example}"
               </p>
               {localizedExample && (
-                <p className="type-body font-ui text-[var(--text-secondary)] pt-1 border-t border-[var(--border-subtle)]/40">
+                <p className="type-translation font-ui text-[var(--text-secondary)] pt-1 border-t border-[var(--border-subtle)]/40">
                   {localizedExample}
                 </p>
               )}
@@ -122,7 +122,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
           {/* Collocations */}
           {vocab.collocations && vocab.collocations.length > 0 && (
             <div>
-              <span className="text-xs uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-2">
+              <span className="text-[length:var(--type-label)] leading-[1.4] uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-2">
                 {getI18nText(targetLanguage, 'collocationsLabel')}
               </span>
               <div className="flex flex-wrap gap-2">

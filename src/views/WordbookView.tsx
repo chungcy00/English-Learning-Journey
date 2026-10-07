@@ -301,7 +301,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
               aria-autocomplete="list"
               aria-controls={suggestionPanelVisible ? 'wordbook-expression-options' : undefined}
               aria-activedescendant={suggestionPanelVisible && searchSuggestions[activeSuggestionIndex] ? `wordbook-expression-option-${activeSuggestionIndex}` : undefined}
-              className="w-full pl-9 pr-3 py-2 text-base bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-sm focus-visible:outline-2 focus-visible:outline-[var(--accent-vocab)] font-ui text-[var(--text-primary)]"
+              className="w-full pl-9 pr-3 py-2 text-[length:var(--type-body)] leading-[1.6] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-sm focus-visible:outline-2 focus-visible:outline-[var(--accent-vocab)] font-ui text-[var(--text-primary)]"
             />
 
             {suggestionPanelVisible && (
@@ -331,7 +331,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                         : 'hover:bg-[var(--bg-alt)]/60'
                     }`}
                   >
-                    <span className="block font-editorial text-base font-semibold text-[var(--accent-vocab)]">
+                    <span className="block font-editorial text-[length:var(--type-term)] leading-[1.4] font-semibold text-[var(--accent-vocab)]">
                       {term}
                     </span>
                     <span className="type-meta block font-ui text-[var(--text-secondary)] truncate">
@@ -341,7 +341,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                   </button>
                 ))}
                 </div>
-                <div className="p-3 space-y-2 text-sm font-ui">
+                <div className="p-3 space-y-2 text-[length:var(--type-body)] leading-[1.6] font-ui">
                   {catalogue.loading && <p role="status">正在识别表达…</p>}
                   {catalogue.error && <p role="alert" className="text-[var(--status-error)]">{catalogue.error} <button onClick={catalogue.retry} className="underline">重试</button></p>}
                   {isEnglishTermQuery(search) && search.trim().length <= 160 && !vocabularyList.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(search)) && <button type="button" disabled={isAdding} onClick={() => void addToCurrentLevel()} className="border border-[var(--border-subtle)] rounded-sm px-3 py-1.5 disabled:opacity-50 break-words w-full text-left">
@@ -385,7 +385,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         <label htmlFor="saved-vocabulary-search" className="sr-only">筛选已添加词条</label>
         <input id="saved-vocabulary-search" value={collectionSearch} onChange={event => setCollectionSearch(event.target.value)}
           placeholder="搜索已添加的单词、短语或习语"
-          className="w-full min-h-11 px-3 py-2 text-base bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]" />
+          className="w-full min-h-11 px-3 py-2 text-[length:var(--type-body)] leading-[1.6] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]" />
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="wordbook-status-filters flex flex-wrap items-center gap-1.5" role="group" aria-label="按学习状态筛选">
@@ -505,7 +505,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                     <p className="type-body font-ui font-medium text-[var(--text-primary)] mt-1 flex items-center gap-1.5 flex-wrap">
                       <span>{getLocalizedVocabMeaning(vocab, targetLanguage)}</span>
                       {targetLanguage !== 'zh-CN' && vocab.meaningZh && getLocalizedVocabMeaning(vocab, targetLanguage) !== vocab.meaningZh && (
-                        <span className="text-xs font-normal text-[var(--text-secondary)]">
+                        <span className="text-[length:var(--type-meta)] leading-[1.4] font-normal text-[var(--text-secondary)]">
                           ({vocab.meaningZh})
                         </span>
                       )}
@@ -564,7 +564,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                 已选 {selectedTerms.length} 个生词重新生成短文
               </span>
             </div>
-            <div className="min-w-0 flex flex-wrap gap-1 text-[11px] font-editorial text-[var(--accent-vocab)] break-words">
+            <div className="min-w-0 flex flex-wrap gap-1 text-[length:var(--type-term)] leading-[1.4] font-editorial text-[var(--accent-vocab)] break-words">
               {selectedTerms.map((t) => (
                 <span key={t} className="px-1.5 py-0.5 bg-[var(--bg-primary)] rounded-xs border border-[var(--border-subtle)]/50">
                   {t}
@@ -580,7 +580,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                 value={readingType}
                 aria-label="生成短文的类型"
                 onChange={(e) => setReadingType(e.target.value as ReadingType)}
-                className="px-2 py-1 text-xs bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xs"
+                className="px-2 py-1 text-[length:var(--type-label)] leading-[1.4] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xs"
               >
                 <option value="story">Story</option>
                 <option value="non-story">Non-story</option>
@@ -594,7 +594,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                 value={length}
                 aria-label="生成短文的篇幅"
                 onChange={(e) => setLength(e.target.value as ReadingLength)}
-                className="px-2 py-1 text-xs bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xs"
+                className="px-2 py-1 text-[length:var(--type-label)] leading-[1.4] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-xs"
               >
                 <option value="short">Short</option>
                 <option value="medium">Medium</option>

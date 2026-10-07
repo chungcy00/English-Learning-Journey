@@ -227,7 +227,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
             <CheckCircle className="w-6 h-6" />
           </div>
 
-          <h2 className="font-editorial text-2xl font-semibold text-[var(--text-primary)]">
+          <h2 className="font-editorial text-[length:var(--type-section)] leading-[1.3] font-semibold text-[var(--text-primary)]">
             {allVocabularies.length === 0 ? '当前短文还没有已添加词条' : '本轮复习已完成！'}
           </h2>
           {allVocabularies.length === 0 && <p className="type-body font-ui text-[var(--text-secondary)] max-w-md mx-auto">
@@ -314,10 +314,10 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
               </div>
 
               <div className="text-center py-4">
-                <h2 className="font-editorial text-4xl sm:text-5xl font-semibold text-[var(--accent-vocab)] tracking-tight break-words">
+                <h2 className="font-editorial text-[length:var(--type-term)] leading-[1.4]  font-semibold text-[var(--accent-vocab)] tracking-tight break-words">
                   {currentVocab.term}
                 </h2>
-                <p className="type-body font-ui text-[var(--text-secondary)] mt-1">
+                <p className="type-meta font-ui text-[var(--text-secondary)] mt-1">
                   {currentVocab.phonetic} •{' '}
                   <span className="type-label italic">{currentVocab.partOfSpeech}</span>
                 </p>
@@ -331,7 +331,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                     <span className="type-meta font-ui text-[var(--text-secondary)] block uppercase">
                       {getI18nText(targetLanguage, 'targetMeaningLabel', '母语地道释义 (Meaning)')}:
                     </span>
-                    <p className="font-ui text-base font-semibold text-[var(--text-primary)] mt-0.5">
+                    <p className="font-ui text-[length:var(--type-translation)] leading-[1.6] font-semibold text-[var(--text-primary)] mt-0.5">
                       {localizedMeaning}
                     </p>
                     {isNotZh && currentVocab.meaningZh && localizedMeaning !== currentVocab.meaningZh && (
@@ -346,7 +346,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                     <span className="type-meta font-ui text-[var(--text-secondary)] block uppercase">
                       {getI18nText(targetLanguage, 'enDefinitionLabel', '英文释义 (Definition)')}:
                     </span>
-                    <p className="type-example font-editorial text-[var(--text-primary)]">
+                    <p className="text-[length:var(--type-body)] leading-[1.6] font-editorial text-[var(--text-primary)]">
                       {currentVocab.definitionEn}
                     </p>
                   </div>
@@ -361,7 +361,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                         "{currentVocab.example}"
                       </p>
                       {localizedExample && (
-                        <p className="type-body font-ui text-[var(--text-secondary)] pt-1 border-t border-[var(--border-subtle)]/40">
+                        <p className="type-translation font-ui text-[var(--text-secondary)] pt-1 border-t border-[var(--border-subtle)]/40">
                           {localizedExample}
                         </p>
                       )}
@@ -436,7 +436,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
               </fieldset>
             )}
             {isSaving && <p role="status" className="type-body font-ui text-[var(--text-secondary)] mt-3">正在保存评分，请稍候…</p>}
-            {failedRating && <div role="alert" className="font-ui text-sm text-[var(--status-error)] mt-3">
+            {failedRating && <div role="alert" className="font-ui text-[length:var(--type-body)] leading-[1.6] text-[var(--status-error)] mt-3">
               <p>评分未保存，当前词条已保留。请检查设备存储后重试。</p>
               <button onClick={() => handleRating(failedRating)} className="min-h-11 px-3 border rounded-sm mt-2">重试保存</button>
             </div>}

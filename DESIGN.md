@@ -41,46 +41,46 @@ colors:
 typography:
   page:
     fontFamily: '"Cormorant Garamond", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", Georgia, serif'
-    fontSize: "1.75rem"
+    fontSize: "1.5rem"
     fontWeight: 600
     lineHeight: 1.2
     letterSpacing: "-0.02em"
   section:
     fontFamily: '"Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif'
-    fontSize: "1.375rem"
+    fontSize: "1.25rem"
     fontWeight: 600
     lineHeight: 1.3
     letterSpacing: "-0.01em"
   term:
     fontFamily: '"Cormorant Garamond", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", Georgia, serif'
-    fontSize: "1.125rem"
+    fontSize: "1rem"
     fontWeight: 600
-    lineHeight: 1.3
+    lineHeight: 1.4
   reading:
     fontFamily: '"Cormorant Garamond", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", Georgia, serif'
-    fontSize: "1.125rem"
-    lineHeight: 1.75
+    fontSize: "1.0625rem"
+    lineHeight: 1.7
   example:
     fontFamily: '"Cormorant Garamond", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", Georgia, serif'
-    fontSize: "1.125rem"
+    fontSize: "1rem"
     lineHeight: 1.6
   body:
     fontFamily: '"Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif'
-    fontSize: "1rem"
-    lineHeight: 1.75
+    fontSize: "0.9375rem"
+    lineHeight: 1.6
   translation:
     fontFamily: '"Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif'
-    fontSize: "1rem"
-    lineHeight: 1.85
+    fontSize: "0.9375rem"
+    lineHeight: 1.6
   label:
     fontFamily: '"Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif'
-    fontSize: "0.875rem"
-    lineHeight: 1.5
+    fontSize: "0.8125rem"
+    lineHeight: 1.4
     letterSpacing: "normal"
   meta:
     fontFamily: '"Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif'
-    fontSize: "0.875rem"
-    lineHeight: 1.5
+    fontSize: "0.75rem"
+    lineHeight: 1.4
     letterSpacing: "normal"
 rounded:
   nav: "4px"
@@ -202,18 +202,18 @@ Existing semantic feedback is not a unified root-token palette: error text uses 
 
 **Body/Control Font:** Inter with the existing Chinese and sans-serif fallbacks.
 
-English headings and learning passages use the editorial family; controls, translations, metadata, and helper copy use the UI family. The frontmatter lists mobile/base roles. At the existing small-screen breakpoint, page, section, term, reading, and metadata roles change; component overrides remain authoritative.
+English headings and learning passages use the editorial family; controls, translations, metadata, and helper copy use the UI family. The frontmatter lists mobile/base roles. At 640px, only page, section, term and reading sizes change. All application components reference the global scale in src/index.css.
 
 ### Hierarchy
 
-- Page titles use the editorial `page` role. From (640px), its token becomes (2.25rem). Home overrides it with `clamp(1.875rem, 3vw, 2.5rem)` and (1.75rem) on mobile; History uses `clamp(1.75rem, 3vw, 2.5rem)`.
-- Section headings use the UI `section` role, increasing to (1.75rem) from (640px). The chart heading stays (1.375rem).
-- Terms use the editorial `term` role, increasing to (1.5rem) from (640px).
-- Reading uses the editorial `reading` role, increasing to (1.375rem) from (640px); reading-screen component overrides are incumbent, outside this batch's finish review.
-- Body and translations remain (1rem). The composer textarea and placeholder explicitly use the UI family at (1rem), including mobile.
-- Labels and base metadata are compact. Metadata becomes (0.8125rem) from (640px), while History explicitly keeps (0.875rem). Numeric counts use tabular figures where implemented.
+- Page titles use (1.5rem), increasing to (1.875rem) from 640px, with line-height 1.2.
+- Section headings use (1.25rem), increasing to (1.5rem) from 640px, with line-height 1.3.
+- Terms use (1rem), increasing to (1.1875rem) from 640px, with line-height 1.4.
+- Reading uses (1.0625rem), increasing to (1.15rem) from 640px, with line-height 1.7.
+- Examples use (1rem). Body and translations use separate (0.9375rem) tokens. These roles use line-height 1.6.
+- Labels use (0.8125rem) and metadata uses (0.75rem), both with line-height 1.4 and no breakpoint scaling. Numeric counts retain tabular figures.
 
-**The Confirmed Type Rule.** Preserve the existing font pairing and confirmed compact sizes; keep the composer input and placeholder in the UI family at (1rem).
+**The Confirmed Type Rule.** Preserve existing font families, weights, geometry and colors. Use the global role tokens for application text; do not use viewport-scaled font sizes. Mobile text-entry controls retain the 1rem example token to prevent iOS focus zoom. PDF export remains an independent print typography surface.
 
 ## Layout
 
