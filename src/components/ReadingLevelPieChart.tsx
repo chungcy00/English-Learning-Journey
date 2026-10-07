@@ -1,32 +1,69 @@
-import React from 'react';
-import { readingLevelDistribution } from '../utils/readingLevelDistribution';
+import React, { useState } from 'react';
+import { BookOpen, ChartNoAxesColumn, ChartPie, Sparkles } from 'lucide-react';
+import { distributionSource, readingLevelDistribution, type DistributionDimension, type DistributionReading } from '../utils/readingLevelDistribution';
 
-export function ReadingLevelPieChart({ readings }: { readings: readonly { cefrLevel?: string | null }[] }) {
-  const distribution = readingLevelDistribution(readings);
-  const slices = distribution.filter(item => item.count > 0);
-  let angle = -Math.PI / 2;
-  return (
-    <section className="reading-distribution" aria-labelledby="reading-distribution-title">
-      <h2 id="reading-distribution-title" className="type-section font-ui font-semibold">已保存短文等级分布</h2>
-      {readings.length === 0 ? <p className="type-body text-[var(--text-secondary)]">保存短文后显示等级分布。</p> : (
-        <div className="reading-distribution__body">
-          <svg className="reading-distribution__pie" viewBox="0 0 200 200" role="img" aria-label="短文等级分布，具体篇数和占比见文字图例">
-            {slices.map(item => {
-              const start = angle;
-              angle += item.count / readings.length * Math.PI * 2;
-              const point = (value: number) => `${100 + 94 * Math.cos(value)} ${100 + 94 * Math.sin(value)}`;
-              return slices.length === 1
-                ? <circle key={item.level} className={`chart-level-${item.level}`} cx="100" cy="100" r="94" />
-                : <path key={item.level} className={`chart-level-${item.level}`} d={`M 100 100 L ${point(start)} A 94 94 0 ${angle - start > Math.PI ? 1 : 0} 1 ${point(angle)} Z`} />;
-            })}
-          </svg>
-          <ul className="reading-distribution__legend" aria-label="短文等级统计">
-            {distribution.filter(item => item.level !== '未知' || item.count > 0).map(item => (
-              <li key={item.level}><span className={`chart-key chart-level-${item.level}`} aria-hidden="true" /><span>{item.level}</span><span>{item.count} 篇</span><span>{item.percentage.toLocaleString('zh-CN', { maximumFractionDigits: 1 })}%</span></li>
-            ))}
-          </ul>
+const levels: Record<string, { name: string; color: string }> = {
+  A1: { name: 'Breakthrough', color: '#A5BBA2' }, A2: { name: 'Elementary', color: '#EBC78C' },
+  B1: { name: 'Intermediate', color: '#8FA38C' }, B2: { name: 'Upper-Intermediate', color: '#DDA99C' },
+  C1: { name: 'Advanced', color: '#9CB0BA' }, C2: { name: 'Mastery', color: '#C8BAAD' },
+  未知: { name: 'Unclassified', color: '#E3E0D7' },
+};
+
+export function ReadingLevelPieChart({ readings, dimension: controlledDimension, selectedLevel = null, onDimensionChange, onLevelSelect }: {
+  readings: readonly DistributionReading[];
+  dimension?: DistributionDimension;
+  selectedLevel?: string | null;
+  onDimensionChange?: (dimension: DistributionDimension) => void;
+  onLevelSelect?: (level: string) => void;
+}) {
+  const [localDimension, setLocalDimension] = useState<DistributionDimension>('readings');
+  const dimension = controlledDimension || localDimension;
+  const source = distributionSource(readings, dimension);
+  const distribution = readingLevelDistribution(source);
+  const dominant = [...distribution].sort((a, b) => b.count - a.count)[0];
+  const unknown = distribution.find(item => item.level === '未知')!;
+  const totalWords = distributionSource(readings, 'vocabulary').length;
+  const unit = dimension === 'readings' ? '篇' : '条';
+  let offset = 0;
+  const percent = (value: number) => `${value.toLocaleString('zh-CN', { maximumFractionDigits: 1 })}%`;
+  return <section className="reading-distribution" aria-labelledby="reading-distribution-title">
+    <header className="reading-distribution__header">
+      <div className="reading-distribution__title"><ChartPie size={24} aria-hidden="true" /><h2 id="reading-distribution-title">短文难度等级分布（CEFR）</h2></div>
+      <p>基于已生成的 {readings.length} 篇情境短文及 {totalWords} 条精选词汇</p>
+      <div className="reading-distribution__switch" role="group" aria-label="统计维度">
+        {(['readings', 'vocabulary'] as const).map(value => <button key={value} type="button" aria-pressed={dimension === value} onClick={() => { setLocalDimension(value); onDimensionChange?.(value); }}>
+          {value === 'readings' ? <BookOpen size={17} aria-hidden="true" /> : <ChartNoAxesColumn size={17} aria-hidden="true" />}{value === 'readings' ? '按短文篇数' : '按词汇难度'}
+        </button>)}
+      </div>
+    </header>
+    <div className="reading-distribution__body">
+      <div className="reading-distribution__ring">
+        <svg viewBox="0 0 240 240" role="img" aria-label={`${dimension === 'readings' ? '短文' : '精选词汇'}等级分布，数量和占比见下方等级卡片`}>
+          <circle cx="120" cy="120" r="100" fill="none" stroke="#F0F3EC" strokeWidth="28" />
+          {distribution.filter(item => item.count > 0).map(item => {
+            const start = offset; offset += item.percentage;
+            return <circle key={item.level} cx="120" cy="120" r="100" fill="none" stroke={levels[item.level].color} strokeWidth="28" pathLength="100" strokeDasharray={`${item.percentage} ${100 - item.percentage}`} strokeDashoffset={-start} transform="rotate(-90 120 120)" />;
+          })}
+        </svg>
+        <div className="reading-distribution__center" aria-live="polite">
+          <span>{source.length ? levels[dominant.level].name.toUpperCase() : 'NO DATA'}</span>
+          <strong>{source.length ? (dominant.level === '未知' ? '未标注' : dominant.level) : '—'}</strong>
+          <small>{source.length ? `${dominant.count} ${unit} · ${dominant.percentage.toFixed(1)}%` : '暂无等级数据'}</small>
         </div>
-      )}
-    </section>
-  );
+      </div>
+      <div className="reading-distribution__details">
+        <p className="reading-distribution__hint">点击等级卡片可筛选下方短文：</p>
+        <div className="reading-distribution__levels" role="group" aria-label="按 CEFR 等级筛选历史短文">
+          {distribution.filter(item => item.level !== '未知').map(item => <button type="button" key={item.level} aria-pressed={selectedLevel === item.level} onClick={() => onLevelSelect?.(item.level)}>
+            <span className="reading-distribution__dot" style={{ background: levels[item.level].color }} aria-hidden="true" />
+            <span className="reading-distribution__level-name"><strong>{item.level}</strong><small>{levels[item.level].name}</small></span>
+            <span className="reading-distribution__numbers"><strong>{item.count}</strong><small>{percent(item.percentage)}</small></span>
+          </button>)}
+        </div>
+        {unknown.count > 0 && <p className="reading-distribution__unknown">未标注等级：{unknown.count} {unit}（{percent(unknown.percentage)}），已计入总数。</p>}
+        <div className="reading-distribution__summary"><Sparkles size={19} aria-hidden="true" /><span>主修核心等级：<strong>{source.length ? `${dominant.level === '未知' ? '未标注' : dominant.level}（${percent(dominant.percentage)}）` : '暂无数据'}</strong></span></div>
+        {!source.length && <p className="reading-distribution__unknown">{dimension === 'readings' ? '保存短文后显示等级分布。' : '暂无精选词汇，生成含精选词汇的短文后显示分布。'}</p>}
+      </div>
+    </div>
+  </section>;
 }
