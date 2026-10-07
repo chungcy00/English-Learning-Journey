@@ -761,6 +761,12 @@ main {
 .reading-distribution__body { display: grid; gap: 1.25rem; padding-top: 1.5rem; align-items: center; }
 .reading-distribution__ring { position: relative; width: min(100%, 18rem); aspect-ratio: 1; margin-inline: auto; }
 .reading-distribution__ring svg { width: 100%; height: 100%; }
+.reading-distribution__segment { transition: stroke-width 150ms cubic-bezier(.16, 1, .3, 1); }
+.reading-distribution__segment[role="button"] { cursor: pointer; }
+.reading-distribution__segment:focus-visible { outline: none; stroke: #315E4C; stroke-width: 3; }
+.reading-distribution__center { pointer-events: none; }
+.reading-distribution__levels button[data-preview="true"] { border-color: #8FA38C; background: #F0F3EC; }
+@media (prefers-reduced-motion: reduce) { .reading-distribution__segment { transition: none; } }
 .reading-distribution__center { position: absolute; inset: 22%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .25rem; text-align: center; }
 .reading-distribution__center > span { color: #9A9C94; font-size: .625rem; letter-spacing: .1em; overflow-wrap: anywhere; }
 .reading-distribution__center > strong { font-size: clamp(2rem, 8vw, 3rem); line-height: 1.2; }

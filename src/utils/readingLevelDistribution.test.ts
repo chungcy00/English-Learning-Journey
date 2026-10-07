@@ -22,7 +22,7 @@ test('single level is a full circle; missing and unsupported levels remain unkno
   const html = renderToStaticMarkup(React.createElement(ReadingLevelPieChart, { readings: [{ cefrLevel: 'B2' }] }));
   assert.match(html, /<circle/);
   assert.match(html, /100%/);
-  assert.match(html, /stroke-dasharray="100 0"/);
+  assert.match(html, /class="reading-distribution__segment"/);
 });
 
 test('adding and deleting readings recomputes actual counts and slices', () => {
@@ -30,7 +30,7 @@ test('adding and deleting readings recomputes actual counts and slices', () => {
   assert.equal(readingLevelDistribution(readings).find(item => item.level === 'A2')!.percentage, 50);
   assert.equal(readingLevelDistribution(readings.slice(0, 1)).find(item => item.level === 'A2')!.percentage, 100);
   const html = renderToStaticMarkup(React.createElement(ReadingLevelPieChart, { readings }));
-  assert.equal((html.match(/stroke-dasharray=/g) || []).length, 2);
+  assert.equal((html.match(/class="reading-distribution__segment"/g) || []).length, 2);
 });
 
 test('vocabulary uses actual word levels, not passage levels; filters keep original records', () => {
@@ -49,7 +49,8 @@ test('chart exposes six filter buttons and vocabulary dimension with truthful to
   assert.match(html, /1 篇情境短文及 1 条精选词汇/);
   assert.match(html, /MASTERY/);
   assert.match(html, /1 条 · 100.0%/);
-  assert.equal((html.match(/aria-pressed=/g) || []).length, 8);
+  assert.equal((html.match(/aria-pressed=/g) || []).length, 9);
+  assert.match(html, /筛选 C2：1 条，100%/);
 });
 
 test('history shows factual metadata without topic, body preview, search or fake progress', () => {
