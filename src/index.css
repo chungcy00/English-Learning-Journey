@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import "@fontsource-variable/nunito/wght.css";
+@import "@fontsource-variable/nunito/wght-italic.css";
+@import "@fontsource-variable/noto-sans-tc/wght.css";
 
 @theme {
   --shadow-xs: 0 1px 2px rgb(67 64 52 / 3%);
@@ -100,13 +103,15 @@ input, textarea, select { scroll-margin-block: 6rem; }
     --ease-feedback: ease;
     --ease-vocab: ease-in-out;
     --ease-arrive: cubic-bezier(.16, 1, .3, 1);
-    --font-app: "SF Pro Text", -apple-system, "Inter", "Roboto", "PingFang SC", "MiSans", "Noto Sans CJK SC", "HarmonyOS Sans", "Noto Sans SC", sans-serif;
+    /* Bundled faces take precedence over device fonts, including on Android. */
+    --font-app: "Nunito Variable", "Noto Sans TC Variable", "PingFang SC", "Microsoft YaHei", sans-serif;
     /* Compatibility alias: existing editorial markup now uses the same sans family. */
     --font-editorial: var(--font-app);
     --type-page: 1.5rem;
     --type-section: 1.125rem;
     --type-term: 1rem;
-    --type-reading: 1rem;
+    --type-reading: 0.9375rem;
+    --type-reading-leading: 1.65;
     --type-example: 1rem;
     --type-body: 0.9375rem;
     --type-translation: 0.875rem;
@@ -124,6 +129,7 @@ input, textarea, select { scroll-margin-block: 6rem; }
   body {
     font-size: var(--type-body);
     font-family: var(--font-app);
+    font-synthesis: none;
     background-color: var(--bg-primary);
     color: var(--text-primary);
     line-height: 1.6;
@@ -182,7 +188,7 @@ main :is(h1, h2, h3) { overflow-wrap: anywhere; text-wrap: balance; }
 .type-page { font-family: var(--font-editorial); font-size: var(--type-page); font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; }
 .type-section { font-size: var(--type-section); font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; }
 .type-term { font-family: var(--font-editorial); font-size: var(--type-term); font-weight: 500; line-height: 1.4; }
-.type-reading { font-family: var(--font-editorial); font-size: var(--type-reading); line-height: 1.7; }
+.type-reading { font-family: var(--font-editorial); font-size: var(--type-reading); line-height: var(--type-reading-leading); }
 .type-example { font-family: var(--font-editorial); font-size: var(--type-example); line-height: 1.6; }
 .type-body { font-family: var(--font-app); font-size: var(--type-body); line-height: 1.6; }
 .type-translation { font-family: var(--font-app); font-size: var(--type-translation); line-height: 1.6; }
@@ -544,7 +550,7 @@ button.vocab-highlight {
 .reading-original .reading-prose {
   max-width: 68ch;
   font-size: var(--type-reading);
-  line-height: 1.7;
+  line-height: var(--type-reading-leading);
 }
 
 .reading-translation .reading-prose {
@@ -599,7 +605,7 @@ button.vocab-highlight {
 
   .reading-original .reading-prose {
     font-size: var(--type-reading);
-    line-height: 1.7;
+    line-height: var(--type-reading-leading);
   }
 }
 
@@ -1221,7 +1227,7 @@ main {
   .wordbook-selection-panel > div:last-child > button { width: 100%; margin-left: 0; justify-content: center; }
   .reading-toolbar .reading-actions { justify-content: flex-start; gap: 0.5rem; }
   .reading-panel { border-radius: 12px; }
-  .reading-panel .reading-prose { font-size: var(--type-reading); line-height: 1.7; }
+  .reading-panel .reading-prose { font-size: var(--type-reading); line-height: var(--type-reading-leading); }
   .reading-translation .reading-prose { font-size: var(--type-translation); line-height: 1.6; }
   #word-detail-title { font-size: var(--type-term); line-height: 1.4; }
   .rewrite-question-panel .rewrite-target-term { font-size: var(--type-term); line-height: 1.4; }

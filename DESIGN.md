@@ -59,8 +59,8 @@ typography:
     lineHeight: 1.4
   reading:
     fontFamily: 'var(--font-app)'
-    fontSize: "1rem"
-    lineHeight: 1.7
+    fontSize: "0.9375rem"
+    lineHeight: 1.65
   example:
     fontFamily: 'var(--font-app)'
     fontSize: "1rem"
@@ -199,7 +199,7 @@ Existing semantic feedback is not a unified root-token palette: error text uses 
 
 ## Typography
 
-**Font:** SF Pro Text / Apple system, Inter, Roboto, PingFang SC, MiSans, Noto Sans CJK SC, HarmonyOS Sans, Noto Sans SC, then sans-serif. Named platform fonts are used when available; their presence is not assumed or bundled. Inter and Noto Sans SC retain swap loading. The existing editorial variable is an alias to the app family, not a second font system.
+**Font:** font_requirements.md explicitly specifies Nunito for Latin and all digits, followed by Noto Sans TC for Chinese, including simplified Chinese UI copy. The Fontsource variable packages bundle WOFF2 resources with unicode-range subsets and swap loading from the application origin. Nunito supports real weights 200–1000 and italic; Noto Sans TC supports real weights 100–900. Existing 400/500/600/700 hierarchy is retained, with no synthetic weight/italic. First-family precedence ensures Latin digits in mixed Chinese strings remain Nunito. PingFang SC / Microsoft YaHei are recovery fallbacks only. The existing editorial variable remains an alias to the app family. OFL licenses are distributed under public/fonts/licenses.
 
 All headings, reading passages, controls, translations and metadata now use sans typography. At 640px, only page and section sizes change. All application components reference the global scale in src/index.css. Heading ink is #2C3E35; normal content remains soft gray-black and readable secondary text uses #5F655D / #6A7068.
 
@@ -208,11 +208,11 @@ All headings, reading passages, controls, translations and metadata now use sans
 - Page titles use 24px / 28px and weight 700, preserving line-height 1.2.
 - Section headings use 18px / 20px and weight 600, preserving line-height 1.3.
 - Terms and card titles use 16px and weight 500. The previous 26px review-word exception is removed.
-- Reading and examples use 16px / regular weight; body uses 15px. Existing reading line-height 1.7 and body line-height 1.6 are preserved.
+- Reading uses a dedicated 15px / 1.65 regular setting for the compact reference density; examples remain 16px / 1.6 and body remains 15px / 1.6. Other role sizes and paragraph spacing are unchanged.
 - Translations and vocabulary definitions use 14px / regular weight.
 - Labels and metadata use 12px / regular weight, within the brief's 11–12px range. Progress/counts retain tabular figures to avoid numeric jitter.
 
-**The Confirmed Type Rule.** Apply the five-level sans hierarchy from 英语学习应用_字体与排版需求文档.md without changing structure, navigation or interactions. Existing role names remain compatibility mappings into these five levels, not a second system. Preserve unspecified line heights and tracking. Mobile text-entry controls retain 16px to prevent iOS focus zoom. PDF export remains an independent print typography surface.
+**The Confirmed Type Rule.** font_requirements.md determines the font families; retain current sizes, line heights, tracking, colors, layout and interactions. Existing role names remain compatibility mappings, not a second system. Mobile text-entry controls retain 16px to prevent iOS focus zoom. PDF export remains an independent print typography surface. Final Android and iPhone rendering requires real-device acceptance; desktop responsive testing is not proof of physical-device font delivery. The existing rewrite progress list has icons, not circular numbered steps; do not introduce new step containers to imitate the reference.
 
 ## Layout
 
