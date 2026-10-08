@@ -6,12 +6,14 @@ import { join } from 'node:path';
 const root = new URL('../', import.meta.url);
 const css = readFileSync(new URL('index.css', root), 'utf8');
 
-test('learning typography preserves font identity, tabular metadata and browser zoom', () => {
-  assert.match(css, /--font-app: "Inter", "Noto Sans SC"/);
-  assert.match(css, /--font-editorial: "Cormorant Garamond"/);
+test('learning typography follows platform sans fallbacks, tabular metadata and browser zoom', () => {
+  assert.match(css, /--font-app: "SF Pro Text", -apple-system, "Inter", "Roboto", "PingFang SC", "MiSans", "Noto Sans CJK SC", "HarmonyOS Sans", "Noto Sans SC", sans-serif/);
+  assert.match(css, /--font-editorial: var\(--font-app\)/);
+  assert.doesNotMatch(css, /Cormorant|Georgia/);
   assert.match(css, /\.type-meta[^}]+tabular-nums/);
   const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
   assert.match(html, /display=swap/);
+  assert.doesNotMatch(html, /Cormorant/);
   assert.doesNotMatch(html, /user-scalable=no|maximum-scale=1/);
 });
 
@@ -34,11 +36,15 @@ test('repeated teaching content shares type roles across reading, wordbook and r
 });
 
 test('typography uses the requested mobile-first scale and one desktop breakpoint', () => {
-  const sizes = { page: '1.5rem', section: '1.25rem', term: '1rem', reading: '1.0625rem', example: '1rem', body: '0.9375rem', translation: '0.9375rem', label: '0.8125rem', meta: '0.75rem' };
+  const sizes = { page: '1.5rem', section: '1.125rem', term: '1rem', reading: '1rem', example: '1rem', body: '0.9375rem', translation: '0.875rem', label: '0.75rem', meta: '0.75rem' };
   for (const [role, size] of Object.entries(sizes)) {
     assert.equal(css.match(new RegExp(`--type-${role}: ([^;]+);`))?.[1], size);
   }
-  assert.match(css, /@media \(min-width: 640px\)\s*\{\s*:root \{ --type-page: 1\.875rem; --type-section: 1\.5rem; --type-term: 1\.1875rem; --type-reading: 1\.15rem; \}/);
+  assert.match(css, /@media \(min-width: 640px\)\s*\{\s*:root \{ --type-page: 1\.75rem; --type-section: 1\.25rem; \}/);
+  assert.doesNotMatch(css, /--type-review-term|--type-wordbook-entry/);
+  assert.match(css, /\.type-page[^}]*font-weight: 700/);
+  assert.match(css, /\.type-term[^}]*font-weight: 500/);
+  assert.match(css, /--text-ink: #2C3E35/);
   assert.doesNotMatch(css, /font-size:\s*(?!var\(--type-)[\d.]/);
   assert.match(css, /\.type-reading[^}]*line-height: 1\.7;/);
   assert.match(css, /\.type-translation[^}]*font-size: var\(--type-translation\);[^}]*line-height: 1\.6;/);

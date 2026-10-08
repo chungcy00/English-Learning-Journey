@@ -177,7 +177,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       </form>
       {currentReading && onContinueReading && (
         <section className="home-continue" aria-labelledby="continue-reading-title">
-          <h2 id="continue-reading-title" className="type-label font-ui text-[var(--text-secondary)]">继续上次阅读</h2>
+          <h2 id="continue-reading-title" className="type-section font-ui">继续上次阅读</h2>
           <button type="button" onClick={onContinueReading} className="home-continue__link">
             <span className="min-w-0">
               <span className="type-term font-editorial block">{currentReading.title}</span>

@@ -66,7 +66,7 @@ test('primary content, actions and semantic feedback meet 4.5:1', () => {
 
 test('requested text palette separates readable metadata from placeholders and disabled content', () => {
   const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8');
-  for (const [name, value] of Object.entries({ 'text-primary': '#20251F', 'text-secondary': '#74796F', 'text-muted': '#9A9C94', 'text-placeholder': '#8E928B' })) {
+  for (const [name, value] of Object.entries({ 'text-primary': '#20251F', 'text-secondary': '#5F655D', 'text-muted': '#6A7068', 'text-placeholder': '#8E928B' })) {
     assert.ok(css.includes(`--${name}: ${value};`));
   }
   assert.match(css, /--text-disabled: var\(--text-placeholder\)/);

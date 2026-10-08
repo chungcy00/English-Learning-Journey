@@ -344,7 +344,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                     <span className="type-meta font-ui text-[var(--text-muted)] block uppercase">
                       {getI18nText(targetLanguage, 'enDefinitionLabel', '英文释义 (Definition)')}:
                     </span>
-                    <p className="text-[length:var(--type-body)] leading-[1.6] font-editorial text-[var(--text-primary)]">
+                    <p className="type-translation font-editorial text-[var(--text-primary)]">
                       {currentVocab.definitionEn}
                     </p>
                   </div>

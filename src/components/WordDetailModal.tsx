@@ -52,7 +52,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
         <div className="flex items-start justify-between gap-3 border-b border-[var(--border-subtle)] pb-4 mb-5">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-3">
-              <h2 id="word-detail-title" className="type-section font-editorial font-semibold text-[var(--accent-vocab)] break-words">
+              <h2 id="word-detail-title" className="type-term font-editorial font-medium text-[var(--accent-vocab)] break-words">
                 {vocab.term}
               </h2>
               <button
@@ -99,7 +99,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
             <span className="text-[length:var(--type-label)] leading-[1.4] uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-1">
               {getI18nText(targetLanguage, 'enDefinitionLabel')}
             </span>
-            <p className="text-[length:var(--type-body)] leading-[1.6] font-editorial text-[var(--text-primary)]">
+            <p className="type-translation font-editorial text-[var(--text-primary)]">
               {vocab.definitionEn}
             </p>
           </div>
