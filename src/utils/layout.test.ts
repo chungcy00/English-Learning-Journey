@@ -22,7 +22,7 @@ test('shared layout gives every page the same gutters and task-specific widths',
 
 test('long exercise targets are not pinned beside the question on narrow screens', () => {
   const item = { id: 'layout', originalSentence: 'This is a sentence to rewrite.', target: 'take something into consideration', referenceAnswer: 'Take this into consideration.' } as RewritePracticeItem;
-  const html = renderToStaticMarkup(React.createElement(RewritePracticeCard, { item, index: 0, targetLanguage: 'zh-CN' }));
+  const html = renderToStaticMarkup(React.createElement(RewritePracticeCard, { item, index: 0, }));
   assert.match(html, /exercise-heading/);
   assert.match(html, /exercise-target/);
   assert.match(html, /take something into consideration/);

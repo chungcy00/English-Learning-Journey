@@ -10,7 +10,6 @@ interface RewritePracticeCardProps {
   item: RewritePracticeItem;
   index: number;
   cefrLevel: string;
-  targetLanguage?: string;
   currentTranslation?: ReadingTranslation;
 }
 
@@ -19,7 +18,6 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
   item,
   index,
   cefrLevel,
-  targetLanguage = 'zh-CN',
   currentTranslation,
 }) => {
   const progressKey = rewriteProgressKey(readingId, item);
@@ -30,7 +28,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
   );
   const [showAnswer, setShowAnswer] = useState(false);
 
-  const localizedOriginalMeaning = getLocalizedExerciseMeaning(item, index, targetLanguage, currentTranslation);
+  const localizedOriginalMeaning = getLocalizedExerciseMeaning(item, index, currentTranslation);
 
   const handleCheck = async () => {
     await rewriteProgressStore.evaluate(progressKey, item, submittedAnswer => evaluateRewriteAnswer({
@@ -39,7 +37,6 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
         userAnswer: submittedAnswer,
         referenceAnswer: item.referenceAnswer,
         cefrLevel,
-        targetLanguage,
       }));
   };
 
@@ -63,11 +60,11 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
       {/* Question Header */}
       <div className="rewrite-exercise-heading exercise-heading mb-3">
         <span className="rewrite-exercise-number type-label font-ui text-[var(--text-secondary)]">
-          {getI18nText(targetLanguage, 'exerciseLabel')} {String(index + 1).padStart(2, '0')}
+          {getI18nText('exerciseLabel')} {String(index + 1).padStart(2, '0')}
         </span>
         <div className="exercise-target flex flex-wrap items-center gap-x-4 gap-y-1">
           <span className="text-[length:var(--type-label)] leading-[1.4] font-ui font-semibold text-[var(--accent-vocab)] block mb-1">
-            {getI18nText(targetLanguage, 'targetLabel')}:
+            {getI18nText('targetLabel')}:
           </span>
           <span className="rewrite-target-term inline-block font-editorial font-semibold text-[var(--accent-vocab)]">
             {item.target}
@@ -92,8 +89,8 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
             onChange={(e) => rewriteProgressStore.edit(progressKey, item, e.target.value)}
             disabled={loading}
             onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void handleCheck(); } }}
-            aria-label={`${getI18nText(targetLanguage, 'exerciseLabel')} ${index + 1}：${getI18nText(targetLanguage, 'inputPlaceholder')}`}
-            placeholder={getI18nText(targetLanguage, 'inputPlaceholder')}
+            aria-label={`${getI18nText('exerciseLabel')} ${index + 1}：${getI18nText('inputPlaceholder')}`}
+            placeholder={getI18nText('inputPlaceholder')}
             className="type-body font-ui min-w-0 min-h-11 flex-1 px-3 py-2 bg-[var(--surface-paper)] border border-[var(--border-subtle)] rounded-sm focus:outline-none focus:border-[var(--accent-primary)] text-[var(--text-primary)]"
           />
           <button
@@ -104,12 +101,12 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>{getI18nText(targetLanguage, 'evaluating')}</span>
+                <span>{getI18nText('evaluating')}</span>
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                <span>{getI18nText(targetLanguage, 'checkButton')}</span>
+                <span>{getI18nText('checkButton')}</span>
               </>
             )}
           </button>
@@ -133,7 +130,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
           {showAnswer && (
             <div className="type-label mt-2 p-3 bg-[var(--bg-primary)] rounded-sm border border-[var(--border-subtle)] font-ui animate-in fade-in">
               <span className="text-[length:var(--type-label)] leading-[1.4] text-[var(--text-secondary)] block mb-1">
-                {getI18nText(targetLanguage, 'referenceAnswer')}:
+                {getI18nText('referenceAnswer')}:
               </span>
               <p className="type-example font-editorial text-[var(--accent-vocab)]">
                 "{item.referenceAnswer}"
@@ -157,7 +154,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
             {evaluation.meaningPreserved && evaluation.targetUsedCorrectly && (
               <span className="type-label text-[var(--accent-vocab)] font-ui flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                {getI18nText(targetLanguage, 'meaningPreserved')} & {getI18nText(targetLanguage, 'targetUsed')}
+                {getI18nText('meaningPreserved')} & {getI18nText('targetUsed')}
               </span>
             )}
           </div>
@@ -166,7 +163,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
           {evaluation.whatYouDidWell && evaluation.whatYouDidWell.length > 0 && (
             <div className="bg-[var(--bg-primary)]/80 p-3 rounded-sm border border-[var(--border-subtle)]/60">
               <span className="type-label font-ui font-semibold text-[var(--accent-vocab)] block mb-1">
-                {getI18nText(targetLanguage, 'whatYouDidWell')}:
+                {getI18nText('whatYouDidWell')}:
               </span>
               <ul className="type-body font-ui text-[var(--text-primary)] space-y-1 list-disc list-inside">
                 {evaluation.whatYouDidWell.map((point, idx) => (
@@ -180,7 +177,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
           {evaluation.issues && evaluation.issues.length > 0 && (
             <div className="bg-[var(--bg-primary)]/80 p-3 rounded-sm border border-[var(--border-subtle)]/60 space-y-2">
               <span className="type-label font-ui font-semibold text-[var(--status-warning)] block">
-                {getI18nText(targetLanguage, 'issuesToImprove')}:
+                {getI18nText('issuesToImprove')}:
               </span>
               {evaluation.issues.map((issue, idx) => (
                 <div key={idx} className="type-body font-ui space-y-0.5">
@@ -203,7 +200,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
           <div className="type-label grid sm:grid-cols-2 gap-3 font-ui">
             <div className="p-2.5 bg-[var(--bg-primary)] rounded-sm border border-[var(--border-subtle)]">
               <span className="text-[length:var(--type-label)] leading-[1.4] text-[var(--text-secondary)] block mb-0.5">
-                {getI18nText(targetLanguage, 'improvedVersion')}:
+                {getI18nText('improvedVersion')}:
               </span>
               <p className="type-example font-editorial text-[var(--text-primary)] italic">
                 "{evaluation.improvedVersion}"
@@ -212,7 +209,7 @@ export const RewritePracticeCard: React.FC<RewritePracticeCardProps> = ({
 
             <div className="p-2.5 bg-[var(--bg-primary)] rounded-sm border border-[var(--border-subtle)]">
               <span className="text-[length:var(--type-label)] leading-[1.4] text-[var(--text-secondary)] block mb-0.5">
-                {getI18nText(targetLanguage, 'referenceAnswer')}:
+                {getI18nText('referenceAnswer')}:
               </span>
               <p className="type-example font-editorial text-[var(--accent-vocab)]">
                 "{evaluation.referenceAnswer}"

@@ -1,36 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { readReviewProgress, restoreReviewProgress, writeReviewProgress } from '../utils/reviewProgress';
-import { RotateCcw, Volume2, CheckCircle, Sparkles, BookOpen, Check, Languages, Loader2, ChevronDown } from 'lucide-react';
+import { Volume2, CheckCircle, ChevronDown } from 'lucide-react';
 import { VocabularyItem, ReviewRating } from '../types';
 import {
-  SUPPORTED_LANGUAGES,
   getLocalizedVocabMeaning,
   getLocalizedExampleTranslation,
   getI18nText,
 } from '../utils/i18n';
-import { translateVocabularies } from '../services/api';
 import { speakEnglishTerm } from '../utils/speech';
 import { ReviewFlipCard } from '../components/ReviewFlipCard';
 import { reviewIntervalDays } from '../utils/reviewSchedule';
-import { RecoveryNotice } from '../components/RecoveryNotice';
 
 interface ReviewViewProps {
   embedded?: boolean;
   allVocabularies: VocabularyItem[];
   onRate: (vocabId: string, rating: ReviewRating) => Promise<void>;
   onRefresh: () => void;
-  targetLanguage: string;
-  onLanguageChange: (lang: string) => void;
-  onBatchUpdateVocabularies: (updatedVocabs: VocabularyItem[]) => void;
 }
 
 export const ReviewView: React.FC<ReviewViewProps> = ({
   allVocabularies,
   onRate,
   onRefresh,
-  targetLanguage,
-  onLanguageChange,
-  onBatchUpdateVocabularies,
   embedded = false,
 }) => {
   const [initialProgress] = useState(readReviewProgress);
@@ -49,9 +40,6 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   const activeId = useRef(reviewList[currentIndex]?.id);
   activeId.current = reviewList[currentIndex]?.id;
   const previousIds = useRef(allVocabularies.map(item => item.id));
-  const [isTranslatingCurrent, setIsTranslatingCurrent] = useState(false);
-  const [translationError, setTranslationError] = useState('');
-  const [translationRetry, setTranslationRetry] = useState(0);
 
   // Keep this session's order stable. Rating moves an item's due date forward;
   // replacing the list with the shortened due list here would skip the next card.
@@ -81,45 +69,6 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   }, [currentVocab?.id, isRevealed, sessionCompleted, reviewList]);
   useEffect(() => { setFailedRating(null); }, [currentVocab?.id]);
 
-  // Auto translate current vocabulary item if targetLanguage is not zh-CN and translation is missing
-  useEffect(() => {
-    setTranslationError('');
-    setIsTranslatingCurrent(false);
-    if (!currentVocab || !targetLanguage || targetLanguage === 'zh-CN') return;
-    if (currentVocab.translations?.[targetLanguage]?.meaning) return;
-
-    let isMounted = true;
-    setIsTranslatingCurrent(true);
-
-    translateVocabularies([currentVocab], targetLanguage)
-      .then((results) => {
-        if (!isMounted) return;
-        if (!results) throw new Error('未返回释义翻译');
-        const tr = results[currentVocab.id] || results[currentVocab.term.toLowerCase()];
-        if (!tr?.meaning) throw new Error('未返回有效释义');
-        if (tr) {
-          const updatedItem: VocabularyItem = {
-            ...currentVocab,
-            translations: {
-              ...currentVocab.translations,
-              [targetLanguage]: tr,
-            },
-          };
-          onBatchUpdateVocabularies([updatedItem]);
-          setReviewList((prev) =>
-            prev.map((item) => (item.id === currentVocab.id ? updatedItem : item))
-          );
-        }
-      })
-      .catch(() => { if (isMounted) setTranslationError('释义翻译失败，已有释义仍可使用。请稍后重试。'); })
-      .finally(() => {
-        if (isMounted) setIsTranslatingCurrent(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [currentVocab?.id, targetLanguage, translationRetry]);
 
   const handleStartReviewAll = () => {
     setReviewList(allVocabularies);
@@ -163,12 +112,9 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
     speakEnglishTerm(term);
   };
 
-  const currentLangObj =
-    SUPPORTED_LANGUAGES.find((l) => l.code === targetLanguage) || SUPPORTED_LANGUAGES[0];
 
-  const localizedMeaning = currentVocab ? getLocalizedVocabMeaning(currentVocab, targetLanguage) : '';
-  const localizedExample = currentVocab ? getLocalizedExampleTranslation(currentVocab, targetLanguage) : undefined;
-  const isNotZh = targetLanguage !== 'zh-CN';
+  const localizedMeaning = currentVocab ? getLocalizedVocabMeaning(currentVocab) : '';
+  const localizedExample = currentVocab ? getLocalizedExampleTranslation(currentVocab) : undefined;
 
   useEffect(() => {
     const bar = ratingBarRef.current;
@@ -194,31 +140,11 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border-subtle)]">
         <div>
           <Heading className="type-page font-editorial font-semibold text-[var(--text-primary)]">
-            {embedded ? '词汇复习' : getI18nText(targetLanguage, 'reviewTitle')}
+            {embedded ? '词汇复习' : getI18nText('reviewTitle')}
           </Heading>
           <p className="type-body font-ui text-[var(--text-secondary)] mt-2">当前短文已添加词条：{reviewList.length} 项</p>
         </div>
-
-        {/* Target Language Selector */}
-        <div className="select-with-icon self-start sm:self-auto">
-          <Languages className="w-3.5 h-3.5 text-[var(--accent-vocab)]" />
-          <select
-            value={targetLanguage}
-            onChange={(e) => onLanguageChange(e.target.value)}
-            className="type-label bg-transparent min-h-11 font-ui font-medium text-[var(--text-primary)] focus:outline-none cursor-pointer"
-            title="切换复习释义语言"
-            aria-label="切换复习释义语言"
-          >
-            {SUPPORTED_LANGUAGES.map((lang) => (
-              <option key={lang.code} value={lang.code}>
-                {lang.flag} {lang.native}
-              </option>
-            ))}
-          </select>
-        </div>
       </div>
-
-      {translationError && <RecoveryNotice message={translationError} pending={isTranslatingCurrent} onRetry={() => setTranslationRetry(value => value + 1)} />}
 
       {/* When finished or the wordbook is empty */}
       {sessionCompleted || reviewList.length === 0 ? (
@@ -294,12 +220,6 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
             <div className="space-y-4">
               <div className="flex items-center justify-end">
                 <div className="flex items-center gap-2">
-                  {isTranslatingCurrent && (
-                    <span className="type-meta inline-flex items-center gap-1 font-ui text-[var(--accent-vocab)] animate-pulse">
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                      翻译释义中...
-                    </span>
-                  )}
                   <button
                     onClick={() => playVoice(currentVocab.term)}
                     title="朗读发音"
@@ -327,22 +247,17 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   {/* Localized Meaning */}
                   <div>
                     <span className="type-meta font-ui text-[var(--text-muted)] block uppercase">
-                      {getI18nText(targetLanguage, 'targetMeaningLabel', '母语地道释义 (Meaning)')}:
+                      {getI18nText('targetMeaningLabel', '母语地道释义 (Meaning)')}:
                     </span>
                     <p className="font-ui text-[length:var(--type-translation)] leading-[1.6] font-semibold text-[var(--text-primary)] mt-0.5">
                       {localizedMeaning}
                     </p>
-                    {isNotZh && currentVocab.meaningZh && localizedMeaning !== currentVocab.meaningZh && (
-                      <p className="type-body font-ui text-[var(--text-secondary)] mt-0.5">
-                        (中文参考: {currentVocab.meaningZh})
-                      </p>
-                    )}
                   </div>
 
                   {/* English Definition */}
                   <div>
                     <span className="type-meta font-ui text-[var(--text-muted)] block uppercase">
-                      {getI18nText(targetLanguage, 'enDefinitionLabel', '英文释义 (Definition)')}:
+                      {getI18nText('enDefinitionLabel', '英文释义 (Definition)')}:
                     </span>
                     <p className="type-translation font-editorial text-[var(--text-primary)]">
                       {currentVocab.definitionEn}
@@ -352,7 +267,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   {/* Example & Localized Example Translation */}
                   <div>
                     <span className="type-meta font-ui text-[var(--text-muted)] block uppercase">
-                      {getI18nText(targetLanguage, 'exampleLabel', '例句 (Example)')}:
+                      {getI18nText('exampleLabel', '例句 (Example)')}:
                     </span>
                     <div className="bg-[var(--bg-alt)]/40 p-2.5 rounded-sm border border-[var(--border-subtle)] mt-1 space-y-1">
                       <p className="type-example font-editorial italic text-[var(--accent-vocab)]">
@@ -370,7 +285,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                   {currentVocab.collocations && currentVocab.collocations.length > 0 && (
                     <details key={currentVocab.id} className="review-collocations group">
                       <summary className="type-label min-h-11 flex items-center justify-between font-ui text-[var(--text-secondary)] cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                        {getI18nText(targetLanguage, 'collocationsLabel', '常见搭配 (Collocations)')}:
+                        {getI18nText('collocationsLabel', '常见搭配 (Collocations)')}:
                         <ChevronDown aria-hidden="true" className="w-4 h-4 group-open:rotate-180" />
                       </summary>
                       <div className="flex flex-wrap gap-1.5">
@@ -408,7 +323,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                 >
                   <span className="type-label font-ui font-semibold text-[var(--status-warning)] block">Hard</span>
                   <span className="type-meta text-[var(--text-muted)] font-ui block">
-                    {getI18nText(targetLanguage, 'hardHint', '1 天后')}
+                    {getI18nText('hardHint', '1 天后')}
                   </span>
                 </button>
 

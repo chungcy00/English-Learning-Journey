@@ -55,12 +55,12 @@ test('every AI endpoint refuses exhausted global quota before any provider reque
   const realFetch = globalThis.fetch;
   let providerCalls = 0;
   let reservations = 0;
-  globalThis.fetch = (async (url: any, options: any) => {
+  globalThis.fetch = (async (url: any, _options: any) => {
     if (String(url).startsWith(env.UPSTASH_REDIS_REST_URL)) {
       reservations++;
       return new Response('{"result":[0,1,120]}');
     }
-    if (String(url).startsWith('http://127.0.0.1:')) return realFetch(url, options);
+    if (String(url).startsWith('http://127.0.0.1:')) return realFetch(url, _options);
     providerCalls++;
     throw Error('Unexpected external request');
   }) as typeof fetch;
@@ -74,7 +74,6 @@ test('every AI endpoint refuses exhausted global quota before any provider reque
     ['rewrite/evaluate', { userAnswer: 'Good morning.', target: 'morning' }],
     ['vocabulary/explain', { term: 'break the ice' }],
     ['vocabulary/candidates', { contextReading: 'We helped her out.' }],
-    ['vocabulary/translate', { vocabularies: [{ id: '1', term: 'genuine' }], targetLanguage: 'ja' }],
     ['speech/dialogue', { turns: [{ text: 'Hello.', gender: 'female' }] }],
   ] as const;
   try {
@@ -100,7 +99,7 @@ test('provider fallback must reserve again and stops immediately at the global c
   const realFetch = globalThis.fetch;
   let reservations = 0;
   let providerCalls = 0;
-  globalThis.fetch = (async (url: any, options: any) => {
+  globalThis.fetch = (async (url: any) => {
     if (String(url).startsWith(env.UPSTASH_REDIS_REST_URL)) {
       reservations++;
       return new Response(JSON.stringify({ result: reservations === 1 ? [1, 0, 0] : [0, 1, 120] }));

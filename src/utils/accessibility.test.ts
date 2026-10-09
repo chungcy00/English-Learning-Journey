@@ -11,7 +11,7 @@ import type { VocabularyItem } from '../types';
 const vocab = { id: 'test', term: 'break the ice', type: 'idiom', partOfSpeech: 'idiom', collocations: [] } as unknown as VocabularyItem;
 
 test('four navigation destinations consolidate study tasks and retain current-state semantics', () => {
-  const html = renderToStaticMarkup(React.createElement(Navbar, { activeTab: 'reading', setActiveTab: () => {}, reviewCount: 22, hasCurrentReading: true, targetLanguage: 'zh-CN' }));
+  const html = renderToStaticMarkup(React.createElement(Navbar, { activeTab: 'reading', setActiveTab: () => {}, reviewCount: 22, hasCurrentReading: true, }));
   assert.equal((html.match(/aria-label=/g) || []).length, 5); // nav + four destinations
   assert.match(html, /aria-label="当前阅读" aria-current="page"/);
   assert.match(html, /aria-label="练习与生词，22 个词条"/);

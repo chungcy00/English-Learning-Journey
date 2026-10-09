@@ -11,6 +11,8 @@ test('rejects oversized, deeply nested and prototype-key input before invoking A
   assert.ok(validateApiBody({ term: {} }));
   assert.ok(validateApiBody({ vocabulary: 'not an array' }));
   assert.equal(validateApiBody({ input: 'Rainy day', cefrLevel: 'B1', vocabularyCount: 8, targetLanguage: 'zh-CN' }), null);
+  assert.ok(validateApiBody({ text: 'Rainy day', targetLanguage: 'ja' }));
+  assert.equal(validateApiBody({ text: 'Rainy day' }), null);
   for (const readingStyle of ['auto', 'natural', 'funny', 'warm', 'suspenseful', 'dramatic', 'professional', 'cinematic']) {
     assert.equal(validateApiBody({ input: 'Rainy day', readingStyle }), null);
   }

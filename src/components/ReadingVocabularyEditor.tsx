@@ -9,9 +9,8 @@ import { ExpressionSelect } from './ExpressionSelect';
 export const ReadingVocabularyEditor: React.FC<{
   reading: ReadingRecord;
   knownVocabulary: VocabularyItem[];
-  targetLanguage: string;
   onSave: (reading: ReadingRecord) => Promise<void>;
-}> = ({ reading, knownVocabulary, targetLanguage, onSave }) => {
+}> = ({ reading, knownVocabulary, onSave }) => {
   const [term, setTerm] = useState('');
   const [candidate, setCandidate] = useState<VocabularyItem | null>(null);
   const [replaceId, setReplaceId] = useState('');
@@ -44,7 +43,7 @@ export const ReadingVocabularyEditor: React.FC<{
       if (reading.selectedVocabulary.some(item => normalizeEnglishTerm(item.term) === normalizeEnglishTerm(value))) {
         setMessage('这个表达已在精选词汇中。'); return;
       }
-      const details = await explainVocabularyTerm(value, reading.content, targetLanguage, true, { cefrLevel: reading.cefrLevel, requireInReading: true });
+      const details = await explainVocabularyTerm(value, reading.content, true, { cefrLevel: reading.cefrLevel, requireInReading: true });
       if (currentIdentity.current !== requestedIdentity) return;
       if (details.cefrLevel !== reading.cefrLevel) throw new Error('该表达不符合 ' + reading.cefrLevel + ' 程度。');
       const now = Date.now();

@@ -16,7 +16,6 @@ interface WordDetailModalProps {
   onClose: () => void;
   isInWordbook: boolean;
   onToggleWordbook: (vocab: VocabularyItem) => void;
-  targetLanguage?: string;
   currentTranslation?: ReadingTranslation;
   inline?: boolean;
   inlineExpanded?: boolean;
@@ -29,7 +28,6 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
   onClose,
   isInWordbook,
   onToggleWordbook,
-  targetLanguage = 'zh-CN',
   currentTranslation,
   inline = false,
   inlineExpanded = false,
@@ -43,8 +41,8 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
     speakEnglishTerm(vocab.term);
   };
 
-  const localizedMeaning = getLocalizedVocabMeaning(vocab, targetLanguage, currentTranslation);
-  const localizedExample = getLocalizedExampleTranslation(vocab, targetLanguage, currentTranslation);
+  const localizedMeaning = getLocalizedVocabMeaning(vocab, currentTranslation);
+  const localizedExample = getLocalizedExampleTranslation(vocab, currentTranslation);
 
   const content = (
     <>
@@ -87,7 +85,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
           {/* Target Language Meaning */}
           <div>
             <span className="text-[length:var(--type-label)] leading-[1.4] uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-1 font-medium">
-              {getI18nText(targetLanguage, 'targetMeaningLabel')}
+              {getI18nText('targetMeaningLabel')}
             </span>
             <p className="font-ui text-[length:var(--type-translation)] leading-[1.6] font-medium text-[var(--text-primary)] bg-[var(--bg-alt)]/50 p-2.5 rounded-sm border border-[var(--border-subtle)]/50">
               {localizedMeaning || '暂无释义'}
@@ -97,7 +95,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
           {/* English Definition */}
           <div>
             <span className="text-[length:var(--type-label)] leading-[1.4] uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-1">
-              {getI18nText(targetLanguage, 'enDefinitionLabel')}
+              {getI18nText('enDefinitionLabel')}
             </span>
             <p className="type-translation font-editorial text-[var(--text-primary)]">
               {vocab.definitionEn}
@@ -107,7 +105,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
           {/* Example Sentence */}
           <div>
             <span className="text-[length:var(--type-label)] leading-[1.4] uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-1">
-              {getI18nText(targetLanguage, 'exampleLabel')}
+              {getI18nText('exampleLabel')}
             </span>
             <div className="bg-[var(--bg-alt)]/30 p-3 rounded-sm border-l border-[var(--accent-primary)] space-y-1.5">
               <p className="type-example font-editorial italic text-[var(--accent-vocab)]">
@@ -125,7 +123,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
           {vocab.collocations && vocab.collocations.length > 0 && (
             <div>
               <span className="text-[length:var(--type-label)] leading-[1.4] uppercase tracking-wider text-[var(--text-secondary)] font-ui block mb-2">
-                {getI18nText(targetLanguage, 'collocationsLabel')}
+                {getI18nText('collocationsLabel')}
               </span>
               <div className="flex flex-wrap gap-2">
                 {vocab.collocations.map((col, idx) => (
@@ -143,7 +141,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
 
         {/* Footer Actions */}
         <div className="word-detail-actions mt-8 pt-4 border-t border-[var(--border-subtle)] flex flex-wrap gap-3 items-center justify-between">
-          {isInWordbook && <span className="type-label flex items-center gap-1 text-[var(--accent-vocab)] font-ui"><Check aria-hidden="true" className="w-4 h-4" />{getI18nText(targetLanguage, 'inWordbook')}</span>}
+          {isInWordbook && <span className="type-label flex items-center gap-1 text-[var(--accent-vocab)] font-ui"><Check aria-hidden="true" className="w-4 h-4" />{getI18nText('inWordbook')}</span>}
           <button
             onClick={() => onToggleWordbook(vocab)}
             aria-label={`${isInWordbook ? '移出生词本' : '加入生词本'}：${vocab.term}`}
@@ -161,7 +159,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
             ) : (
               <>
                 <Bookmark className="w-4 h-4" />
-                <span>{getI18nText(targetLanguage, 'addToWordbook')}</span>
+                <span>{getI18nText('addToWordbook')}</span>
               </>
             )}
           </button>
@@ -170,7 +168,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
             onClick={onClose}
             className="type-label min-h-11 px-4 py-2 font-ui text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-alt)] rounded-sm transition-colors"
           >
-            {getI18nText(targetLanguage, 'close')}
+            {getI18nText('close')}
           </button>}
         </div>
     </>

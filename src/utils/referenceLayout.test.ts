@@ -36,7 +36,7 @@ test('mobile accordion details preserve learning content without opening a dialo
 
 test('workbook presents the target before the original and uses a multiline answer without revealing the reference', () => {
   const item = { id: 'workbook', originalSentence: 'She listened carefully.', target: 'undivided attention', referenceAnswer: 'She gave me her undivided attention.' } as RewritePracticeItem;
-  const html = renderToStaticMarkup(React.createElement(RewritePracticeCard, { item, index: 0, cefrLevel: 'B1', targetLanguage: 'zh-CN' }));
+  const html = renderToStaticMarkup(React.createElement(RewritePracticeCard, { item, index: 0, cefrLevel: 'B1', }));
   assert.ok(html.indexOf(item.target) < html.indexOf(item.originalSentence));
   assert.match(html, /<textarea/);
   assert.match(html, /for="rewrite-answer-workbook"/);

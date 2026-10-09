@@ -31,7 +31,7 @@ export function validateApiBody(body: unknown): string | null {
     readingType: ['story', 'non-story', 'dialogue', 'random'],
     readingStyle: ['auto', 'natural', 'funny', 'warm', 'suspenseful', 'dramatic', 'professional', 'cinematic'],
     length: ['short', 'medium', 'long'],
-    targetLanguage: ['zh-CN', 'zh-TW', 'ja', 'ko', 'es', 'fr', 'de', 'vi', 'ru'],
+    targetLanguage: ['zh-CN'],
   };
   for (const [key, allowed] of Object.entries(enums)) {
     if (data[key] !== undefined && !allowed.includes(data[key])) return '选项不受支持';

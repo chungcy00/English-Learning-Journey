@@ -16,8 +16,7 @@ test('revealed review uses a closed native collocation disclosure and large rati
     writeReviewProgress({ currentId: 'qa', ids: ['qa'], revealed: true, completed: false });
     const html = renderToStaticMarkup(React.createElement(ReviewView, {
       allVocabularies: [{ id: 'qa', term: 'catch up', collocations: ['catch up with friends'], partOfSpeech: 'phrasal verb' } as VocabularyItem],
-      onRate: async () => {}, onRefresh: () => {}, targetLanguage: 'zh-CN', onLanguageChange: () => {}, onBatchUpdateVocabularies: () => {},
-    }));
+      onRate: async () => {}, onRefresh: () => {}, }));
     assert.match(html, /<details[^>]*>/);
     assert.doesNotMatch(html, /<details[^>]*open/);
     assert.match(html, /review-rating-bar/);

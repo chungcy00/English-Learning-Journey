@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles,
-  Download,
   RefreshCw,
   History,
   Bookmark,
@@ -11,22 +10,19 @@ import {
   Square,
   Pause,
   Play,
-  BookOpen,
   MessageSquare,
   AlignLeft,
   Copy
 } from 'lucide-react';
-import { ReadingRecord, VocabularyItem, RewritePracticeItem, ReadingTranslation } from '../types';
+import { ReadingRecord, VocabularyItem } from '../types';
 import { WordDetailModal } from '../components/WordDetailModal';
 import { ReadingVocabularyEditor } from '../components/ReadingVocabularyEditor';
-import { generateReadingPDF } from '../services/pdfGenerator';
 import {
   generateDialogueSpeech,
   rememberCompletedDialogueSpeech,
   translateReading,
 } from '../services/api';
 import {
-  SUPPORTED_LANGUAGES,
   getI18nText,
   getLocalizedVocabMeaning,
 } from '../utils/i18n';
@@ -52,8 +48,6 @@ interface ReadingViewProps {
   onOpenHistory: () => void;
   onOpenPractice?: () => void;
   isRewriting: boolean;
-  targetLanguage?: string;
-  onLanguageChange?: (lang: string) => void;
 }
 
 interface DialogueTurn {
@@ -198,8 +192,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   onOpenHistory,
   onOpenPractice,
   isRewriting,
-  targetLanguage: propTargetLanguage = 'zh-CN',
-  onLanguageChange,
 }) => {
   const [selectedVocab, setSelectedVocab] = useState<VocabularyItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -219,14 +211,11 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     isDetectedDialogue ? 'dialogue' : 'paragraph'
   );
 
-  // Translation state ("短文我需要旁边有个翻译，根据用户需求可以选择不同语言，翻译的也要humanise")
-  const [targetLanguage, setTargetLanguage] = useState<string>(propTargetLanguage);
+  // Chinese translation state and cached reading content
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [translationError, setTranslationError] = useState<string | null>(null);
   const [copiedTranslation, setCopiedTranslation] = useState<boolean>(false);
   const [copyError, setCopyError] = useState('');
-  const [isExportingPdf, setIsExportingPdf] = useState(false);
-  const [pdfError, setPdfError] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [isSpeechPaused, setIsSpeechPaused] = useState(false);
   const speechPausedRef = useRef(false);
@@ -583,18 +572,12 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     };
   }, [reading.id, reading.content]);
 
-  useEffect(() => {
-    if (propTargetLanguage && propTargetLanguage !== targetLanguage) {
-      setTargetLanguage(propTargetLanguage);
-    }
-  }, [propTargetLanguage]);
 
-  const currentTranslation = reading.translations?.[targetLanguage];
+  const currentTranslation = reading.translations?.['zh-CN'];
 
-  const fetchTranslation = async (lang: string, force = false) => {
-    const existing = reading.translations?.[lang];
-    const hasVocab = !!existing?.vocabularyTranslations && Object.keys(existing.vocabularyTranslations).length > 0;
-    if (!force && existing && (lang === 'zh-CN' || hasVocab)) {
+  const fetchTranslation = async (force = false) => {
+    const existing = reading.translations?.['zh-CN'];
+    if (!force && existing) {
       return;
     }
     setIsTranslating(true);
@@ -604,7 +587,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       const result = await translateReading({
         text: reading.content,
         title: reading.title,
-        targetLanguage: lang,
         readingType: reading.readingType,
         vocabulary: reading.selectedVocabulary,
         rewriteExercises: reading.rewritePractice,
@@ -614,7 +596,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         ...reading,
         translations: {
           ...(reading.translations || {}),
-          [lang]: result,
+          'zh-CN': result,
         },
       };
       if (runId !== translationRunRef.current) return;
@@ -631,24 +613,14 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     translationRunRef.current += 1;
   }, [reading.id, reading.content, vocabularySignature]);
 
-  // Automatically fetch translation when reading or language changes
+  // Automatically fetch translation when the reading changes
   useEffect(() => {
-    const existing = reading.translations?.[targetLanguage];
-    const needsFetch = !existing || (!existing.vocabularyTranslations && targetLanguage !== 'zh-CN');
+    const existing = reading.translations?.['zh-CN'];
+    const needsFetch = !existing;
     if (needsFetch && !isTranslating) {
-      fetchTranslation(targetLanguage);
+      fetchTranslation();
     }
-  }, [reading.id, reading.content, targetLanguage]);
-
-  const handleLanguageChange = (newLang: string) => {
-    setTargetLanguage(newLang);
-    onLanguageChange?.(newLang);
-    const existing = reading.translations?.[newLang];
-    const needsFetch = !existing || (!existing.vocabularyTranslations && newLang !== 'zh-CN');
-    if (needsFetch) {
-      fetchTranslation(newLang);
-    }
-  };
+  }, [reading.id, reading.content]);
 
   const handleCopyTranslation = async () => {
     if (!currentTranslation) return;
@@ -891,25 +863,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     ));
   };
 
-  const handleDownloadPDF = async () => {
-    if (isExportingPdf) return;
-    setIsExportingPdf(true);
-    setPdfError(null);
-    try {
-      await generateReadingPDF(reading, {
-      showTranslation: true,
-      currentTranslation,
-      vocabTranslations: currentTranslation?.vocabularyTranslations,
-      exerciseTranslations: currentTranslation?.exerciseTranslations,
-      targetLanguage
-      });
-    } catch {
-      setPdfError('PDF 导出失败，请重试。');
-    } finally {
-      setIsExportingPdf(false);
-    }
-  };
-
   const renderReadAloudButton = () => {
     const isSpeechActive = isSpeaking || isPreparingSpeech;
     return (
@@ -999,7 +952,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
         </div>
 
-        {/* Action Buttons: Rewrite, PDF, History */}
+        {/* Action Buttons: Rewrite, History */}
         <div className="reading-actions flex items-center gap-2 flex-wrap">
 
           {/* Rewrite Dropdown (PRD Section 21) */}
@@ -1054,16 +1007,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             )}
           </div>
 
-          {/* Generate PDF Button */}
-          <button
-            onClick={handleDownloadPDF}
-            disabled={isExportingPdf}
-            className="type-label flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent-primary)] text-[var(--bg-primary)] hover:bg-[var(--accent-hover)] font-ui rounded-sm transition-colors shadow-xs"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{isExportingPdf ? '正在导出…' : '导出 PDF'}</span>
-            <span className="sm:hidden">PDF</span>
-          </button>
 
           {/* History Button */}
           <button
@@ -1078,7 +1021,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       </div>
 
       {/* Main Reading Area: switch between the original and translated reading modes */}
-      {pdfError && <p role="alert" className="type-body font-ui text-[var(--status-error)]">{pdfError}</p>}
       <div className="mobile-reading-switch" role="tablist" aria-label="阅读内容模式">
         <button type="button" role="tab" aria-selected={mobileReadingMode === 'original'} onClick={() => setMobileReadingMode('original')}>原文</button>
         <button type="button" role="tab" aria-selected={mobileReadingMode === 'translation'} onClick={() => setMobileReadingMode('translation')}>翻译</button>
@@ -1145,29 +1087,14 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 </h2>
               </div>
 
-              {/* Language Selector & Actions */}
+              {/* Translation Actions */}
               <div className="flex items-center gap-1.5 self-start sm:self-auto flex-wrap">
-                {/* Language Picker Dropdown */}
-                <div className="relative">
-                  <select
-                    value={targetLanguage}
-                    onChange={(e) => handleLanguageChange(e.target.value)}
-                    className="type-label appearance-none bg-[var(--bg-alt)]/70 hover:bg-[var(--bg-alt)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-ui py-1.5 pl-2.5 pr-7 rounded-sm focus:outline-none cursor-pointer"
-                    title="选择目标翻译语言"
-                    aria-label="选择目标翻译语言"
-                  >
-                    {SUPPORTED_LANGUAGES.map((lang) => (
-                      <option key={lang.code} value={lang.code}>
-                        {lang.flag} {lang.native}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+
 
                 {/* Regenerate Button */}
                 <button
                   type="button"
-                  onClick={() => fetchTranslation(targetLanguage, true)}
+                  onClick={() => fetchTranslation(true)}
                   disabled={isTranslating}
                   title="重新按母语习惯润色翻译"
                   aria-label="重新生成翻译"
@@ -1201,7 +1128,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
               {currentTranslation && isTranslating && <p role="status" className="type-label font-ui mb-4 text-[var(--text-secondary)]">正在更新翻译，原译文仍可阅读…</p>}
               {currentTranslation && translationError && <div className="mb-4">
                 <p role="alert" className="type-label font-ui text-[var(--status-error)]">{translationError}</p>
-                <button type="button" onClick={() => fetchTranslation(targetLanguage, true)} disabled={isTranslating} className="type-label font-ui min-h-11 underline underline-offset-4">重试翻译</button>
+                <button type="button" onClick={() => fetchTranslation(true)} disabled={isTranslating} className="type-label font-ui min-h-11 underline underline-offset-4">重试翻译</button>
               </div>}
               {isTranslating && !currentTranslation ? (
                 <div className="py-16 px-4 text-center">
@@ -1217,7 +1144,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   <p role="alert" className="type-body text-[var(--status-warning)] font-ui mb-2">{translationError}</p>
                   <button
                     type="button"
-                    onClick={() => fetchTranslation(targetLanguage, true)}
+                    onClick={() => fetchTranslation(true)}
                     className="type-label min-h-11 px-3 py-2 bg-[var(--status-warning)] text-white rounded-xs font-ui hover:bg-[var(--status-warning)]"
                   >
                     重试翻译
@@ -1242,23 +1169,23 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="type-section font-editorial font-semibold text-[var(--accent-vocab)]">
-                {getI18nText(targetLanguage, 'vocabSectionTitle')} ({reading.selectedVocabulary.length})
+                {getI18nText('vocabSectionTitle')} ({reading.selectedVocabulary.length})
               </h2>
               {isTranslating && (
                 <span className="type-meta font-ui text-[var(--accent-vocab)] inline-flex items-center gap-1 bg-[var(--accent-vocab)]/10 px-2 py-0.5 rounded-xs">
                   <RefreshCw className="w-3 h-3 animate-spin" />
-                  {getI18nText(targetLanguage, 'syncingVocab')}
+                  {getI18nText('syncingVocab')}
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        <ReadingVocabularyEditor key={reading.id} reading={reading} knownVocabulary={knownVocabulary} targetLanguage={targetLanguage} onSave={onUpdateVocabulary} />
+        <ReadingVocabularyEditor key={reading.id} reading={reading} knownVocabulary={knownVocabulary} onSave={onUpdateVocabulary} />
         <div className="reading-vocabulary__list" role="list">
           {reading.selectedVocabulary.map((vocab) => {
             const inWordbook = wordbookVocabIds.has(vocab.term.toLowerCase());
-            const localizedMeaning = getLocalizedVocabMeaning(vocab, targetLanguage, currentTranslation);
+            const localizedMeaning = getLocalizedVocabMeaning(vocab, currentTranslation);
 
             return (
               <div
@@ -1280,7 +1207,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 <p className="reading-vocabulary__meaning type-body font-ui text-[var(--text-primary)]">{localizedMeaning || '暂无释义'}</p>
                 <button
                   onClick={(e) => { e.stopPropagation(); onToggleWordbook(vocab); }}
-                  title={inWordbook ? '移出生词本' : getI18nText(targetLanguage, 'addToWordbook')}
+                  title={inWordbook ? '移出生词本' : getI18nText('addToWordbook')}
                   aria-label={`${inWordbook ? '移出生词本' : '加入生词本'}：${vocab.term}`}
                   className={`reading-vocabulary__bookmark ${inWordbook ? 'is-saved' : ''}`}
                 >
@@ -1303,7 +1230,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         onClose={() => setIsDetailOpen(false)}
         isInWordbook={selectedVocab ? wordbookVocabIds.has(selectedVocab.term.toLowerCase()) : false}
         onToggleWordbook={onToggleWordbook}
-        targetLanguage={targetLanguage}
         currentTranslation={currentTranslation}
       />
 

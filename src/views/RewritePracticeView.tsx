@@ -4,7 +4,7 @@ import type { ReadingRecord } from '../types';
 import { RewritePracticeCard } from '../components/RewritePracticeCard';
 import { rewriteProgressKey, rewriteProgressStore } from '../utils/rewriteProgress';
 
-export function RewritePracticeView({ reading, targetLanguage, onBack }: { reading: ReadingRecord | null; targetLanguage: string; onBack: () => void }) {
+export function RewritePracticeView({ reading, onBack }: { reading: ReadingRecord | null; onBack: () => void }) {
   const exercises = reading?.rewritePractice || [];
   const snapshot = useSyncExternalStore(rewriteProgressStore.subscribe,
     () => JSON.stringify(exercises.map(item => {
@@ -43,8 +43,7 @@ export function RewritePracticeView({ reading, targetLanguage, onBack }: { readi
         </header>
         <div className="rewrite-practice-section">
           {exercises.map((item, index) => <RewritePracticeCard key={`${reading.id}:${item.id}:${item.originalSentence}:${item.target}:${item.referenceAnswer}`}
-            readingId={reading.id} item={item} index={index} cefrLevel={reading.cefrLevel}
-            targetLanguage={targetLanguage} currentTranslation={reading.translations?.[targetLanguage]} />)}
+            readingId={reading.id} item={item} index={index} cefrLevel={reading.cefrLevel} currentTranslation={reading.translations?.['zh-CN']} />)}
         </div>
       </section>
     </div> : <p className="practice-empty type-body font-ui">{reading ? '这篇短文暂无改写练习，可选择其他短文。' : '请先生成或打开一篇短文。'}</p>}

@@ -326,9 +326,6 @@ select:not([multiple]):focus-visible, button[role="combobox"][aria-haspopup="lis
   border-color: var(--accent-primary);
 }
 select:disabled { cursor: not-allowed; opacity: 0.55; }
-.select-with-icon { position: relative; }
-.select-with-icon > svg { position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); pointer-events: none; }
-.select-with-icon > select { padding-left: 2.25rem; }
 .single-choice-group button { border-radius: 10px; }
 .single-choice-group button[aria-pressed="true"] { border-color: var(--accent-primary); }
 .expression-options { padding: 0.375rem; border-radius: 12px; }

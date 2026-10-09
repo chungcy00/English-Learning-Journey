@@ -8,7 +8,6 @@ interface NavbarProps {
   setActiveTab: (tab: NavTab | 'settings') => void;
   reviewCount: number;
   hasCurrentReading: boolean;
-  targetLanguage: string;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -16,12 +15,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   reviewCount,
   hasCurrentReading,
-  targetLanguage,
 }) => {
   const tabs = [
-    { id: 'home' as NavTab, label: targetLanguage === 'zh-CN' ? '生成短文' : targetLanguage === 'zh-TW' ? '生成短文' : targetLanguage === 'ja' ? '文章生成' : targetLanguage === 'ko' ? '지문 생성' : targetLanguage === 'es' ? 'Generar' : targetLanguage === 'fr' ? 'Générer' : targetLanguage === 'de' ? 'Generieren' : targetLanguage === 'vi' ? 'Tạo bài' : targetLanguage === 'ru' ? 'Генерация' : 'Generate', icon: Sparkles },
-    { id: 'reading' as NavTab, label: targetLanguage === 'zh-CN' ? '当前阅读' : targetLanguage === 'zh-TW' ? '當前閱讀' : targetLanguage === 'ja' ? '現在の文章' : targetLanguage === 'ko' ? '현재 읽기' : targetLanguage === 'es' ? 'Lectura actual' : targetLanguage === 'fr' ? 'Lecture' : targetLanguage === 'de' ? 'Aktuell' : targetLanguage === 'vi' ? 'Đang đọc' : targetLanguage === 'ru' ? 'Текущее' : 'Reading', icon: BookOpen, disabled: !hasCurrentReading },
-    { id: 'practice' as NavTab, label: targetLanguage === 'zh-TW' ? '練習與生詞' : targetLanguage === 'zh-CN' ? '练习与生词' : 'Practice & Wordbook', icon: Bookmark, badge: reviewCount },
+    { id: 'home' as NavTab, label: '生成短文', icon: Sparkles },
+    { id: 'reading' as NavTab, label: '当前阅读', icon: BookOpen, disabled: !hasCurrentReading },
+    { id: 'practice' as NavTab, label: '练习与生词', icon: Bookmark, badge: reviewCount },
     { id: 'history' as NavTab, label: '历史记录', icon: History },
   ];
 

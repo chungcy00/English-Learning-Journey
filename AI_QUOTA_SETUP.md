@@ -39,7 +39,7 @@
 
 ## 验证
 
-- `node --import tsx --test backend/*.test.ts src/utils/wordbookSort.test.ts`
+- `node --import tsx --test backend/*.test.ts src/utils/*.test.ts`
 - 测试环境将全站上限设为 `0`，所有 AI 路由应返回 429 且无供应商请求；移除 Redis token 应返回 503。
 - 核对 Vercel 环境变量及实际预览/生产响应后才能宣称线上限额生效。不要为测试清空生产计数。
 

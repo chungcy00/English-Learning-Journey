@@ -1,29 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { RecoveryNotice } from '../components/RecoveryNotice';
 import {
   Search,
-  CheckSquare,
-  Square,
   Sparkles,
   Trash2,
   Volume2,
-  ChevronRight,
   ChevronDown,
-  Filter,
-  Layers,
   Plus,
-  Languages,
-  Loader2
 } from 'lucide-react';
 import { VocabularyItem, VocabStatus, CEFRLevel, ReadingType, ReadingLength, ReadingRecord } from '../types';
 import { WordDetailModal } from '../components/WordDetailModal';
 import { VocabularyStatusSelect } from '../components/VocabularyStatusSelect';
 import {
-  SUPPORTED_LANGUAGES,
   getLocalizedVocabMeaning,
   getI18nText,
 } from '../utils/i18n';
-import { explainVocabularyTerm, translateVocabularies } from '../services/api';
+import { explainVocabularyTerm } from '../services/api';
 import { getEnglishTermMatchRank, isEnglishTermQuery, normalizeEnglishTerm, containsEnglishExpression } from '../utils/englishSearch';
 import { filterSavedVocabulary } from '../utils/savedVocabulary';
 import { speakEnglishTerm } from '../utils/speech';
@@ -43,9 +34,6 @@ interface WordbookViewProps {
     length: ReadingLength;
   }) => void;
   isGenerating: boolean;
-  targetLanguage: string;
-  onLanguageChange: (lang: string) => void;
-  onBatchUpdateVocabularies: (updatedVocabs: VocabularyItem[]) => void;
   currentCefr: CEFRLevel;
   onSaveVocab: (vocab: VocabularyItem) => Promise<void>;
   onOpenReview: () => void;
@@ -58,9 +46,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   onUpdateStatus,
   onGenerateFromWordbook,
   isGenerating,
-  targetLanguage,
-  onLanguageChange,
-  onBatchUpdateVocabularies,
   currentCefr,
   onSaveVocab,
   onOpenReview,
@@ -71,9 +56,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
   const [selectedTerms, setSelectedTerms] = useState<string[]>([]);
   const [detailVocab, setDetailVocab] = useState<VocabularyItem | null>(null);
   const isWideLayout = useWideLayout();
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [translationError, setTranslationError] = useState('');
-  const [translationRetry, setTranslationRetry] = useState(0);
   const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [isAdding, setIsAdding] = useState(false);
@@ -93,7 +75,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
     setAddedTerm(null);
     try {
       if (!currentReading) throw new Error('请先选择一篇当前短文。');
-      const details = await explainVocabularyTerm(existing?.term || term, currentReading.content, targetLanguage, true, { requireInReading: true });
+      const details = await explainVocabularyTerm(existing?.term || term, currentReading.content, true, { requireInReading: true });
       const now = Date.now();
       const item: VocabularyItem = existing ? { ...existing, ...details } : {
         id: `vocab_custom_${crypto.randomUUID()}`,
@@ -123,50 +105,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
     }
   };
 
-  // Auto-translate vocabulary items for the selected target language if needed
-  useEffect(() => {
-    setTranslationError('');
-    setIsTranslating(false);
-    if (!targetLanguage || targetLanguage === 'zh-CN') return;
-
-    const needsTranslation = vocabularyList.filter(
-      (v) => !v.translations?.[targetLanguage]?.meaning
-    );
-
-    if (needsTranslation.length === 0) return;
-
-    let isMounted = true;
-    setIsTranslating(true);
-
-    const batch = needsTranslation.slice(0, 30);
-    translateVocabularies(batch, targetLanguage)
-      .then((results) => {
-        if (!isMounted) return;
-        if (!results || !batch.some(item => (results[item.id] || results[item.term.toLowerCase()])?.meaning)) throw new Error('未返回有效释义翻译');
-        const updatedList = vocabularyList.map((item) => {
-          const tr = results[item.id] || results[item.term.toLowerCase()];
-          if (tr) {
-            return {
-              ...item,
-              translations: {
-                ...item.translations,
-                [targetLanguage]: tr,
-              },
-            };
-          }
-          return item;
-        });
-        onBatchUpdateVocabularies(updatedList);
-      })
-      .catch(() => { if (isMounted) setTranslationError('释义翻译失败，已保存词条没有改变。请稍后重试。'); })
-      .finally(() => {
-        if (isMounted) setIsTranslating(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [targetLanguage, vocabularyList, translationRetry]);
 
   // Generation parameters when generating from Wordbook (PRD Section 20)
   const [readingType, setReadingType] = useState<ReadingType>('story');
@@ -217,8 +155,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
     e.stopPropagation();
     speakEnglishTerm(term);
   };
-
-  const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === targetLanguage) || SUPPORTED_LANGUAGES[0];
   const suggestionPanelVisible = isSuggestionOpen && !!(search.trim() || catalogue.loading || catalogue.error || addError || addedTerm);
   useEffect(() => {
     if (suggestionPanelVisible && activeSuggestionIndex >= 0) {
@@ -233,15 +169,9 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
         <div className="wordbook-heading-row flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="type-page font-editorial font-semibold text-[var(--text-primary)]">
-            {getI18nText(targetLanguage, 'wordbookTitle')}
+            {getI18nText('wordbookTitle')}
           </h1>
           <p className="type-label mt-2 font-ui text-[var(--text-secondary)]">当前短文已添加词条：{vocabularyList.length} 项</p>
-          {isTranslating && (
-            <span className="type-meta inline-flex items-center gap-1 mt-1 font-ui text-[var(--accent-vocab)] animate-pulse">
-              <Loader2 className="w-3 h-3 animate-spin" />
-              {getI18nText(targetLanguage, 'syncingWordbook').replace('{lang}', currentLangObj.native)}
-            </span>
-          )}
         </div>
         <button type="button" onClick={onOpenReview} className="type-label min-h-11 px-4 py-2 rounded-xl bg-[var(--accent-primary)] text-[var(--bg-primary)] font-ui hover:bg-[var(--accent-hover)]">开始复习</button>
         </div>
@@ -335,7 +265,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                       {term}
                     </span>
                     <span className="type-meta block font-ui text-[var(--text-muted)] truncate">
-                      {item ? `${vocabularyList.some(saved => saved.id === item.id) ? '已在生词本 · ' : '当前精选 · '}${getLocalizedVocabMeaning(item, targetLanguage)} · ` : ''}
+                      {item ? `${vocabularyList.some(saved => saved.id === item.id) ? '已在生词本 · ' : '当前精选 · '}${getLocalizedVocabMeaning(item)} · ` : ''}
                       <span className="italic">{item?.type || expression?.type || ''}</span>
                     </span>
                   </button>
@@ -354,30 +284,12 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
             )}
             </div>
           </div>
-
-          {/* Language Selector */}
-          <div className="select-with-icon justify-self-start sm:justify-self-end">
-            <Languages className="w-3.5 h-3.5 text-[var(--accent-vocab)]" />
-            <select
-              value={targetLanguage}
-              onChange={(e) => onLanguageChange(e.target.value)}
-              className="type-label bg-transparent min-h-11 max-w-full font-ui font-medium text-[var(--text-primary)] focus:outline-none cursor-pointer"
-              title="切换单词本释义语言"
-            >
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <option key={lang.code} value={lang.code}>
-                  {lang.flag} {lang.native}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
         </details>
       </div>
 
       <div className="wordbook-workspace">
       <div className="wordbook-collection-panel">
-      {translationError && <RecoveryNotice message={translationError} pending={isTranslating} onRetry={() => setTranslationRetry(value => value + 1)} />}
       {/* Filter Tabs & Multi-select Toolbar */}
       <section className="wordbook-controls" aria-label="筛选生词本">
       <div className="wordbook-saved-search font-ui">
@@ -461,7 +373,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                   </div>
                   <div id={panelId} role="region" aria-labelledby={`${panelId}-toggle`} hidden={!expanded}>
                     {expanded && <>
-                      <WordDetailModal vocab={vocab} isOpen embedded isInWordbook onClose={() => setDetailVocab(null)} onToggleWordbook={v => { onDeleteVocab(v.id); setDetailVocab(null); }} targetLanguage={targetLanguage} />
+                      <WordDetailModal vocab={vocab} isOpen embedded isInWordbook onClose={() => setDetailVocab(null)} onToggleWordbook={v => { onDeleteVocab(v.id); setDetailVocab(null); }} />
                       <div className="flex flex-wrap items-center justify-between gap-3 py-3 font-ui">
                         <span>学习状态</span>
                         <VocabularyStatusSelect vocab={vocab} onUpdate={onUpdateStatus} />
@@ -503,12 +415,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
                       <span className="italic">{vocab.partOfSpeech} · {vocab.type}</span>
                     </p>
                     <p className="type-body font-ui font-medium text-[var(--text-primary)] mt-1 flex items-center gap-1.5 flex-wrap">
-                      <span>{getLocalizedVocabMeaning(vocab, targetLanguage)}</span>
-                      {targetLanguage !== 'zh-CN' && vocab.meaningZh && getLocalizedVocabMeaning(vocab, targetLanguage) !== vocab.meaningZh && (
-                        <span className="text-[length:var(--type-meta)] leading-[1.4] font-normal text-[var(--text-muted)]">
-                          ({vocab.meaningZh})
-                        </span>
-                      )}
+                      <span>{getLocalizedVocabMeaning(vocab)}</span>
                     </p>
 
                   </div>
@@ -550,7 +457,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({
           onDeleteVocab(v.id);
           setDetailVocab(null);
         }}
-        targetLanguage={targetLanguage}
       />
       {(vocabularyList.find(v => v.id === detailVocab?.id) || filtered[0]) && <div className="wordbook-inspector-status font-ui"><span>学习状态</span><VocabularyStatusSelect vocab={vocabularyList.find(v => v.id === detailVocab?.id) || filtered[0]} onUpdate={onUpdateStatus} /></div>}
       </div>}

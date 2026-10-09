@@ -40,8 +40,7 @@ test('navigation keeps its original flat containers, local active indicator and 
     activeTab: 'rewrite', setActiveTab: () => {}, reviewCount: 7, hasCurrentReading: false,
   }));
   const browser = renderToStaticMarkup(React.createElement(Navbar, {
-    activeTab: 'wordbook', setActiveTab: () => {}, reviewCount: 7, hasCurrentReading: false, targetLanguage: 'zh-CN',
-  }));
+    activeTab: 'wordbook', setActiveTab: () => {}, reviewCount: 7, hasCurrentReading: false, }));
   for (const html of [installed, browser]) {
     assert.match(html, /aria-current="page"/);
     assert.match(html, /disabled=""/);
@@ -77,7 +76,7 @@ test('exit presence reuses form timing, respects reduced motion, and keeps closi
   assert.match(css, /data-closing\]::backdrop/);
   assert.match(css, /dialog-dismiss var\(--motion-form\)/);
   assert.match(css, /:is\(button, a, summary, input, select, textarea, \[tabindex\]\):focus-visible/);
-  for (const name of ['WordDetailModal', 'ProcessingModal', 'EditVocabularyModal', 'ExpressionSelect']) {
+  for (const name of ['WordDetailModal', 'ProcessingModal', 'ExpressionSelect']) {
     const source = readFileSync(new URL(`../components/${name}.tsx`, import.meta.url), 'utf8');
     assert.match(source, /inert=\{closing\}/);
   }

@@ -116,7 +116,6 @@ export interface AppSettings {
   defaultLength: ReadingLength;
   defaultReadingStyle?: ReadingStyle;
   theme?: string;
-  targetLanguage?: string;
 }
 
 export interface GenerationRequest {
@@ -127,7 +126,6 @@ export interface GenerationRequest {
   length: ReadingLength;
   vocabularyCount: number;
   specifiedVocabulary?: string[];
-  targetLanguage?: string;
 }
 
 export interface RewriteReadingRequest {

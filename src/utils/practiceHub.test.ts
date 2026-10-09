@@ -20,7 +20,7 @@ test('hub presents actual counts and two entrances before the live review', () =
 
 test('web and installed navigation keep the unified destination active in both detail views', () => {
   for (const activeTab of ['rewrite', 'wordbook'] as const) {
-    const props = { activeTab, setActiveTab() {}, reviewCount: 5, hasCurrentReading: true, targetLanguage: 'zh-CN' };
+    const props = { activeTab, setActiveTab() {}, reviewCount: 5, hasCurrentReading: true, };
     for (const Component of [Navbar, InstalledAppBottomNav]) {
       const html = renderToStaticMarkup(React.createElement(Component, props));
       assert.match(html, /aria-label="练习与生词，5 个词条"[^>]*aria-current="page"/);
@@ -33,9 +33,9 @@ test('reading no longer duplicates exercises; empty practice and embedded review
   const reading = readFileSync(new URL('../views/ReadingView.tsx', import.meta.url), 'utf8');
   assert.doesNotMatch(reading, /<RewritePracticeCard/);
   assert.match(reading, /onOpenPractice/);
-  const empty = renderToStaticMarkup(React.createElement(RewritePracticeView, { reading: null, targetLanguage: 'zh-CN', onBack() {} }));
+  const empty = renderToStaticMarkup(React.createElement(RewritePracticeView, { reading: null, onBack() {} }));
   assert.match(empty, /请先生成或打开一篇短文/);
-  const review = renderToStaticMarkup(React.createElement(ReviewView, { embedded: true, allVocabularies: [], onRate: async () => {}, onRefresh() {}, targetLanguage: 'zh-CN', onLanguageChange() {}, onBatchUpdateVocabularies() {} }));
+  const review = renderToStaticMarkup(React.createElement(ReviewView, { embedded: true, allVocabularies: [], onRate: async () => {}, onRefresh() {}, }));
   assert.match(review, /<h2[^>]*>词汇复习<\/h2>/);
   assert.doesNotMatch(review, /<h1/);
 });

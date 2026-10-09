@@ -68,7 +68,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   defaultLength: 'medium',
   defaultReadingStyle: 'auto',
   theme: 'warm',
-  targetLanguage: 'zh-CN'
 };
 
 const SETTINGS_KEY = 'english_learning_settings';
@@ -441,10 +440,6 @@ export async function saveVocabulary(vocab: VocabularyItem): Promise<string> {
 
 export async function deleteVocabulary(id: string): Promise<void> {
   return db.vocabulary.delete(id);
-}
-
-export async function getDueReviews(): Promise<VocabularyItem[]> {
-  return db.vocabulary.where('nextReviewDate').belowOrEqual(Date.now()).toArray();
 }
 
 export const recordReview = updateVocabularyReview;

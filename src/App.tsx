@@ -47,7 +47,6 @@ import {
   getAllVocabularies,
   saveVocabulary,
   deleteVocabulary,
-  getDueReviews,
   recordReview,
   getSettings,
   saveSettings,
@@ -189,7 +188,6 @@ export default function App() {
           length: params.length,
           vocabularyCount: params.vocabularyCount,
           specifiedVocabulary: params.specifiedVocabulary,
-          targetLanguage: settings.targetLanguage,
         },
         (status) => setProcessingStatus(status), controller.signal
       );
@@ -377,18 +375,6 @@ export default function App() {
     }
   };
 
-  // 10. Save Settings
-  const handleSaveSettings = async (newSettings: AppSettings) => {
-    await saveSettings(newSettings);
-    setAppSettings(newSettings);
-  };
-
-  // 11. Handle Global Target Language Change
-  const handleLanguageChange = async (newLang: string) => {
-    const newSettings = { ...settings, targetLanguage: newLang };
-    setAppSettings(newSettings);
-    await saveSettings(newSettings);
-  };
 
   const handleCefrChange = (cefr: CEFRLevel) => {
     const newSettings = { ...settings, cefr };
@@ -396,14 +382,6 @@ export default function App() {
     saveSettings(newSettings);
   };
 
-  // 12. Handle Batch Update Vocabularies
-  const handleBatchUpdateVocabularies = async (updatedVocabs: VocabularyItem[]) => {
-    for (const v of updatedVocabs) {
-      await saveVocabulary(v);
-    }
-    const updated = await getAllVocabularies();
-    setVocabularies(updated);
-  };
 
   return (
     <div className={`min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] selection:bg-[var(--accent-primary)]/20 ${softwareKeyboardOpen ? 'software-keyboard-open' : ''}`}
@@ -415,7 +393,6 @@ export default function App() {
           setActiveTab={setActiveTab}
           reviewCount={reviewVocabulary.length}
           hasCurrentReading={!!currentReading}
-          targetLanguage={settings.targetLanguage || 'zh-CN'}
         />
       )}
 
@@ -465,8 +442,6 @@ export default function App() {
             onOpenHistory={() => setActiveTab('history')}
             onOpenPractice={() => setActiveTab('rewrite')}
             isRewriting={isRewriting}
-            targetLanguage={settings.targetLanguage || 'zh-CN'}
-            onLanguageChange={handleLanguageChange}
           />
         )}
 
@@ -481,9 +456,6 @@ export default function App() {
             onUpdateStatus={handleUpdateStatus}
             onGenerateFromWordbook={handleGenerateFromWordbook}
             isGenerating={isGenerating}
-            targetLanguage={settings.targetLanguage || 'zh-CN'}
-            onLanguageChange={handleLanguageChange}
-            onBatchUpdateVocabularies={handleBatchUpdateVocabularies}
             currentCefr={settings.cefr}
             onSaveVocab={async (vocab) => {
               const existing = vocabularies.find(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(vocab.term));
@@ -502,7 +474,7 @@ export default function App() {
           </>
         )}
 
-        {activeTab === 'rewrite' && <RewritePracticeView reading={currentReading} targetLanguage={settings.targetLanguage || 'zh-CN'} onBack={() => setActiveTab('practice')} />}
+        {activeTab === 'rewrite' && <RewritePracticeView reading={currentReading} onBack={() => setActiveTab('practice')} />}
 
         {activeTab === 'practice' && (
           <PracticeHubView exerciseCount={currentReading?.rewritePractice?.length || 0} vocabularyCount={reviewVocabulary.length}
@@ -512,9 +484,6 @@ export default function App() {
             allVocabularies={reviewVocabulary}
             onRate={handleRateReview}
             onRefresh={loadData}
-            targetLanguage={settings.targetLanguage || 'zh-CN'}
-            onLanguageChange={handleLanguageChange}
-            onBatchUpdateVocabularies={handleBatchUpdateVocabularies}
           />
           </PracticeHubView>
         )}
