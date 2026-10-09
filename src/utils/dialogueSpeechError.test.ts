@@ -20,11 +20,12 @@ test('configuration and request failures are not labelled as exhausted quota', (
   assert.match(dialogueSpeechError(500, null, null).message, /HTTP 500/);
 });
 
-test('speech uses WAV without MP3 bitrate and page visits never retry speech automatically', () => {
+test('legacy speech uses the model default format and page visits never retry speech automatically', () => {
   const backend = readFileSync(new URL('../../backend/app.ts', import.meta.url), 'utf8');
   const speech = backend.slice(backend.indexOf('async function generateDialogueAudio'), backend.indexOf('function isDialogueTtsQuotaError'));
-  assert.match(speech, /mime_type: 'audio\/wav'/);
-  assert.doesNotMatch(speech, /audio\/mp3|bit_rate/);
+  assert.match(speech, /browserDialogueAudio\(audioData/);
+  assert.match(speech, /mimeType: 'audio\/wav'/);
+  assert.doesNotMatch(speech, /mime_type:|delivery:|bit_rate/);
   const app = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
   const api = readFileSync(new URL('../services/api.ts', import.meta.url), 'utf8');
   const reading = readFileSync(new URL('../views/ReadingView.tsx', import.meta.url), 'utf8');

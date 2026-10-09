@@ -5,6 +5,7 @@ import { validateApiBody } from './requestValidation.js';
 import { consumeAiQuota, quotaContext, sendQuotaError } from './aiQuota.js';
 import { vocabularyInstruction, vocabularyProblem } from './vocabularyPolicy.js';
 import { explainedTermProblem } from './termPolicy.js';
+import { browserDialogueAudio } from './dialogueAudio.js';
 import { validateExpressions } from './expressionPolicy.js';
 import { isEnglishTermQuery, normalizeEnglishTerm } from '../src/utils/englishSearch.js';
 
@@ -397,8 +398,6 @@ async function generateDialogueAudio(turns: DialogueTtsTurn[]): Promise<Dialogue
     input: buildDialogueTtsPrompt(turns),
     response_format: {
       type: 'audio',
-      mime_type: 'audio/wav',
-      delivery: 'inline',
     },
     generation_config: {
       speech_config: speakerConfig,
@@ -409,8 +408,8 @@ async function generateDialogueAudio(turns: DialogueTtsTurn[]): Promise<Dialogue
   if (!audioData) throw new Error('TTS_EMPTY_AUDIO');
 
   return {
-    buffer: Buffer.from(audioData, 'base64'),
-    mimeType: interaction.output_audio?.mime_type || 'audio/wav',
+    buffer: browserDialogueAudio(audioData, interaction.output_audio?.mime_type, interaction.output_audio?.sample_rate),
+    mimeType: 'audio/wav',
     provider: 'gemini',
     voices: `${DIALOGUE_TTS_VOICES.female},${DIALOGUE_TTS_VOICES.male}`,
   };
