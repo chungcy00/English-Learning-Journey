@@ -55,7 +55,6 @@ import {
 
 import {
   generateReadingWithPipeline,
-  refreshPendingDialogueSpeech,
   rewriteReadingWithPipeline,
 } from './services/api';
 
@@ -127,9 +126,6 @@ export default function App() {
         }
       })().catch(error => console.warn('Legacy app cache cleanup failed; will retry on next visit.', error));
     }
-    // If a previous visit had to use free browser speech, quietly retry
-    // Gemini once on this fresh visit and cache a successful result.
-    void refreshPendingDialogueSpeech();
   }, []);
 
   // Load initial data

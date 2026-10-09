@@ -22,7 +22,6 @@ import { ReadingVocabularyEditor } from '../components/ReadingVocabularyEditor';
 import { generateReadingPDF } from '../services/pdfGenerator';
 import {
   generateDialogueSpeech,
-  queueDialogueSpeechGeminiRetry,
   rememberCompletedDialogueSpeech,
   translateReading,
 } from '../services/api';
@@ -450,15 +449,12 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       speakNext(0);
     };
 
-    const startFreeDeviceFallback = () => {
+    const startFreeDeviceFallback = (error: Error) => {
       if (!('speechSynthesis' in window)) return false;
       setIsPreparingSpeech(false);
       setIsSpeaking(true);
       setSpeechError(null);
-      setSpeechNotice('Gemini 免费语音额度暂不可用，已自动切换为设备语音。');
-      void queueDialogueSpeechGeminiRetry(
-        queue.map(item => ({ text: item.text, gender: item.gender }))
-      );
+      setSpeechNotice(`${error?.message || '云端语音连接失败。'} 已自动切换为设备语音。`);
 
       const availableVoices = getAvailableSpeechVoices();
       if (availableVoices.length > 0) {
@@ -540,7 +536,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       } catch (error: any) {
         if (error?.name !== 'AbortError' && speechRunRef.current === runId) {
           console.error('Dialogue speech failed:', error);
-          if (!startFreeDeviceFallback()) {
+          if (!startFreeDeviceFallback(error)) {
             setSpeechError(error?.message || '当前设备暂时无法朗读角色语音');
             setIsPreparingSpeech(false);
             setIsSpeaking(false);

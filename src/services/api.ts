@@ -10,6 +10,7 @@ import {
   ReadingTranslation
 } from '../types';
 import { db } from '../db/dexie';
+import { dialogueSpeechError } from '../utils/dialogueSpeechError';
 
 export interface GenerationProgressCallback {
   (status: 'Generating reading...' | 'Humanising language...' | 'Checking level and vocabulary...' | 'Ready'): void;
@@ -21,15 +22,7 @@ interface DialogueSpeechTurn {
 }
 
 const DIALOGUE_SPEECH_CACHE_NAME = 'mine-dialogue-speech-v2';
-const DIALOGUE_SPEECH_RETRY_KEY = 'mine-dialogue-speech-cloud-retry-v1';
 const dialogueSpeechMemoryCache = new Map<string, Blob>();
-let hasStartedPendingDialogueSpeechRefresh = false;
-
-interface PendingDialogueSpeechRetry {
-  id: string;
-  turns: DialogueSpeechTurn[];
-  queuedAt: number;
-}
 
 function normalizeDialogueSpeechTurns(turns: DialogueSpeechTurn[]): DialogueSpeechTurn[] {
   return turns
@@ -65,61 +58,6 @@ async function getDialogueSpeechCacheId(cacheSource: string): Promise<string> {
 
 function getDialogueSpeechCacheUrl(cacheId: string): string {
   return `${window.location.origin}/__mine-dialogue-audio-cache__/${cacheId}`;
-}
-
-function readPendingDialogueSpeechRetries(): PendingDialogueSpeechRetry[] {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(DIALOGUE_SPEECH_RETRY_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function writePendingDialogueSpeechRetries(items: PendingDialogueSpeechRetry[]): void {
-  try {
-    localStorage.setItem(DIALOGUE_SPEECH_RETRY_KEY, JSON.stringify(items.slice(-12)));
-  } catch (error) {
-    console.warn('Dialogue cloud retry state could not be saved:', error);
-  }
-}
-
-async function clearPendingDialogueSpeechRetry(cacheSource: string): Promise<void> {
-  const cacheId = await getDialogueSpeechCacheId(cacheSource);
-  const pending = readPendingDialogueSpeechRetries();
-  if (pending.some(item => item.id === cacheId)) {
-    writePendingDialogueSpeechRetries(pending.filter(item => item.id !== cacheId));
-  }
-}
-
-export async function queueDialogueSpeechGeminiRetry(
-  turns: DialogueSpeechTurn[]
-): Promise<void> {
-  const normalizedTurns = normalizeDialogueSpeechTurns(turns);
-  const cacheSource = getDialogueSpeechCacheSource(normalizedTurns);
-  const cacheId = await getDialogueSpeechCacheId(cacheSource);
-  const pending = readPendingDialogueSpeechRetries().filter(item => item.id !== cacheId);
-  pending.push({ id: cacheId, turns: normalizedTurns, queuedAt: Date.now() });
-  writePendingDialogueSpeechRetries(pending);
-}
-
-export async function refreshPendingDialogueSpeech(): Promise<void> {
-  if (typeof window === 'undefined' || hasStartedPendingDialogueSpeechRefresh) return;
-  hasStartedPendingDialogueSpeechRefresh = true;
-  const pending = readPendingDialogueSpeechRetries();
-  if (pending.length === 0) return;
-
-  // Retry only a few items once per page load to protect the free Gemini quota.
-  // A browser reload creates a fresh module and therefore performs a fresh retry.
-  const retryItems = pending.slice(0, 3);
-
-  for (const item of retryItems) {
-    try {
-      await generateDialogueSpeech(item.turns);
-    } catch (error) {
-      console.info('Background dialogue Gemini speech retry remains pending:', error);
-    }
-  }
 }
 
 async function saveDialogueSpeechCache(cacheSource: string, audio: Blob): Promise<void> {
@@ -179,7 +117,6 @@ export async function generateDialogueSpeech(
   const cacheSource = getDialogueSpeechCacheSource(normalizedTurns);
   const memoryCached = dialogueSpeechMemoryCache.get(cacheSource);
   if (memoryCached) {
-    void clearPendingDialogueSpeechRetry(cacheSource);
     return memoryCached;
   }
 
@@ -193,7 +130,6 @@ export async function generateDialogueSpeech(
         : storedAudio.audio.slice(0, storedAudio.audio.size, storedAudio.mimeType || 'audio/mpeg');
       dialogueSpeechMemoryCache.set(cacheSource, cachedAudio);
       void db.dialogueAudio.update(cacheId, { lastPlayedAt: Date.now() });
-      void clearPendingDialogueSpeechRetry(cacheSource);
       return cachedAudio;
     }
   } catch (error) {
@@ -210,7 +146,6 @@ export async function generateDialogueSpeech(
         if (cachedAudio.size) {
           dialogueSpeechMemoryCache.set(cacheSource, cachedAudio);
           void saveDialogueSpeechCache(cacheSource, cachedAudio);
-          void clearPendingDialogueSpeechRetry(cacheSource);
           return cachedAudio;
         }
       }
@@ -228,20 +163,12 @@ export async function generateDialogueSpeech(
 
   if (!res.ok) {
     const errorBody = await res.json().catch(() => ({}));
-    const serverMessage = typeof errorBody?.error === 'string' &&
-      errorBody.error.length <= 160 && !errorBody.error.trim().startsWith('{')
-      ? errorBody.error
-      : null;
-    const message = serverMessage || (res.status === 429
-      ? '角色语音服务暂时繁忙，请约一分钟后重试。'
-      : `角色语音暂时无法生成，请稍后重试（HTTP ${res.status}）。`);
-    throw new Error(message);
+    throw dialogueSpeechError(res.status, errorBody, res.headers.get('Retry-After'));
   }
 
   const audio = await res.blob();
   if (!audio.size) throw new Error('角色语音生成结果为空');
   await saveDialogueSpeechCache(cacheSource, audio);
-  void clearPendingDialogueSpeechRetry(cacheSource);
 
   return audio;
 }

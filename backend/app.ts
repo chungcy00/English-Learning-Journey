@@ -397,8 +397,7 @@ async function generateDialogueAudio(turns: DialogueTtsTurn[]): Promise<Dialogue
     input: buildDialogueTtsPrompt(turns),
     response_format: {
       type: 'audio',
-      mime_type: 'audio/mp3',
-      bit_rate: 64000,
+      mime_type: 'audio/wav',
       delivery: 'inline',
     },
     generation_config: {
@@ -411,7 +410,7 @@ async function generateDialogueAudio(turns: DialogueTtsTurn[]): Promise<Dialogue
 
   return {
     buffer: Buffer.from(audioData, 'base64'),
-    mimeType: interaction.output_audio?.mime_type || 'audio/mp3',
+    mimeType: interaction.output_audio?.mime_type || 'audio/wav',
     provider: 'gemini',
     voices: `${DIALOGUE_TTS_VOICES.female},${DIALOGUE_TTS_VOICES.male}`,
   };
@@ -479,7 +478,13 @@ app.post('/api/speech/dialogue', async (req, res) => {
     if (String(error?.message || '').includes('GEMINI_API_KEY')) {
       return res.status(503).json({
         code: 'TTS_NOT_CONFIGURED',
-        error: 'Gemini 角色语音尚未配置，已改用设备语音。',
+        error: 'Gemini 角色语音尚未配置。',
+      });
+    }
+    if (error?.status === 400 || error?.statusCode === 400) {
+      return res.status(502).json({
+        code: 'TTS_REQUEST_INVALID',
+        error: '云端语音请求与服务不兼容，请联系维护者修复。',
       });
     }
     return res.status(500).json({
