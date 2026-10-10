@@ -30,3 +30,13 @@ export function manualUpdatePlatform(standalone: boolean, mobile: boolean, apple
 export function isManualUpdateApp(): boolean {
   return manualUpdatePlatform(isStandaloneApp(), isMobileOrTablet(), isAppleMobileDevice());
 }
+
+// Installation alone does not change an open browser tab's navigation.
+// Android tablets omit Mobile from their UA and retain the web header.
+export function usesAndroidPhoneBottomNav(standalone: boolean, userAgent: string): boolean {
+  return standalone && /Android/i.test(userAgent) && /Mobile/i.test(userAgent) && !/Tablet/i.test(userAgent);
+}
+
+export function isAndroidPhoneApp(): boolean {
+  return typeof navigator !== 'undefined' && usesAndroidPhoneBottomNav(isStandaloneApp(), navigator.userAgent);
+}

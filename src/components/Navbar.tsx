@@ -17,10 +17,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   hasCurrentReading,
 }) => {
   const tabs = [
-    { id: 'home' as NavTab, label: '生成短文', icon: Sparkles },
-    { id: 'reading' as NavTab, label: '当前阅读', icon: BookOpen, disabled: !hasCurrentReading },
+    { id: 'home' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '生成' : '生成短文', icon: Sparkles },
+    { id: 'reading' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '阅读' : '当前阅读', icon: BookOpen, disabled: !hasCurrentReading },
     { id: 'practice' as NavTab, label: '练习与生词', icon: Bookmark, badge: reviewCount },
-    { id: 'history' as NavTab, label: '历史记录', icon: History },
+    { id: 'history' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '历史' : '历史记录', icon: History },
   ];
 
   return (

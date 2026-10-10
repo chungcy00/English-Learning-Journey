@@ -921,7 +921,8 @@ app.post('/api/reading/translate', async (req, res) => {
       title,
       readingType = 'story',
       vocabulary = [],
-      rewriteExercises = []
+      rewriteExercises = [],
+      translationSegments = []
     } = req.body;
 
     if (!text) {
@@ -980,7 +981,9 @@ ${JSON.stringify(vocabulary.map((v: any) => ({ id: v.id, term: v.term, definitio
 Sentence Rewriting Exercises to Translate:
 ${JSON.stringify(rewriteExercises.map((e: any) => ({ id: e.id, originalSentence: e.originalSentence, target: e.target })))}
 
-Return JSON with translated title, translatedContent, vocabularyTranslations, and exerciseTranslations.`;
+Exact English segments for inline translation (copy each source verbatim; translate each segment in its surrounding context):
+${JSON.stringify(translationSegments)}
+Return JSON with translated title, translatedContent, vocabularyTranslations, exerciseTranslations, and sentenceTranslations. Each sentenceTranslations entry must contain an exact source from the supplied segment list and its complete Chinese translation. Do not invent, merge or reorder source text.`;
 
     const response = await callGeminiWithFallback({
       preferredModel: 'gemini-3.1-flash-lite',
@@ -996,6 +999,14 @@ Return JSON with translated title, translatedContent, vocabularyTranslations, an
             translatedContent: {
               type: Type.STRING,
               description: 'Exquisitely natural, humanised translated text matching original line breaks or dialogue format'
+            },
+            sentenceTranslations: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: { source: { type: Type.STRING }, translation: { type: Type.STRING } },
+                required: ['source', 'translation']
+              }
             },
             vocabularyTranslations: {
               type: Type.ARRAY,
@@ -1063,6 +1074,10 @@ Return JSON with translated title, translatedContent, vocabularyTranslations, an
       language: 'zh-CN',
       languageName: targetLangName,
       humanised: true,
+      sentenceTranslations: Array.isArray(parsed.sentenceTranslations) ? parsed.sentenceTranslations.filter((item: any) =>
+        typeof item.source === 'string' && typeof item.translation === 'string' && item.translation.trim() &&
+        Array.isArray(translationSegments) && translationSegments.includes(item.source)
+      ).map((item: any) => ({ source: item.source, translation: item.translation })) : [],
       vocabularyTranslations: vocabMap,
       exerciseTranslations: exerciseMap,
       updatedAt: Date.now()

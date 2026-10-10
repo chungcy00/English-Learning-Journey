@@ -55,7 +55,7 @@ test('navigation keeps its original flat containers, local active indicator and 
   const currentInstalledButton = installed.match(/<button[^>]+aria-current="page"[^>]*>/)![0];
   assert.doesNotMatch(currentInstalledButton, /bg-\[var\(--surface-selected\)\]/);
   assert.match(browser, /<header[^>]+border-b /);
-  assert.match(css, /\.app-header nav \{\s*position: fixed;\s*inset: auto 0 0;/);
+  assert.match(css, /\.app-header nav \{\s*position: static;/);
   assert.doesNotMatch(css, /\.installed-bottom-nav button\[aria-current="page"\]/);
 });
 
@@ -64,8 +64,8 @@ test('navigation has color-only feedback and source utilities never animate all 
   const nav = readFileSync(new URL('../components/Navbar.tsx', import.meta.url), 'utf8');
   assert.doesNotMatch(nav, /transition-all/);
   const app = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
-  assert.match(app, /!isInstalledApp && \(\s*<Navbar/);
-  assert.match(app, /isInstalledApp && \(\s*<InstalledAppBottomNav/);
+  assert.match(app, /!isBottomNavApp && \(\s*<Navbar/);
+  assert.match(app, /isBottomNavApp && \(\s*<InstalledAppBottomNav/);
 });
 
 test('exit presence reuses form timing, respects reduced motion, and keeps closing surfaces inert', () => {

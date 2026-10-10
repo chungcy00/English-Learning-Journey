@@ -8,11 +8,11 @@ export function useModalDialog(open: boolean) {
     if (!open || !dialog) return;
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     if (!dialog.open) dialog.showModal();
-    dialog.querySelector<HTMLElement>('[data-dialog-initial-focus]')?.focus();
+    dialog.querySelector<HTMLElement>('[data-dialog-initial-focus]')?.focus({ preventScroll: true });
     return () => {
       dialog.close();
-      if (previous?.isConnected) previous.focus();
-      else document.querySelector<HTMLElement>('nav button:not([disabled])')?.focus();
+      if (previous?.isConnected) previous.focus({ preventScroll: true });
+      else document.querySelector<HTMLElement>('nav button:not([disabled])')?.focus({ preventScroll: true });
     };
   }, [open]);
   return ref;

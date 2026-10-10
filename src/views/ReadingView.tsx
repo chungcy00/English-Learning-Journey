@@ -1,3 +1,4 @@
+import { parseDialogueTurns, mappedDialogueTranslation, type DialogueTurn } from '../utils/dialogueReading';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles,
@@ -12,9 +13,11 @@ import {
   Play,
   MessageSquare,
   AlignLeft,
-  Copy
+  Copy, MoreHorizontal, RotateCcw, ArrowRight, PencilLine, X
 } from 'lucide-react';
-import { ReadingRecord, VocabularyItem } from '../types';
+import { ReadingRecord, ReadingTranslation, VocabularyItem } from '../types';
+import { splitReadingSentences, groupReadingSentences, hasCompleteSentenceTranslations, formatAudioTime } from '../utils/readingSegments';
+import { createDeviceSpeechProgress, locateDeviceSpeechPosition } from '../utils/deviceSpeechProgress';
 import { WordDetailModal } from '../components/WordDetailModal';
 import { ReadingVocabularyEditor } from '../components/ReadingVocabularyEditor';
 import {
@@ -42,6 +45,7 @@ interface ReadingViewProps {
   knownVocabulary: VocabularyItem[];
   wordbookVocabIds: Set<string>;
   onToggleWordbook: (vocab: VocabularyItem) => void;
+  onToggleWordbookFromDetails?: (vocab: VocabularyItem) => void | Promise<void>;
   onUpdateReading?: (updatedReading: ReadingRecord) => void;
   onUpdateVocabulary: (updatedReading: ReadingRecord) => Promise<void>;
   onRewrite: (mode: string, keepVocab: boolean) => void;
@@ -50,25 +54,12 @@ interface ReadingViewProps {
   isRewriting: boolean;
 }
 
-interface DialogueTurn {
-  speaker: string | null;
-  speech: string;
-}
-
 interface SpeechQueueItem {
   text: string;
   gender: SpeechGender;
   speakerKey: string;
   speakerIndex: number;
   turnIndex: number | null;
-}
-
-const NON_SPEAKER_LABELS = new Set([
-  'note', 'ps', 'p.s', 'step', 'tip', 'warning',
-]);
-
-function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function cleanSpeechText(text: string): string {
@@ -105,75 +96,6 @@ function splitNarrationText(text: string): string[] {
   return chunks;
 }
 
-// Helper to parse dialogue turns from text (handles line-by-line, single-paragraph merged dialogues, and scene notes)
-function parseDialogueTurns(text: string, knownSpeakers: string[] = []): DialogueTurn[] {
-  const normalizedText = text
-    .replace(/\r\n?/g, '\n')
-    .replace(/\\n/g, '\n')
-    .trim();
-
-  if (!normalizedText) return [];
-
-  // Prefer names from the English source when parsing a translation. The generic
-  // fallback also supports localized names, while avoiding the old greedy `\s`
-  // pattern that could swallow several turns into one speaker name.
-  const knownPattern = [...new Set(knownSpeakers.filter(Boolean))]
-    .sort((a, b) => b.length - a.length)
-    .map(escapeRegex)
-    .join('|');
-  const genericSpeakerPattern = '[A-Z][A-Za-z0-9_-]*(?:\\s+[A-Z][A-Za-z0-9_-]*){0,2}|[\\u4e00-\\u9fff]{2,8}';
-  const speakerPattern = knownPattern
-    ? `(?:${knownPattern})`
-    : `(?:${genericSpeakerPattern})`;
-  // A model may remove line breaks, so punctuation is also accepted as a turn boundary.
-  const inlineSpeakerRegex = new RegExp(
-    `(^|[\\s。！？!?；;”"'）)])(${speakerPattern})\\s*[:：]\\s*`,
-    'gm'
-  );
-  const matches: Array<{ speaker: string; index: number; contentStart: number }> = [];
-  let m: RegExpExecArray | null;
-
-  while ((m = inlineSpeakerRegex.exec(normalizedText)) !== null) {
-    const candidate = m[2].trim();
-    if (!NON_SPEAKER_LABELS.has(candidate.toLowerCase())) {
-      matches.push({
-        speaker: candidate,
-        index: m.index + m[1].length,
-        contentStart: inlineSpeakerRegex.lastIndex,
-      });
-    }
-  }
-
-  // One match is enough: it still preserves a valid single-turn dialogue and any
-  // leading text whose first speaker label was omitted by the translation model.
-  if (matches.length >= 1) {
-    const turns: DialogueTurn[] = [];
-    const firstMatch = matches[0];
-    if (firstMatch.index > 0) {
-      const intro = normalizedText.substring(0, firstMatch.index).trim();
-      if (intro) turns.push({ speaker: null, speech: intro });
-    }
-    for (let i = 0; i < matches.length; i++) {
-      const current = matches[i];
-      const nextStart = i + 1 < matches.length ? matches[i + 1].index : normalizedText.length;
-      const speech = normalizedText.substring(current.contentStart, nextStart).trim();
-      turns.push({ speaker: current.speaker, speech });
-    }
-    return turns;
-  }
-
-  // Otherwise split by line breaks and check line starts
-  const rawLines = normalizedText.split(/\n+/).map(l => l.trim()).filter(Boolean);
-  const speakerLineRegex = new RegExp(`^(${speakerPattern})\\s*[:：]\\s*(.*)$`);
-  return rawLines.map(line => {
-    const lineMatch = line.match(speakerLineRegex);
-    if (lineMatch && !NON_SPEAKER_LABELS.has(lineMatch[1].toLowerCase())) {
-      return { speaker: lineMatch[1].trim(), speech: lineMatch[2].trim() };
-    }
-    return { speaker: null, speech: line };
-  });
-}
-
 const SPEAKER_STYLES = [
   { bg: 'bg-[var(--accent-vocab)]', text: 'text-[var(--surface-paper)]', border: 'border-[var(--accent-vocab)]/30', label: 'text-[var(--accent-vocab)]' },
   { bg: 'bg-[var(--status-warning)]', text: 'text-[var(--surface-paper)]', border: 'border-[var(--status-warning)]/30', label: 'text-[var(--status-warning)]' },
@@ -186,6 +108,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   knownVocabulary,
   wordbookVocabIds,
   onToggleWordbook,
+  onToggleWordbookFromDetails,
   onUpdateReading,
   onUpdateVocabulary,
   onRewrite,
@@ -196,9 +119,35 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const [selectedVocab, setSelectedVocab] = useState<VocabularyItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isRewriteMenuOpen, setIsRewriteMenuOpen] = useState(false);
+  useEffect(() => { setIsDetailOpen(false); setSelectedVocab(null); setIsRewriteMenuOpen(false); }, [reading.id]);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!moreOpen) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !moreMenuRef.current?.contains(event.target)) setMoreOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOutside);
+    return () => document.removeEventListener('pointerdown', closeOutside);
+  }, [moreOpen]);
+  const [lookupOpen, setLookupOpen] = useState(false);
+  const [expandedSentence, setExpandedSentence] = useState<string | null>(null);
+  const [speechPosition, setSpeechPosition] = useState(0);
+  const [speechDuration, setSpeechDuration] = useState<number | null>(null);
+  const deviceSpeechProgress = useRef(createDeviceSpeechProgress());
+  const deviceUtteranceActive = useRef(false);
+  const [deviceSpeechPercent, setDeviceSpeechPercent] = useState(0);
+  const [isDeviceSpeech, setIsDeviceSpeech] = useState(reading.readingType !== 'dialogue');
+  const deviceSeekRef = useRef<((percent: number) => void) | null>(null);
+  const deviceRevisionRef = useRef(0);
+  const suspendDeviceForVocabulary = useRef<(() => void) | null>(null);
+  const draggingDeviceSeek = useRef(false);
+  const resumeAfterDeviceSeek = useRef(false);
+  const [deviceSeekDraft, setDeviceSeekDraft] = useState<number | null>(null);
   const [mobileReadingMode, setMobileReadingMode] = useState<'original' | 'translation'>('original');
   const [keepVocab, setKeepVocab] = useState(true);
   const translationRunRef = useRef(0);
+  const translationControllerRef = useRef<AbortController | null>(null);
   const vocabularySignature = reading.selectedVocabulary.map(vocab => `${vocab.id}:${vocab.term}`).join('|');
 
   // Parse dialogue turns
@@ -216,6 +165,18 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const [translationError, setTranslationError] = useState<string | null>(null);
   const [copiedTranslation, setCopiedTranslation] = useState<boolean>(false);
   const [copyError, setCopyError] = useState('');
+  const [bookmarkError, setBookmarkError] = useState('');
+  const [pendingBookmarks, setPendingBookmarks] = useState<Set<string>>(new Set());
+  const pendingBookmarkIds = useRef(new Set<string>());
+  const toggleBookmark = async (vocab: VocabularyItem) => {
+    if (pendingBookmarkIds.current.has(vocab.id)) return;
+    pendingBookmarkIds.current.add(vocab.id);
+    setPendingBookmarks(new Set(pendingBookmarkIds.current));
+    setBookmarkError('');
+    try { await onToggleWordbook(vocab); }
+    catch (error) { setBookmarkError(error instanceof Error ? error.message : '收藏操作失败，请重试。'); }
+    finally { pendingBookmarkIds.current.delete(vocab.id); setPendingBookmarks(new Set(pendingBookmarkIds.current)); }
+  };
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [isSpeechPaused, setIsSpeechPaused] = useState(false);
   const speechPausedRef = useRef(false);
@@ -245,6 +206,11 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   }, []);
 
   const stopReadingAloud = () => {
+    suspendDeviceForVocabulary.current = null;
+    deviceRevisionRef.current += 1;
+    deviceSeekRef.current = null;
+    deviceSpeechProgress.current.pause();
+    deviceUtteranceActive.current = false;
     speechPausedRef.current = false;
     pendingSpeechRef.current = null;
     setIsSpeechPaused(false);
@@ -273,22 +239,29 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     setActiveSpeechTurn(null);
   };
 
-  const startReadingAloud = async () => {
-    if (!isDetectedDialogue && !('speechSynthesis' in window)) {
+  const startReadingAloud = async (restart = false, seekPercent = 0, startPaused = false, forceDevice = false) => {
+    if (restart) stopReadingAloud();
+    if ((!isDetectedDialogue || forceDevice) && !('speechSynthesis' in window)) {
       setSpeechError('当前浏览器不支持朗读，请尝试 Chrome、Safari 或 Edge。');
       return;
     }
 
-    if (isSpeaking || isPreparingSpeech) {
+    if (!restart && (isSpeaking || isPreparingSpeech)) {
       stopReadingAloud();
       return;
     }
 
+    setSpeechPosition(0);
+    setSpeechDuration(null);
+    setDeviceSpeechPercent(0);
+    deviceSpeechProgress.current.reset();
+    deviceUtteranceActive.current = false;
+    setIsDeviceSpeech(!isDetectedDialogue || forceDevice);
     setSpeechError(null);
     setSpeechNotice(null);
-    speechPausedRef.current = false;
+    speechPausedRef.current = startPaused;
     pendingSpeechRef.current = null;
-    setIsSpeechPaused(false);
+    setIsSpeechPaused(startPaused);
     stopEnglishSpeech();
     const voices = speechVoices.length > 0
       ? speechVoices
@@ -375,6 +348,16 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       resolvedVoices: SpeechSynthesisVoice[],
       useDialogueVoices: boolean
     ) => {
+      setIsDeviceSpeech(true);
+      const totalCharacters = queue.reduce((sum, item) => sum + item.text.length, 0);
+      let hasSeeked = false;
+      let cursor = { queueIndex: 0, charIndex: 0 };
+      deviceSpeechProgress.current.reset(totalCharacters);
+      const updateDeviceProgress = () => {
+        const progress = deviceSpeechProgress.current.snapshot();
+        setSpeechPosition(progress.seconds);
+        setDeviceSpeechPercent(progress.percent);
+      };
       const dialogueVoicePair = useDialogueVoices
         ? selectDialogueVoicePair(resolvedVoices)
         : null;
@@ -384,21 +367,27 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         dialogueVoicePair.female.voiceURI !== dialogueVoicePair.male.voiceURI
       );
 
-      const speakNext = (queueIndex: number) => {
-        if (speechRunRef.current !== runId) return;
+      const speakNext = (queueIndex: number, startChar = 0, revision = deviceRevisionRef.current) => {
+        const current = () => speechRunRef.current === runId && deviceRevisionRef.current === revision;
+        if (!current()) return;
         if (speechPausedRef.current) {
-          pendingSpeechRef.current = () => speakNext(queueIndex);
+          pendingSpeechRef.current = () => speakNext(queueIndex, startChar, revision);
           return;
         }
         if (queueIndex >= queue.length) {
+          deviceSpeechProgress.current.pause();
+          const measured = deviceSpeechProgress.current.snapshot().seconds;
+          if (measured > 0 && !hasSeeked) setSpeechDuration(measured);
           setIsSpeaking(false);
+          deviceSeekRef.current = null;
           setSpeechNotice('朗读已结束');
           setActiveSpeechTurn(null);
           return;
         }
 
+        cursor = { queueIndex, charIndex: startChar };
         const item = queue[queueIndex];
-        const utterance = new SpeechSynthesisUtterance(item.text);
+        const utterance = new SpeechSynthesisUtterance(item.text.slice(startChar));
         const selectedVoice = useDialogueVoices
           ? dialogueVoicePair?.[item.gender] || selectVocabularyVoice(resolvedVoices)
           : selectVocabularyVoice(resolvedVoices);
@@ -412,30 +401,82 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           ? item.gender === 'male' ? 0.82 : 1.12
           : 1;
         setActiveSpeechTurn(item.turnIndex);
-
+        const completedCharacters = queue.slice(0, queueIndex).reduce((sum, chunk) => sum + chunk.text.length, 0);
+        utterance.onstart = () => {
+          if (!current()) return;
+          deviceUtteranceActive.current = true;
+          if (!speechPausedRef.current) deviceSpeechProgress.current.start();
+        };
+        utterance.onboundary = event => {
+          if (!current() || speechPausedRef.current) return;
+          cursor = { queueIndex, charIndex: startChar + event.charIndex };
+          deviceSpeechProgress.current.boundary(completedCharacters + startChar, event.charIndex, utterance.text.length);
+          updateDeviceProgress();
+        };
         utterance.onend = () => {
-          if (speechRunRef.current !== runId) return;
+          if (!current()) return;
+          deviceUtteranceActive.current = false;
+          deviceSpeechProgress.current.pause();
+          deviceSpeechProgress.current.complete(completedCharacters + item.text.length);
+          updateDeviceProgress();
+          cursor = { queueIndex: queueIndex + 1, charIndex: 0 };
           const nextItem = queue[queueIndex + 1];
           const changedSpeaker = nextItem && nextItem.speakerIndex !== item.speakerIndex;
           const pauseMs = changedSpeaker ? 520 : 180;
           speechPauseTimerRef.current = window.setTimeout(
-            () => speakNext(queueIndex + 1),
+            () => speakNext(queueIndex + 1, 0, revision),
             pauseMs
           );
         };
         utterance.onerror = (event) => {
-          if (speechRunRef.current !== runId || ['canceled', 'interrupted'].includes(event.error)) {
+          if (!current()) {
             return;
           }
+          deviceUtteranceActive.current = false;
+          deviceSpeechProgress.current.pause();
+          updateDeviceProgress();
           setIsSpeaking(false);
-          setSpeechError('设备朗读失败，请重新开始朗读。');
+          deviceSeekRef.current = null;
+          speechPausedRef.current = false;
+          setIsSpeechPaused(false);
+          if (['canceled', 'interrupted'].includes(event.error)) setSpeechNotice('朗读已中断，请重新播放。');
+          else setSpeechError('设备朗读失败，请重新开始朗读。');
           setActiveSpeechTurn(null);
         };
 
         window.speechSynthesis.speak(utterance);
       };
 
-      speakNext(0);
+      const seek = (percent: number) => {
+        if (speechRunRef.current !== runId) return;
+        hasSeeked = true;
+        const revision = ++deviceRevisionRef.current;
+        deviceSpeechProgress.current.pause();
+        deviceUtteranceActive.current = false;
+        pendingSpeechRef.current = null;
+        if (speechPauseTimerRef.current !== null) window.clearTimeout(speechPauseTimerRef.current);
+        stopEnglishSpeech();
+        const position = locateDeviceSpeechPosition(queue.map(item => item.text), percent);
+        deviceSpeechProgress.current.seek(position.characters);
+        updateDeviceProgress();
+        if (position.queueIndex >= queue.length) { speechPausedRef.current = false; setIsSpeechPaused(false); }
+        speakNext(position.queueIndex, position.charIndex, revision);
+      };
+      suspendDeviceForVocabulary.current = () => {
+        // Invalidate cancellation callbacks before the shared speech engine is
+        // borrowed for a term. Resume from the last real boundary, not the start.
+        const revision = ++deviceRevisionRef.current;
+        deviceUtteranceActive.current = false;
+        if (speechPauseTimerRef.current !== null) window.clearTimeout(speechPauseTimerRef.current);
+        const saved = { ...cursor };
+        pendingSpeechRef.current = () => {
+          stopEnglishSpeech();
+          speakNext(saved.queueIndex, saved.charIndex, revision);
+        };
+      };
+      deviceSeekRef.current = seek;
+      if (seekPercent > 0) seek(seekPercent);
+      else speakNext(0);
     };
 
     const startFreeDeviceFallback = (error: Error) => {
@@ -458,7 +499,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       return true;
     };
 
-    if (isDetectedDialogue) {
+    if (isDetectedDialogue && !forceDevice) {
       const controller = new AbortController();
       speechAbortRef.current = controller;
       setIsPreparingSpeech(true);
@@ -470,6 +511,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         dialogueAudioRef.current = audio;
         audio.preload = 'auto';
         audio.playbackRate = 1;
+        audio.onloadedmetadata = () => { if (speechRunRef.current === runId && Number.isFinite(audio.duration)) setSpeechDuration(audio.duration); };
+        audio.ontimeupdate = () => { if (speechRunRef.current === runId) setSpeechPosition(audio.currentTime); };
 
         try {
           await new Promise<void>((resolve, reject) => {
@@ -541,13 +584,13 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     setIsSpeaking(true);
 
     if (voices.length > 0) {
-      beginBrowserPlayback(voices, false);
+      beginBrowserPlayback(voices, isDetectedDialogue);
     } else {
       // Chrome can expose voices shortly after page load. Waiting once prevents
       // the first playback from assigning the same default voice to every role.
       speechPauseTimerRef.current = window.setTimeout(() => {
         if (speechRunRef.current === runId) {
-          beginBrowserPlayback(getAvailableSpeechVoices(), false);
+          beginBrowserPlayback(getAvailableSpeechVoices(), isDetectedDialogue);
         }
       }, 180);
     }
@@ -560,6 +603,11 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     setIsSpeaking(false);
     setIsPreparingSpeech(false);
     return () => {
+      deviceSeekRef.current = null;
+      suspendDeviceForVocabulary.current = null;
+      deviceRevisionRef.current += 1;
+      deviceSpeechProgress.current.pause();
+      deviceUtteranceActive.current = false;
       speechRunRef.current += 1;
       speechAbortRef.current?.abort();
       if (speechPauseTimerRef.current !== null) {
@@ -571,26 +619,42 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       stopEnglishSpeech();
     };
   }, [reading.id, reading.content]);
-
+  useEffect(() => {
+    if (!isDeviceSpeech || !isSpeaking || isSpeechPaused) return;
+    const timer = window.setInterval(() => setSpeechPosition(deviceSpeechProgress.current.snapshot().seconds), 200);
+    return () => window.clearInterval(timer);
+  }, [isDeviceSpeech, isSpeaking, isSpeechPaused]);
+  useEffect(() => { deviceSpeechProgress.current.reset(); setDeviceSpeechPercent(0); setDeviceSeekDraft(null); draggingDeviceSeek.current = false; setIsDeviceSpeech(!isDetectedDialogue); setSpeechPosition(0); setSpeechDuration(null); setExpandedSentence(null); setMobileReadingMode('original'); setMoreOpen(false); setLookupOpen(false); }, [reading.id, reading.content]);
 
   const currentTranslation = reading.translations?.['zh-CN'];
+  const translationBlocks = (isDetectedDialogue ? dialogueTurns.map(turn => turn.speech) : reading.content.split(/\n\s*\n/)).filter(block => block.trim()).map(splitReadingSentences);
+  const translationSegments = translationBlocks.flat().map(segment => segment.trim());
+  const completeTranslation = (translation?: ReadingTranslation) => translationBlocks.length > 0 && translationBlocks.every(block => hasCompleteSentenceTranslations(block, translation));
 
   const fetchTranslation = async (force = false) => {
     const existing = reading.translations?.['zh-CN'];
-    if (!force && existing) {
+    if (translationControllerRef.current || (!force && existing && completeTranslation(existing))) {
       return;
     }
+    const controller = new AbortController();
+    translationControllerRef.current = controller;
     setIsTranslating(true);
     setTranslationError(null);
     const runId = ++translationRunRef.current;
     try {
       const result = await translateReading({
         text: reading.content,
+        translationSegments,
         title: reading.title,
         readingType: reading.readingType,
         vocabulary: reading.selectedVocabulary,
         rewriteExercises: reading.rewritePractice,
-      });
+      }, controller.signal);
+
+      if (runId !== translationRunRef.current || controller.signal.aborted) return;
+      if (!completeTranslation(result)) {
+        throw new Error('句子翻译未完整生成，请重试。已有全文译文已保留。');
+      }
 
       const updatedReading: ReadingRecord = {
         ...reading,
@@ -600,27 +664,31 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         },
       };
       if (runId !== translationRunRef.current) return;
-      onUpdateReading?.(updatedReading);
+      await onUpdateReading?.(updatedReading);
     } catch (err: any) {
+      if (runId !== translationRunRef.current || controller.signal.aborted) return;
       console.error('Translation failed:', err);
       setTranslationError(err?.message || '地道翻译生成失败，请点击重试');
     } finally {
-      if (runId === translationRunRef.current) setIsTranslating(false);
+      if (translationControllerRef.current === controller) {
+        translationControllerRef.current = null;
+        setIsTranslating(false);
+      }
     }
   };
 
   useEffect(() => () => {
     translationRunRef.current += 1;
+    translationControllerRef.current?.abort();
+    translationControllerRef.current = null;
   }, [reading.id, reading.content, vocabularySignature]);
 
-  // Automatically fetch translation when the reading changes
+  // Upgrade legacy full-text caches once on entry; failures wait for explicit retry.
   useEffect(() => {
-    const existing = reading.translations?.['zh-CN'];
-    const needsFetch = !existing;
-    if (needsFetch && !isTranslating) {
-      fetchTranslation();
-    }
-  }, [reading.id, reading.content]);
+    setIsTranslating(false);
+    setTranslationError(null);
+    void fetchTranslation();
+  }, [reading.id, reading.content, vocabularySignature]);
 
   const handleCopyTranslation = async () => {
     if (!currentTranslation) return;
@@ -688,7 +756,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           <button
             key={idx}
             type="button"
-            onClick={() => handleTermClick(part)}
+            onClick={event => { event.stopPropagation(); if (!window.getSelection()?.toString()) handleTermClick(part); }}
             className="vocab-highlight"
             aria-label={`查看 ${part} 的词汇释义`}
           >
@@ -710,151 +778,73 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     }
   }
 
-  // Render dialogue format (screenplay / turn-by-turn conversational bubbles)
-  const renderDialogueContent = () => {
-    return (
-      <div className="space-y-3 sm:space-y-4">
-        {dialogueTurns.map((turn, tIdx) => {
-          if (!turn.speaker || turn.speaker.toLowerCase() === 'setting' || turn.speaker.toLowerCase() === 'scene') {
-            return (
-              <div
-                key={tIdx}
-                className="italic font-editorial text-[length:var(--type-example)] leading-[1.6]  text-[var(--text-secondary)] bg-[var(--bg-alt)]/40 border-l-2 border-[var(--accent-primary)] px-4 py-2.5 rounded-xs my-2"
-              >
-                {turn.speaker ? (
-                  <span className="not-italic font-ui font-semibold text-[length:var(--type-label)] leading-[1.4] text-[var(--accent-vocab)] uppercase tracking-wider block mb-1">
-                    {turn.speaker}:
-                  </span>
-                ) : null}
-                {renderTextWithHighlights(turn.speech)}
-              </div>
-            );
-          }
+  const renderSentences = (text: string, prefix: string) => groupReadingSentences(splitReadingSentences(text), currentTranslation).map(({ source: sentence, index, translation: translated }) => {
+    const key = `${prefix}-${index}`;
+    const expanded = expandedSentence === key && !!translated;
+    const open = (fromKeyboard = false) => {
+      if (window.getSelection()?.toString()) return;
+      setExpandedSentence(expanded ? null : key);
+      if (fromKeyboard && translated) requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(`[data-expanded-sentence="${key}"] .reading-sentence-card__close`)?.focus({ preventScroll: true }));
+      if (!translated) void fetchTranslation(true);
+    };
+    return <React.Fragment key={key}>{expanded ? <span className="reading-sentence-card" data-expanded-sentence={key}>
+      <span className="reading-sentence-card__original">{renderTextWithHighlights(sentence.trim())}</span>
+      <button type="button" aria-label="关闭句子翻译" className="reading-sentence-card__close" onClick={event => { event.stopPropagation(); setExpandedSentence(null); requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-sentence-id="${key}"]`)?.focus({ preventScroll: true })); }}><X size={17} /></button>
+      <span className="reading-sentence-card__translation">{translated}</span>
+    </span> : <span className="reading-sentence" data-sentence-id={key} role="button" tabIndex={0} aria-label={`查看句子翻译：${sentence.trim()}`} aria-expanded={false} onClick={() => open()} onKeyDown={event => { if (event.target === event.currentTarget && ['Enter', ' '].includes(event.key)) { event.preventDefault(); open(true); } }}>{renderTextWithHighlights(sentence)}</span>}</React.Fragment>;
+  });
 
-          const styleIdx = speakerMap.get(turn.speaker) ?? 0;
-          const style = SPEAKER_STYLES[styleIdx];
-          const initial = turn.speaker.charAt(0).toUpperCase();
-
-          return (
-            <div
-              key={tIdx}
-              className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-sm bg-[var(--surface-paper)]/80 hover:bg-[var(--surface-paper)] border transition-colors ${
-                isSpeaking && activeSpeechTurn === tIdx
-                  ? 'border-[var(--accent-primary)] ring-2 ring-[var(--accent-primary)]/20 shadow-sm'
-                  : 'border-[var(--border-subtle)]/50'
-              }`}
-            >
-              {/* Speaker Avatar & Name */}
-              <div className="flex-shrink-0 flex flex-col items-center pt-0.5 w-12 sm:w-16 text-center">
-                <div
-                  className={`type-label w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-ui font-bold shadow-xs ${style.bg} ${style.text}`}
-                >
-                  {initial}
-                </div>
-                <span
-                  className={`font-ui text-[length:var(--type-label)] leading-[1.4] font-semibold mt-1.5 truncate max-w-full tracking-wide uppercase ${style.label}`}
-                  title={turn.speaker}
-                >
-                  {turn.speaker}
-                </span>
-              </div>
-
-              {/* Spoken dialogue text */}
-              <div className="flex-1 min-w-0 pt-0.5">
-                <p className="type-reading font-editorial text-[var(--text-primary)]">
-                  {renderTextWithHighlights(turn.speech)}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
+  const renderDialogueTurns = (turns: DialogueTurn[], translated = false) => (
+    <div className="reading-dialogue-turns">
+      {turns.map((turn, index) => {
+        if (!turn.speaker || ['setting', 'scene', '场景', '背景', 'note'].includes(turn.speaker.toLowerCase())) {
+          return <div key={index} className="reading-dialogue-scene">{turn.speaker && <span>{turn.speaker}: </span>}{translated ? turn.speech : renderSentences(turn.speech, `turn-${index}`)}</div>;
+        }
+        const style = SPEAKER_STYLES[speakerMap.get(turn.speaker) ?? 0];
+        return <div key={index} className={`reading-dialogue-turn ${isSpeaking && activeSpeechTurn === index ? 'is-reading' : ''}`}>
+          <div className="reading-dialogue-speaker">
+            <span aria-hidden="true" className={`reading-dialogue-avatar ${style.bg} ${style.text}`}>{turn.speaker.charAt(0).toUpperCase()}</span>
+            <span className="reading-dialogue-name">{turn.speaker}</span>
+          </div>
+          <div className={`reading-dialogue-speech ${translated ? 'reading-dialogue-speech--translated' : ''}`}>
+            {translated ? turn.speech : renderSentences(turn.speech, `turn-${index}`)}
+          </div>
+        </div>;
+      })}
+    </div>
+  );
+  const renderDialogueContent = () => renderDialogueTurns(dialogueTurns);
 
   // Render paragraph format
   const renderParagraphContent = () => {
+    if (isDetectedDialogue) return dialogueTurns.map((turn, index) => (
+      <p key={index} className="type-reading mb-5 font-editorial text-[var(--text-primary)]">
+        {turn.speaker && <span>{turn.speaker}: </span>}{renderSentences(turn.speech, `turn-${index}`)}
+      </p>
+    ));
     const paragraphs = reading.content.split(/\n\s*\n/).filter(Boolean);
     return paragraphs.map((para, pIdx) => (
       <p key={pIdx} className="type-reading mb-5 font-editorial text-[var(--text-primary)]">
-        {renderTextWithHighlights(para)}
+        {renderSentences(para, `paragraph-${pIdx}`)}
       </p>
     ));
   };
 
-  // Render translated dialogue turns
   const renderTranslatedDialogue = (translatedText: string) => {
-    const originalSpokenTurns = dialogueTurns.filter(turn => turn.speaker !== null);
-    const knownSpeakers = originalSpokenTurns.map(turn => turn.speaker as string);
-    const parsedTurns = parseDialogueTurns(translatedText, knownSpeakers);
-
-    // Some translations omit only the first `Speaker:` label. If the remaining
-    // turn count still aligns with the source, restore that label for display.
-    const turns = parsedTurns.map((turn, index) => {
-      if (!turn.speaker && parsedTurns.length === originalSpokenTurns.length) {
-        return { ...turn, speaker: originalSpokenTurns[index]?.speaker || null };
-      }
-      return turn;
-    });
-
-    return (
-      <div className="space-y-3 sm:space-y-4">
-        {turns.map((turn, tIdx) => {
-          if (!turn.speaker || ['setting', 'scene', '场景', '背景', 'note'].includes(turn.speaker.toLowerCase())) {
-            return (
-              <div
-                key={tIdx}
-                className="italic font-editorial text-[length:var(--type-example)] leading-[1.6]  text-[var(--text-secondary)] bg-[var(--bg-alt)]/40 border-l-2 border-[var(--accent-primary)] px-4 py-2.5 rounded-xs my-2"
-              >
-                {turn.speaker ? (
-                  <span className="not-italic font-ui font-semibold text-[length:var(--type-label)] leading-[1.4] text-[var(--accent-vocab)] uppercase tracking-wider block mb-1">
-                    {turn.speaker}:
-                  </span>
-                ) : null}
-                {turn.speech}
-              </div>
-            );
-          }
-
-          const sourceSpeaker = knownSpeakers.find(
-            speaker => speaker.toLowerCase() === turn.speaker?.toLowerCase()
-          );
-          const speakerKey = sourceSpeaker || turn.speaker;
-          const styleIdx = speakerMap.get(speakerKey) ?? (tIdx % SPEAKER_STYLES.length);
-          const style = SPEAKER_STYLES[styleIdx];
-          const initial = turn.speaker.charAt(0).toUpperCase();
-
-          return (
-            <div
-              key={tIdx}
-              className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-sm bg-[var(--surface-paper)]/90 hover:bg-[var(--surface-paper)] border border-[var(--border-subtle)]/50 transition-colors"
-            >
-              <div className="flex-shrink-0 flex flex-col items-center pt-0.5 w-12 sm:w-16 text-center">
-                <div
-                  className={`type-label w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-ui font-bold shadow-xs ${style.bg} ${style.text}`}
-                >
-                  {initial}
-                </div>
-                <span
-                  className={`font-ui text-[length:var(--type-label)] leading-[1.4] font-semibold mt-1.5 truncate max-w-full tracking-wide uppercase ${style.label}`}
-                  title={turn.speaker}
-                >
-                  {turn.speaker}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0 pt-0.5">
-                <p className="type-translation font-editorial text-[var(--text-primary)]">
-                  {turn.speech}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
+    const mapped = mappedDialogueTranslation(dialogueTurns, currentTranslation);
+    // Keep legacy cached text readable without guessing which Chinese sentence
+    // belongs to an English turn. Exact sentence mappings take priority.
+    const legacy = parseDialogueTurns(translatedText, dialogueTurns.flatMap(turn => turn.speaker ? [turn.speaker] : []));
+    return renderDialogueTurns(mapped || legacy, true);
   };
 
   const renderTranslatedParagraphs = (translatedText: string) => {
+    const mapped = isDetectedDialogue ? mappedDialogueTranslation(dialogueTurns, currentTranslation) : null;
+    if (mapped) return mapped.map((turn, index) => (
+      <p key={index} className="type-translation mb-5 font-ui text-[var(--text-primary)]">
+        {turn.speaker && <span>{turn.speaker}: </span>}{turn.speech}
+      </p>
+    ));
     const paragraphs = translatedText.split(/\n\s*\n/).filter(Boolean);
     return paragraphs.map((para, pIdx) => (
       <p key={pIdx} className="type-translation mb-5 font-ui text-[var(--text-primary)]">
@@ -863,313 +853,92 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     ));
   };
 
-  const renderReadAloudButton = () => {
-    const isSpeechActive = isSpeaking || isPreparingSpeech;
-    return (
-      <div className="flex flex-col items-start gap-1">
-        <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={startReadingAloud}
-          aria-pressed={isSpeaking}
-          aria-busy={isPreparingSpeech}
-          title={isSpeechActive ? '停止英文朗读' : isDetectedDialogue ? '按固定男女声朗读英文对话' : '朗读英文短文'}
-          className={`type-label flex items-center gap-1.5 px-2.5 py-1.5 border  font-ui rounded-sm transition-colors ${
-            isSpeechActive
-              ? 'bg-[var(--accent-vocab)] text-[var(--surface-paper)] border-[var(--accent-vocab)] shadow-xs'
-              : 'bg-[var(--bg-primary)] text-[var(--accent-vocab)] hover:bg-[var(--bg-alt)] border-[var(--accent-vocab)]/40'
-          }`}
-        >
-          {isSpeaking ? (
-            <Square className="w-3.5 h-3.5 fill-current" />
-          ) : isPreparingSpeech ? (
-            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Volume2 className="w-3.5 h-3.5" />
-          )}
-          <span>
-            {isSpeaking
-              ? '停止朗读'
-              : isPreparingSpeech
-                ? '正在准备角色语音'
-                : isDetectedDialogue ? '角色朗读' : '英文朗读'}
-          </span>
-        </button>
-        {isSpeaking && <button type="button" className="type-label min-h-11 px-3 flex items-center gap-1.5 border border-[var(--border-subtle)] rounded-sm font-ui"
-          onClick={() => {
-            const paused = !speechPausedRef.current;
-            speechPausedRef.current = paused;
-            setIsSpeechPaused(paused);
-            const audio = dialogueAudioRef.current;
-            if (audio) {
-              if (paused) audio.pause();
-              else void audio.play().catch(() => {
-                stopReadingAloud();
-                setSpeechError('无法继续播放，请重新开始朗读。');
-              });
-            } else if ('speechSynthesis' in window) {
-              if (paused) window.speechSynthesis.pause();
-              else window.speechSynthesis.resume();
-            }
-            if (!paused && pendingSpeechRef.current) {
-              const next = pendingSpeechRef.current;
-              pendingSpeechRef.current = null;
-              next();
-            }
-          }}>
-          {isSpeechPaused ? <Play aria-hidden="true" className="w-3.5 h-3.5" /> : <Pause aria-hidden="true" className="w-3.5 h-3.5" />}
-          {isSpeechPaused ? '继续朗读' : '暂停朗读'}
-        </button>}
-        </div>
-        {isSpeaking && <span role="status" className="type-meta font-ui text-[var(--text-muted)]">{isSpeechPaused ? '朗读已暂停' : '正在朗读'}</span>}
-        {speechError ? (
-          <span className="type-meta max-w-56 text-[var(--status-error)] font-ui" role="alert">
-            {speechError}
-          </span>
-        ) : null}
-        {speechNotice ? (
-          <span className="type-meta max-w-64 text-[var(--accent-vocab)] font-ui" role="status">
-            {speechNotice}
-          </span>
-        ) : null}
-      </div>
-    );
+  const toggleSpeechPause = () => {
+    const paused = !speechPausedRef.current;
+    speechPausedRef.current = paused;
+    setIsSpeechPaused(paused);
+    const audio = dialogueAudioRef.current;
+    if (audio) {
+      if (paused) audio.pause();
+      else void audio.play().catch(() => { stopReadingAloud(); setSpeechError('无法继续播放，请重新开始朗读。'); });
+    } else if ('speechSynthesis' in window) {
+      if (paused) {
+        deviceSpeechProgress.current.pause();
+        setSpeechPosition(deviceSpeechProgress.current.snapshot().seconds);
+        window.speechSynthesis.pause();
+      } else {
+        if (deviceUtteranceActive.current) deviceSpeechProgress.current.start();
+        window.speechSynthesis.resume();
+      }
+    }
+    if (!paused && pendingSpeechRef.current) { const next = pendingSpeechRef.current; pendingSpeechRef.current = null; next(); }
   };
+  const pauseForVocabulary = () => {
+    if (!isSpeaking) return;
+    if (!speechPausedRef.current) toggleSpeechPause();
+    if (!dialogueAudioRef.current) suspendDeviceForVocabulary.current?.();
+  };
+  const seekDeviceSpeech = (percent: number) => {
+    setDeviceSeekDraft(null);
+    setSpeechDuration(null);
+    if (deviceSeekRef.current) deviceSeekRef.current(percent);
+    else void startReadingAloud(true, percent, true, true);
+  };
+  const translationState = <>
+    {isTranslating && !currentTranslation && <p role="status" className="reading-inline-status">正在准备全文翻译…</p>}
+    {translationError && <p role="alert" className="reading-inline-status">{translationError} <button type="button" onClick={() => fetchTranslation(true)} disabled={isTranslating}>重试翻译</button></p>}
+    {currentTranslation ? (isDetectedDialogue && formatMode === 'dialogue' ? renderTranslatedDialogue(currentTranslation.translatedContent) : renderTranslatedParagraphs(currentTranslation.translatedContent)) : !isTranslating && !translationError && <p>暂无全文翻译。</p>}
+  </>;
 
   return (
-    <div className="page-shell page-shell--reading page-stack--reading reading-page">
-      <h1 className="reading-page-title font-editorial font-semibold text-[var(--text-primary)]">{reading.title}</h1>
-      {/* Top Controls Bar */}
-      <div className="reading-toolbar flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[var(--border-subtle)]">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[length:var(--type-label)] leading-[1.4] font-ui font-semibold px-2 py-0.5 bg-[var(--bg-alt)] text-[var(--text-secondary)] rounded-xs uppercase">
-            {reading.cefrLevel}
-          </span>
-          <span className="type-label text-[var(--text-secondary)] font-ui capitalize">
-            {reading.readingType}
-          </span>
-          <span className="type-label text-[var(--text-secondary)] font-ui">{reading.content.trim().split(/\s+/).filter(Boolean).length} 词</span>
-
+    <div className={`page-shell page-shell--reading page-stack--reading reading-page reading-studio ${isDetectedDialogue ? 'reading-studio--dialogue' : ''}`}>
+      <header className="reading-studio__header">
+        <div><h1 className="reading-page-title font-editorial">{reading.title}</h1><div className="reading-studio__meta"><span>{reading.cefrLevel}</span><span>{({ story: '故事', 'non-story': '说明', dialogue: '对话' })[reading.readingType]} · {reading.content.trim().split(/\s+/).filter(Boolean).length} 词</span></div></div>
+        <div ref={moreMenuRef} className="reading-more" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setMoreOpen(false); }} onKeyDown={event => { if (event.key === 'Escape') { setMoreOpen(false); (event.currentTarget.querySelector('button') as HTMLButtonElement | null)?.focus(); } }}>
+          <button type="button" className="reading-more__trigger" aria-label="更多阅读操作" aria-expanded={moreOpen} aria-controls={moreOpen ? "reading-more-menu" : undefined} onClick={() => setMoreOpen(value => !value)}><MoreHorizontal size={21} /></button>
+          {moreOpen && <div id="reading-more-menu" className="reading-more__menu">
+            <button type="button" aria-expanded={isRewriteMenuOpen} onClick={() => { setIsRewriteMenuOpen(value => !value); setMoreOpen(false); }}><PencilLine size={17} />改写短文</button>
+            <button type="button" onClick={() => { setMoreOpen(false); onOpenHistory(); }}><History size={17} />历史记录</button>
+            <button type="button" onClick={() => { setMoreOpen(false); setLookupOpen(true); }}><AlignLeft size={17} />查询文中其他表达</button>
+            {isDetectedDialogue && <button type="button" onClick={() => { setFormatMode(value => value === 'dialogue' ? 'paragraph' : 'dialogue'); setMoreOpen(false); }}><AlignLeft size={17} />{formatMode === 'dialogue' ? '切换段落排版' : '切换剧本排版'}</button>}
+            <button type="button" disabled={isTranslating} onClick={() => { setMoreOpen(false); void fetchTranslation(true); }}><RefreshCw size={17} />更新全文及句子翻译</button>
+            <button type="button" disabled={!currentTranslation} onClick={() => { setMoreOpen(false); void handleCopyTranslation(); }}><Copy size={17} />{copiedTranslation ? '已复制译文' : '复制全文译文'}</button>
+          </div>}
         </div>
-
-        {/* Action Buttons: Rewrite, History */}
-        <div className="reading-actions flex items-center gap-2 flex-wrap">
-
-          {/* Rewrite Dropdown (PRD Section 21) */}
-          <div className="relative" onBlur={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIsRewriteMenuOpen(false);
-          }} onKeyDown={(event) => {
-            if (event.key === 'Escape') {
-              setIsRewriteMenuOpen(false);
-              event.currentTarget.querySelector('button')?.focus();
-            }
-          }}>
-            <button
-              onClick={() => setIsRewriteMenuOpen(!isRewriteMenuOpen)}
-              disabled={isRewriting}
-              aria-expanded={isRewriteMenuOpen}
-              aria-controls="reading-rewrite-options"
-              className="type-label flex items-center gap-1.5 px-3 py-1.5 bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-alt)] border border-[var(--border-subtle)] font-ui rounded-sm transition-colors"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRewriting ? 'animate-spin' : ''}`} />
-              <span>{isRewriting ? '正在改写…' : '改写短文'}</span>
-              <ChevronDown className="w-3 h-3" />
-            </button>
-
-            {isRewriteMenuOpen && (
-              <div id="reading-rewrite-options" className="absolute left-0 sm:left-auto sm:right-0 mt-1.5 w-60 max-w-[calc(100vw-2rem)] bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-sm shadow-lg z-20 p-2 space-y-1">
-                <div className="px-2 py-1.5 border-b border-[var(--border-subtle)]/60 flex items-center justify-between">
-                  <label className="type-meta min-h-11 font-ui text-[var(--text-primary)] flex items-center gap-1.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={keepVocab}
-                      onChange={(e) => setKeepVocab(e.target.checked)}
-                      className="rounded-xs text-[var(--accent-primary)]"
-                    />
-                    <span>保留当前生词</span>
-                  </label>
-                </div>
-                <div className="max-h-60 overflow-y-auto pt-1">
-                  {rewriteOptions.map((opt) => (
-                    <button
-                      key={opt.id}
-                      onClick={() => {
-                        setIsRewriteMenuOpen(false);
-                        onRewrite(opt.id, keepVocab);
-                      }}
-                      className="type-label min-h-11 w-full text-left px-2.5 py-1.5 font-ui text-[var(--text-primary)] hover:bg-[var(--bg-alt)] rounded-xs transition-colors"
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-
-          {/* History Button */}
-          <button
-            onClick={onOpenHistory}
-            title="查看历史短文"
-            aria-label="查看历史短文"
-            className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-alt)] border border-[var(--border-subtle)] rounded-sm transition-colors"
-          >
-            <History className="w-4 h-4" />
-          </button>
+      </header>
+      {copyError && <p role="alert" className="reading-inline-status">{copyError}</p>}
+      {isRewriteMenuOpen && <section className="reading-rewrite-panel" aria-label="改写短文设置"><div className="reading-studio__section-heading"><h2>改写短文</h2><button type="button" aria-label="关闭改写设置" onClick={() => setIsRewriteMenuOpen(false)}><X size={19} /></button></div><label><input type="checkbox" checked={keepVocab} onChange={event => setKeepVocab(event.target.checked)} />保留当前精选词汇</label><div>{rewriteOptions.map(option => <button type="button" key={option.id} disabled={isRewriting} onClick={() => { setIsRewriteMenuOpen(false); onRewrite(option.id, keepVocab); }}>{option.label}</button>)}</div></section>}
+      <section className="reading-player" aria-label="英文朗读播放器">
+        <button type="button" className="reading-player__play" disabled={isPreparingSpeech} aria-label={isPreparingSpeech ? '正在准备语音' : isSpeaking && !isSpeechPaused ? '暂停朗读' : isSpeaking ? '继续朗读' : '播放英文朗读'} aria-busy={isPreparingSpeech} onClick={() => { if (isSpeaking) toggleSpeechPause(); else void startReadingAloud(); }}>{isPreparingSpeech ? <RefreshCw size={19} /> : isSpeaking && !isSpeechPaused ? <Pause size={19} /> : <Play size={19} />}</button>
+        <span className="reading-player__time" title={isDeviceSpeech ? '本次实际播放时间（不含暂停与跳过的内容）' : undefined}>{formatAudioTime(speechPosition)}</span>
+        {dialogueAudioRef.current && speechDuration && speechDuration > 0 ? <input type="range" aria-label="音频播放进度" min={0} max={speechDuration} step={.1} value={Math.min(speechPosition, speechDuration)} style={{ backgroundImage: `linear-gradient(to right, var(--reading-selected) ${Math.min(100, speechPosition / speechDuration * 100)}%, var(--reading-divider) ${Math.min(100, speechPosition / speechDuration * 100)}%)` }} onChange={event => { if (dialogueAudioRef.current) { dialogueAudioRef.current.currentTime = Number(event.target.value); setSpeechPosition(Number(event.target.value)); } }} /> : isDeviceSpeech ? <input type="range" aria-label="设备朗读进度" aria-valuetext={`朗读位置 ${Math.floor(deviceSeekDraft ?? deviceSpeechPercent)}%`} min={0} max={100} step={1} value={deviceSeekDraft ?? deviceSpeechPercent} title="拖动到文本位置；实际播放时间不包含跳过的内容" style={{ backgroundImage: `linear-gradient(to right, var(--reading-selected) ${deviceSeekDraft ?? deviceSpeechPercent}%, var(--reading-divider) ${deviceSeekDraft ?? deviceSpeechPercent}%)` }}
+          onPointerDown={event => { draggingDeviceSeek.current = true; resumeAfterDeviceSeek.current = isSpeaking && !speechPausedRef.current; if (resumeAfterDeviceSeek.current) toggleSpeechPause(); event.currentTarget.setPointerCapture(event.pointerId); }}
+          onChange={event => { const percent = Number(event.target.value); if (draggingDeviceSeek.current) setDeviceSeekDraft(percent); else seekDeviceSpeech(percent); }}
+          onPointerUp={event => { if (!draggingDeviceSeek.current) return; draggingDeviceSeek.current = false; seekDeviceSpeech(Number(event.currentTarget.value)); if (resumeAfterDeviceSeek.current && speechPausedRef.current) toggleSpeechPause(); resumeAfterDeviceSeek.current = false; }}
+          onPointerCancel={() => { draggingDeviceSeek.current = false; setDeviceSeekDraft(null); if (resumeAfterDeviceSeek.current && speechPausedRef.current) toggleSpeechPause(); resumeAfterDeviceSeek.current = false; }} /> : <div className="reading-player__track" role="progressbar" aria-label="朗读播放进度" aria-valuemin={0} aria-valuemax={100} aria-valuenow={speechDuration ? Math.min(100, speechPosition / speechDuration * 100) : undefined}><span style={{ width: `${speechDuration ? Math.min(100, speechPosition / speechDuration * 100) : 0}%` }} /></div>}
+        <span className="reading-player__time" title={isDeviceSpeech && !speechDuration ? '当前文本位置；设备语音不提供音频总时长' : undefined}>{isDeviceSpeech && !speechDuration ? `${Math.floor(deviceSeekDraft ?? deviceSpeechPercent)}%` : formatAudioTime(speechDuration)}</span>
+        <button type="button" aria-label="重新播放英文朗读" className="reading-player__restart" disabled={isPreparingSpeech} onClick={() => void startReadingAloud(true)}><RotateCcw size={18} /></button>
+      </section>
+      {speechError && <p role="alert" className="reading-inline-status">{speechError}</p>}
+      {speechNotice && <p role="status" className="reading-inline-status">{speechNotice}</p>}
+      <section className="reading-studio__body">
+        <div className="reading-studio__switch" role="tablist" aria-label="阅读内容模式">
+          <button type="button" role="tab" id="reading-original-tab" aria-controls="reading-body-panel" aria-selected={mobileReadingMode === 'original'} onClick={() => setMobileReadingMode('original')}>原文</button>
+          <button type="button" role="tab" id="reading-translation-tab" aria-controls="reading-body-panel" aria-selected={mobileReadingMode === 'translation'} onClick={() => setMobileReadingMode('translation')}>全文翻译</button>
         </div>
-      </div>
+        {mobileReadingMode === 'original' && isTranslating && <p role="status" className="reading-inline-status">正在准备句子翻译，完成后可点击句子查看。</p>}
+        {mobileReadingMode === 'original' && translationError && <p role="alert" className="reading-inline-status">{translationError} <button type="button" onClick={() => void fetchTranslation(true)} disabled={isTranslating}>重试翻译</button></p>}
+        <article id="reading-body-panel" role="tabpanel" aria-labelledby={mobileReadingMode === 'original' ? 'reading-original-tab' : 'reading-translation-tab'} className="reading-prose">
+          {mobileReadingMode === 'original' ? (isDetectedDialogue && formatMode === 'dialogue' ? renderDialogueContent() : renderParagraphContent()) : translationState}
+        </article>
+      </section>
 
-      {/* Main Reading Area: switch between the original and translated reading modes */}
-      <div className="mobile-reading-switch" role="tablist" aria-label="阅读内容模式">
-        <button type="button" role="tab" aria-selected={mobileReadingMode === 'original'} onClick={() => setMobileReadingMode('original')}>原文</button>
-        <button type="button" role="tab" aria-selected={mobileReadingMode === 'translation'} onClick={() => setMobileReadingMode('translation')}>翻译</button>
-      </div>
-      <div className="reading-columns reading-mode-parallel grid grid-cols-1 gap-6 items-start">
-          {/* Left Column: English Reading Card */}
-          <article className={`reading-panel reading-original bg-[var(--bg-primary)] border border-[var(--border-subtle)] rounded-sm flex flex-col ${mobileReadingMode === 'translation' ? 'mobile-reading-hidden' : ''}`}>
-            <header className="reading-panel-header mb-6 pb-4 border-b border-[var(--border-subtle)]/50">
-              <div>
-                <h2 className="type-label font-ui text-[var(--text-secondary)]">原文</h2>
-              </div>
-
-              <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-                {renderReadAloudButton()}
-
-                {/* Dialogue vs Paragraph Toggle */}
-                {isDetectedDialogue && (
-                  <div className="type-label flex items-center gap-1 bg-[var(--bg-alt)]/70 p-1 rounded-sm font-ui border border-[var(--border-subtle)]/50">
-                    <button
-                      type="button"
-                      onClick={() => setFormatMode('dialogue')}
-                      aria-pressed={formatMode === 'dialogue'}
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-xs transition-colors ${
-                        formatMode === 'dialogue'
-                          ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] font-semibold shadow-xs'
-                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                      }`}
-                    >
-                      <MessageSquare className="w-3.5 h-3.5" />
-                      <span>剧本</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormatMode('paragraph')}
-                      aria-pressed={formatMode === 'paragraph'}
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-xs transition-colors ${
-                        formatMode === 'paragraph'
-                          ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] font-semibold shadow-xs'
-                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                      }`}
-                    >
-                      <AlignLeft className="w-3.5 h-3.5" />
-                      <span>段落</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            </header>
-
-            {/* Content with highlighted vocabulary */}
-            <div className="reading-prose text-[var(--text-primary)] flex-1">
-              {formatMode === 'dialogue' && isDetectedDialogue
-                ? renderDialogueContent()
-                : renderParagraphContent()}
-            </div>
-          </article>
-
-          {/* Right Column: Humanised Translation Card ("短文我需要旁边有个翻译") */}
-          <article className={`reading-panel reading-translation bg-[var(--surface-paper)] border border-[var(--border-subtle)] rounded-sm flex flex-col relative ${mobileReadingMode === 'original' ? 'mobile-reading-hidden' : ''}`}>
-            <header className="reading-panel-header mb-6 pb-4 border-b border-[var(--border-subtle)]/50">
-              <div>
-                <h2 className="type-section font-ui font-semibold text-[var(--text-primary)] tracking-tight">
-                  {currentTranslation?.title || (isTranslating ? '正在生成自然译文...' : reading.title)}
-                </h2>
-              </div>
-
-              {/* Translation Actions */}
-              <div className="flex items-center gap-1.5 self-start sm:self-auto flex-wrap">
-
-
-                {/* Regenerate Button */}
-                <button
-                  type="button"
-                  onClick={() => fetchTranslation(true)}
-                  disabled={isTranslating}
-                  title="重新按母语习惯润色翻译"
-                  aria-label="重新生成翻译"
-                  className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-alt)] border border-[var(--border-subtle)] rounded-sm transition-colors disabled:opacity-50"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isTranslating ? 'animate-spin' : ''}`} />
-                </button>
-
-                {/* Copy Button */}
-                <button
-                  type="button"
-                  onClick={handleCopyTranslation}
-                  disabled={!currentTranslation || isTranslating}
-                  title="复制地道译文"
-                  aria-label="复制译文"
-                  className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-alt)] border border-[var(--border-subtle)] rounded-sm transition-colors disabled:opacity-50"
-                >
-                  {copiedTranslation ? (
-                    <Check className="w-3.5 h-3.5 text-[var(--status-success)]" />
-                  ) : (
-                    <Copy className="w-3.5 h-3.5" />
-                  )}
-                </button>
-              </div>
-            </header>
-
-            {/* Translation Content */}
-            <div className="reading-prose text-[var(--text-primary)] flex-1">
-              {copyError && <p role="alert" className="type-label font-ui text-[var(--status-error)] mb-3">{copyError}</p>}
-              {copiedTranslation && <p role="status" className="type-label font-ui text-[var(--accent-vocab)] mb-3">译文已复制</p>}
-              {currentTranslation && isTranslating && <p role="status" className="type-label font-ui mb-4 text-[var(--text-secondary)]">正在更新翻译，原译文仍可阅读…</p>}
-              {currentTranslation && translationError && <div className="mb-4">
-                <p role="alert" className="type-label font-ui text-[var(--status-error)]">{translationError}</p>
-                <button type="button" onClick={() => fetchTranslation(true)} disabled={isTranslating} className="type-label font-ui min-h-11 underline underline-offset-4">重试翻译</button>
-              </div>}
-              {isTranslating && !currentTranslation ? (
-                <div className="py-16 px-4 text-center">
-                  <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[var(--accent-vocab)]/10 text-[var(--accent-vocab)] mb-3 animate-pulse">
-                    <Sparkles className="w-5 h-5 animate-spin" style={{ animationDuration: '3s' }} />
-                  </div>
-                  <h4 role="status" className="font-editorial text-[length:var(--type-body)] leading-[1.6] font-semibold text-[var(--text-primary)]">
-                    正在翻译…
-                  </h4>
-                </div>
-              ) : translationError && !currentTranslation ? (
-                <div className="p-4 rounded-sm bg-[var(--status-warning-soft)] border border-[var(--status-warning-border)] text-center my-6">
-                  <p role="alert" className="type-body text-[var(--status-warning)] font-ui mb-2">{translationError}</p>
-                  <button
-                    type="button"
-                    onClick={() => fetchTranslation(true)}
-                    className="type-label min-h-11 px-3 py-2 bg-[var(--status-warning)] text-white rounded-xs font-ui hover:bg-[var(--status-warning)]"
-                  >
-                    重试翻译
-                  </button>
-                </div>
-              ) : currentTranslation ? (
-                formatMode === 'dialogue' && isDetectedDialogue
-                  ? renderTranslatedDialogue(currentTranslation.translatedContent)
-                  : renderTranslatedParagraphs(currentTranslation.translatedContent)
-              ) : (
-                <div className="type-label py-16 text-center font-ui text-[var(--text-secondary)]">
-                  暂无翻译，请点击刷新生成
-                </div>
-              )}
-            </div>
-          </article>
-      </div>
-
-      {/* Vocabulary Section (PRD Section 13 & 16) */}
       <section className="reading-vocabulary space-y-4">
         <div className="reading-vocabulary__header flex items-center justify-between pb-2 border-b border-[var(--border-subtle)] flex-wrap gap-2">
           <div>
             <div className="flex items-center gap-2">
               <h2 className="type-section font-editorial font-semibold text-[var(--accent-vocab)]">
-                {getI18nText('vocabSectionTitle')} ({reading.selectedVocabulary.length})
+                本篇精选词汇
               </h2>
               {isTranslating && (
                 <span className="type-meta font-ui text-[var(--accent-vocab)] inline-flex items-center gap-1 bg-[var(--accent-vocab)]/10 px-2 py-0.5 rounded-xs">
@@ -1179,9 +948,12 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
               )}
             </div>
           </div>
+          <span className="reading-studio__vocab-count">{reading.selectedVocabulary.length} 个词汇</span>
         </div>
 
-        <ReadingVocabularyEditor key={reading.id} reading={reading} knownVocabulary={knownVocabulary} onSave={onUpdateVocabulary} />
+        <p className="reading-studio__vocab-hint">系统精选词汇 · 点击书签加入生词本</p>
+        {bookmarkError && <p className="reading-inline-status" role="alert">{bookmarkError}</p>}
+        {lookupOpen && <section className="reading-lookup-panel"><div className="reading-studio__section-heading"><h3>查询文中其他表达</h3><button type="button" aria-label="关闭表达查询" onClick={() => setLookupOpen(false)}><X size={18} /></button></div><ReadingVocabularyEditor key={reading.id} reading={reading} knownVocabulary={knownVocabulary} onSave={onUpdateVocabulary} onInspect={vocab => { setSelectedVocab(vocab); setIsDetailOpen(true); }} /></section>}
         <div className="reading-vocabulary__list" role="list">
           {reading.selectedVocabulary.map((vocab) => {
             const inWordbook = wordbookVocabIds.has(vocab.term.toLowerCase());
@@ -1206,7 +978,9 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 </div>
                 <p className="reading-vocabulary__meaning type-body font-ui text-[var(--text-primary)]">{localizedMeaning || '暂无释义'}</p>
                 <button
-                  onClick={(e) => { e.stopPropagation(); onToggleWordbook(vocab); }}
+                  disabled={pendingBookmarks.has(vocab.id)}
+                  aria-pressed={inWordbook}
+                  onClick={(e) => { e.stopPropagation(); void toggleBookmark(vocab); }}
                   title={inWordbook ? '移出生词本' : getI18nText('addToWordbook')}
                   aria-label={`${inWordbook ? '移出生词本' : '加入生词本'}：${vocab.term}`}
                   className={`reading-vocabulary__bookmark ${inWordbook ? 'is-saved' : ''}`}
@@ -1219,17 +993,19 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         </div>
       </section>
 
-      {onOpenPractice && <button type="button" onClick={onOpenPractice} className="practice-back">
-        进入句子改写练习 <ChevronDown aria-hidden="true" className="w-4 h-4 -rotate-90" />
+      {onOpenPractice && <button type="button" onClick={onOpenPractice} className="reading-studio__practice">
+        <PencilLine size={19} aria-hidden="true" />开始句子改写练习 <ArrowRight aria-hidden="true" size={19} />
       </button>}
 
       {/* Modals */}
       <WordDetailModal
         vocab={selectedVocab}
+        readingContext
+        onBeforePronunciation={pauseForVocabulary}
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         isInWordbook={selectedVocab ? wordbookVocabIds.has(selectedVocab.term.toLowerCase()) : false}
-        onToggleWordbook={onToggleWordbook}
+        onToggleWordbook={onToggleWordbookFromDetails || onToggleWordbook}
         currentTranslation={currentTranslation}
       />
 

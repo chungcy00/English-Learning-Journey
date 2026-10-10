@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { currentReadingSavedVocabulary } from './utils/savedVocabulary';
+import { toggleWordDetailBookmark } from './utils/wordDetailBookmark';
 import { Navbar, NavTab } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ProcessingModal } from './components/ProcessingModal';
@@ -17,7 +18,7 @@ import { ReadingView } from './views/ReadingView';
 import { WordbookView } from './views/WordbookView';
 import { ReviewView } from './views/ReviewView';
 import { ReadingHistoryView } from './views/ReadingHistoryView';
-import { isAppleMobileDevice, isManualUpdateApp } from './utils/pwa';
+import { isAppleMobileDevice, isManualUpdateApp, isAndroidPhoneApp } from './utils/pwa';
 import { normalizeEnglishTerm } from './utils/englishSearch';
 import { useReadingExpressions } from './hooks/useReadingExpressions';
 import { WordbookRemovalDialog } from './components/WordbookRemovalDialog';
@@ -73,10 +74,22 @@ export default function App() {
     }
   }, [activeTab]);
   const [currentReading, setCurrentReading] = useState<ReadingRecord | null>(null);
+  // Keep the existing reading intact and restore its last viewport on return.
+  const readingPositions = useRef(new Map<string, number>());
+  useEffect(() => {
+    if (activeTab !== 'reading' || !currentReading) return;
+    const id = currentReading.id;
+    const frame = requestAnimationFrame(() => window.scrollTo({ top: readingPositions.current.get(id) || 0, behavior: 'instant' }));
+    const remember = () => readingPositions.current.set(id, window.scrollY);
+    window.addEventListener('scroll', remember, { passive: true });
+    return () => { cancelAnimationFrame(frame); window.removeEventListener('scroll', remember); };
+  }, [activeTab, currentReading?.id]);
   // Prepare once when a passage is ready, independently of opening a search menu.
   useReadingExpressions(currentReading);
   const [readings, setReadings] = useState<ReadingRecord[]>([]);
   const [vocabularies, setVocabularies] = useState<VocabularyItem[]>([]);
+  const removedDetailVocabulary = useRef(new Map<string, VocabularyItem>());
+  useEffect(() => { removedDetailVocabulary.current.clear(); }, [currentReading?.id]);
   const reviewVocabulary = useMemo(() => currentReadingSavedVocabulary(vocabularies, currentReading), [vocabularies, currentReading]);
   const [removalTarget, setRemovalTarget] = useState<VocabularyItem | null>(null);
   const removalPresence = useMotionPresence(!!removalTarget);
@@ -96,11 +109,20 @@ export default function App() {
   const [isSavingReading, setIsSavingReading] = useState(false);
   const [isRewriting, setIsRewriting] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<string>('');
+  const [processingTopic, setProcessingTopic] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [storageError, setStorageError] = useState('');
   const [isInstalledApp, setIsInstalledApp] = useState(
     () => isManualUpdateApp()
   );
+  const [isBottomNavApp, setIsBottomNavApp] = useState(() => isAndroidPhoneApp());
+
+  useEffect(() => {
+    const mode = window.matchMedia('(display-mode: standalone)');
+    const syncNavigation = () => setIsBottomNavApp(isAndroidPhoneApp());
+    mode.addEventListener('change', syncNavigation);
+    return () => mode.removeEventListener('change', syncNavigation);
+  }, []);
 
   useEffect(() => {
     setIsInstalledApp(isManualUpdateApp());
@@ -172,11 +194,14 @@ export default function App() {
     vocabularyCount: number;
     specifiedVocabulary?: string[];
     readingStyle?: import('./types').ReadingStyle;
+    customReadingStyle?: string;
   }) => {
     if (readingOperation.current) return;
     const controller = new AbortController();
     readingOperation.current = controller;
     setIsGenerating(true);
+    setProcessingTopic(params.input);
+    setProcessingStatus('Generating reading...');
     setErrorMessage(null);
     try {
       const record = await generateReadingWithPipeline(
@@ -185,11 +210,12 @@ export default function App() {
           cefrLevel: params.cefrLevel,
           readingType: params.readingType,
           readingStyle: params.readingStyle,
+          customReadingStyle: params.customReadingStyle,
           length: params.length,
           vocabularyCount: params.vocabularyCount,
           specifiedVocabulary: params.specifiedVocabulary,
         },
-        (status) => setProcessingStatus(status), controller.signal
+        (status) => { if (readingOperation.current === controller && !controller.signal.aborted) setProcessingStatus(status); }, controller.signal
       );
 
       // Save reading to Dexie
@@ -213,15 +239,27 @@ export default function App() {
       setCurrentReading(record);
       setActiveTab('reading');
     } catch (err: any) {
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted || readingOperation.current !== controller) return;
       console.error('Failed to generate reading:', err);
       setErrorMessage(err?.message || '短文生成遇到问题，请重试');
     } finally {
-      readingOperation.current = null;
-      setIsSavingReading(false);
-      setIsGenerating(false);
-      setProcessingStatus('');
+      if (readingOperation.current === controller) {
+        readingOperation.current = null;
+        setIsSavingReading(false);
+        setIsGenerating(false);
+        setProcessingStatus('');
+      }
     }
+  };
+
+  const handleCancelReadingOperation = () => {
+    if (isSavingReading || !readingOperation.current) return;
+    const controller = readingOperation.current;
+    readingOperation.current = null;
+    controller.abort();
+    setIsGenerating(false);
+    setIsRewriting(false);
+    setProcessingStatus('');
   };
 
   // 2. Rewrite Reading (PRD Section 21)
@@ -247,7 +285,7 @@ export default function App() {
           currentVocabulary: currentVocabTerms,
           vocabularyCount: currentReading.vocabularyCount || currentReading.selectedVocabulary.length,
         },
-        (status) => setProcessingStatus(status), controller.signal
+        (status) => { if (readingOperation.current === controller && !controller.signal.aborted) setProcessingStatus(status); }, controller.signal
       );
 
       const updatedRecord: ReadingRecord = {
@@ -280,20 +318,22 @@ export default function App() {
       const allR = await getAllReadings();
       setReadings(allR);
     } catch (err: any) {
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted || readingOperation.current !== controller) return;
       console.error('Rewrite failed:', err);
       setErrorMessage(err?.message || '短文改写遇到问题，请重试');
     } finally {
-      readingOperation.current = null;
-      setIsSavingReading(false);
-      setIsRewriting(false);
-      setProcessingStatus('');
+      if (readingOperation.current === controller) {
+        readingOperation.current = null;
+        setIsSavingReading(false);
+        setIsRewriting(false);
+        setProcessingStatus('');
+      }
     }
   };
 
   const handleUpdateReading = async (updated: ReadingRecord) => {
     await saveReading(updated);
-    setCurrentReading(updated);
+    setCurrentReading(current => current?.id === updated.id && current.content === updated.content ? updated : current);
     setReadings((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
   };
 
@@ -319,6 +359,12 @@ export default function App() {
   };
 
   // 5. Delete Vocabulary from Wordbook
+  const handleDetailBookmark = async (vocab: VocabularyItem) => {
+    const updated = await toggleWordDetailBookmark(vocab, vocabularies, currentReading?.id, removedDetailVocabulary.current, { save: saveVocabulary, remove: deleteVocabulary }, reviewVocabulary.some(item => item.term.toLowerCase() === vocab.term.toLowerCase()));
+    const key = vocab.term.toLowerCase();
+    setVocabularies(items => [...items.filter(item => item.term.toLowerCase() !== key), ...updated.filter(item => item.term.toLowerCase() === key)]);
+  };
+
   const handleDeleteVocab = (id: string) => {
     const target = vocabularies.find(item => item.id === id);
     if (target) setRemovalTarget(target);
@@ -384,10 +430,10 @@ export default function App() {
 
 
   return (
-    <div className={`min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] selection:bg-[var(--accent-primary)]/20 ${softwareKeyboardOpen ? 'software-keyboard-open' : ''}`}
-      style={{ '--review-nav-offset': isInstalledApp ? '4.5rem' : undefined } as React.CSSProperties}>
-      {/* Web navigation; installed phone/tablet software uses the bottom tabs. */}
-      {!isInstalledApp && (
+    <div className={`min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] selection:bg-[var(--accent-primary)]/20 ${softwareKeyboardOpen ? 'software-keyboard-open' : ''} ${activeTab === 'home' ? 'studio-home-active' : activeTab === 'reading' ? 'studio-reading-active' : ''}`}
+      style={{ '--review-nav-offset': isBottomNavApp ? '4.5rem' : '0px' } as React.CSSProperties}>
+      {/* All browser sizes use the header; only installed Android phones use bottom tabs. */}
+      {!isBottomNavApp && (
         <Navbar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -397,7 +443,7 @@ export default function App() {
       )}
 
       {/* Main Content Router */}
-      <main className={`min-w-0 flex-1 ${isInstalledApp ? 'pb-[calc(5rem+env(safe-area-inset-bottom))]' : ''}`}>
+      <main className={`min-w-0 flex-1 ${isBottomNavApp ? 'pb-[calc(5rem+env(safe-area-inset-bottom))]' : ''}`}>
         {storageError && <div className="max-w-3xl mx-auto px-4 pt-4"><RecoveryNotice message={storageError} onRetry={() => void loadData()} /></div>}
         {errorMessage && (
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4">
@@ -414,7 +460,7 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === 'home' && (
+        <div hidden={activeTab !== 'home'}>
           <HomeView
             settings={settings}
             onGenerate={handleGenerateReading}
@@ -423,7 +469,7 @@ export default function App() {
             currentReading={currentReading}
             onContinueReading={() => setActiveTab('reading')}
           />
-        )}
+        </div>
 
         {activeTab === 'reading' && currentReading && (
           <ReadingView
@@ -431,6 +477,7 @@ export default function App() {
             knownVocabulary={vocabularies}
             wordbookVocabIds={wordbookVocabIds}
             onToggleWordbook={handleToggleWordbook}
+            onToggleWordbookFromDetails={handleDetailBookmark}
             onUpdateReading={handleUpdateReading}
             onUpdateVocabulary={async updated => {
               await saveReadingWithVocabulary(updated);
@@ -513,8 +560,10 @@ export default function App() {
       <ProcessingModal
         isOpen={isGenerating || isRewriting}
         status={processingStatus}
+        topic={processingTopic}
+        operation={isRewriting ? 'rewrite' : 'generate'}
         canCancel={!isSavingReading}
-        onCancel={() => readingOperation.current?.abort()}
+        onCancel={handleCancelReadingOperation}
       />
 
       {/* Mobile browsers offer installation; installed apps use the same network-loaded app. */}
@@ -523,7 +572,7 @@ export default function App() {
       {/* Browser copyright only; installed phone/tablet software stays app-like. */}
       {!isInstalledApp && <Footer />}
 
-      {isInstalledApp && (
+      {isBottomNavApp && (
         <InstalledAppBottomNav
           activeTab={activeTab}
           setActiveTab={setActiveTab}

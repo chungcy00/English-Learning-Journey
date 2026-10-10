@@ -65,6 +65,7 @@ export interface RewriteEvaluation {
 }
 
 export interface ReadingTranslation {
+  sentenceTranslations?: { source: string; translation: string }[];
   language: string;
   languageName: string;
   title: string;
@@ -119,6 +120,7 @@ export interface AppSettings {
 }
 
 export interface GenerationRequest {
+  customReadingStyle?: string;
   input: string;
   cefrLevel: CEFRLevel;
   readingType: ReadingType;

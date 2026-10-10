@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useModalDialog } from '../hooks/useModalDialog';
 import { useMotionPresence } from '../hooks/useMotionPresence';
-import { Volume2, Bookmark, Check, X, ChevronDown } from 'lucide-react';
+import { Volume2, Bookmark, BookmarkMinus, Check, X, ChevronDown } from 'lucide-react';
+import { registerModalBack } from '../utils/modalHistory';
 import { VocabularyItem, ReadingTranslation } from '../types';
 import {
   getI18nText,
@@ -15,11 +16,13 @@ interface WordDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   isInWordbook: boolean;
-  onToggleWordbook: (vocab: VocabularyItem) => void;
+  onToggleWordbook: (vocab: VocabularyItem) => void | Promise<void>;
   currentTranslation?: ReadingTranslation;
   inline?: boolean;
   inlineExpanded?: boolean;
   embedded?: boolean;
+  readingContext?: boolean;
+  onBeforePronunciation?: () => void;
 }
 
 export const WordDetailModal: React.FC<WordDetailModalProps> = ({
@@ -32,17 +35,86 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({
   inline = false,
   inlineExpanded = false,
   embedded = false,
+  readingContext = false,
+  onBeforePronunciation,
 }) => {
   const { present, closing } = useMotionPresence(isOpen && !!vocab);
   const dialogRef = useModalDialog(present && !inline && !embedded);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [removed, setRemoved] = useState(false);
+  const [pronunciationError, setPronunciationError] = useState('');
+  const savingRef = useRef(false);
+  const operation = useRef(0);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    setSaveError(''); setPronunciationError(''); setRemoved(false);
+    operation.current += 1;
+    const body = dialogRef.current?.querySelector('.reading-word-dialog__body');
+    if (body) body.scrollTop = 0;
+  }, [vocab?.id, isOpen]);
+  useEffect(() => {
+    if (!removed) return;
+    const timer = window.setTimeout(() => setRemoved(false), 5000);
+    return () => window.clearTimeout(timer);
+  }, [removed]);
+  useEffect(() => { if (isInWordbook) setRemoved(false); }, [isInWordbook]);
+  useEffect(() => {
+    if (!readingContext || !isOpen || !vocab) return;
+    return registerModalBack(() => closeRef.current());
+  }, [readingContext, isOpen, !!vocab]);
+  useEffect(() => {
+    if (!readingContext || !present) return;
+    const page = document.body;
+    const scrollY = window.scrollY;
+    const scrollX = window.scrollX;
+    const previous = { overflow: page.style.overflow, position: page.style.position, top: page.style.top, width: page.style.width };
+    Object.assign(page.style, { overflow: 'hidden', position: 'fixed', top: `${-scrollY}px`, width: '100%' });
+    return () => {
+      Object.assign(page.style, previous);
+      window.scrollTo({ left: scrollX, top: scrollY, behavior: 'instant' });
+    };
+  }, [readingContext, present]);
   if (!(inline || embedded ? isOpen : present) || !vocab) return null;
 
   const playPronunciation = () => {
-    speakEnglishTerm(vocab.term);
+    setPronunciationError('');
+    onBeforePronunciation?.();
+    const run = operation.current;
+    speakEnglishTerm(vocab.term, message => { if (run === operation.current) setPronunciationError(message); });
   };
 
   const localizedMeaning = getLocalizedVocabMeaning(vocab, currentTranslation);
   const localizedExample = getLocalizedExampleTranslation(vocab, currentTranslation);
+
+  if (readingContext && !inline && !embedded) {
+    const toggleSaved = async () => {
+      if (savingRef.current) return;
+      savingRef.current = true;
+      const run = operation.current;
+      const wasSaved = isInWordbook;
+      setSaving(true); setSaveError('');
+      try { await onToggleWordbook(vocab); if (run === operation.current) setRemoved(wasSaved); }
+      catch (error) { if (run === operation.current) setSaveError(error instanceof Error ? error.message : '收藏操作失败，请重试。'); }
+      finally { savingRef.current = false; setSaving(false); }
+    };
+    return <dialog ref={dialogRef} data-closing={closing || undefined} inert={closing} aria-labelledby="word-detail-title" onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => {
+      if (event.target !== event.currentTarget) return;
+      const bounds = event.currentTarget.getBoundingClientRect();
+      if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) onClose();
+    }} className="app-dialog word-detail-dialog reading-word-dialog">
+      <header className="reading-word-dialog__header"><div><div className="reading-word-dialog__title"><h2 id="word-detail-title">{vocab.term}</h2><button type="button" aria-label={`播放 ${vocab.term} 的发音`} onClick={playPronunciation}><Volume2 size={20} /></button></div><div className="reading-word-dialog__meta">{[vocab.phonetic, vocab.partOfSpeech, vocab.type].filter(Boolean).map((value, index) => <React.Fragment key={index}>{index > 0 && <span aria-hidden="true">·</span>}<span>{value}</span></React.Fragment>)}</div></div><button type="button" data-dialog-initial-focus aria-label="关闭词汇详情" onClick={onClose}><X size={21} /></button></header>
+      <div className="word-detail-body reading-word-dialog__body" tabIndex={0} aria-label="词汇释义、例句与搭配">
+        {pronunciationError && <p role="alert" className="reading-word-dialog__error">{pronunciationError}</p>}
+        <section><h3>中文释义</h3><p className="reading-word-dialog__meaning">{localizedMeaning || '暂无释义'}</p></section>
+        <section><h3>英英释义</h3><p>{vocab.definitionEn || '暂无英文定义'}</p></section>
+        {vocab.example && <section><h3>例句</h3><div className="reading-word-dialog__example"><p>{vocab.example}</p>{localizedExample && <p>{localizedExample}</p>}</div></section>}
+        {!!vocab.collocations?.length && <section><h3>常见搭配</h3><div className="reading-word-dialog__collocations">{vocab.collocations.map((item, index) => <span key={index}>{item}</span>)}</div></section>}
+      </div>
+      <footer className="reading-word-dialog__footer" aria-busy={saving}>{saveError && <p role="alert">{saveError}</p>}{removed && !isInWordbook && <div className="reading-word-dialog__undo"><span role="status">已移出生词本</span><button type="button" disabled={saving} onClick={() => void toggleSaved()}>撤销</button></div>}{isInWordbook && <span><Check size={17} aria-hidden="true" />已加入生词本</span>}<button type="button" disabled={saving} aria-label={`${isInWordbook ? '移出生词本' : '加入生词本'}：${vocab.term}`} className={isInWordbook ? 'is-saved' : ''} onClick={() => void toggleSaved()}>{isInWordbook ? <BookmarkMinus size={17} aria-hidden="true" /> : <Bookmark size={17} aria-hidden="true" />}{saving ? '正在保存…' : isInWordbook ? '移出' : '加入生词本'}</button></footer>
+    </dialog>;
+  }
 
   const content = (
     <>

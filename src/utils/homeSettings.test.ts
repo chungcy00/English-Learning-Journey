@@ -1,63 +1,69 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { HomeView } from '../views/HomeView';
-import { READING_STYLES } from './readingStyles';
+import { generateReadingWithPipeline } from '../services/api';
 import type { AppSettings, ReadingRecord } from '../types';
 
 const settings = { cefr: 'B2', defaultReadingType: 'dialogue', defaultReadingStyle: 'warm', defaultLength: 'long', vocabularyCount: 10 } as AppSettings;
 const render = (isLoading = false) => renderToStaticMarkup(React.createElement(HomeView, { settings, onGenerate: () => {}, isLoading }));
 
-test('topic suggestions and reading bookmarks keep at least 44px touch targets', () => {
-  const prompts = render().match(/<section class="home-prompts">[\s\S]*?<\/section>/)![0];
-  const buttons = prompts.match(/<button\b[^>]*>/g)!;
-  assert.equal(buttons.length, 3);
-  for (const button of buttons) assert.match(button, /\bmin-h-11\b/);
-  const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8');
-  const bookmark = css.match(/\.reading-vocabulary__bookmark\s*\{([^}]+)\}/)![1];
-  assert.match(bookmark, /min-width:\s*2\.75rem/);
-  assert.match(bookmark, /min-height:\s*2\.75rem/);
-});
-
-test('continue reading only appears for a real current passage and uses its actual vocabulary count', () => {
-  assert.doesNotMatch(render(), /continue-reading-title/);
-  const currentReading = { title: 'A real saved passage', cefrLevel: 'B1', selectedVocabulary: [{ term: 'genuine' }] } as ReadingRecord;
-  const html = renderToStaticMarkup(React.createElement(HomeView, { settings, onGenerate: () => {}, isLoading: false, currentReading, onContinueReading: () => {} }));
-  assert.match(html, /A real saved passage/);
-  assert.match(html, /B1 · 1 个精选词汇/);
-});
-
-test('all reading parameters are directly available without a disclosure', () => {
+test('home starts with a collapsed recipe showing actual saved parameters', () => {
   const html = render();
-  assert.doesNotMatch(html, /<details|<summary/);
-  assert.match(html, /aria-labelledby="cefr-label"/);
-  assert.match(html, /aria-labelledby="vocab-count-label"/);
-  for (const id of ['reading-type', 'reading-length', 'reading-style']) assert.match(html, new RegExp(`id="${id}"`));
-  for (const style of READING_STYLES) assert.match(html, new RegExp(`value="${style.value}"`));
-});
-
-test('saved parameters stay selected without resetting defaults', () => {
-  const html = render();
-  assert.match(html, /aria-pressed="true"[^>]*><span>B2<\/span>/);
-  assert.match(html, /aria-label="精选词汇数量">10<\/output>/);
-  assert.match(html, /aria-pressed="true"[^>]*>对话<\/button>/);
-  assert.match(html, /aria-pressed="true"[^>]*>长 · 250–350 词<\/button>/);
-  assert.match(html, /value="warm" selected=""/);
-  assert.match(html, /能力参考：理解较复杂内容，清楚表达观点与理由。/);
-  assert.match(html, /aria-describedby="cefr-ability-hint"/);
+  assert.match(html, /aria-expanded="false"/);
+  assert.doesNotMatch(html, /id="recipe-panel"|id="reading-style"/);
+  for (const text of ['B2 · 中高阶', '对话', '长篇', '10 个精选词汇', 'Warm（温暖治愈）']) assert.ok(html.includes(text));
+  for (const text of ['Language Studio', 'YOUR ENGLISH SPACE', '每一个想法，', '都能成为一篇故事。', '寻找创作灵感', '创作你的短文', '生成专属短文']) assert.ok(html.includes(text));
   assert.match(html, /<label for="generation-input"/);
-  assert.doesNotMatch(html, /将按词表处理/);
-  assert.doesNotMatch(html, /Generation Settings|自然叙述与对话|自动 Humanise|语境记忆与AI反馈|学习册随身练习/);
 });
 
-test('loading blocks parameter changes and vocabulary controls expose bounded steps', () => {
+test('inspiration provides four scenes and three local themes without duplicate controls', () => {
+  const html = render();
+  const scenes = html.match(/<div class="studio-scenes"[\s\S]*?<\/div>/)![0];
+  assert.equal((scenes.match(/<button/g) || []).length, 4);
+  const topics = html.match(/<div class="studio-topics"[\s\S]*?<\/div>/)![0];
+  assert.equal((topics.match(/<button/g) || []).length, 3);
+  assert.ok(topics.includes('如何礼貌地拒绝别人'));
+  assert.doesNotMatch(topics, /svg/);
+});
+
+test('continue reading uses real article data and omits unsupported progress', () => {
+  assert.doesNotMatch(render(), /CONTINUE READING/);
+  const currentReading = { title: 'A real saved passage', cefrLevel: 'B1', readingType: 'dialogue' } as ReadingRecord;
+  const html = renderToStaticMarkup(React.createElement(HomeView, { settings, onGenerate: () => {}, isLoading: false, currentReading, onContinueReading: () => {} }));
+  assert.ok(html.includes('A real saved passage'));
+  assert.ok(html.includes('B1 · 对话'));
+  assert.doesNotMatch(html, /60%|role="progressbar"/);
+  assert.ok(html.indexOf('CONTINUE READING') < html.indexOf('inspiration-title'));
+});
+
+test('empty input and loading prevent generation, preserving the existing flow', () => {
+  assert.match(render(), /type="submit" class="studio-generate" disabled=""/);
   const html = render(true);
-  assert.match(html, /aria-label="减少精选词汇" disabled=""/);
-  assert.match(html, /aria-label="增加精选词汇" disabled=""/);
   assert.match(html, /生成中…/);
-  const source = readFileSync(new URL('../views/HomeView.tsx', import.meta.url), 'utf8');
-  assert.match(source, /vocabCount <= 1/);
-  assert.match(source, /vocabCount >= 20/);
+  assert.match(html, /id="generation-input"[^>]*disabled=""/);
+});
+
+test('custom style is sent through the existing API input without changing stored topic or preset enums', async () => {
+  const originalFetch = globalThis.fetch;
+  let body: any;
+  globalThis.fetch = (async (url, init) => {
+    assert.equal(url, '/api/reading/generate');
+    body = JSON.parse(String(init?.body));
+    return new Response(JSON.stringify({ title: 'Example', reading: 'A short scene.', vocabulary: [], rewritePractice: [] }), { status: 200 });
+  }) as typeof fetch;
+  try {
+    const record = await generateReadingWithPipeline({ input: '雨天', cefrLevel: 'B1', readingType: 'story', readingStyle: 'auto', customReadingStyle: '温暖的赛博朋克风', length: 'medium', vocabularyCount: 8, specifiedVocabulary: ['genuine'] });
+    assert.ok(body.input.includes('雨天'));
+    assert.ok(body.input.includes('温暖的赛博朋克风'));
+    assert.equal(body.readingStyle, 'auto');
+    assert.equal(body.customReadingStyle, undefined);
+    assert.deepEqual(body.specifiedVocabulary, ['genuine']);
+    assert.equal(record.input, '雨天');
+    assert.equal(record.topic, '雨天');
+    await generateReadingWithPipeline({ input: 'Morning', cefrLevel: 'B1', readingType: 'dialogue', readingStyle: 'cinematic', length: 'short', vocabularyCount: 1 });
+    assert.equal(body.input, 'Morning');
+    assert.equal(body.readingStyle, 'cinematic');
+  } finally { globalThis.fetch = originalFetch; }
 });

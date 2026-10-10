@@ -187,7 +187,8 @@ export async function generateReadingWithPipeline(
     signal,
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request),
+    // Reuse the existing free-text requirements channel; keep preset enums intact.
+    body: JSON.stringify({ ...request, customReadingStyle: undefined, input: request.customReadingStyle?.trim() ? `${request.input}\n\n写作风格要求：${request.customReadingStyle.trim()}。在上述学习等级、文体、篇幅和词汇限制内使用此风格。` : request.input }),
   });
 
   if (!res.ok) {
@@ -415,16 +416,18 @@ export async function explainVocabularyTerm(term: string, context?: string, requ
 }
 
 export async function translateReading(params: {
+  translationSegments?: string[];
   text: string;
   title: string;
   readingType: string;
   vocabulary?: any[];
   rewriteExercises?: any[];
-}): Promise<ReadingTranslation> {
+}, signal?: AbortSignal): Promise<ReadingTranslation> {
   const res = await fetch('/api/reading/translate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params)
+    body: JSON.stringify(params),
+    signal,
   });
 
   if (!res.ok) {

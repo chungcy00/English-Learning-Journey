@@ -200,8 +200,8 @@ export function stopEnglishSpeech(): void {
   }
 }
 
-export function speakEnglishTerm(text: string): void {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+export function speakEnglishTerm(text: string, onError?: (message: string) => void): void {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) { onError?.('当前设备不支持词汇发音。'); return; }
   const normalizedText = text.trim();
   if (!normalizedText) return;
 
@@ -212,5 +212,7 @@ export function speakEnglishTerm(text: string): void {
   utterance.rate = WORD_SPEECH_RATE;
   utterance.pitch = 1;
   utterance.volume = 1;
-  window.speechSynthesis.speak(utterance);
+  utterance.onerror = event => { if (!['canceled', 'interrupted'].includes(event.error)) onError?.('词汇发音失败，请重试。'); };
+  try { window.speechSynthesis.speak(utterance); }
+  catch { onError?.('词汇发音失败，请重试。'); }
 }
