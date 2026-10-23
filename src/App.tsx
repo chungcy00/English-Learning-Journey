@@ -524,7 +524,7 @@ export default function App() {
         {activeTab === 'rewrite' && <RewritePracticeView reading={currentReading} onBack={() => setActiveTab('practice')} />}
 
         {activeTab === 'practice' && (
-          <PracticeHubView exerciseCount={currentReading?.rewritePractice?.length || 0} vocabularyCount={reviewVocabulary.length}
+          <PracticeHubView exerciseCount={currentReading?.rewritePractice?.length || 0} vocabularyCount={vocabularies.length}
             onOpenRewrite={() => setActiveTab('rewrite')} onOpenWordbook={() => setActiveTab('wordbook')}>
           <ReviewView
             embedded

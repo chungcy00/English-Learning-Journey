@@ -18,7 +18,9 @@ export function ReviewFlipCard({ revealed, front, children, onFlip, disabled = f
     'aria-label': revealed ? '翻回词条' : '翻转查看释义', 'aria-disabled': disabled,
     onClick: (event: React.MouseEvent) => {
       // Nested controls keep their own actions (audio, ratings and collocations).
-      if (!disabled && !(event.target as Element).closest('button, summary, input, select, a')) onFlip?.();
+      if (!disabled && event.detail < 2 && window.getSelection()?.isCollapsed !== false
+        && !(event.target as Element).closest('[data-flip-ignore]')
+        && !(event.target as Element).closest('button, summary, input, select, a')) onFlip?.();
     },
     onKeyDown: (event: React.KeyboardEvent) => {
       if (event.target === event.currentTarget && !disabled && ['Enter', ' '].includes(event.key)) {

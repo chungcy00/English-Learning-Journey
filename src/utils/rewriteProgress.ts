@@ -3,6 +3,8 @@ import type { RewriteEvaluation, RewritePracticeItem } from '../types';
 export interface RewriteProgress {
   answer: string;
   evaluation?: RewriteEvaluation;
+  lastEvaluated?: { answer: string; evaluation: RewriteEvaluation };
+  editing?: boolean;
   pending: boolean;
   saved: boolean;
   error?: string;
@@ -24,7 +26,7 @@ export function createRewriteProgressStore(storage: () => StorageLike | undefine
     try {
       const target = storage();
       if (!target) throw new Error('Storage unavailable');
-      target.setItem(key, JSON.stringify({ answer: progress.answer, evaluation: progress.evaluation }));
+      target.setItem(key, JSON.stringify({ answer: progress.answer, evaluation: progress.evaluation, lastEvaluated: progress.lastEvaluated, editing: progress.editing }));
       return { ...progress, saved: true };
     } catch {
       // Keep the in-memory copy across page navigation, but never claim durability.
@@ -34,13 +36,20 @@ export function createRewriteProgressStore(storage: () => StorageLike | undefine
   const get = (key: string, item: RewritePracticeItem): RewriteProgress => {
     const cached = entries.get(key);
     if (cached) return cached;
-    let progress: RewriteProgress = { answer: item.userAnswer || '', evaluation: item.evaluation, pending: false, saved: true };
+    const initialAnswer = item.userAnswer || '';
+    const initialEvaluation = isEvaluation(item.evaluation) ? item.evaluation : undefined;
+    let progress: RewriteProgress = { answer: initialAnswer, evaluation: initialEvaluation,
+      lastEvaluated: initialEvaluation ? { answer: initialAnswer, evaluation: initialEvaluation } : undefined, pending: false, saved: true };
     try {
       const raw = storage()?.getItem(key);
       if (raw) {
         const stored = JSON.parse(raw);
         if (typeof stored.answer === 'string') {
-          progress = { ...progress, answer: stored.answer, evaluation: isEvaluation(stored.evaluation) ? stored.evaluation : undefined };
+          const last = stored.lastEvaluated;
+          const lastEvaluated = last && typeof last.answer === 'string' && isEvaluation(last.evaluation) ? last
+            : isEvaluation(stored.evaluation) ? { answer: stored.answer, evaluation: stored.evaluation } : undefined;
+          progress = { ...progress, answer: stored.answer, lastEvaluated,
+            evaluation: lastEvaluated?.answer === stored.answer ? lastEvaluated.evaluation : undefined, editing: stored.editing === true };
         }
       }
     } catch { /* Corrupt/denied storage must not prevent opening an exercise. */ }
@@ -53,8 +62,21 @@ export function createRewriteProgressStore(storage: () => StorageLike | undefine
     needsProtection: () => [...entries.values()].some(entry => entry.pending || !entry.saved),
     edit(key: string, item: RewritePracticeItem, answer: string) {
       const current = get(key, item);
-      const next = persist(key, { ...current, answer, evaluation: undefined, error: undefined });
+      const next = persist(key, { ...current, answer, evaluation: current.lastEvaluated?.answer === answer ? current.lastEvaluated.evaluation : undefined, error: undefined });
       entries.set(key, next);
+      emit();
+    },
+    beginEdit(key: string, item: RewritePracticeItem) {
+      const current = get(key, item);
+      if (current.pending || !current.lastEvaluated) return;
+      entries.set(key, persist(key, { ...current, editing: true, error: undefined }));
+      emit();
+    },
+    cancelEdit(key: string, item: RewritePracticeItem) {
+      const current = get(key, item);
+      if (current.pending || !current.lastEvaluated) return;
+      entries.set(key, persist(key, { ...current, answer: current.lastEvaluated.answer,
+        evaluation: current.lastEvaluated.evaluation, editing: false, error: undefined }));
       emit();
     },
     retrySave(key: string, item: RewritePracticeItem) {
@@ -64,15 +86,27 @@ export function createRewriteProgressStore(storage: () => StorageLike | undefine
     async evaluate(key: string, item: RewritePracticeItem, evaluate: (answer: string) => Promise<RewriteEvaluation>) {
       const current = get(key, item);
       if (current.pending || !current.answer.trim()) return;
+      // The exact evaluated draft already has a valid result; leaving edit mode
+      // must not spend another AI request (including edit → undo → submit).
+      if (current.lastEvaluated?.answer === current.answer) {
+        entries.set(key, persist(key, { ...current, evaluation: current.lastEvaluated.evaluation,
+          editing: false, error: undefined }));
+        emit();
+        return;
+      }
       const answer = current.answer;
       entries.set(key, persist(key, { ...current, pending: true, error: undefined }));
       emit();
       try {
         const evaluation = await evaluate(answer.trim());
+        if (!isEvaluation(evaluation)) throw new Error('评估结果不完整，请重试。');
         const latest = get(key, item);
+        const matches = latest.answer === answer;
         entries.set(key, persist(key, { ...latest, pending: false,
-          // A result belongs to the submitted answer, never a subsequent edit.
-          evaluation: latest.answer === answer ? evaluation : undefined }));
+          // Keep the last successful answer independently of an in-progress draft.
+          lastEvaluated: { answer, evaluation },
+          editing: matches ? false : latest.editing,
+          evaluation: matches ? evaluation : undefined }));
       } catch (error) {
         const latest = get(key, item);
         entries.set(key, { ...latest, pending: false, error: error instanceof Error ? error.message : '评估暂不可用，请稍后重试' });

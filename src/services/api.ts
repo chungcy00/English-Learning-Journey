@@ -306,82 +306,19 @@ export async function evaluateRewriteAnswer(params: {
   referenceAnswer: string;
   cefrLevel: string;
 }): Promise<RewriteEvaluation> {
+  let res: Response;
   try {
-    const res = await fetch('/api/rewrite/evaluate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
+    res = await fetch('/api/rewrite/evaluate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(params),
     });
-    if (res.ok) {
-      return await res.json();
-    }
-    if (res.status === 429 || res.status === 503) {
-      const body = await res.json().catch(() => ({}));
-      throw Object.assign(new Error(body.error || 'AI 评估暂不可用，请稍后重试'), { quotaBlocked: true });
-    }
-  } catch (err) {
-    if ((err as any)?.quotaBlocked) throw err;
-    console.warn('Backend evaluation call failed, using intelligent client evaluator:', err);
+  } catch {
+    throw new Error('网络连接失败，答案已保留，请重试评估。');
   }
-
-  // Fallback intelligent evaluation
-  const targetLower = params.target.toLowerCase();
-  const answerLower = params.userAnswer.toLowerCase();
-  const targetIncluded = answerLower.includes(targetLower);
-
-  const wordCount = params.userAnswer.trim().split(/\s+/).length;
-  const isReasonableLength = wordCount >= 4;
-
-  if (targetIncluded && isReasonableLength) {
-    return {
-      rating: 'Excellent',
-      meaningPreserved: true,
-      targetUsedCorrectly: true,
-      whatYouDidWell: [
-        `You incorporated "${params.target}" accurately and naturally into the sentence.`,
-        'The grammatical structure expresses the original thought with clarity.'
-      ],
-      issues: [],
-      improvedVersion: params.userAnswer,
-      referenceAnswer: params.referenceAnswer
-    };
-  } else if (targetIncluded) {
-    return {
-      rating: 'Good',
-      meaningPreserved: true,
-      targetUsedCorrectly: true,
-      whatYouDidWell: [
-        `You successfully placed "${params.target}" in your answer.`
-      ],
-      issues: [
-        {
-          original: params.userAnswer,
-          correction: params.referenceAnswer,
-          explanation: 'Consider framing the sentence with a complete subject and verb clause.'
-        }
-      ],
-      improvedVersion: params.referenceAnswer,
-      referenceAnswer: params.referenceAnswer
-    };
-  } else {
-    return {
-      rating: 'Needs Improvement',
-      meaningPreserved: true,
-      targetUsedCorrectly: false,
-      whatYouDidWell: [
-        'You made an honest attempt to express the core idea.'
-      ],
-      issues: [
-        {
-          original: 'Missing target',
-          correction: `Include "${params.target}"`,
-          explanation: `Make sure the specified target word or phrase "${params.target}" is used in your rewrite.`
-        }
-      ],
-      improvedVersion: params.referenceAnswer,
-      referenceAnswer: params.referenceAnswer
-    };
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `评估暂不可用 (HTTP ${res.status})，请重试。`);
   }
+  return res.json();
 }
 
 export async function explainVocabularyTerm(term: string, context?: string, requireDetails = false, constraints?: { cefrLevel?: CEFRLevel; requireInReading?: boolean }): Promise<Partial<VocabularyItem>> {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { readReviewProgress, restoreReviewProgress, writeReviewProgress } from '../utils/reviewProgress';
-import { Volume2, CheckCircle, ChevronDown } from 'lucide-react';
+import { Volume2, CheckCircle, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { VocabularyItem, ReviewRating } from '../types';
 import {
   getLocalizedVocabMeaning,
@@ -9,7 +9,8 @@ import {
 } from '../utils/i18n';
 import { speakEnglishTerm } from '../utils/speech';
 import { ReviewFlipCard } from '../components/ReviewFlipCard';
-import { reviewIntervalDays } from '../utils/reviewSchedule';
+import { PracticeVocabularyCard } from '../components/PracticeVocabularyCard';
+import { reviewDelayLabel } from '../utils/reviewSchedule';
 
 interface ReviewViewProps {
   embedded?: boolean;
@@ -35,6 +36,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   const mounted = useRef(true);
   const [isSaving, setIsSaving] = useState(false);
   const [failedRating, setFailedRating] = useState<ReviewRating | null>(null);
+  const [speechError, setSpeechError] = useState<string | null>(null);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const [reviewList, setReviewList] = useState<VocabularyItem[]>(allVocabularies);
   const activeId = useRef(reviewList[currentIndex]?.id);
@@ -67,7 +69,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
     if (currentVocab && initialized.current) writeReviewProgress({ currentId: currentVocab.id,
       revealed: isRevealed, completed: sessionCompleted, ids: reviewList.map(v => v.id) });
   }, [currentVocab?.id, isRevealed, sessionCompleted, reviewList]);
-  useEffect(() => { setFailedRating(null); }, [currentVocab?.id]);
+  useEffect(() => { setFailedRating(null); setSpeechError(null); }, [currentVocab?.id]);
 
 
   const handleStartReviewAll = () => {
@@ -109,7 +111,8 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   };
 
   const playVoice = (term: string) => {
-    speakEnglishTerm(term);
+    setSpeechError(null);
+    speakEnglishTerm(term, setSpeechError);
   };
 
 
@@ -133,16 +136,128 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
     };
   }, [isRevealed, sessionCompleted, reviewList.length]);
 
+  const studyDetails = currentVocab ? (
+    <div className="space-y-4 pt-4 border-t border-[var(--border-subtle)] text-left animate-fadeIn">
+      {/* Localized Meaning */}
+      {!embedded && <div>
+        <span className="type-meta font-ui text-[var(--text-muted)] block uppercase">
+          {getI18nText('targetMeaningLabel', '母语地道释义 (Meaning)')}:
+        </span>
+        <p className="font-ui text-[length:var(--type-translation)] leading-[1.6] font-semibold text-[var(--text-primary)] mt-0.5">
+          {localizedMeaning}
+        </p>
+      </div>}
+
+      {/* English Definition */}
+      <div>
+        <span className="type-meta font-ui text-[var(--text-muted)] block uppercase">
+          {getI18nText('enDefinitionLabel', '英文释义 (Definition)')}:
+        </span>
+        <p className="type-translation font-editorial text-[var(--text-primary)]">
+          {currentVocab.definitionEn}
+        </p>
+      </div>
+
+      {/* Example & Localized Example Translation */}
+      <div>
+        <span className="type-meta font-ui text-[var(--text-muted)] block uppercase">
+          {getI18nText('exampleLabel', '例句 (Example)')}:
+        </span>
+        <div className="bg-[var(--bg-alt)]/40 p-2.5 rounded-sm border border-[var(--border-subtle)] mt-1 space-y-1">
+          <p className="type-example font-editorial italic text-[var(--accent-vocab)]">
+            "{currentVocab.example}"
+          </p>
+          {localizedExample && (
+            <p className="type-translation font-ui text-[var(--text-secondary)] pt-1 border-t border-[var(--border-subtle)]/40">
+              {localizedExample}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Collocations */}
+      {currentVocab.collocations && currentVocab.collocations.length > 0 && (
+        <details key={currentVocab.id} className="review-collocations group">
+          <summary className="type-label min-h-11 flex items-center justify-between font-ui text-[var(--text-secondary)] cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+            {getI18nText('collocationsLabel', '常见搭配 (Collocations)')}:
+            <ChevronDown aria-hidden="true" className="w-4 h-4 group-open:rotate-180" />
+          </summary>
+          <div className="flex flex-wrap gap-1.5">
+            {currentVocab.collocations.map((col, idx) => (
+              <span
+                key={idx}
+                className="type-example font-editorial px-2 py-0.5 bg-[var(--bg-alt)] text-[var(--text-primary)] rounded-xs border border-[var(--border-subtle)]"
+              >
+                {col}
+              </span>
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  ) : null;
+  const ratingControls = currentVocab ? <>
+    {/* Rating Buttons (PRD Section 29) */}
+    {isRevealed && (
+      <fieldset ref={ratingBarRef} disabled={isSaving} aria-label="评价记忆程度" className="review-rating-bar mt-8 pt-4 border-t border-[var(--border-subtle)] grid grid-cols-4 gap-2 disabled:opacity-60">
+        <button
+          onClick={() => handleRating('Again')}
+          className="min-h-14 py-2.5 px-2 bg-[var(--status-error)]/10 hover:bg-[var(--status-error)]/20 border border-[var(--status-error)]/30 rounded-sm text-center transition-colors"
+        >
+          <span className="type-label font-ui font-semibold text-[var(--status-error)] block">Again</span>
+          <span className="type-meta text-[var(--text-muted)] font-ui block">
+            {reviewDelayLabel('Again', currentVocab.currentInterval)}
+          </span>
+        </button>
+
+        <button
+          onClick={() => handleRating('Hard')}
+          className="min-h-14 py-2.5 px-2 bg-[var(--accent-warm)]/15 hover:bg-[var(--accent-warm)]/25 border border-[var(--accent-warm)]/30 rounded-sm text-center transition-colors"
+        >
+          <span className="type-label font-ui font-semibold text-[var(--status-warning)] block">Hard</span>
+          <span className="type-meta text-[var(--text-muted)] font-ui block">
+            {reviewDelayLabel('Hard', currentVocab.currentInterval)}
+          </span>
+        </button>
+
+        <button
+          onClick={() => handleRating('Good')}
+          className="min-h-14 py-2.5 px-2 bg-[var(--accent-primary)]/15 hover:bg-[var(--accent-primary)]/25 border border-[var(--accent-primary)]/30 rounded-sm text-center transition-colors"
+        >
+          <span className="type-label font-ui font-semibold text-[var(--accent-vocab)] block">Good</span>
+          <span className="type-meta text-[var(--text-muted)] font-ui block">
+            {reviewDelayLabel('Good', currentVocab.currentInterval)}
+          </span>
+        </button>
+
+        <button
+          onClick={() => handleRating('Easy')}
+          className="min-h-14 py-2.5 px-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] border border-[var(--accent-primary)] rounded-sm text-center transition-colors"
+        >
+          <span className="type-label font-ui font-semibold text-[var(--bg-primary)] block">Easy</span>
+          <span className="type-meta text-[var(--bg-primary)] font-ui block">
+            {reviewDelayLabel('Easy', currentVocab.currentInterval)}
+          </span>
+        </button>
+      </fieldset>
+    )}
+    {isSaving && <p role="status" className="type-body font-ui text-[var(--text-secondary)] mt-3">正在保存评分，请稍候…</p>}
+    {failedRating && <div role="alert" className="font-ui text-[length:var(--type-body)] leading-[1.6] text-[var(--status-error)] mt-3">
+      <p>评分未保存，当前词条已保留。请检查设备存储后重试。</p>
+      <button onClick={() => handleRating(failedRating)} className="min-h-11 px-3 border rounded-sm mt-2">重试保存</button>
+    </div>}
+  </> : null;
+
   const Heading = embedded ? 'h2' : 'h1';
   return (
     <div className={`${embedded ? 'review-embedded' : 'page-shell page-shell--review'} page-stack review-page`}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border-subtle)]">
+      <div className={embedded ? "practice-review-heading" : "flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border-subtle)]"}>
         <div>
           <Heading className="type-page font-editorial font-semibold text-[var(--text-primary)]">
             {embedded ? '词汇复习' : getI18nText('reviewTitle')}
           </Heading>
-          <p className="type-body font-ui text-[var(--text-secondary)] mt-2">当前短文已添加词条：{reviewList.length} 项</p>
+          <p className="type-body font-ui text-[var(--text-secondary)] mt-2">{embedded ? `当前短文 · ${reviewList.length} 个词汇` : `当前短文已添加词条：${reviewList.length} 项`}</p>
         </div>
       </div>
 
@@ -181,9 +296,9 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
         /* Active Flashcard */
         <div className="space-y-6">
           {/* Progress Indicator */}
-          <div className="review-progress type-label flex flex-wrap items-center justify-end gap-x-4 gap-y-2 font-ui text-[var(--text-secondary)]">
+          <div className={`review-progress ${embedded ? "practice-review-progress" : "type-label flex flex-wrap items-center justify-end gap-x-4 gap-y-2 font-ui text-[var(--text-secondary)]"}`}>
             <div className="flex items-center gap-3">
-              <button
+              <button type="button" aria-label="上一张词汇"
                 onClick={() => {
                   setCurrentIndex((prev) => Math.max(0, prev - 1));
                   setIsRevealed(false);
@@ -191,12 +306,12 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                 disabled={isSaving || currentIndex === 0}
                 className="min-h-11 min-w-11 px-2 py-1 rounded-xs hover:bg-[var(--bg-alt)] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
               >
-                &larr; Prev
+                {embedded ? <ChevronLeft aria-hidden="true" size={22} /> : <>← Prev</>}
               </button>
-              <span className="font-medium">
+              <span className="font-medium" role="status" aria-live="polite" aria-atomic="true">
                 {currentIndex + 1} / {reviewList.length}
               </span>
-              <button
+              <button type="button" aria-label="下一张词汇"
                 onClick={() => {
                   setCurrentIndex((prev) => Math.min(reviewList.length - 1, prev + 1));
                   setIsRevealed(false);
@@ -204,13 +319,13 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                 disabled={isSaving || currentIndex === reviewList.length - 1}
                 className="min-h-11 min-w-11 px-2 py-1 rounded-xs hover:bg-[var(--bg-alt)] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
               >
-                Next &rarr;
+                {embedded ? <ChevronRight aria-hidden="true" size={22} /> : <>Next →</>}
               </button>
             </div>
           </div>
 
           {/* Flashcard Card (PRD Section 28) */}
-          <ReviewFlipCard revealed={isRevealed} disabled={isSaving} onFlip={() => setIsRevealed(value => !value)} front={<div className="review-flashcard review-front-card p-6 sm:p-10">
+          {embedded ? <PracticeVocabularyCard vocab={currentVocab} meaning={localizedMeaning} exampleTranslation={localizedExample} ratings={ratingControls} revealed={isRevealed} disabled={isSaving} onFlip={() => setIsRevealed(value => !value)} onPronounce={() => playVoice(currentVocab.term)} /> : <ReviewFlipCard revealed={isRevealed} disabled={isSaving} onFlip={() => setIsRevealed(value => !value)} front={<div className="review-flashcard review-front-card p-6 sm:p-10">
             <button type="button" aria-label={`播放 ${currentVocab.term} 的发音`} onClick={() => playVoice(currentVocab.term)} className="min-h-11 min-w-11 flex items-center justify-center ml-auto rounded-sm hover:bg-[var(--bg-alt)]"><Volume2 aria-hidden="true" className="w-4 h-4" /></button>
             <h2 className="font-editorial font-semibold text-[var(--accent-vocab)] text-center break-words">{currentVocab.term}</h2>
             <p className="type-label font-ui text-[var(--text-secondary)] text-center mt-2">{currentVocab.phonetic} · {currentVocab.partOfSpeech}</p>
@@ -241,120 +356,13 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                 </p>
               </div>
 
-              {/* Revealable Details */}
-              {(
-                <div className="space-y-4 pt-4 border-t border-[var(--border-subtle)] text-left animate-fadeIn">
-                  {/* Localized Meaning */}
-                  <div>
-                    <span className="type-meta font-ui text-[var(--text-muted)] block uppercase">
-                      {getI18nText('targetMeaningLabel', '母语地道释义 (Meaning)')}:
-                    </span>
-                    <p className="font-ui text-[length:var(--type-translation)] leading-[1.6] font-semibold text-[var(--text-primary)] mt-0.5">
-                      {localizedMeaning}
-                    </p>
-                  </div>
-
-                  {/* English Definition */}
-                  <div>
-                    <span className="type-meta font-ui text-[var(--text-muted)] block uppercase">
-                      {getI18nText('enDefinitionLabel', '英文释义 (Definition)')}:
-                    </span>
-                    <p className="type-translation font-editorial text-[var(--text-primary)]">
-                      {currentVocab.definitionEn}
-                    </p>
-                  </div>
-
-                  {/* Example & Localized Example Translation */}
-                  <div>
-                    <span className="type-meta font-ui text-[var(--text-muted)] block uppercase">
-                      {getI18nText('exampleLabel', '例句 (Example)')}:
-                    </span>
-                    <div className="bg-[var(--bg-alt)]/40 p-2.5 rounded-sm border border-[var(--border-subtle)] mt-1 space-y-1">
-                      <p className="type-example font-editorial italic text-[var(--accent-vocab)]">
-                        "{currentVocab.example}"
-                      </p>
-                      {localizedExample && (
-                        <p className="type-translation font-ui text-[var(--text-secondary)] pt-1 border-t border-[var(--border-subtle)]/40">
-                          {localizedExample}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Collocations */}
-                  {currentVocab.collocations && currentVocab.collocations.length > 0 && (
-                    <details key={currentVocab.id} className="review-collocations group">
-                      <summary className="type-label min-h-11 flex items-center justify-between font-ui text-[var(--text-secondary)] cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                        {getI18nText('collocationsLabel', '常见搭配 (Collocations)')}:
-                        <ChevronDown aria-hidden="true" className="w-4 h-4 group-open:rotate-180" />
-                      </summary>
-                      <div className="flex flex-wrap gap-1.5">
-                        {currentVocab.collocations.map((col, idx) => (
-                          <span
-                            key={idx}
-                            className="type-example font-editorial px-2 py-0.5 bg-[var(--bg-alt)] text-[var(--text-primary)] rounded-xs border border-[var(--border-subtle)]"
-                          >
-                            {col}
-                          </span>
-                        ))}
-                      </div>
-                    </details>
-                  )}
-                </div>
-              )}
+              {studyDetails}
             </div>
 
-            {/* Rating Buttons (PRD Section 29) */}
-            {isRevealed && (
-              <fieldset ref={ratingBarRef} disabled={isSaving} aria-label="评价记忆程度" className="review-rating-bar mt-8 pt-4 border-t border-[var(--border-subtle)] grid grid-cols-4 gap-2 disabled:opacity-60">
-                <button
-                  onClick={() => handleRating('Again')}
-                  className="min-h-14 py-2.5 px-2 bg-[var(--status-error)]/10 hover:bg-[var(--status-error)]/20 border border-[var(--status-error)]/30 rounded-sm text-center transition-colors"
-                >
-                  <span className="type-label font-ui font-semibold text-[var(--status-error)] block">Again</span>
-                  <span className="type-meta text-[var(--text-muted)] font-ui block">
-                    30 分钟后
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => handleRating('Hard')}
-                  className="min-h-14 py-2.5 px-2 bg-[var(--accent-warm)]/15 hover:bg-[var(--accent-warm)]/25 border border-[var(--accent-warm)]/30 rounded-sm text-center transition-colors"
-                >
-                  <span className="type-label font-ui font-semibold text-[var(--status-warning)] block">Hard</span>
-                  <span className="type-meta text-[var(--text-muted)] font-ui block">
-                    {getI18nText('hardHint', '1 天后')}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => handleRating('Good')}
-                  className="min-h-14 py-2.5 px-2 bg-[var(--accent-primary)]/15 hover:bg-[var(--accent-primary)]/25 border border-[var(--accent-primary)]/30 rounded-sm text-center transition-colors"
-                >
-                  <span className="type-label font-ui font-semibold text-[var(--accent-vocab)] block">Good</span>
-                  <span className="type-meta text-[var(--text-muted)] font-ui block">
-                    {reviewIntervalDays('Good', currentVocab.currentInterval)} 天后
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => handleRating('Easy')}
-                  className="min-h-14 py-2.5 px-2 bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] border border-[var(--accent-primary)] rounded-sm text-center transition-colors"
-                >
-                  <span className="type-label font-ui font-semibold text-[var(--bg-primary)] block">Easy</span>
-                  <span className="type-meta text-[var(--bg-primary)] font-ui block">
-                    {reviewIntervalDays('Easy', currentVocab.currentInterval)} 天后
-                  </span>
-                </button>
-              </fieldset>
-            )}
-            {isSaving && <p role="status" className="type-body font-ui text-[var(--text-secondary)] mt-3">正在保存评分，请稍候…</p>}
-            {failedRating && <div role="alert" className="font-ui text-[length:var(--type-body)] leading-[1.6] text-[var(--status-error)] mt-3">
-              <p>评分未保存，当前词条已保留。请检查设备存储后重试。</p>
-              <button onClick={() => handleRating(failedRating)} className="min-h-11 px-3 border rounded-sm mt-2">重试保存</button>
-            </div>}
+            {ratingControls}
           </div>
-          </ReviewFlipCard>
+          </ReviewFlipCard>}
+          {speechError && <p role="alert" className="practice-review-speech-error">{speechError}</p>}
         </div>
       )}
     </div>

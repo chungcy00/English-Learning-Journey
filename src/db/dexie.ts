@@ -2,7 +2,7 @@ import Dexie, { Table } from 'dexie';
 import { ReadingRecord, VocabularyItem, ReviewLog, AppSettings, VocabStatus, ReviewRating } from '../types';
 import { planReadingVocabularySync } from '../utils/readingVocabulary';
 import { preserveCatalogue } from '../utils/expressionCache';
-import { reviewIntervalDays } from '../utils/reviewSchedule';
+import { reviewIntervalDays, reviewDelayMs } from '../utils/reviewSchedule';
 
 export interface RewriteRecord {
   id?: number;
@@ -290,7 +290,7 @@ export async function updateVocabularyReview(vocabId: string, rating: ReviewRati
     newStatus = 'Mastered';
   }
 
-  const nextReviewDate = intervalDays === 0 ? now + 60000 * 30 : now + intervalDays * 86400000;
+  const nextReviewDate = now + reviewDelayMs(rating, vocab.currentInterval);
 
   const updated: VocabularyItem = {
     ...vocab,

@@ -109,3 +109,69 @@ test('practice cards subscribe to shared progress with a passage identity and sa
   assert.match(card, /retrySave/);
   assert.match(reading, /readingId=\{reading\.id\}/);
 });
+
+test('editing retains the successful answer and cancellation restores feedback and progress', async () => {
+  const { store, storage, key } = setup();
+  store.edit(key, item, 'Original answer.\nUnchanged punctuation!');
+  await store.evaluate(key, item, async () => evaluation);
+  store.beginEdit(key, item);
+  assert.equal(store.get(key, item).editing, true);
+  assert.deepEqual(store.get(key, item).evaluation, evaluation);
+  store.edit(key, item, 'Changed answer.');
+  assert.equal(store.get(key, item).evaluation, undefined);
+  assert.deepEqual(store.get(key, item).lastEvaluated, {answer:'Original answer.\nUnchanged punctuation!',evaluation});
+  const restored = createRewriteProgressStore(() => storage);
+  assert.equal(restored.get(key,item).editing, true);
+  assert.equal(restored.get(key,item).answer, 'Changed answer.');
+  restored.cancelEdit(key, item);
+  assert.equal(restored.get(key,item).answer, 'Original answer.\nUnchanged punctuation!');
+  assert.equal(restored.get(key,item).editing, false);
+  assert.deepEqual(restored.get(key,item).evaluation, evaluation);
+});
+
+test('restoring exactly the evaluated text restores progress; failed re-evaluation preserves cancellation', async () => {
+  const {store,key}=setup();
+  store.edit(key,item,'Original'); await store.evaluate(key,item,async()=>evaluation);
+  store.beginEdit(key,item); store.edit(key,item,'Changed'); store.edit(key,item,'Original');
+  assert.deepEqual(store.get(key,item).evaluation,evaluation);
+  store.edit(key,item,'Changed');
+  await store.evaluate(key,item,async()=>{throw new Error('Unavailable');});
+  assert.equal(store.get(key,item).answer,'Changed'); assert.equal(store.get(key,item).evaluation,undefined);
+  store.cancelEdit(key,item); assert.deepEqual(store.get(key,item).evaluation,evaluation);
+});
+
+test('new valid result replaces the last successful snapshot; malformed response cannot complete a question', async () => {
+  const {store,key}=setup();
+  store.edit(key,item,'Original'); await store.evaluate(key,item,async()=>evaluation);
+  store.beginEdit(key,item);store.edit(key,item,'Changed');
+  await store.evaluate(key,item,async()=>({rating:'Good'} as RewriteEvaluation));
+  assert.equal(store.get(key,item).evaluation,undefined); assert.match(store.get(key,item).error!,/不完整/);
+  const updated={...evaluation,rating:'Excellent' as const};
+  await store.evaluate(key,item,async()=>updated);
+  assert.equal(store.get(key,item).editing,false);
+  assert.deepEqual(store.get(key,item).lastEvaluated,{answer:'Changed',evaluation:updated});
+});
+
+test('unchanged or undone edits reuse the exact successful evaluation without another request', async () => {
+  const { store, key, storage } = setup();
+  let calls = 0;
+  const evaluator = async () => { calls++; return evaluation; };
+  store.edit(key, item, 'Original answer.\nSecond line!');
+  await store.evaluate(key, item, evaluator);
+  store.beginEdit(key, item);
+  await store.evaluate(key, item, evaluator);
+  assert.equal(calls, 1);
+  assert.equal(store.get(key, item).editing, false);
+  store.beginEdit(key, item);
+  store.edit(key, item, 'Different answer.');
+  store.edit(key, item, 'Original answer.\nSecond line!');
+  const reloaded = createRewriteProgressStore(() => storage);
+  await reloaded.evaluate(key, item, evaluator);
+  assert.equal(calls, 1);
+  assert.equal(reloaded.get(key, item).editing, false);
+  assert.deepEqual(reloaded.get(key, item).evaluation, evaluation);
+  reloaded.beginEdit(key, item);
+  reloaded.edit(key, item, 'Original answer.\nSecond line! ');
+  await reloaded.evaluate(key, item, evaluator);
+  assert.equal(calls, 2, 'a different draft still requires a real evaluation');
+});
