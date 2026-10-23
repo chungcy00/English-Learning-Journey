@@ -354,6 +354,7 @@ export async function explainVocabularyTerm(term: string, context?: string, requ
 
 export async function translateReading(params: {
   translationSegments?: string[];
+  sentenceOnly?: boolean;
   text: string;
   title: string;
   readingType: string;
@@ -369,7 +370,7 @@ export async function translateReading(params: {
 
   if (!res.ok) {
     const errorBody = await res.json().catch(() => ({}));
-    throw new Error(errorBody.error || `翻译失败 (HTTP ${res.status})，请重试`);
+    throw new Error(errorBody.error || (res.status === 504 ? '翻译服务响应超时，请稍后重试。已有译文不会被清除。' : `翻译失败 (HTTP ${res.status})，请重试`));
   }
 
   return res.json();

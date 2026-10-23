@@ -23,7 +23,9 @@ export function validateApiBody(body: unknown): string | null {
   for (const key of ['specifiedVocabulary', 'currentVocabulary']) {
     if (Array.isArray(data[key]) && data[key].some(item => typeof item !== 'string' || item.length > 160)) return '词条列表格式不正确';
   }
-  for (const key of ['keepVocabulary', 'keepCurrentVocabulary', 'requireInReading']) {
+  if (data.translationSegments !== undefined && (!Array.isArray(data.translationSegments) || data.translationSegments.some(item => typeof item !== 'string' || !item.trim()))) return '句子列表格式不正确';
+  if (data.sentenceOnly === true && (!Array.isArray(data.translationSegments) || !data.translationSegments.length)) return '请提供需要补全的句子';
+  for (const key of ['keepVocabulary', 'keepCurrentVocabulary', 'requireInReading', 'sentenceOnly']) {
     if (data[key] !== undefined && typeof data[key] !== 'boolean') return '选项格式不正确';
   }
   const enums: Record<string, unknown[]> = {

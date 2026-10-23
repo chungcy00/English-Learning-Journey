@@ -6,6 +6,7 @@ export function ReviewFlipCard({ revealed, front, children, onFlip, disabled = f
 }) {
   const root = useRef<HTMLDivElement>(null);
   const previous = useRef(revealed);
+  const gesture = useRef<{ id: number; x: number; y: number; moved: boolean } | null>(null);
   useEffect(() => {
     if (previous.current !== revealed) {
       root.current?.querySelector<HTMLElement>('[data-active-face]')?.focus({ preventScroll: true });
@@ -16,11 +17,22 @@ export function ReviewFlipCard({ revealed, front, children, onFlip, disabled = f
     role: 'group', tabIndex: disabled ? -1 : 0,
     'aria-roledescription': '可翻转单词卡',
     'aria-label': revealed ? '翻回词条' : '翻转查看释义', 'aria-disabled': disabled,
+    onPointerDown: (event: React.PointerEvent) => {
+      gesture.current = { id: event.pointerId, x: event.clientX, y: event.clientY, moved: false };
+    },
+    onPointerMove: (event: React.PointerEvent) => {
+      const start = gesture.current;
+      if (start?.id === event.pointerId && Math.hypot(event.clientX - start.x, event.clientY - start.y) > 8) start.moved = true;
+    },
+    onPointerCancel: () => { if (gesture.current) gesture.current.moved = true; },
+    onScrollCapture: () => { if (gesture.current) gesture.current.moved = true; },
     onClick: (event: React.MouseEvent) => {
+      const dragged = event.detail > 0 && gesture.current?.moved;
+      gesture.current = null;
       // Nested controls keep their own actions (audio, ratings and collocations).
-      if (!disabled && event.detail < 2 && window.getSelection()?.isCollapsed !== false
+      if (!disabled && !dragged && event.detail < 2 && window.getSelection()?.isCollapsed !== false
         && !(event.target as Element).closest('[data-flip-ignore]')
-        && !(event.target as Element).closest('button, summary, input, select, a')) onFlip?.();
+        && !(event.target as Element).closest('button, summary, input, select, textarea, label, a, [role="button"]')) onFlip?.();
     },
     onKeyDown: (event: React.KeyboardEvent) => {
       if (event.target === event.currentTarget && !disabled && ['Enter', ' '].includes(event.key)) {

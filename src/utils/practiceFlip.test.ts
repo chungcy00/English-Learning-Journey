@@ -14,8 +14,9 @@ test('both faces preserve the same word header; reverse details and ratings stay
   assert.equal((html.match(/<h3 class="practice-vocabulary-card__term">considerate<\/h3>/g) ?? []).length, 2);
   assert.equal((html.match(/practice-vocabulary-card__phonetic/g) ?? []).length, 2);
   assert.equal((html.match(/practice-vocabulary-card__pos/g) ?? []).length, 2);
-  assert.match(html, /data-flip-ignore="true"[^>]*role="region"/);
-  assert.match(html, /<footer[^>]*data-flip-ignore="true"[^>]*>.*Good<\/button><\/footer>/);
+  assert.doesNotMatch(html, /data-flip-ignore="true"[^>]*role="region"/);
+  assert.match(html, /<details data-flip-ignore="true"/);
+  assert.match(html, /<footer class="practice-vocabulary-card__footer">.*Good<\/button><\/footer>/);
   assert.match(html, /She said, “Be considerate.”/);
   assert.doesNotMatch(html, /查看学习详情/);
 });

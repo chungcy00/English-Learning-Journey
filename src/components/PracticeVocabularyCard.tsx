@@ -68,17 +68,17 @@ export function PracticeVocabularyCard({ vocab, meaning, exampleTranslation, rat
   return <ReviewFlipCard revealed={revealed} disabled={disabled} onFlip={onFlip} front={front}>
     <div ref={card} className={`review-flashcard practice-vocabulary-card practice-vocabulary-card--back${scrolled && !natural ? ' is-scrolled' : ''}${natural ? ' is-natural' : ''}`}>
       {header(true)}
-      <div key={`${vocab.id}-${revealed}`} ref={body} data-flip-ignore className="practice-vocabulary-card__body" tabIndex={0} role="region" aria-label="词汇释义与例句"
+      <div key={`${vocab.id}-${revealed}`} ref={body} className="practice-vocabulary-card__body" tabIndex={0} role="region" aria-label="词汇释义与例句"
         onScroll={event => setScrolled(event.currentTarget.scrollTop > 0)}>
         <section><h4>中文释义</h4><p className="practice-vocabulary-card__meaning">{meaning}</p></section>
         {vocab.definitionEn && <section><h4>英英释义</h4><p>{vocab.definitionEn}</p></section>}
         {vocab.example && <section><h4>例句</h4><div className="practice-vocabulary-card__example"><p>{vocab.example}</p>{exampleTranslation && <p className="practice-vocabulary-card__translation">{exampleTranslation}</p>}</div></section>}
-        {!!vocab.collocations?.length && <details open={expanded} onToggle={event => setExpanded(event.currentTarget.open)} className="practice-vocabulary-card__collocations">
+        {!!vocab.collocations?.length && <details data-flip-ignore open={expanded} onToggle={event => setExpanded(event.currentTarget.open)} className="practice-vocabulary-card__collocations">
           <summary>常见搭配<ChevronDown aria-hidden="true" size={18} /></summary>
           <ul>{vocab.collocations.map((item, index) => <li key={index}>{item}</li>)}</ul>
         </details>}
       </div>
-      <footer data-flip-ignore className="practice-vocabulary-card__footer">{ratings}</footer>
+      <footer className="practice-vocabulary-card__footer">{ratings}</footer>
     </div>
   </ReviewFlipCard>;
 }

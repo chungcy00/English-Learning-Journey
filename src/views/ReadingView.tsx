@@ -1,3 +1,4 @@
+import { mergeReadingTranslations } from '../utils/translationResults';
 import { parseDialogueTurns, mappedDialogueTranslation, type DialogueTurn } from '../utils/dialogueReading';
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -148,6 +149,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const [keepVocab, setKeepVocab] = useState(true);
   const translationRunRef = useRef(0);
   const translationControllerRef = useRef<AbortController | null>(null);
+  const translationPriorityRef = useRef(false);
   const vocabularySignature = reading.selectedVocabulary.map(vocab => `${vocab.id}:${vocab.term}`).join('|');
 
   // Parse dialogue turns
@@ -631,29 +633,40 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const translationSegments = translationBlocks.flat().map(segment => segment.trim());
   const completeTranslation = (translation?: ReadingTranslation) => translationBlocks.length > 0 && translationBlocks.every(block => hasCompleteSentenceTranslations(block, translation));
 
-  const fetchTranslation = async (force = false) => {
+  const fetchTranslation = async (force = false, focusedSource?: string, refreshAll = false) => {
     const existing = reading.translations?.['zh-CN'];
+    if (translationControllerRef.current && focusedSource && !translationPriorityRef.current) {
+      translationControllerRef.current.abort();
+      translationControllerRef.current = null;
+    }
     if (translationControllerRef.current || (!force && existing && completeTranslation(existing))) {
       return;
     }
     const controller = new AbortController();
     translationControllerRef.current = controller;
+    translationPriorityRef.current = !!focusedSource;
     setIsTranslating(true);
     setTranslationError(null);
     const runId = ++translationRunRef.current;
     try {
-      const result = await translateReading({
+      const sentenceOnly = !refreshAll && (!!focusedSource || !!existing?.translatedContent?.trim() || !!existing?.sentenceTranslations?.length);
+      const missingSegments = translationBlocks.flatMap(block => groupReadingSentences(block, existing).filter(segment => !segment.translation).map(segment => segment.source.trim()));
+      if (sentenceOnly && !focusedSource && !missingSegments.length) return;
+      const received = await translateReading({
         text: reading.content,
-        translationSegments,
+        translationSegments: focusedSource ? [focusedSource.trim()] : sentenceOnly ? [...new Set(missingSegments)] : translationSegments,
+        sentenceOnly,
         title: reading.title,
         readingType: reading.readingType,
-        vocabulary: reading.selectedVocabulary,
-        rewriteExercises: reading.rewritePractice,
+        vocabulary: sentenceOnly ? [] : reading.selectedVocabulary,
+        rewriteExercises: sentenceOnly ? [] : reading.rewritePractice,
       }, controller.signal);
 
       if (runId !== translationRunRef.current || controller.signal.aborted) return;
-      if (!completeTranslation(result)) {
-        throw new Error('句子翻译未完整生成，请重试。已有全文译文已保留。');
+      const result = mergeReadingTranslations(existing, received, translationBlocks, isDetectedDialogue ? dialogueTurns.map(turn => turn.speaker) : undefined);
+      if (!result.title.trim()) result.title = reading.title;
+      if (!result.translatedContent.trim() && !result.sentenceTranslations?.length) {
+        throw new Error('未生成有效翻译，请重试。');
       }
 
       const updatedReading: ReadingRecord = {
@@ -665,6 +678,11 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       };
       if (runId !== translationRunRef.current) return;
       await onUpdateReading?.(updatedReading);
+      if (!completeTranslation(result) && runId === translationRunRef.current) {
+        setTranslationError(result.translatedContent.trim()
+          ? '全文译文已保留，部分句子译文尚未完整生成，可重试补全。'
+          : '已有句子译文已保留，其余句子可重试补全。');
+      }
     } catch (err: any) {
       if (runId !== translationRunRef.current || controller.signal.aborted) return;
       console.error('Translation failed:', err);
@@ -672,6 +690,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     } finally {
       if (translationControllerRef.current === controller) {
         translationControllerRef.current = null;
+        translationPriorityRef.current = false;
         setIsTranslating(false);
       }
     }
@@ -785,7 +804,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       if (window.getSelection()?.toString()) return;
       setExpandedSentence(expanded ? null : key);
       if (fromKeyboard && translated) requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(`[data-expanded-sentence="${key}"] .reading-sentence-card__close`)?.focus({ preventScroll: true }));
-      if (!translated) void fetchTranslation(true);
+      if (!translated) void fetchTranslation(true, sentence);
     };
     return <React.Fragment key={key}>{expanded ? <span className="reading-sentence-card" data-expanded-sentence={key}>
       <span className="reading-sentence-card__original">{renderTextWithHighlights(sentence.trim())}</span>
@@ -901,7 +920,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             <button type="button" onClick={() => { setMoreOpen(false); onOpenHistory(); }}><History size={17} />历史记录</button>
             <button type="button" onClick={() => { setMoreOpen(false); setLookupOpen(true); }}><AlignLeft size={17} />查询文中其他表达</button>
             {isDetectedDialogue && <button type="button" onClick={() => { setFormatMode(value => value === 'dialogue' ? 'paragraph' : 'dialogue'); setMoreOpen(false); }}><AlignLeft size={17} />{formatMode === 'dialogue' ? '切换段落排版' : '切换剧本排版'}</button>}
-            <button type="button" disabled={isTranslating} onClick={() => { setMoreOpen(false); void fetchTranslation(true); }}><RefreshCw size={17} />更新全文及句子翻译</button>
+            <button type="button" disabled={isTranslating} onClick={() => { setMoreOpen(false); void fetchTranslation(true, undefined, true); }}><RefreshCw size={17} />更新全文及句子翻译</button>
             <button type="button" disabled={!currentTranslation} onClick={() => { setMoreOpen(false); void handleCopyTranslation(); }}><Copy size={17} />{copiedTranslation ? '已复制译文' : '复制全文译文'}</button>
           </div>}
         </div>

@@ -1,4 +1,7 @@
 import express from 'express';
+import { AiDeadlineError, withAiDeadline } from './aiDeadline.js';
+import { sanitizeSentenceTranslations } from '../src/utils/translationResults.js';
+import { parseDialogueTurns } from '../src/utils/dialogueReading.js';
 import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from '@google/genai';
 import { validateApiBody } from './requestValidation.js';
@@ -58,6 +61,7 @@ interface GenerateWithRetryOptions {
   config?: any;
   preferredModel?: string;
   operationName?: string;
+  deadlineMs?: number;
 }
 
 /**
@@ -84,19 +88,22 @@ async function callGeminiWithFallback(options: GenerateWithRetryOptions) {
   ];
 
   let lastError: any = null;
+  const deadline = options.deadlineMs ? Date.now() + options.deadlineMs : undefined;
 
   for (let mIdx = 0; mIdx < modelChain.length; mIdx++) {
     const currentModel = modelChain[mIdx];
     const maxRetries = 1; // 1 retry for transient glitches before switching models
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      if (deadline && Date.now() >= deadline) throw new AiDeadlineError();
       await consumeAiQuota('text');
       try {
-        const response = await getGeminiClient().models.generateContent({
+        const generate = (signal?: AbortSignal) => getGeminiClient().models.generateContent({
           model: currentModel,
           contents: options.contents,
-          config: { ...options.config, maxOutputTokens: 8192 },
+          config: { ...options.config, maxOutputTokens: 8192, ...(signal ? { abortSignal: signal } : {}) },
         });
+        const response = deadline ? await withAiDeadline(deadline - Date.now(), generate) : await generate();
 
         if (response && response.text) {
           if (mIdx > 0 || attempt > 0) {
@@ -106,6 +113,7 @@ async function callGeminiWithFallback(options: GenerateWithRetryOptions) {
         }
         throw new Error(`Empty response text returned from ${currentModel}`);
       } catch (err: any) {
+        if (err instanceof AiDeadlineError) throw err;
         lastError = err;
         const msg = err?.message || String(err);
         const status = err?.status || err?.code || '';
@@ -922,7 +930,8 @@ app.post('/api/reading/translate', async (req, res) => {
       readingType = 'story',
       vocabulary = [],
       rewriteExercises = [],
-      translationSegments = []
+      translationSegments = [],
+      sentenceOnly = false
     } = req.body;
 
     if (!text) {
@@ -965,7 +974,7 @@ CRITICAL GUIDELINES FOR HUMANISATION:
    - Preserve paragraphs and line breaks matching the original source text.
 ${dialogueOutputContract}`;
 
-    const prompt = `Please translate this entire English learning unit into ${targetLangName}:
+    const prompt = sentenceOnly ? `Translate only the indexed English segments below into natural Simplified Chinese. Use the reading solely as context. Return one complete Chinese translation for each index. Keep indices unchanged. Do not merge indices or generate full-text/vocabulary/exercise translations.\nContext:\n${text}\nIndexed segments:\n${JSON.stringify((Array.isArray(translationSegments) ? translationSegments : []).map((source: string, index: number) => ({index, source})))}` : `Please translate this entire English learning unit into ${targetLangName}:
 
 Title: "${title || ''}"
 Type: ${readingType}
@@ -988,11 +997,16 @@ Return JSON with translated title, translatedContent, vocabularyTranslations, ex
     const response = await callGeminiWithFallback({
       preferredModel: 'gemini-3.1-flash-lite',
       contents: prompt,
-      operationName: 'Humanised Translation with Vocab Sync',
+      operationName: sentenceOnly ? 'Sentence translation repair' : 'Humanised Translation with Vocab Sync',
+      deadlineMs: 45000,
       config: {
         systemInstruction,
         responseMimeType: 'application/json',
-        responseSchema: {
+        responseSchema: sentenceOnly ? {
+          type: Type.OBJECT,
+          properties: { translations: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { index: {type: Type.INTEGER}, translation: {type: Type.STRING} }, required: ['index', 'translation'] } } },
+          required: ['translations'],
+        } : {
           type: Type.OBJECT,
           properties: {
             title: { type: Type.STRING, description: 'Naturally translated title' },
@@ -1035,12 +1049,23 @@ Return JSON with translated title, translatedContent, vocabularyTranslations, ex
               }
             }
           },
-          required: ['title', 'translatedContent']
+          required: Array.isArray(translationSegments) && translationSegments.length
+            ? ['title', 'translatedContent', 'sentenceTranslations']
+            : ['title', 'translatedContent']
         }
       }
     });
 
     const parsed = safeParseJson(response.text);
+    if (sentenceOnly) {
+      const entries = Array.isArray(parsed.translations) ? parsed.translations.flatMap((item: any) =>
+        Number.isInteger(item.index) && item.index >= 0 && item.index < translationSegments.length && typeof item.translation === 'string'
+          ? [{source: translationSegments[item.index], translation: item.translation}] : []) : [];
+      return res.json({title: '', translatedContent: '', language: 'zh-CN', languageName: targetLangName,
+        sentenceTranslations: sanitizeSentenceTranslations(translationSegments,
+          readingType === 'dialogue' ? parseDialogueTurns(text).map(turn => turn.speech) : text.split(/\n\s*\n/), entries),
+        vocabularyTranslations: {}, exerciseTranslations: {}, updatedAt: Date.now()});
+    }
 
     // Build lookup maps for rapid frontend access
     const vocabMap: Record<string, { meaning: string; exampleTranslation?: string }> = Object.create(null);
@@ -1074,16 +1099,16 @@ Return JSON with translated title, translatedContent, vocabularyTranslations, ex
       language: 'zh-CN',
       languageName: targetLangName,
       humanised: true,
-      sentenceTranslations: Array.isArray(parsed.sentenceTranslations) ? parsed.sentenceTranslations.filter((item: any) =>
-        typeof item.source === 'string' && typeof item.translation === 'string' && item.translation.trim() &&
-        Array.isArray(translationSegments) && translationSegments.includes(item.source)
-      ).map((item: any) => ({ source: item.source, translation: item.translation })) : [],
+      sentenceTranslations: sanitizeSentenceTranslations(translationSegments,
+        readingType === 'dialogue' ? parseDialogueTurns(text).map(turn => turn.speech) : text.split(/\n\s*\n/),
+        parsed.sentenceTranslations),
       vocabularyTranslations: vocabMap,
       exerciseTranslations: exerciseMap,
       updatedAt: Date.now()
     });
   } catch (error: any) {
     if (sendQuotaError(res, error)) return;
+    if (error instanceof AiDeadlineError) return res.status(504).json({code: 'AI_TRANSLATION_TIMEOUT', error: error.message});
     console.error('Translation error:', error);
     return res.status(500).json({ error: '翻译失败，请稍后重试' });
   }
