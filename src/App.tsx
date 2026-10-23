@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { createHistoryReviewRequest, historyReviewWords, vocabularyForLevel, vocabularyLevelLabel, type HistoryReviewRequest, type HistoryVocabularyLevel } from './utils/historyVocabulary';
 import { currentReadingSavedVocabulary } from './utils/savedVocabulary';
 import { toggleWordDetailBookmark } from './utils/wordDetailBookmark';
 import { Navbar, NavTab } from './components/Navbar';
@@ -88,9 +89,23 @@ export default function App() {
   useReadingExpressions(currentReading);
   const [readings, setReadings] = useState<ReadingRecord[]>([]);
   const [vocabularies, setVocabularies] = useState<VocabularyItem[]>([]);
+  const [historyReview, setHistoryReview] = useState<(HistoryReviewRequest & { run: number }) | null>(null);
+  const [historyWordbookLevel, setHistoryWordbookLevel] = useState<HistoryVocabularyLevel | undefined>(undefined);
+  const navigateTab = (tab: NavTab | 'settings') => {
+    setHistoryReview(null); setHistoryWordbookLevel(undefined);
+    if (tab !== 'settings') setActiveTab(tab);
+  };
+  const openHistoryReview = (level: HistoryVocabularyLevel | null) => {
+    const request = createHistoryReviewRequest(vocabularies, level, Date.now());
+    if (!request) return;
+    setHistoryReview({ ...request, run: Date.now() });
+    setActiveTab('practice');
+  };
   const removedDetailVocabulary = useRef(new Map<string, VocabularyItem>());
   useEffect(() => { removedDetailVocabulary.current.clear(); }, [currentReading?.id]);
   const reviewVocabulary = useMemo(() => currentReadingSavedVocabulary(vocabularies, currentReading), [vocabularies, currentReading]);
+  const wordbookVocabulary = useMemo(() => historyWordbookLevel === undefined ? reviewVocabulary : vocabularyForLevel(vocabularies, historyWordbookLevel), [reviewVocabulary, vocabularies, historyWordbookLevel]);
+  const scopedHistoryReview = useMemo(() => historyReview ? historyReviewWords(vocabularies, historyReview) : [], [vocabularies, historyReview]);
   const [removalTarget, setRemovalTarget] = useState<VocabularyItem | null>(null);
   const removalPresence = useMotionPresence(!!removalTarget);
   const lastRemovalTarget = useRef<VocabularyItem | null>(null);
@@ -409,11 +424,12 @@ export default function App() {
 
   // 9. Delete Reading
   const handleDeleteReading = async (readingId: string) => {
-    await deleteReading(readingId);
-    const [updated, updatedVocabulary] = await Promise.all([
-      getAllReadings(),
-      getAllVocabularies(),
-    ]);
+    // Read the committed result in the same transaction: a failed refresh must
+    // not report failure after permanently removing a history record.
+    const [updated, updatedVocabulary] = await db.transaction('rw', db.readings, db.vocabulary, async () => {
+      await deleteReading(readingId);
+      return Promise.all([getAllReadings(), getAllVocabularies()]);
+    });
     setReadings(updated);
     setVocabularies(updatedVocabulary);
     if (currentReading?.id === readingId) {
@@ -436,7 +452,7 @@ export default function App() {
       {!isBottomNavApp && (
         <Navbar
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={navigateTab}
           reviewCount={reviewVocabulary.length}
           hasCurrentReading={!!currentReading}
         />
@@ -494,36 +510,68 @@ export default function App() {
 
         {activeTab === 'wordbook' && (
           <>
-          <div className="practice-back-bar"><button type="button" className="practice-back" onClick={() => setActiveTab('practice')}><ArrowLeft aria-hidden="true" className="w-4 h-4" />练习与生词</button></div>
+          <div className="practice-back-bar"><button type="button" className="practice-back" onClick={() => setActiveTab(historyWordbookLevel === undefined ? 'practice' : 'history')}><ArrowLeft aria-hidden="true" className="w-4 h-4" />{historyWordbookLevel === undefined ? '练习与生词' : '返回历史词汇看板'}</button></div>
           <WordbookView
-            vocabularyList={reviewVocabulary}
+            key={historyWordbookLevel || 'current-reading'}
+            scopeLabel={historyWordbookLevel === undefined ? undefined : `${vocabularyLevelLabel(historyWordbookLevel)} 已收录词汇`}
+            vocabularyList={wordbookVocabulary}
             readings={readings}
-            currentReading={currentReading}
+            currentReading={historyWordbookLevel === undefined ? currentReading : null}
             onDeleteVocab={handleDeleteVocab}
+            onRemoveVocab={historyWordbookLevel === undefined ? handleDetailBookmark : async vocab => {
+              await toggleWordDetailBookmark(vocab, vocabularies, undefined, removedDetailVocabulary.current, {save: saveVocabulary, remove: deleteVocabulary}, true);
+              setVocabularies(items => items.filter(item => item.id !== vocab.id));
+            }}
+            onRestoreVocab={async (vocab) => {
+              const items = await getAllVocabularies();
+              const key = normalizeEnglishTerm(vocab.term);
+              const existing = items.find(item => normalizeEnglishTerm(item.term) === key);
+              if (existing) {
+                setVocabularies(previous => [...previous.filter(item => normalizeEnglishTerm(item.term) !== key), existing]);
+                return;
+              }
+              const updated = await toggleWordDetailBookmark(vocab, items, currentReading?.id, removedDetailVocabulary.current,
+                { save: saveVocabulary, remove: deleteVocabulary }, false);
+              setVocabularies(previous => [...previous.filter(item => normalizeEnglishTerm(item.term) !== key), ...updated.filter(item => normalizeEnglishTerm(item.term) === key)]);
+            }}
+            onDeleteVocabularies={async (ids) => {
+              const allowed = new Set(wordbookVocabulary.map(v => v.id));
+              const targets = ids.filter(id => allowed.has(id));
+              await db.transaction('rw', db.vocabulary, async () => {
+                for (const id of targets) await deleteVocabulary(id);
+              });
+              setVocabularies(items => items.filter(item => !targets.includes(item.id)));
+            }}
             onUpdateStatus={handleUpdateStatus}
             onGenerateFromWordbook={handleGenerateFromWordbook}
             isGenerating={isGenerating}
             currentCefr={settings.cefr}
             onSaveVocab={async (vocab) => {
               const existing = vocabularies.find(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(vocab.term));
-              await saveVocabulary(existing ? {
+              const saved = existing ? {
                 ...existing,
                 savedManually: true,
                 addedFromReadingIds: [...new Set([...(existing.addedFromReadingIds || []), ...(vocab.addedFromReadingIds || [])])],
                 updatedAt: vocab.updatedAt,
-                nextReviewDate: Math.min(existing.nextReviewDate, vocab.nextReviewDate),
                 wordbookLevels: [...new Set([...(existing.wordbookLevels || []), ...(vocab.wordbookLevels || [])])],
-              } : vocab);
-              await loadData();
+              } : vocab;
+              await saveVocabulary(saved);
+              setVocabularies(items => [...items.filter(item => item.id !== saved.id), saved]);
             }}
-            onOpenReview={openHubReview}
+            onOpenReview={historyWordbookLevel === undefined ? openHubReview : () => openHistoryReview(historyWordbookLevel)}
           />
           </>
         )}
 
         {activeTab === 'rewrite' && <RewritePracticeView reading={currentReading} onBack={() => setActiveTab('practice')} />}
 
-        {activeTab === 'practice' && (
+        {activeTab === 'practice' && historyReview && <div className="page-shell page-shell--review history-scoped-review">
+          <button type="button" className="practice-back" onClick={() => { setHistoryReview(null); setActiveTab('history'); }}><ArrowLeft size={17} aria-hidden="true"/>返回历史词汇看板</button>
+          <ReviewView key={historyReview.run} embedded allVocabularies={scopedHistoryReview} onRate={handleRateReview} onRefresh={loadData}
+            practiceOnly={historyReview.mode === 'free'} sessionKey={`history:${historyReview.level || 'all'}:${historyReview.mode}:${historyReview.run}`}
+            scopeLabel={`${historyReview.level ? vocabularyLevelLabel(historyReview.level) : '全部词汇'} · ${historyReview.mode === 'free' ? '自由复习（不更改复习排程）' : '到期复习'}`} />
+        </div>}
+        {activeTab === 'practice' && !historyReview && (
           <PracticeHubView exerciseCount={currentReading?.rewritePractice?.length || 0} vocabularyCount={vocabularies.length}
             onOpenRewrite={() => setActiveTab('rewrite')} onOpenWordbook={() => setActiveTab('wordbook')}>
           <ReviewView
@@ -535,17 +583,22 @@ export default function App() {
           </PracticeHubView>
         )}
 
-        {activeTab === 'history' && (
+        <div hidden={activeTab !== 'history'}>
           <ReadingHistoryView
+            active={activeTab === 'history'}
+            vocabulary={vocabularies}
+            onReviewVocabulary={openHistoryReview}
+            onOpenLevelWordbook={level => { setHistoryWordbookLevel(level); setActiveTab('wordbook'); }}
             readings={readings}
             onSelectReading={(reading) => {
+              setHistoryReview(null); setHistoryWordbookLevel(undefined);
               setCurrentReading(reading);
               setActiveTab('reading');
             }}
             onDeleteReading={handleDeleteReading}
             onCreateReading={() => setActiveTab('home')}
           />
-        )}
+        </div>
 
       </main>
 
@@ -575,7 +628,7 @@ export default function App() {
       {isBottomNavApp && (
         <InstalledAppBottomNav
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={navigateTab}
           reviewCount={reviewVocabulary.length}
           hasCurrentReading={!!currentReading}
         />

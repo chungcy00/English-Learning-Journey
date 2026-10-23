@@ -14,6 +14,9 @@ import { reviewDelayLabel } from '../utils/reviewSchedule';
 
 interface ReviewViewProps {
   embedded?: boolean;
+  practiceOnly?: boolean;
+  sessionKey?: string;
+  scopeLabel?: string;
   allVocabularies: VocabularyItem[];
   onRate: (vocabId: string, rating: ReviewRating) => Promise<void>;
   onRefresh: () => void;
@@ -24,11 +27,14 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   onRate,
   onRefresh,
   embedded = false,
+  practiceOnly = false, sessionKey, scopeLabel,
 }) => {
-  const [initialProgress] = useState(readReviewProgress);
+  const [initialProgress] = useState(() => readReviewProgress(sessionKey));
   const restored = restoreReviewProgress(allVocabularies.map(v => v.id), initialProgress);
   const [currentIndex, setCurrentIndex] = useState(restored.index);
   const [isRevealed, setIsRevealed] = useState(restored.revealed);
+  const scopeHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { if (scopeLabel) scopeHeading.current?.focus({ preventScroll: true }); }, [scopeLabel]);
   const ratingBarRef = useRef<HTMLFieldSetElement>(null);
   const [sessionCompleted, setSessionCompleted] = useState(restored.completed);
   const initialized = useRef(allVocabularies.length > 0);
@@ -67,7 +73,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   const currentVocab = reviewList[currentIndex];
   useEffect(() => {
     if (currentVocab && initialized.current) writeReviewProgress({ currentId: currentVocab.id,
-      revealed: isRevealed, completed: sessionCompleted, ids: reviewList.map(v => v.id) });
+      revealed: isRevealed, completed: sessionCompleted, ids: reviewList.map(v => v.id) }, sessionKey);
   }, [currentVocab?.id, isRevealed, sessionCompleted, reviewList]);
   useEffect(() => { setFailedRating(null); setSpeechError(null); }, [currentVocab?.id]);
 
@@ -93,10 +99,10 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
     setIsSaving(true);
     setFailedRating(null);
     try {
-      await onRate(currentVocab.id, rating);
+      if (!practiceOnly) await onRate(currentVocab.id, rating);
       const nextIndex = Math.min(currentIndex + 1, reviewList.length - 1);
       const completed = currentIndex + 1 >= reviewList.length;
-      writeReviewProgress({ currentId: reviewList[nextIndex].id, revealed: false, completed, ids: reviewList.map(v => v.id) });
+      writeReviewProgress({ currentId: reviewList[nextIndex].id, revealed: false, completed, ids: reviewList.map(v => v.id) }, sessionKey);
       if (mounted.current) {
         setIsRevealed(false);
         setCurrentIndex(nextIndex);
@@ -206,7 +212,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
         >
           <span className="type-label font-ui font-semibold text-[var(--status-error)] block">Again</span>
           <span className="type-meta text-[var(--text-muted)] font-ui block">
-            {reviewDelayLabel('Again', currentVocab.currentInterval)}
+            {practiceOnly ? '本轮练习' : reviewDelayLabel('Again', currentVocab.currentInterval)}
           </span>
         </button>
 
@@ -216,7 +222,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
         >
           <span className="type-label font-ui font-semibold text-[var(--status-warning)] block">Hard</span>
           <span className="type-meta text-[var(--text-muted)] font-ui block">
-            {reviewDelayLabel('Hard', currentVocab.currentInterval)}
+            {practiceOnly ? '本轮练习' : reviewDelayLabel('Hard', currentVocab.currentInterval)}
           </span>
         </button>
 
@@ -226,7 +232,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
         >
           <span className="type-label font-ui font-semibold text-[var(--accent-vocab)] block">Good</span>
           <span className="type-meta text-[var(--text-muted)] font-ui block">
-            {reviewDelayLabel('Good', currentVocab.currentInterval)}
+            {practiceOnly ? '本轮练习' : reviewDelayLabel('Good', currentVocab.currentInterval)}
           </span>
         </button>
 
@@ -236,7 +242,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
         >
           <span className="type-label font-ui font-semibold text-[var(--bg-primary)] block">Easy</span>
           <span className="type-meta text-[var(--bg-primary)] font-ui block">
-            {reviewDelayLabel('Easy', currentVocab.currentInterval)}
+            {practiceOnly ? '本轮练习' : reviewDelayLabel('Easy', currentVocab.currentInterval)}
           </span>
         </button>
       </fieldset>
@@ -254,10 +260,10 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
       {/* Header */}
       <div className={embedded ? "practice-review-heading" : "flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border-subtle)]"}>
         <div>
-          <Heading className="type-page font-editorial font-semibold text-[var(--text-primary)]">
+          <Heading ref={scopeHeading} tabIndex={scopeLabel ? -1 : undefined} className="type-page font-editorial font-semibold text-[var(--text-primary)]">
             {embedded ? '词汇复习' : getI18nText('reviewTitle')}
           </Heading>
-          <p className="type-body font-ui text-[var(--text-secondary)] mt-2">{embedded ? `当前短文 · ${reviewList.length} 个词汇` : `当前短文已添加词条：${reviewList.length} 项`}</p>
+          <p className="type-body font-ui text-[var(--text-secondary)] mt-2">{scopeLabel ? `${scopeLabel} · ${reviewList.length} 个词汇` : embedded ? `当前短文 · ${reviewList.length} 个词汇` : `当前短文已添加词条：${reviewList.length} 项`}</p>
         </div>
       </div>
 
@@ -269,7 +275,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
           </div>
 
           <h2 className="font-editorial text-[length:var(--type-section)] leading-[1.3] font-semibold text-[var(--text-primary)]">
-            {allVocabularies.length === 0 ? '当前短文还没有已添加词条' : '本轮复习已完成！'}
+            {allVocabularies.length === 0 ? scopeLabel ? '当前范围暂无可复习词汇' : '当前短文还没有已添加词条' : '本轮复习已完成！'}
           </h2>
           {allVocabularies.length === 0 && <p className="type-body font-ui text-[var(--text-secondary)] max-w-md mx-auto">
             在当前阅读页或生词本添加表达后，即可在这里复习。
@@ -281,7 +287,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
                 onClick={handleStartReviewAll}
                 className="type-label px-4 py-2 bg-[var(--accent-primary)] text-[var(--bg-primary)] font-ui font-medium rounded-sm hover:bg-[var(--accent-hover)] transition-colors"
               >
-                重新复习当前短文 ({allVocabularies.length})
+                {scopeLabel ? '重新复习当前范围' : '重新复习当前短文'} ({allVocabularies.length})
               </button>
             )}
             <button
