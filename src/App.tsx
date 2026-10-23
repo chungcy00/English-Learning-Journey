@@ -90,6 +90,17 @@ export default function App() {
   const [readings, setReadings] = useState<ReadingRecord[]>([]);
   const [vocabularies, setVocabularies] = useState<VocabularyItem[]>([]);
   const [historyReview, setHistoryReview] = useState<(HistoryReviewRequest & { run: number }) | null>(null);
+  const historyReviewRef = useRef(historyReview);
+  historyReviewRef.current = historyReview;
+  const refreshHistoryReview = async () => {
+    const previous = historyReviewRef.current;
+    if (!previous) return;
+    const latest = await getAllVocabularies();
+    if (historyReviewRef.current?.run !== previous.run) return;
+    const request = createHistoryReviewRequest(latest, previous.level, Date.now()) || { source: 'history' as const, level: previous.level, mode: 'free' as const, ids: [] };
+    setVocabularies(latest);
+    setHistoryReview({ ...request, run: Math.max(Date.now(), previous.run + 1) });
+  };
   const [historyWordbookLevel, setHistoryWordbookLevel] = useState<HistoryVocabularyLevel | undefined>(undefined);
   const navigateTab = (tab: NavTab | 'settings') => {
     setHistoryReview(null); setHistoryWordbookLevel(undefined);
@@ -398,10 +409,10 @@ export default function App() {
     if (pendingRatings.current.has(vocabId)) throw new Error('此词条评分仍在保存');
     pendingRatings.current.add(vocabId);
     try {
-      await recordReview(vocabId, rating);
-      // The transaction has committed. A refresh error must not invite a duplicate rating.
-      try { setVocabularies(await getAllVocabularies()); }
-      catch (error) { console.warn('评分已保存，但列表刷新失败', error); }
+      const updated = await recordReview(vocabId, rating);
+      // Use the record returned by the committed transaction; no second read
+      // can leave the task counts stale or invite a duplicate rating.
+      setVocabularies(items => items.map(item => item.id === updated.id ? updated : item));
     } finally { pendingRatings.current.delete(vocabId); }
   };
 
@@ -567,7 +578,7 @@ export default function App() {
 
         {activeTab === 'practice' && historyReview && <div className="page-shell page-shell--review history-scoped-review">
           <button type="button" className="practice-back" onClick={() => { setHistoryReview(null); setActiveTab('history'); }}><ArrowLeft size={17} aria-hidden="true"/>返回历史词汇看板</button>
-          <ReviewView key={historyReview.run} embedded allVocabularies={scopedHistoryReview} onRate={handleRateReview} onRefresh={loadData}
+          <ReviewView key={historyReview.run} embedded allVocabularies={scopedHistoryReview} onRate={handleRateReview} onRefresh={refreshHistoryReview}
             practiceOnly={historyReview.mode === 'free'} sessionKey={`history:${historyReview.level || 'all'}:${historyReview.mode}:${historyReview.run}`}
             scopeLabel={`${historyReview.level ? vocabularyLevelLabel(historyReview.level) : '全部词汇'} · ${historyReview.mode === 'free' ? '自由复习（不更改复习排程）' : '到期复习'}`} />
         </div>}

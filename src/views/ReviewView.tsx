@@ -19,7 +19,7 @@ interface ReviewViewProps {
   scopeLabel?: string;
   allVocabularies: VocabularyItem[];
   onRate: (vocabId: string, rating: ReviewRating) => Promise<void>;
-  onRefresh: () => void;
+  onRefresh: () => void | Promise<void>;
 }
 
 export const ReviewView: React.FC<ReviewViewProps> = ({
@@ -41,6 +41,9 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
   const saving = useRef(false);
   const mounted = useRef(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState('');
+  const refreshLock = useRef(false);
   const [failedRating, setFailedRating] = useState<ReviewRating | null>(null);
   const [speechError, setSpeechError] = useState<string | null>(null);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
@@ -79,18 +82,30 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
 
 
   const handleStartReviewAll = () => {
+    if (scopeLabel) { void handleRefreshReviews(); return; }
     setReviewList(allVocabularies);
     setCurrentIndex(0);
     setIsRevealed(false);
     setSessionCompleted(false);
   };
 
-  const handleRefreshReviews = () => {
-    setReviewList(allVocabularies);
-    setCurrentIndex(0);
-    setIsRevealed(false);
-    setSessionCompleted(false);
-    onRefresh();
+  const handleRefreshReviews = async () => {
+    if (refreshLock.current) return;
+    refreshLock.current = true; setIsRefreshing(true); setRefreshError('');
+    try {
+      await onRefresh();
+      if (mounted.current) {
+        setReviewList(allVocabularies);
+        setCurrentIndex(0);
+        setIsRevealed(false);
+        setSessionCompleted(false);
+      }
+    } catch {
+      if (mounted.current) setRefreshError('复习状态刷新失败，原有进度已保留，请重试。');
+    } finally {
+      refreshLock.current = false;
+      if (mounted.current) setIsRefreshing(false);
+    }
   };
 
   const handleRating = async (rating: ReviewRating) => {
@@ -285,18 +300,21 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
             {allVocabularies.length > 0 && (
               <button
                 onClick={handleStartReviewAll}
+                disabled={isRefreshing}
                 className="type-label px-4 py-2 bg-[var(--accent-primary)] text-[var(--bg-primary)] font-ui font-medium rounded-sm hover:bg-[var(--accent-hover)] transition-colors"
               >
                 {scopeLabel ? '重新复习当前范围' : '重新复习当前短文'} ({allVocabularies.length})
               </button>
             )}
             <button
-              onClick={handleRefreshReviews}
+              onClick={() => void handleRefreshReviews()}
+              disabled={isRefreshing}
               className="type-label px-4 py-2 bg-[var(--bg-alt)] text-[var(--text-primary)] border border-[var(--border-subtle)] font-ui rounded-sm hover:bg-[var(--bg-alt)]/80 transition-colors"
             >
-              刷新复习状态
+              {isRefreshing ? '正在刷新…' : '刷新复习状态'}
             </button>
           </div>
+          {refreshError && <p role="alert" className="type-body text-[var(--status-error)]">{refreshError}</p>}
         </div>
       ) : (
         /* Active Flashcard */

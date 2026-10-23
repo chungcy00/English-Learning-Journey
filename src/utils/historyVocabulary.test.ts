@@ -47,3 +47,14 @@ test('history scope is wired to the existing review and wordbook without changin
  assert.match(review,/if \(!practiceOnly\) await onRate\(currentVocab.id, rating\)/);
  assert.match(review,/practiceOnly \? '本轮练习' : reviewDelayLabel/);
 });
+
+test('starting again rebuilds due/free scope from the latest scheduling and collection',()=>{
+ const started=createHistoryReviewRequest(words,'A2',100)!;
+ const afterRating=words.map(v=>v.id==='a'?{...v,nextReviewDate:500}:v);
+ assert.equal(createHistoryReviewRequest(afterRating,'A2',100)?.mode,'free');
+ assert.deepEqual(createHistoryReviewRequest(afterRating,'A2',100)?.ids,['a','b']);
+ assert.deepEqual(historyReviewWords(afterRating,started).map(v=>v.id),['a']);
+ const newlyDue=[...afterRating,{...words[0],id:'new',nextReviewDate:90}];
+ assert.deepEqual(createHistoryReviewRequest(newlyDue,'A2',100)?.ids,['new']);
+ assert.equal(createHistoryReviewRequest(words.filter(v=>v.cefrLevel!=='A2'),'A2',100),null);
+});
