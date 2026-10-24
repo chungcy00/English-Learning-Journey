@@ -11,6 +11,7 @@ import {
 } from '../types';
 import { db } from '../db/dexie';
 import { dialogueSpeechError } from '../utils/dialogueSpeechError';
+import { translationConnectionMessage } from '../utils/translationConnection';
 
 export interface GenerationProgressCallback {
   (status: 'Generating reading...' | 'Humanising language...' | 'Checking level and vocabulary...' | 'Ready'): void;
@@ -361,17 +362,22 @@ export async function translateReading(params: {
   vocabulary?: any[];
   rewriteExercises?: any[];
 }, signal?: AbortSignal): Promise<ReadingTranslation> {
-  const res = await fetch('/api/reading/translate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params),
-    signal,
-  });
+  try {
+    const res = await fetch('/api/reading/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+      signal,
+    });
 
-  if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({}));
-    throw new Error(errorBody.error || (res.status === 504 ? '翻译服务响应超时，请稍后重试。已有译文不会被清除。' : `翻译失败 (HTTP ${res.status})，请重试`));
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({}));
+      throw new Error(errorBody.error || (res.status === 504 ? '翻译服务响应超时，请稍后重试。已有译文不会被清除。' : `翻译失败 (HTTP ${res.status})，请重试`));
+    }
+    return await res.json();
+  } catch (error) {
+    signal?.throwIfAborted();
+    if (error instanceof TypeError) throw new Error(await translationConnectionMessage(signal));
+    throw error;
   }
-
-  return res.json();
 }
