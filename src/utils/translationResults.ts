@@ -1,5 +1,5 @@
 import type { ReadingTranslation } from '../types';
-import { groupReadingSentences, hasCompleteSentenceTranslations } from './readingSegments';
+import { groupReadingSentences, hasCompleteSentenceTranslations } from './readingSegments.js';
 export const normalizeTranslationSource = (source: string) => source.replace(/\s+/gu, ' ').trim();
 
 /** Accept exact requested sentences or contiguous spans within one source turn/paragraph. */

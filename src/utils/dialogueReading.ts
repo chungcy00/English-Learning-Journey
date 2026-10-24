@@ -1,5 +1,5 @@
 import type { ReadingTranslation } from '../types';
-import { groupReadingSentences, splitReadingSentences } from './readingSegments';
+import { groupReadingSentences, splitReadingSentences } from './readingSegments.js';
 
 export interface DialogueTurn { speaker: string | null; speech: string; }
 const NON_SPEAKER_LABELS = new Set(['note', 'ps', 'p.s', 'step', 'tip', 'warning']);
