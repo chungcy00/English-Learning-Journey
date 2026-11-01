@@ -3,6 +3,7 @@ import { ReadingRecord, VocabularyItem, ReviewLog, AppSettings, VocabStatus, Rev
 import { planReadingVocabularySync } from '../utils/readingVocabulary';
 import { preserveCatalogue } from '../utils/expressionCache';
 import { reviewIntervalDays, reviewDelayMs } from '../utils/reviewSchedule';
+import { planReadingDeletion } from '../utils/readingVocabularyOwnership';
 
 export interface RewriteRecord {
   id?: number;
@@ -71,6 +72,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
 };
 
 const SETTINGS_KEY = 'english_learning_settings';
+const INITIAL_DATA_KEY = 'mine_english_initial_data_created';
+function markInitialDataCreated() {
+  try { localStorage.setItem(INITIAL_DATA_KEY, 'true'); } catch { /* Storage restrictions must not block learning. */ }
+}
 
 export function loadSettings(): AppSettings {
   try {
@@ -94,6 +99,10 @@ export function saveSettings(settings: Partial<AppSettings>): AppSettings {
 // Initial Seed for new users so the app opens with rich contextual content
 export async function seedInitialDataIfNeeded() {
   const count = await db.readings.count();
+  let initialized = false;
+  try { initialized = localStorage.getItem(INITIAL_DATA_KEY) === 'true'; } catch { /* Use existing data if storage is restricted. */ }
+  if (count === 0 && initialized) return;
+  if (count > 0) markInitialDataCreated();
   const sampleReadingId = 'seed_thoughtful_relationship_01';
   const existingSeed = await db.readings.get(sampleReadingId);
 
@@ -264,6 +273,7 @@ A few minutes later, someone discovered a copy on the exchange shelf. Maya opene
 
   await db.readings.put(sampleReading);
   await db.vocabulary.bulkPut(initialVocabs);
+  markInitialDataCreated();
 }
 
 // Spaced repetition interval calculator (PRD Section 29)
@@ -416,15 +426,18 @@ export async function saveReadingWithVocabulary(reading: ReadingRecord): Promise
 }
 
 export async function deleteReading(id: string): Promise<void> {
-  await db.transaction('rw', db.readings, db.vocabulary, async () => {
-    const source = await db.readings.get(id);
-    if (source) {
-      await db.vocabulary.filter((vocab) =>
-        vocab.sourceReadingId === id && !vocab.sourceCefrLevel
-      ).modify({ sourceCefrLevel: source.cefrLevel });
-    }
+  await db.transaction('rw', [db.readings, db.vocabulary, db.reviews, db.rewriteRecords, db.notes], async () => {
+    const [readings, words] = await Promise.all([db.readings.toArray(), db.vocabulary.toArray()]);
+    const plan = planReadingDeletion(id, words, readings);
+    await db.vocabulary.bulkDelete(plan.removeIds);
+    await db.vocabulary.bulkPut(plan.upserts);
+    if (plan.removeIds.length) await db.reviews.where('vocabularyId').anyOf(plan.removeIds).delete();
+    await db.notes.where('targetId').anyOf([id, ...plan.removeIds]).delete();
+    await db.rewriteRecords.where('readingId').equals(id).delete();
     await db.readings.delete(id);
   });
+  // An intentionally empty history must not recreate the bundled sample.
+  markInitialDataCreated();
 }
 
 export async function getAllVocabularies(): Promise<VocabularyItem[]> {

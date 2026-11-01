@@ -39,7 +39,7 @@ test('history scope is wired to the existing review and wordbook without changin
  const {readFileSync}=await import('node:fs');
  const app=readFileSync(new URL('../App.tsx',import.meta.url),'utf8');
  const review=readFileSync(new URL('../views/ReviewView.tsx',import.meta.url),'utf8');
- assert.match(app,/vocabulary=\{vocabularies\}/);
+ assert.match(app,/vocabulary=\{historyVocabulary\}/);
  assert.match(app,/allVocabularies=\{scopedHistoryReview\}/);
  assert.match(app,/allVocabularies=\{reviewVocabulary\}/);
  assert.match(app,/vocabularyList=\{wordbookVocabulary\}/);

@@ -15,7 +15,7 @@ export function HistoryDeletionDialog({ title, onCancel, onConfirm }: {
   };
   return <dialog ref={ref} className="app-dialog history-deletion-dialog" aria-labelledby="history-delete-title" aria-describedby="history-delete-description" onCancel={event => { event.preventDefault(); if (!busy) onCancel(); }}>
     <h2 id="history-delete-title">确定删除这篇历史短文？</h2>
-    <p id="history-delete-description">{title}</p>
+    <p id="history-delete-description">{title}<br />仅关联这篇短文的词条及其复习记录会一并删除；其他短文仍在使用的词条会保留。</p>
     {error && <p role="alert">{error}</p>}
     <div><button type="button" data-dialog-initial-focus disabled={busy} onClick={onCancel}>取消</button><button type="button" disabled={busy} onClick={() => void confirm()}>{busy ? '正在删除…' : '确认删除'}</button></div>
   </dialog>;

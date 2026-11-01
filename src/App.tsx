@@ -7,6 +7,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { ArrowLeft } from 'lucide-react';
 import { createHistoryReviewRequest, historyReviewWords, vocabularyForLevel, vocabularyLevelLabel, type HistoryReviewRequest, type HistoryVocabularyLevel } from './utils/historyVocabulary';
 import { currentReadingSavedVocabulary } from './utils/savedVocabulary';
+import { vocabularyWithReadingSources } from './utils/readingVocabularyOwnership';
 import { toggleWordDetailBookmark } from './utils/wordDetailBookmark';
 import { Navbar, NavTab } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -95,10 +96,11 @@ export default function App() {
   const refreshHistoryReview = async () => {
     const previous = historyReviewRef.current;
     if (!previous) return;
-    const latest = await getAllVocabularies();
+    const [latest, latestReadings] = await Promise.all([getAllVocabularies(), getAllReadings()]);
     if (historyReviewRef.current?.run !== previous.run) return;
-    const request = createHistoryReviewRequest(latest, previous.level, Date.now()) || { source: 'history' as const, level: previous.level, mode: 'free' as const, ids: [] };
+    const request = createHistoryReviewRequest(vocabularyWithReadingSources(latest, latestReadings), previous.level, Date.now()) || { source: 'history' as const, level: previous.level, mode: 'free' as const, ids: [] };
     setVocabularies(latest);
+    setReadings(latestReadings);
     setHistoryReview({ ...request, run: Math.max(Date.now(), previous.run + 1) });
   };
   const [historyWordbookLevel, setHistoryWordbookLevel] = useState<HistoryVocabularyLevel | undefined>(undefined);
@@ -107,7 +109,7 @@ export default function App() {
     if (tab !== 'settings') setActiveTab(tab);
   };
   const openHistoryReview = (level: HistoryVocabularyLevel | null) => {
-    const request = createHistoryReviewRequest(vocabularies, level, Date.now());
+    const request = createHistoryReviewRequest(historyVocabulary, level, Date.now());
     if (!request) return;
     setHistoryReview({ ...request, run: Date.now() });
     setActiveTab('practice');
@@ -115,8 +117,9 @@ export default function App() {
   const removedDetailVocabulary = useRef(new Map<string, VocabularyItem>());
   useEffect(() => { removedDetailVocabulary.current.clear(); }, [currentReading?.id]);
   const reviewVocabulary = useMemo(() => currentReadingSavedVocabulary(vocabularies, currentReading), [vocabularies, currentReading]);
-  const wordbookVocabulary = useMemo(() => historyWordbookLevel === undefined ? reviewVocabulary : vocabularyForLevel(vocabularies, historyWordbookLevel), [reviewVocabulary, vocabularies, historyWordbookLevel]);
-  const scopedHistoryReview = useMemo(() => historyReview ? historyReviewWords(vocabularies, historyReview) : [], [vocabularies, historyReview]);
+  const historyVocabulary = useMemo(() => vocabularyWithReadingSources(vocabularies, readings), [vocabularies, readings]);
+  const wordbookVocabulary = useMemo(() => historyWordbookLevel === undefined ? reviewVocabulary : vocabularyForLevel(historyVocabulary, historyWordbookLevel), [reviewVocabulary, historyVocabulary, historyWordbookLevel]);
+  const scopedHistoryReview = useMemo(() => historyReview ? historyReviewWords(historyVocabulary, historyReview) : [], [historyVocabulary, historyReview]);
   const [removalTarget, setRemovalTarget] = useState<VocabularyItem | null>(null);
   const removalPresence = useMotionPresence(!!removalTarget);
   const lastRemovalTarget = useRef<VocabularyItem | null>(null);
@@ -437,7 +440,7 @@ export default function App() {
   const handleDeleteReading = async (readingId: string) => {
     // Read the committed result in the same transaction: a failed refresh must
     // not report failure after permanently removing a history record.
-    const [updated, updatedVocabulary] = await db.transaction('rw', db.readings, db.vocabulary, async () => {
+    const [updated, updatedVocabulary] = await db.transaction('rw', [db.readings, db.vocabulary, db.reviews, db.rewriteRecords, db.notes], async () => {
       await deleteReading(readingId);
       return Promise.all([getAllReadings(), getAllVocabularies()]);
     });
@@ -597,7 +600,7 @@ export default function App() {
         <div hidden={activeTab !== 'history'}>
           <ReadingHistoryView
             active={activeTab === 'history'}
-            vocabulary={vocabularies}
+            vocabulary={historyVocabulary}
             onReviewVocabulary={openHistoryReview}
             onOpenLevelWordbook={level => { setHistoryWordbookLevel(level); setActiveTab('wordbook'); }}
             readings={readings}

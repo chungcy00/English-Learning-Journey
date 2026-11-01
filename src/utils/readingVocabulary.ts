@@ -36,7 +36,9 @@ export function planReadingVocabularySync(previous: ReadingRecord | undefined, r
       reviewCount: existing.reviewCount, currentInterval: existing.currentInterval,
       lastRating: existing.lastRating, savedManually: existing.savedManually,
       wordbookLevels: existing.wordbookLevels, translations: existing.translations,
-      addedFromReadingIds: existing.addedFromReadingIds,
+      addedFromReadingIds: [...new Set([...(existing.addedFromReadingIds || []),
+        ...(existing.sourceReadingId ? [existing.sourceReadingId] : []), reading.id]
+        .filter(id => id === reading.id || allReadings.some(source => source.id === id)))],
       cefrLevel: v.cefrLevel || existing.cefrLevel,
     } : { ...v, sourceReadingId: reading.id, sourceCefrLevel: reading.cefrLevel };
   });
