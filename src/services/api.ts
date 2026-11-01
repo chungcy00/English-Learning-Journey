@@ -11,7 +11,7 @@ import {
 } from '../types';
 import { db } from '../db/dexie';
 import { dialogueSpeechError } from '../utils/dialogueSpeechError';
-import { translationConnectionMessage } from '../utils/translationConnection';
+import { apiConnectionMessage, translationConnectionMessage } from '../utils/translationConnection';
 
 export interface GenerationProgressCallback {
   (status: 'Generating reading...' | 'Humanising language...' | 'Checking level and vocabulary...' | 'Ready'): void;
@@ -184,20 +184,26 @@ export async function generateReadingWithPipeline(
   onProgress?.('Generating reading...');
 
   let resultData;
-  const res = await fetch('/api/reading/generate', {
-    signal,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    // Reuse the existing free-text requirements channel; keep preset enums intact.
-    body: JSON.stringify({ ...request, customReadingStyle: undefined, input: request.customReadingStyle?.trim() ? `${request.input}\n\n写作风格要求：${request.customReadingStyle.trim()}。在上述学习等级、文体、篇幅和词汇限制内使用此风格。` : request.input }),
-  });
+  try {
+    const res = await fetch('/api/reading/generate', {
+      signal,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      // Reuse the existing free-text requirements channel; keep preset enums intact.
+      body: JSON.stringify({ ...request, customReadingStyle: undefined, input: request.customReadingStyle?.trim() ? `${request.input}\n\n写作风格要求：${request.customReadingStyle.trim()}。在上述学习等级、文体、篇幅和词汇限制内使用此风格。` : request.input }),
+    });
 
-  if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({}));
-    throw new Error(errorBody.error || `短文生成失败 (HTTP ${res.status})，请稍后重试`);
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({}));
+      throw new Error(errorBody.error || (res.status === 504 ? '短文生成超时，请稍后重试。你的输入和已有短文已保留。' : `短文生成失败 (HTTP ${res.status})，请稍后重试`));
+    }
+
+    resultData = await res.json();
+  } catch (error) {
+    signal?.throwIfAborted();
+    if (error instanceof TypeError) throw new Error(await apiConnectionMessage(signal, { operation: '短文生成' }));
+    throw error;
   }
-
-  resultData = await res.json();
   signal?.throwIfAborted();
   onProgress?.('Ready');
 

@@ -1,5 +1,6 @@
 import express from 'express';
 import { AiDeadlineError, withAiDeadline } from './aiDeadline.js';
+import { GenerationContractError, generationFailure } from './generationFailure.js';
 import { sanitizeSentenceTranslations } from '../src/utils/translationResults.js';
 import { parseDialogueTurns } from '../src/utils/dialogueReading.js';
 import dotenv from 'dotenv';
@@ -88,7 +89,7 @@ async function callGeminiWithFallback(options: GenerateWithRetryOptions) {
   ];
 
   let lastError: any = null;
-  const deadline = options.deadlineMs ? Date.now() + options.deadlineMs : undefined;
+  const deadline = options.deadlineMs === undefined ? undefined : Date.now() + options.deadlineMs;
 
   for (let mIdx = 0; mIdx < modelChain.length; mIdx++) {
     const currentModel = modelChain[mIdx];
@@ -176,16 +177,25 @@ function safeParseJson<T = any>(rawText: string | undefined): T {
 
 async function generateWithVocabularyPolicy(options: GenerateWithRetryOptions, level: string, count: number) {
   let problem = '';
+  const deadline = options.deadlineMs === undefined ? undefined : Date.now() + options.deadlineMs;
   for (let attempt = 0; attempt < 2; attempt++) {
+    if (deadline && Date.now() >= deadline) throw new AiDeadlineError();
     const response = await callGeminiWithFallback({
       ...options,
+      ...(deadline ? { deadlineMs: deadline - Date.now() } : {}),
       contents: `${options.contents}${problem ? `\nPrevious output was invalid: ${problem}. Generate the full corrected result.` : ''}`,
     });
-    const parsed = safeParseJson(response.text);
+    let parsed;
+    try { parsed = safeParseJson(response.text); }
+    catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      problem = 'Return complete valid JSON matching the schema, without markdown.';
+      continue;
+    }
     problem = vocabularyProblem(parsed, level, count) || '';
     if (!problem) return parsed;
   }
-  throw new Error('Vocabulary contract could not be satisfied');
+  throw new GenerationContractError();
 }
 
 function escapeRegex(value: string): string {
@@ -566,6 +576,7 @@ Please generate the complete structured JSON response adhering strictly to the s
       preferredModel: 'gemini-3.1-flash-lite',
       contents: prompt,
       operationName: 'Reading Generation',
+      deadlineMs: 45000,
       config: {
         systemInstruction,
         responseMimeType: 'application/json',
@@ -632,7 +643,8 @@ Please generate the complete structured JSON response adhering strictly to the s
   } catch (error: any) {
     if (sendQuotaError(res, error)) return;
     console.error('Reading generation error:', error);
-    return res.status(500).json({ error: '短文生成失败，请稍后重试' });
+    const { status, ...body } = generationFailure(error);
+    return res.status(status).json(body);
   }
 });
 
