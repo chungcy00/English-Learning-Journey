@@ -216,6 +216,7 @@ export default function App() {
 
   // 1. Generate Reading (PRD Section 4 & 5)
   const handleGenerateReading = async (params: {
+    sourceText?: string;
     input: string;
     cefrLevel: CEFRLevel;
     readingType: ReadingType;
@@ -236,6 +237,7 @@ export default function App() {
       const record = await generateReadingWithPipeline(
         {
           input: params.input,
+          sourceText: params.sourceText,
           cefrLevel: params.cefrLevel,
           readingType: params.readingType,
           readingStyle: params.readingStyle,

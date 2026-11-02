@@ -14,7 +14,7 @@ export function validateApiBody(body: unknown): string | null {
   }
   if (!valid(body)) return '请求内容过长或格式不正确';
   const data = body as Record<string, unknown>;
-  for (const key of ['input', 'term', 'text', 'title', 'reading', 'contextReading', 'originalSentence', 'target', 'userAnswer', 'referenceAnswer', 'mode']) {
+  for (const key of ['sourceText', 'input', 'term', 'text', 'title', 'reading', 'contextReading', 'originalSentence', 'target', 'userAnswer', 'referenceAnswer', 'mode']) {
     if (data[key] !== undefined && typeof data[key] !== 'string') return '文本字段格式不正确';
   }
   for (const key of ['specifiedVocabulary', 'currentVocabulary', 'vocabulary', 'vocabularies', 'rewriteExercises', 'turns']) {
@@ -28,8 +28,9 @@ export function validateApiBody(body: unknown): string | null {
   for (const key of ['keepVocabulary', 'keepCurrentVocabulary', 'requireInReading', 'sentenceOnly']) {
     if (data[key] !== undefined && typeof data[key] !== 'boolean') return '选项格式不正确';
   }
+  if (typeof data.sourceText === 'string' && !data.sourceText.trim()) return '请提供英文原稿';
   const enums: Record<string, unknown[]> = {
-    cefrLevel: ['A2', 'B1', 'B2', 'C1'],
+    cefrLevel: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'],
     readingType: ['story', 'non-story', 'dialogue', 'random'],
     readingStyle: ['auto', 'natural', 'funny', 'warm', 'suspenseful', 'dramatic', 'professional', 'cinematic'],
     length: ['short', 'medium', 'long'],

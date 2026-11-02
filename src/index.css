@@ -1875,3 +1875,12 @@ html .reading-word-dialog::backdrop { background: rgb(255 255 255 / 70%); backdr
 .history-task-primary { display: flex; align-items: center; justify-content: center; gap: .75rem; width: 100%; min-height: 50px; padding: .75rem 1rem; border-radius: 14px; background: linear-gradient(135deg,#4A6D5A,#3F5E4D); box-shadow: inset 0 1px 0 rgb(255 255 255 / 10%); color: white; font-size: var(--type-body); font-weight: 650; }
 .history-scoped-review > .practice-back { margin-bottom: 1rem; }
 @media (prefers-reduced-motion: reduce) { .history-distribution-final .reading-distribution__switch::before { transition: none; } }
+
+.studio-input-modes { display: flex; gap: .5rem; margin-bottom: .75rem; }
+.studio-input-modes button { min-height: 44px; padding: .5rem 1rem; border-radius: 999px; background: var(--studio-soft); color: var(--studio-muted); font-size: var(--type-label); }
+.studio-input-modes button[aria-pressed="true"] { background: var(--studio-selected); color: white; }
+.studio-transcript input { width: 100%; min-height: 44px; padding: .625rem .75rem; border: 1px solid var(--studio-border); border-radius: 12px; margin-bottom: 1rem; }
+.studio-transcript textarea { max-height: 24rem; overflow-y: auto; resize: vertical; }
+@media (max-width: 480px) {
+  .studio-choices[aria-labelledby="cefr-label"] { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

@@ -1,4 +1,4 @@
-export type CEFRLevel = 'A2' | 'B1' | 'B2' | 'C1';
+export type CEFRLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
 export type ReadingType = 'story' | 'non-story' | 'dialogue' | 'random';
 export type ReadingLength = 'short' | 'medium' | 'long';
 export type ReadingStyle = 'auto' | 'natural' | 'funny' | 'warm' | 'suspenseful' | 'dramatic' | 'professional' | 'cinematic';
@@ -82,6 +82,7 @@ export interface DialogueSpeaker {
 }
 
 export interface ReadingRecord {
+  sourceText?: string;
   id: string;
   title: string;
   content: string;
@@ -120,6 +121,7 @@ export interface AppSettings {
 }
 
 export interface GenerationRequest {
+  sourceText?: string;
   customReadingStyle?: string;
   input: string;
   cefrLevel: CEFRLevel;

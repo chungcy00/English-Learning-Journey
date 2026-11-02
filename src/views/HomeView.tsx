@@ -15,7 +15,7 @@ const SCENES = [
 ];
 const TYPE_LABELS: [ReadingType, string][] = [['story', '故事'], ['dialogue', '对话'], ['non-story', '说明'], ['random', '随机']];
 const LENGTH_LABELS: [ReadingLength, string][] = [['short', '短篇'], ['medium', '中篇'], ['long', '长篇']];
-const LEVEL_LABELS = { A2: '入门', B1: '进阶', B2: '中高阶', C1: '高级' };
+const LEVEL_LABELS = { A1: '初学', C2: '精通', A2: '入门', B1: '进阶', B2: '中高阶', C1: '高级' };
 
 interface HomeViewProps {
   settings: AppSettings;
@@ -27,8 +27,11 @@ interface HomeViewProps {
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({ settings, onGenerate, isLoading, onCefrChange, currentReading, onContinueReading }) => {
-  const [input, setDraftInput] = useState(readGenerationDraft);
+  const [input, setDraftInput] = useState(() => readGenerationDraft());
   const setInput = (value: string) => { saveGenerationDraft(value); setDraftInput(value); };
+  const [importMode, setImportMode] = useState(false);
+  const [sourceText, setSourceText] = useState(() => readGenerationDraft('transcript'));
+  const [sourceTitle, setSourceTitle] = useState('');
   const [cefr, setCefr] = useState<CEFRLevel>(settings.cefr);
   const [type, setType] = useState<ReadingType>(settings.defaultReadingType);
   const [style, setStyle] = useState<ReadingStyle>(settings.defaultReadingStyle || 'auto');
@@ -46,7 +49,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ settings, onGenerate, isLoad
   const stylePresence = useMotionPresence(styleOpen);
   const sheet = useModalDialog(stylePresence.present);
   const touchStart = useRef<number | null>(null);
-  const specifiedVocabulary = parseSpecifiedVocabulary(input);
+  const specifiedVocabulary = importMode ? undefined : parseSpecifiedVocabulary(input);
   const styleLabel = useCustomStyle ? `自定义：${customStyle}` : READING_STYLES.find(option => option.value === style)!.label;
 
   useEffect(() => { setCefr(settings.cefr); }, [settings.cefr]);
@@ -58,7 +61,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ settings, onGenerate, isLoad
     if (!textarea.current) return;
     textarea.current.style.height = 'auto';
     textarea.current.style.height = `${Math.max(96, textarea.current.scrollHeight)}px`;
-  }, [input]);
+  }, [input, importMode]);
   useEffect(() => {
     if (!stylePresence.present) return;
     const previous = document.body.style.overflow;
@@ -67,6 +70,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ settings, onGenerate, isLoad
   }, [stylePresence.present]);
 
   const chooseInspiration = (topic: string) => {
+    setImportMode(false);
     setInput(topic);
     textarea.current?.focus({ preventScroll: true });
     if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -76,8 +80,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ settings, onGenerate, isLoad
   };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
-    onGenerate({ input: input.trim(), cefrLevel: cefr, readingType: type, readingStyle: useCustomStyle ? 'auto' : style, customReadingStyle: useCustomStyle ? customStyle : undefined, length, vocabularyCount: vocabCount, specifiedVocabulary });
+    if (!(importMode ? sourceText.trim() : input.trim()) || sourceText.length > 30000 || isLoading) return;
+    onGenerate({ input: importMode ? sourceTitle.trim() || '英文稿改写' : input.trim(), sourceText: importMode ? sourceText.trim() : undefined, cefrLevel: cefr, readingType: type, readingStyle: useCustomStyle ? 'auto' : style, customReadingStyle: useCustomStyle ? customStyle : undefined, length, vocabularyCount: vocabCount, specifiedVocabulary });
   };
 
   return (
@@ -104,23 +108,33 @@ export const HomeView: React.FC<HomeViewProps> = ({ settings, onGenerate, isLoad
       </section>
       <form className="studio-creation" onSubmit={handleSubmit}>
         <h2>创作你的短文</h2>
-        <section className="studio-composer">
+        <div className="studio-input-modes" role="group" aria-label="短文来源">
+          <button type="button" aria-pressed={!importMode} disabled={isLoading} onClick={() => setImportMode(false)}>自定义主题</button>
+          <button type="button" aria-pressed={importMode} disabled={isLoading} onClick={() => setImportMode(true)}>导入英文稿</button>
+        </div>
+        {importMode ? <section className="studio-composer studio-transcript">
+          <label htmlFor="source-title">稿件标题（选填）</label>
+          <input id="source-title" value={sourceTitle} maxLength={160} disabled={isLoading} onChange={e => setSourceTitle(e.target.value)} placeholder="例如：TED 演讲标题" />
+          <label htmlFor="source-transcript">英文原稿</label>
+          <textarea id="source-transcript" value={sourceText} maxLength={30000} rows={8} disabled={isLoading} aria-describedby="transcript-help" onChange={e => { setSourceText(e.target.value); saveGenerationDraft(e.target.value, 'transcript'); }} placeholder="在这里粘贴 TED 稿件或其他英文文章…" />
+          <p id="transcript-help" className="studio-input-preview">{sourceText.length.toLocaleString()} / 30,000 字符 · 保留核心观点，按 {cefr} 等级和下方配方改写。生成的词汇将关联到新短文。</p>
+        </section> : <section className="studio-composer">
           <label htmlFor="generation-input"><AlignLeft size={17} aria-hidden="true" />自定义主题与要求</label>
           <textarea ref={textarea} id="generation-input" value={input} onChange={e => setInput(e.target.value)} rows={3} disabled={isLoading} aria-describedby={specifiedVocabulary ? 'generation-input-preview' : undefined} placeholder="例如：如何礼貌地拒绝别人，或输入想学习的英文单词…" />
           {specifiedVocabulary && <div id="generation-input-preview" className="studio-input-preview" role="status">{specifiedVocabulary.length ? `将按词表处理（${specifiedVocabulary.length} 项）：${specifiedVocabulary.join(' · ')}` : '尚未识别到词条，请在分隔符之间输入表达。'}<p>逗号、顿号和分号会分隔词条；主题描述请避免这些分隔符。</p></div>}
-        </section>
+        </section>}
         <section className="studio-recipe" aria-labelledby="recipe-title">
           <div className="studio-recipe__heading"><h3 id="recipe-title">你的学习配方</h3><button type="button" aria-expanded={expanded} aria-controls={expanded ? 'recipe-panel' : undefined} onClick={() => setExpanded(value => !value)}>{expanded ? <ChevronUp size={17} /> : <SlidersHorizontal size={16} />}{expanded ? '收起设置' : '自定义参数'}</button></div>
           {!expanded && <div className="studio-summary" aria-label="当前学习参数"><span>{cefr} · {LEVEL_LABELS[cefr]}</span><span>{TYPE_LABELS.find(([value]) => value === type)![1]}</span><span>{LENGTH_LABELS.find(([value]) => value === length)![1]}</span><span>{vocabCount} 个精选词汇</span><span>{styleLabel}</span></div>}
           {expanded && <div id="recipe-panel" className="studio-recipe__panel">
-            <div className="studio-recipe__group"><span id="cefr-label">学习等级</span><div className="studio-choices" role="group" aria-labelledby="cefr-label" aria-describedby="cefr-ability-hint">{(['A2', 'B1', 'B2', 'C1'] as CEFRLevel[]).map(level => <button type="button" key={level} aria-pressed={cefr === level} disabled={isLoading} onClick={() => { setCefr(level); onCefrChange?.(level); }}>{level}</button>)}</div><p id="cefr-ability-hint" className="sr-only">能力参考：{CEFR_ABILITY_HINTS[cefr]}</p></div>
+            <div className="studio-recipe__group"><span id="cefr-label">学习等级</span><div className="studio-choices" role="group" aria-labelledby="cefr-label" aria-describedby="cefr-ability-hint">{(['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as CEFRLevel[]).map(level => <button type="button" key={level} aria-pressed={cefr === level} disabled={isLoading} onClick={() => { setCefr(level); onCefrChange?.(level); }}>{level}</button>)}</div><p id="cefr-ability-hint" className="sr-only">能力参考：{CEFR_ABILITY_HINTS[cefr]}</p></div>
             <div className="studio-recipe__group"><span id="reading-type">文体</span><div className="studio-choices" role="group" aria-labelledby="reading-type">{TYPE_LABELS.map(([value, label]) => <button type="button" key={value} aria-pressed={type === value} disabled={isLoading} onClick={() => setType(value)}>{label}</button>)}</div></div>
             <div className="studio-recipe__group"><span id="reading-length">篇幅</span><div className="studio-choices" role="group" aria-labelledby="reading-length">{LENGTH_LABELS.map(([value, label]) => <button type="button" key={value} title={({ short: '80–120 词', medium: '150–200 词', long: '250–350 词' })[value]} aria-pressed={length === value} disabled={isLoading} onClick={() => setLength(value)}>{label}</button>)}</div></div>
             <div className="studio-recipe__inline"><span id="vocab-count-label">精选词汇</span><div className="studio-stepper" role="group" aria-labelledby="vocab-count-label"><button type="button" aria-label="减少精选词汇" disabled={isLoading || vocabCount <= 1} onClick={() => setVocabCount(count => Math.max(1, count - 1))}><Minus size={18} /></button><output aria-live="polite" aria-label="精选词汇数量">{vocabCount}</output><button type="button" aria-label="增加精选词汇" disabled={isLoading || vocabCount >= 20} onClick={() => setVocabCount(count => Math.min(20, count + 1))}><Plus size={18} /></button></div></div>
             <button id="reading-style" type="button" className="studio-style-trigger studio-recipe__inline" aria-haspopup="dialog" disabled={isLoading} onClick={() => setStyleOpen(true)}><span>风格</span><span className="studio-style-label"><span>{styleLabel}</span><ChevronDown size={17} /></span></button>
           </div>}
         </section>
-        <button type="submit" className="studio-generate" disabled={!input.trim() || isLoading}><Sparkles size={22} aria-hidden="true" /><span>{isLoading ? '生成中…' : '生成专属短文'}</span><ArrowRight size={19} aria-hidden="true" /></button>
+        <button type="submit" className="studio-generate" disabled={!(importMode ? sourceText.trim() : input.trim()) || isLoading}><Sparkles size={22} aria-hidden="true" /><span>{isLoading ? '生成中…' : importMode ? '改写为学习短文' : '生成专属短文'}</span><ArrowRight size={19} aria-hidden="true" /></button>
       </form>
       <dialog ref={sheet} className={`studio-style-sheet ${stylePresence.closing ? 'is-closing' : ''}`} aria-labelledby="style-sheet-title" onCancel={() => setStyleOpen(false)} onClick={e => { if (e.target === e.currentTarget) { const bounds = e.currentTarget.getBoundingClientRect(); if (e.clientX < bounds.left || e.clientX > bounds.right || e.clientY < bounds.top || e.clientY > bounds.bottom) setStyleOpen(false); } }}>
         <div className="studio-sheet-header" onTouchStart={e => { touchStart.current = e.touches[0].clientY; }} onTouchEnd={e => { if (touchStart.current !== null && e.changedTouches[0].clientY - touchStart.current > 70) setStyleOpen(false); touchStart.current = null; }}>

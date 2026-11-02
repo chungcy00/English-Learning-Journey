@@ -67,3 +67,21 @@ test('custom style is sent through the existing API input without changing store
     assert.equal(body.readingStyle, 'cinematic');
   } finally { globalThis.fetch = originalFetch; }
 });
+
+test('imported transcript travels separately from topic and keeps linked vocabulary at A1/C2', async () => {
+  const realFetch = globalThis.fetch;
+  const sourceText = 'We learn by trying, making mistakes, and trying again.';
+  globalThis.fetch = (async (_url, init) => {
+    const body=JSON.parse(String(init?.body));
+    assert.equal(body.sourceText,sourceText);assert.equal(body.specifiedVocabulary,undefined);
+    return new Response(JSON.stringify({title:'Keep Trying',reading:'We try again.',cefrLevel:body.cefrLevel,vocabulary:[{term:'try',cefrLevel:body.cefrLevel}],rewritePractice:[]}));
+  }) as typeof fetch;
+  try {
+    for (const cefrLevel of ['A1','C2'] as const) {
+      const record=await generateReadingWithPipeline({input:'Learning from mistakes',sourceText,cefrLevel,readingType:'non-story',length:'short',vocabularyCount:1});
+      assert.equal(record.sourceText,sourceText);assert.equal(record.topic,'Learning from mistakes');assert.equal(record.cefrLevel,cefrLevel);
+      assert.equal(record.selectedVocabulary[0].sourceReadingId,record.id);
+      assert.equal(record.selectedVocabulary[0].sourceCefrLevel,cefrLevel);
+    }
+  } finally { globalThis.fetch=realFetch; }
+});

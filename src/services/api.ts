@@ -242,6 +242,7 @@ export async function generateReadingWithPipeline(
     id: readingId,
     title: resultData.title || 'English Reading Practice',
     content: resultData.reading || '',
+    sourceText: request.sourceText,
     topic: request.input || 'General',
     input: request.input || '',
     cefrLevel: (resultData.cefrLevel as CEFRLevel) || request.cefrLevel,

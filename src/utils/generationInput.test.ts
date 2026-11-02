@@ -11,6 +11,6 @@ test('preview preserves every existing delimiter, phrase, order and duplicate', 
   assert.deepEqual(parseSpecifiedVocabulary('A rainy day, in town'), ['A rainy day', 'in town']);
 });
 test('all available degrees have distinct ability references', () => {
-  assert.deepEqual(Object.keys(CEFR_ABILITY_HINTS), ['A2', 'B1', 'B2', 'C1']);
-  assert.equal(new Set(Object.values(CEFR_ABILITY_HINTS)).size, 4);
+  assert.deepEqual(Object.keys(CEFR_ABILITY_HINTS), ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']);
+  assert.equal(new Set(Object.values(CEFR_ABILITY_HINTS)).size, 6);
 });
