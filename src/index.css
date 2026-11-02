@@ -1824,12 +1824,16 @@ html .reading-word-dialog::backdrop { background: rgb(255 255 255 / 70%); backdr
 .history-task-title { color: var(--text-ink); font-size: var(--type-page); font-weight: 700; line-height: 1.4; margin-bottom: 1rem; }
 .history-review-all { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; padding: 1rem; border-radius: 20px; background: #EFF3EA; color: var(--accent-primary); }
 .history-review-all > svg { flex-shrink: 0; }
-.history-review-all > div { min-width: 0; flex: 1 1 10rem; }
+.history-review-all > div:not(.history-task-actions) { min-width: 0; flex: 1 1 10rem; }
 .history-review-all h3 { font-size: var(--type-section); font-weight: 650; line-height: 1.5; }
 .history-review-all p, .history-task-card > p, .history-vocabulary-detail header p { font-size: var(--type-label); line-height: 1.7; color: var(--text-secondary); margin-top: .5rem; overflow-wrap: anywhere; }
 .history-review-all strong { color: var(--accent-primary); font-weight: 650; }
-.history-review-all > button { display: flex; align-items: center; justify-content: center; gap: .5rem; min-height: 44px; padding: .625rem .875rem; border-radius: 12px; background: #4B6E5B; color: white; font-size: var(--type-label); font-weight: 600; }
-.history-review-all > button:disabled { background: var(--surface-disabled); color: var(--text-disabled); }
+.history-task-start-all { display: flex; align-items: center; justify-content: center; gap: .5rem; min-height: 44px; padding: .625rem .875rem; border-radius: 12px; background: #4B6E5B; color: white; font-size: var(--type-label); font-weight: 600; }
+.history-task-start-all:disabled { background: var(--surface-disabled); color: var(--text-disabled); }
+.history-task-actions { display: grid; justify-items: stretch; flex: 0 0 auto; gap: .25rem; }
+.history-task-due { min-height: 44px; padding: .375rem .625rem; font-size: var(--type-label); line-height: 1.6; color: var(--accent-primary); text-decoration: underline; text-underline-offset: .2em; }
+.history-task-due:hover { background: var(--bg-alt); border-radius: 10px; }
+.history-task-actions--detail { width: 100%; }
 .history-specialized-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin-block: 1.75rem 1rem; }
 .history-specialized-heading h3 { color: var(--text-ink); font-size: var(--type-section); font-weight: 600; }
 .history-specialized-heading > span { color: var(--text-secondary); font-size: var(--type-meta); }

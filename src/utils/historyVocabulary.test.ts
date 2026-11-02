@@ -14,9 +14,9 @@ test('task totals, mastery and due counts use saved word levels and real timesta
  assert.equal(vocabularyLevel({cefrLevel:'invalid' as any}),'未知');
 });
 test('review requests carry exact due IDs or an explicit free scope, never infer word CEFR from passage',()=>{
- const due=createHistoryReviewRequest(words,'A2',100)!;assert.deepEqual(due,{source:'history',level:'A2',mode:'due',ids:['a']});
+ const due=createHistoryReviewRequest(words,'A2',100,'due')!;assert.deepEqual(due,{source:'history',level:'A2',mode:'due',ids:['a']});
  const free=createHistoryReviewRequest(words,'未知',100)!;assert.equal(free.mode,'free');assert.deepEqual(free.ids,['d']);
- assert.deepEqual(createHistoryReviewRequest(words,null,100)?.ids,['a','c']);assert.equal(createHistoryReviewRequest(words,'C1',100),null);
+ assert.deepEqual(createHistoryReviewRequest(words,null,100)?.ids,['a','b','c','d']);assert.equal(createHistoryReviewRequest(words,'C1',100),null);
  assert.deepEqual(historyReviewWords(words.filter(v=>v.id!=='a'),due),[]);
  assert.deepEqual(historyReviewWords(words.map(v=>v.id==='a'?{...v,nextReviewDate:500}:v),due).map(v=>v.id),['a']);
  assert.deepEqual(historyReviewWords(words.map(v=>v.id==='a'?{...v,cefrLevel:'B2'}:v),due),[]);
@@ -49,12 +49,27 @@ test('history scope is wired to the existing review and wordbook without changin
 });
 
 test('starting again rebuilds due/free scope from the latest scheduling and collection',()=>{
- const started=createHistoryReviewRequest(words,'A2',100)!;
+ const started=createHistoryReviewRequest(words,'A2',100,'due')!;
  const afterRating=words.map(v=>v.id==='a'?{...v,nextReviewDate:500}:v);
  assert.equal(createHistoryReviewRequest(afterRating,'A2',100)?.mode,'free');
  assert.deepEqual(createHistoryReviewRequest(afterRating,'A2',100)?.ids,['a','b']);
  assert.deepEqual(historyReviewWords(afterRating,started).map(v=>v.id),['a']);
  const newlyDue=[...afterRating,{...words[0],id:'new',nextReviewDate:90}];
- assert.deepEqual(createHistoryReviewRequest(newlyDue,'A2',100)?.ids,['new']);
+ assert.deepEqual(createHistoryReviewRequest(newlyDue,'A2',100,'due')?.ids,['new']);
+ assert.deepEqual(createHistoryReviewRequest(newlyDue,'A2',100,'free')?.ids,['a','b','new']);
+ assert.equal(createHistoryReviewRequest(afterRating,'A2',100,'due'),null);
  assert.equal(createHistoryReviewRequest(words.filter(v=>v.cefrLevel!=='A2'),'A2',100),null);
+});
+
+test('nine collected words with one due produce nine cards for all review and one only for explicit due review',()=>{
+ const nine=Array.from({length:9},(_,index)=>({...words[0],id:`b1-${index}`,cefrLevel:'B1',nextReviewDate:index===0?50:500})) as VocabularyItem[];
+ const counts=vocabularyTask(nine,'B1',100);assert.equal(counts.total,9);assert.equal(counts.due,1);
+ const all=createHistoryReviewRequest(nine,'B1',100)!;
+ assert.equal(all.mode,'free');assert.equal(historyReviewWords(nine,all).length,9);
+ assert.equal(historyReviewWords(nine,createHistoryReviewRequest(nine,'B1',100,'due')!).length,1);
+ const html=renderToStaticMarkup(React.createElement(HistoryVocabularyTasks,{vocabulary:nine,now:100,selectedLevel:'B1',onSelectLevel(){},onReview(){},onOpenWordbook(){}}));
+ assert.match(html,/复习全部B1词汇（9词）/);assert.match(html,/到期复习（B1，1词）/);
+ const noDue=nine.map(word=>({...word,nextReviewDate:500}));
+ const noDueHtml=renderToStaticMarkup(React.createElement(HistoryVocabularyTasks,{vocabulary:noDue,now:100,selectedLevel:'B1',onSelectLevel(){},onReview(){},onOpenWordbook(){}}));
+ assert.match(noDueHtml,/复习全部B1词汇（9词）/);assert.doesNotMatch(noDueHtml,/aria-label="到期复习/);
 });

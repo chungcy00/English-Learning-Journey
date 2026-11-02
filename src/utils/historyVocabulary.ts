@@ -1,8 +1,9 @@
 import type { VocabularyItem } from '../types';
 import { READING_LEVELS } from './readingLevelDistribution';
 export type HistoryVocabularyLevel = typeof READING_LEVELS[number];
+export type HistoryReviewMode = 'due' | 'free';
 export interface HistoryReviewRequest {
-  source: 'history'; level: HistoryVocabularyLevel | null; mode: 'due' | 'free'; ids: string[];
+  source: 'history'; level: HistoryVocabularyLevel | null; mode: HistoryReviewMode; ids: string[];
 }
 export function vocabularyLevel(item: Pick<VocabularyItem, 'cefrLevel'>): HistoryVocabularyLevel {
   return READING_LEVELS.includes(item.cefrLevel as HistoryVocabularyLevel) ? item.cefrLevel as HistoryVocabularyLevel : '未知';
@@ -20,11 +21,11 @@ export function vocabularyTask(items: readonly VocabularyItem[], level: HistoryV
     percentage: words.length ? mastered / words.length * 100 : 0,
     recent: [...words].sort((a, b) => b.createdAt - a.createdAt).slice(0, 5) };
 }
-export function createHistoryReviewRequest(items: readonly VocabularyItem[], level: HistoryVocabularyLevel | null, now: number): HistoryReviewRequest | null {
+export function createHistoryReviewRequest(items: readonly VocabularyItem[], level: HistoryVocabularyLevel | null, now: number, mode: HistoryReviewMode = 'free'): HistoryReviewRequest | null {
   const words = vocabularyForLevel(items, level);
-  if (!words.length) return null;
-  const due = dueVocabulary(words, now);
-  return { source: 'history', level, mode: due.length ? 'due' : 'free', ids: (due.length ? due : words).map(item => item.id) };
+  const selected = mode === 'due' ? dueVocabulary(words, now) : words;
+  if (!selected.length) return null;
+  return { source: 'history', level, mode, ids: selected.map(item => item.id) };
 }
 export function historyReviewWords(items: readonly VocabularyItem[], request: HistoryReviewRequest) {
   const available = new Map(vocabularyForLevel(items, request.level).map(item => [item.id, item]));

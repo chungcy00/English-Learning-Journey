@@ -98,7 +98,7 @@ export default function App() {
     if (!previous) return;
     const [latest, latestReadings] = await Promise.all([getAllVocabularies(), getAllReadings()]);
     if (historyReviewRef.current?.run !== previous.run) return;
-    const request = createHistoryReviewRequest(vocabularyWithReadingSources(latest, latestReadings), previous.level, Date.now()) || { source: 'history' as const, level: previous.level, mode: 'free' as const, ids: [] };
+    const request = createHistoryReviewRequest(vocabularyWithReadingSources(latest, latestReadings), previous.level, Date.now(), previous.mode) || { source: 'history' as const, level: previous.level, mode: previous.mode, ids: [] };
     setVocabularies(latest);
     setReadings(latestReadings);
     setHistoryReview({ ...request, run: Math.max(Date.now(), previous.run + 1) });
@@ -108,8 +108,8 @@ export default function App() {
     setHistoryReview(null); setHistoryWordbookLevel(undefined);
     if (tab !== 'settings') setActiveTab(tab);
   };
-  const openHistoryReview = (level: HistoryVocabularyLevel | null) => {
-    const request = createHistoryReviewRequest(historyVocabulary, level, Date.now());
+  const openHistoryReview = (level: HistoryVocabularyLevel | null, mode: HistoryReviewRequest['mode'] = 'free') => {
+    const request = createHistoryReviewRequest(historyVocabulary, level, Date.now(), mode);
     if (!request) return;
     setHistoryReview({ ...request, run: Date.now() });
     setActiveTab('practice');
@@ -583,7 +583,7 @@ export default function App() {
           <button type="button" className="practice-back" onClick={() => { setHistoryReview(null); setActiveTab('history'); }}><ArrowLeft size={17} aria-hidden="true"/>返回历史词汇看板</button>
           <ReviewView key={historyReview.run} embedded allVocabularies={scopedHistoryReview} onRate={handleRateReview} onRefresh={refreshHistoryReview}
             practiceOnly={historyReview.mode === 'free'} sessionKey={`history:${historyReview.level || 'all'}:${historyReview.mode}:${historyReview.run}`}
-            scopeLabel={`${historyReview.level ? vocabularyLevelLabel(historyReview.level) : '全部词汇'} · ${historyReview.mode === 'free' ? '自由复习（不更改复习排程）' : '到期复习'}`} />
+            scopeLabel={`${historyReview.level ? vocabularyLevelLabel(historyReview.level) : '全部词汇'} · ${historyReview.mode === 'free' ? '全部复习（不更改复习排程）' : '到期复习'}`} />
         </div>}
         {activeTab === 'practice' && !historyReview && (
           <PracticeHubView exerciseCount={currentReading?.rewritePractice?.length || 0} vocabularyCount={vocabularies.length}
