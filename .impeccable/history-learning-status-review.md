@@ -22,3 +22,7 @@ Per the user's annotated feedback, replaced the native selector and separate “
 Verified with an isolated nine-word fixture (4 New, 3 Learning, 1 Difficult, 1 Mastered): desktop and 390px mobile render four buttons in one row under B2; direct Learning entry opens three cards and Difficult opens one. No real user data or AI calls used. Fixture source/tab and viewport override cleaned up. Typecheck, frontend/server builds and all 190 tests completed (189 passed, 1 skipped). Existing bundle-size warning remains.
 
 Proof screenshots: `history-status-horizontal-desktop.png` and `history-status-horizontal-mobile.png` in the same visualization directory above.
+
+## Compact status labels — 2026-11-02
+
+User requested single-line “词评 · x 词” labels and smaller controls. Kept the agreed learning-state names and now render e.g. “未学习 · 8 词”. Reduced button height from 88px (76px mobile) to 44px, reduced padding/radius/gaps, and capped the four-column strip at 32rem. No queue or count behavior changes. Desktop and 390px synthetic fixtures visually checked, with disabled zero-count categories preserved; no actual user data writes. Typecheck, seven history regression tests and frontend build pass. Screenshot: `history-status-compact-desktop.png` in the visualization directory above.

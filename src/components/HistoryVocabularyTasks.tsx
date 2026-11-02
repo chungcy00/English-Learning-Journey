@@ -25,7 +25,7 @@ function StatusReview({ task, onReview }: ReviewActionProps) {
       return <button key={item.value} type="button" className={`history-status-choice history-status-choice--${item.value.toLowerCase()}`}
         disabled={!count} aria-label={`${label}分类复习：${item.label}（${count}词）`}
         onClick={() => onReview(task.level, 'status', item.value)}>
-        <span>{item.label}</span><small>{count} 词</small>
+        <span>{item.label} · {count} 词</span>
       </button>;
     })}
   </div>;
