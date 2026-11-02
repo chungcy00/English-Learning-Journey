@@ -293,7 +293,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({
             {allVocabularies.length === 0 ? scopeLabel ? '当前范围暂无可复习词汇' : '当前短文还没有已添加词条' : '本轮复习已完成！'}
           </h2>
           {allVocabularies.length === 0 && <p className="type-body font-ui text-[var(--text-secondary)] max-w-md mx-auto">
-            在当前阅读页或生词本添加表达后，即可在这里复习。
+            {scopeLabel ? '可返回历史词汇看板检查收录词汇，或选择其他学习状态。' : '在当前阅读页或生词本添加表达后，即可在这里复习。'}
           </p>}
 
           <div className="pt-4 flex flex-wrap justify-center gap-3">

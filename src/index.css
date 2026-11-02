@@ -1831,8 +1831,13 @@ html .reading-word-dialog::backdrop { background: rgb(255 255 255 / 70%); backdr
 .history-task-start-all { display: flex; align-items: center; justify-content: center; gap: .5rem; min-height: 44px; padding: .625rem .875rem; border-radius: 12px; background: #4B6E5B; color: white; font-size: var(--type-label); font-weight: 600; }
 .history-task-start-all:disabled { background: var(--surface-disabled); color: var(--text-disabled); }
 .history-task-actions { display: grid; justify-items: stretch; flex: 0 0 auto; gap: .25rem; }
-.history-task-due { min-height: 44px; padding: .375rem .625rem; font-size: var(--type-label); line-height: 1.6; color: var(--accent-primary); text-decoration: underline; text-underline-offset: .2em; }
-.history-task-due:hover { background: var(--bg-alt); border-radius: 10px; }
+.history-status-review { display: flex; flex-wrap: wrap; align-items: end; gap: .5rem; margin-top: .5rem; min-width: 0; }
+.history-status-review label { display: grid; gap: .25rem; flex: 1 1 8rem; min-width: 0; }
+.history-status-review label > span { font-size: var(--type-meta); line-height: 1.5; color: var(--text-secondary); }
+.history-status-review select { width: 100%; min-height: 44px; padding: .5rem; border: 1px solid var(--border-control); border-radius: 10px; background: var(--surface-paper); color: var(--text-primary); font-size: var(--type-label); }
+.history-task-status { min-height: 44px; padding: .5rem .75rem; border: 1px solid var(--border-control); border-radius: 10px; font-size: var(--type-label); line-height: 1.6; color: var(--accent-primary); }
+.history-task-status:enabled:hover { background: var(--bg-alt); }
+.history-task-status:disabled { color: var(--text-disabled); cursor: not-allowed; }
 .history-task-actions--detail { width: 100%; }
 .history-specialized-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin-block: 1.75rem 1rem; }
 .history-specialized-heading h3 { color: var(--text-ink); font-size: var(--type-section); font-weight: 600; }
