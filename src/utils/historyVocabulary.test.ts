@@ -63,7 +63,7 @@ test('refresh rebuilds the chosen status and never substitutes other categories 
  assert.equal(createHistoryReviewRequest(words.filter(v=>v.cefrLevel!=='A2'),'A2'),null);
 });
 
-test('nine collected words remain nine for all review; selectors show actual 4/3/1/1 learning categories',()=>{
+test('nine collected words remain nine for all review; direct categories show actual 4/3/1/1 learning categories',()=>{
  const statuses=['New','New','New','New','Learning','Learning','Learning','Difficult','Mastered'] as const;
  const nine=statuses.map((status,index)=>({...words[0],id:`b1-${index}`,cefrLevel:'B1',status,nextReviewDate:index===0?50:500})) as VocabularyItem[];
  const counts=vocabularyTask(nine,'B1');assert.equal(counts.total,9);assert.deepEqual(counts.statusCounts,{New:4,Learning:3,Difficult:1,Mastered:1});
@@ -73,6 +73,6 @@ test('nine collected words remain nine for all review; selectors show actual 4/3
  const html=renderToStaticMarkup(React.createElement(HistoryVocabularyTasks,{vocabulary:nine,selectedLevel:'B1',onSelectLevel(){},onReview(){},onOpenWordbook(){}}));
  assert.match(html,/复习全部B1词汇（9词）/);assert.match(html,/B1分类复习：未学习（4词）/);
  for (const label of ['未学习（4词）','学习中（3词）','困难（1词）','已掌握（1词）']) assert.ok(html.includes(label));
- assert.doesNotMatch(html,/到期|待复习/);
+ assert.doesNotMatch(html,/到期|待复习|<select|复习所选/);
  assert.equal(createHistoryReviewRequest(nine.filter(word=>word.status!=='New'),'B1','status','New'),null);
 });

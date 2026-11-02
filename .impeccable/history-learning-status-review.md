@@ -14,3 +14,11 @@ Screenshots:
 - `/Users/caiying/.codex/visualizations/2026/10/10/01a1261b-9f20-76f1-929f-8a9256f37c97/history-status-selection-desktop.png`
 - `/Users/caiying/.codex/visualizations/2026/10/10/01a1261b-9f20-76f1-929f-8a9256f37c97/history-learning-status-three-cards.png`
 - `/Users/caiying/.codex/visualizations/2026/10/10/01a1261b-9f20-76f1-929f-8a9256f37c97/history-status-selection-mobile.png`
+
+## Horizontal direct-entry update — 2026-11-02
+
+Per the user's annotated feedback, replaced the native selector and separate “复习所选” button with four equal-width, two-line status buttons directly below each CEFR header. Summary and level detail use the same component. Each button shows the real category count and starts that status directly; zero-count categories remain disabled. Full review remains a separate header action. Existing queue, learning-state semantics and rating persistence are unchanged.
+
+Verified with an isolated nine-word fixture (4 New, 3 Learning, 1 Difficult, 1 Mastered): desktop and 390px mobile render four buttons in one row under B2; direct Learning entry opens three cards and Difficult opens one. No real user data or AI calls used. Fixture source/tab and viewport override cleaned up. Typecheck, frontend/server builds and all 190 tests completed (189 passed, 1 skipped). Existing bundle-size warning remains.
+
+Proof screenshots: `history-status-horizontal-desktop.png` and `history-status-horizontal-mobile.png` in the same visualization directory above.
