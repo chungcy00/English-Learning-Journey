@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X, Plus, BookOpenCheck, ArrowRight, ArrowDownAZ, ArrowUpZA, ListChecks, ChevronDown } from 'lucide-react';
 import type { VocabularyItem, VocabStatus, CEFRLevel, ReadingType, ReadingLength, ReadingRecord } from '../types';
+import { WordbookCustomAdd } from '../components/WordbookCustomAdd';
 import { WordbookEntryDetails } from '../components/WordbookEntryDetails';
 import { WordbookRemovalDialog } from '../components/WordbookRemovalDialog';
 import { explainVocabularyTerm } from '../services/api';
@@ -117,6 +118,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({ vocabularyList, scop
       {panelVisible&&catalogue.error&&<p className="wordbook-message">{catalogue.error} <button type="button" onClick={catalogue.retry}>重试加载</button></p>}
       {error&&<p role="alert" className="wordbook-error">{error}</p>}{success&&<p role="status" className="wordbook-message">{success}</p>}
     </section>
+    {!scopeLabel && <div key={currentReading?.id || 'no-reading'}><WordbookCustomAdd reading={currentReading} vocabulary={vocabularyList} onSave={onSaveVocab}/></div>}
     <section className="wordbook-management" aria-label="生词列表管理">
       <div className="wordbook-status-filters flex flex-wrap" role="group" aria-label="按学习状态筛选">{(['All','New','Learning','Difficult','Mastered'] as const).map(status=><button key={status} type="button" aria-pressed={statusFilter===status} onClick={()=>setStatusFilter(status)}>{status==='All'?'全部':wordbookStatuses[status]} <span className="wordbook-filter-count">{status==='All'?vocabularyList.length:vocabularyList.filter(v=>v.status===status).length}</span></button>)}</div>
       <div className="wordbook-action-bar"><button type="button" onClick={()=>setDescending(!descending)} aria-label={`字母排序：${descending?'Z 到 A，切换为 A 到 Z':'A 到 Z，切换为 Z 到 A'}`}>{descending?<ArrowUpZA aria-hidden="true" size={18}/>:<ArrowDownAZ aria-hidden="true" size={18}/>}字母排序 {descending?'Z–A':'A–Z'}</button><button type="button" aria-pressed={batch} onClick={()=>{setBatch(!batch);setSelected([]);setDetailId(null);}}><ListChecks aria-hidden="true" size={18}/>{batch?'完成管理':'批量管理'}</button></div>
