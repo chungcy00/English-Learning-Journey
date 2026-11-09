@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Bookmark, History, Sparkles } from 'lucide-react';
+import { BookOpen, BookA, Bookmark, History, Sparkles } from 'lucide-react';
 
 export type NavTab = 'home' | 'reading' | 'history' | 'practice' | 'wordbook' | 'rewrite';
 
@@ -19,6 +19,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const tabs = [
     { id: 'home' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '生成' : '生成短文', icon: Sparkles },
     { id: 'reading' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '阅读' : '当前阅读', icon: BookOpen, disabled: !hasCurrentReading },
+    { id: 'wordbook' as NavTab, label: '单词', icon: BookA },
     { id: 'practice' as NavTab, label: '词汇与复习', icon: Bookmark, badge: reviewCount },
     { id: 'history' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '历史' : '历史记录', icon: History },
   ];
@@ -45,10 +46,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
 
         {/* Navigation Tabs */}
-        <nav aria-label="主导航" className="grid grid-cols-4 lg:flex lg:items-center gap-1 sm:gap-2">
+        <nav aria-label="主导航" className="grid grid-cols-5 lg:flex lg:items-center gap-1 sm:gap-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
-            const isActive = activeTab === tab.id || (tab.id === 'practice' && (activeTab === 'wordbook' || activeTab === 'rewrite'));
+            const isActive = activeTab === tab.id || (tab.id === 'practice' && activeTab === 'rewrite');
             return (
               <button
                 key={tab.id}
@@ -66,7 +67,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 <Icon aria-hidden="true" className="w-4 h-4 shrink-0" />
-                <span className="text-center leading-[1.4] break-words">{tab.label}</span>
+                <span className="text-center leading-[1.4] break-words"><span className="sm:hidden">{tab.id === 'home' ? '生成' : tab.id === 'reading' ? '阅读' : tab.id === 'practice' ? '复习' : tab.id === 'history' ? '历史' : tab.label}</span><span className="hidden sm:inline">{tab.label}</span></span>
                 {tab.badge !== undefined && tab.badge > 0 && (
                   <span aria-hidden="true" className="absolute top-0 right-0 lg:static lg:ml-1 px-1.5 text-[length:var(--type-meta)] leading-[1.4] rounded-full bg-[var(--accent-warm)] text-[var(--text-primary)] font-semibold">
                     {tab.badge}

@@ -2,6 +2,14 @@ import { DETAIL_SECTIONS, type DetailSection, type LearningEntry, type Vocabular
 
 export const sectionLabels: Record<DetailSection, string> = { examples: '例句', derivatives: '派生', roots: '词根', phrases: '词组', definitions: '英释', usage: '用法辨析' };
 export const categoryLabels: Record<VocabularyCategory, string> = { word: '单词', phrase: '短语', idiom: '习语', collocation: '搭配', 'phrasal-verb': '短语动词' };
+const inflectionLabels: Record<string, string> = {
+  plural: '复数', 'plural form': '复数', singular: '单数', 'third person': '三单', 'third person singular': '三单', 'third person singular present': '三单', 'third person singular present tense': '三单', '3rd person': '三单', 'present participle ing': '现在分词', '3rd person singular': '三单',
+  past: '过去式', 'past tense': '过去式', 'simple past': '过去式', participle: '过去分词', 'past participle': '过去分词', 'present participle': '现在分词', gerund: '动名词',
+  comparative: '比较级', superlative: '最高级', 'base form': '原形', infinitive: '不定式',
+};
+export function inflectionLabel(label: string) {
+  return inflectionLabels[label.toLowerCase().replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim()] || label;
+}
 export const cleanTerm = (term: string) => term.replace(/’/g, "'").replace(/\s+/g, ' ').trim();
 // Preserve case-sensitive names and abbreviations rather than merging US/us or Polish/polish.
 export const vocabularyKey = (term: string, type: VocabularyItem['type']) => `${type === 'word' ? 'word' : 'phrase'}:${cleanTerm(term)}`;

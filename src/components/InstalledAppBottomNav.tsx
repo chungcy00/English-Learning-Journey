@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Bookmark, History, Sparkles } from 'lucide-react';
+import { BookOpen, BookA, Bookmark, History, Sparkles } from 'lucide-react';
 import { NavTab } from './Navbar';
 
 interface InstalledAppBottomNavProps {
@@ -18,6 +18,7 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
   const tabs = [
     { id: 'home' as NavTab, label: '生成', icon: Sparkles },
     { id: 'reading' as NavTab, label: '阅读', icon: BookOpen, disabled: !hasCurrentReading },
+    { id: 'wordbook' as NavTab, label: '单词', icon: BookA },
     { id: 'practice' as NavTab, label: '词汇与复习', icon: Bookmark, badge: reviewCount },
     { id: 'history' as NavTab, label: '历史', icon: History },
   ];
@@ -27,10 +28,10 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
       aria-label="软件主导航"
       className="installed-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-[var(--border-subtle)] bg-[var(--surface-paper)]/95 backdrop-blur-md shadow-[0_-4px_18px_rgba(41,43,37,0.08)]"
     >
-      <div className="mx-auto grid max-w-3xl grid-cols-4 px-1 pt-1.5 pb-[calc(0.4rem+env(safe-area-inset-bottom))]">
+      <div className="mx-auto grid max-w-3xl grid-cols-5 px-1 pt-1.5 pb-[calc(0.4rem+env(safe-area-inset-bottom))]">
         {tabs.map((tab) => {
           const Icon = tab.icon;
-          const isActive = activeTab === tab.id || (tab.id === 'practice' && (activeTab === 'wordbook' || activeTab === 'rewrite'));
+          const isActive = activeTab === tab.id || (tab.id === 'practice' && activeTab === 'rewrite');
           return (
             <button
               key={tab.id}
@@ -58,7 +59,7 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
                 ) : null}
               </span>
               <span className={`text-[length:var(--type-meta)] leading-[1.4] leading-4 ${isActive ? 'font-semibold' : 'font-medium'}`}>
-                {tab.label}
+                {tab.id === 'practice' ? '复习' : tab.label}
               </span>
             </button>
           );
