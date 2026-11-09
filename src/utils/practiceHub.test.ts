@@ -15,12 +15,12 @@ test('hub presents the all-vocabulary entrance and review without rewrite practi
  assert.ok(html.indexOf('我的单词本')<html.indexOf('Actual review'));
 });
 
-test('web and installed navigation select the separate wordbook while retaining the legacy rewrite destination', () => {
+test('web and installed navigation keep the original wordbook and review destination separate from custom words', () => {
   for (const activeTab of ['rewrite', 'wordbook'] as const) {
     const props = { activeTab, setActiveTab() {}, reviewCount: 5, hasCurrentReading: true, };
     for (const Component of [Navbar, InstalledAppBottomNav]) {
       const html = renderToStaticMarkup(React.createElement(Component, props));
-      assert.match(html, activeTab === 'wordbook' ? /aria-label="单词"[^>]*aria-current="page"/ : /aria-label="词汇与复习，5 个词条"[^>]*aria-current="page"/);
+      assert.match(html, /aria-label="词汇与复习，5 个词条"[^>]*aria-current="page"/);
       assert.doesNotMatch(html, /aria-label="复习，|aria-label="生词本"/);
     }
   }

@@ -1,3 +1,4 @@
+import { CustomWordsView } from './views/CustomWordsView';
 import { vocabularyKey } from './utils/vocabularyDetails';
 /**
  * @license
@@ -332,6 +333,16 @@ export default function App() {
     if (target) setRemovalTarget(target);
   };
 
+  const handleSaveWordbookVocabulary = async (vocab: VocabularyItem, fromCustom = false) => {
+    const existing = (await getAllVocabularies()).find(v => vocabularyKey(v.term, v.type) === vocabularyKey(vocab.term, vocab.type));
+    const saved = existing ? { ...vocab, ...existing, details: vocab.details || existing.details, savedManually: true, updatedAt: Date.now() } : vocab;
+    // Adding an existing article expression here records manual intent without
+    // replacing its ID, article links or review fields.
+    if (fromCustom) saved.origin = 'manual';
+    await saveVocabulary(saved);
+    setVocabularies(items => [...items.filter(item => item.id !== saved.id), saved]);
+  };
+
   // 8. Generate From Wordbook (PRD Section 20)
   const handleGenerateFromWordbook = (params: {
     selectedTerms: string[];
@@ -431,6 +442,7 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'words' && <CustomWordsView vocabulary={vocabularies} onSave={word => handleSaveWordbookVocabulary(word, true)} onRequestRemove={word => handleDeleteVocab(word.id)}/>}
         {activeTab === 'wordbook' && (
           <>
           <div className="practice-back-bar"><button type="button" className="practice-back" onClick={() => setActiveTab(historyWordbookLevel === undefined ? 'practice' : 'history')}><ArrowLeft aria-hidden="true" className="w-4 h-4" />{historyWordbookLevel === undefined ? '词汇与复习' : '返回历史词汇看板'}</button></div>
@@ -468,12 +480,7 @@ export default function App() {
             onGenerateFromWordbook={handleGenerateFromWordbook}
             isGenerating={isGenerating}
             currentCefr={settings.cefr}
-            onSaveVocab={async (vocab) => {
-              const existing = (await getAllVocabularies()).find(v => vocabularyKey(v.term, v.type) === vocabularyKey(vocab.term, vocab.type));
-              const saved = existing ? { ...vocab, ...existing, details: vocab.details || existing.details, savedManually: true, updatedAt: Date.now() } : vocab;
-              await saveVocabulary(saved);
-              setVocabularies(items => [...items.filter(item => item.id !== saved.id), saved]);
-            }}
+            onSaveVocab={handleSaveWordbookVocabulary}
             onOpenReview={historyWordbookLevel === undefined ? openHubReview : () => openHistoryReview(historyWordbookLevel)}
           />
           </>

@@ -10,8 +10,8 @@ import { VocabularyDetailsPanel } from './VocabularyDetailsPanel';
 export function customWordbookItem(details: Partial<VocabularyItem>, reading: ReadingRecord | null, now: number, id: string): VocabularyItem {
   return { ...basicVocabulary(details.term || '', details.type), ...details, id, savedManually: true, createdAt: now, updatedAt: now };
 }
-export function WordbookCustomAdd({ vocabulary, onSave }: { reading: ReadingRecord | null; vocabulary: VocabularyItem[]; onSave: (item: VocabularyItem) => Promise<void> }) {
-  const [open, setOpen] = useState(false);
+export function WordbookCustomAdd({ vocabulary, onSave, initiallyOpen = false }: { reading: ReadingRecord | null; vocabulary: VocabularyItem[]; onSave: (item: VocabularyItem) => Promise<void>; initiallyOpen?: boolean }) {
+  const [open, setOpen] = useState(initiallyOpen);
   const [query, setQuery] = useState('');
   const [preview, setPreview] = useState<VocabularyItem | null>(null);
   const [duplicate, setDuplicate] = useState<VocabularyItem | null>(null);

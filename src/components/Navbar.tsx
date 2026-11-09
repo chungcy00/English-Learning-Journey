@@ -1,7 +1,7 @@
 import React from 'react';
 import { BookOpen, BookA, Bookmark, History, Sparkles } from 'lucide-react';
 
-export type NavTab = 'home' | 'reading' | 'history' | 'practice' | 'wordbook' | 'rewrite';
+export type NavTab = 'words' | 'home' | 'reading' | 'history' | 'practice' | 'wordbook' | 'rewrite';
 
 interface NavbarProps {
   activeTab: NavTab | 'settings'; // keep 'settings' literal here just in case App passes it
@@ -19,7 +19,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const tabs = [
     { id: 'home' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '生成' : '生成短文', icon: Sparkles },
     { id: 'reading' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '阅读' : '当前阅读', icon: BookOpen, disabled: !hasCurrentReading },
-    { id: 'wordbook' as NavTab, label: '单词', icon: BookA },
+    { id: 'words' as NavTab, label: '单词', icon: BookA },
     { id: 'practice' as NavTab, label: '词汇与复习', icon: Bookmark, badge: reviewCount },
     { id: 'history' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '历史' : '历史记录', icon: History },
   ];
@@ -49,7 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <nav aria-label="主导航" className="grid grid-cols-5 lg:flex lg:items-center gap-1 sm:gap-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
-            const isActive = activeTab === tab.id || (tab.id === 'practice' && activeTab === 'rewrite');
+            const isActive = activeTab === tab.id || (tab.id === 'practice' && (activeTab === 'wordbook' || activeTab === 'rewrite'));
             return (
               <button
                 key={tab.id}

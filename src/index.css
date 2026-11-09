@@ -1970,3 +1970,17 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 .lexicon-usage-contrast > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: .375rem .75rem; }
 .lexicon-usage-contrast dt { font-size: var(--type-label); color: var(--accent-primary); }
 .lexicon-usage-contrast > div:first-child dt { color: var(--status-error); }
+.custom-words-page { max-width: 56rem; padding-block: 2rem; }
+.custom-words-heading p { margin-top: .5rem; }
+.custom-words-page > .wordbook-custom-add { margin-top: .5rem; }
+.custom-words-collection { margin-top: 1.5rem; }
+.custom-words-list-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.custom-words-search { display: flex; align-items: center; gap: .5rem; padding-inline: 1rem; border-radius: 12px; background: var(--bg-alt); color: var(--text-secondary); }
+.custom-words-search input { min-width: 0; width: 100%; background: transparent; border: 0; }
+.custom-words-list { list-style: none; padding: 0; margin-top: 1rem; }
+.custom-words-list > li { margin-bottom: 1rem; }
+.custom-word-open { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%; min-height: 60px; padding: .75rem 0; text-align: left; }
+.custom-word-open > span { display: grid; gap: .375rem; min-width: 0; overflow-wrap: anywhere; }
+.custom-word-open strong { color: var(--accent-primary); font-size: var(--type-body); }
+.custom-word-open small { color: var(--text-secondary); font-size: var(--type-label); }
+.custom-words-list .wordbook-entry-details { padding: 1rem; border-radius: 16px; background: var(--surface-paper); }

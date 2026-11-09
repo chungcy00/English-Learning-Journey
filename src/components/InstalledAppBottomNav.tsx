@@ -18,7 +18,7 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
   const tabs = [
     { id: 'home' as NavTab, label: '生成', icon: Sparkles },
     { id: 'reading' as NavTab, label: '阅读', icon: BookOpen, disabled: !hasCurrentReading },
-    { id: 'wordbook' as NavTab, label: '单词', icon: BookA },
+    { id: 'words' as NavTab, label: '单词', icon: BookA },
     { id: 'practice' as NavTab, label: '词汇与复习', icon: Bookmark, badge: reviewCount },
     { id: 'history' as NavTab, label: '历史', icon: History },
   ];
@@ -31,7 +31,7 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
       <div className="mx-auto grid max-w-3xl grid-cols-5 px-1 pt-1.5 pb-[calc(0.4rem+env(safe-area-inset-bottom))]">
         {tabs.map((tab) => {
           const Icon = tab.icon;
-          const isActive = activeTab === tab.id || (tab.id === 'practice' && activeTab === 'rewrite');
+          const isActive = activeTab === tab.id || (tab.id === 'practice' && (activeTab === 'wordbook' || activeTab === 'rewrite'));
           return (
             <button
               key={tab.id}
