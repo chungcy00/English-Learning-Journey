@@ -1,6 +1,16 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { validateDetails, detailsSchema, detailsSchemaForSection, isolateRequestedSection } from './learningSchemas';
+
+test('Gemini full and section response schemas never contain rejected empty enum members',()=>{
+ const inspect=(value:any)=>{
+  if(!value||typeof value!=='object')return;
+  if(Array.isArray(value.enum))assert.ok(value.enum.every((item:any)=>item!==''),'Gemini rejects empty enum members');
+  for(const nested of Object.values(value))inspect(nested);
+ };
+ inspect(detailsSchema);
+ for(const section of ['examples','derivatives','roots','phrases','definitions','usage'] as const)inspect(detailsSchemaForSection(section));
+});
 import { DETAILS } from './testLearningFixtures';
 const morphology = { root: 'help', meaningZh: '帮助', parts: [{ kind:'root', text:'help', meaningZh:'帮助' }, { kind:'suffix', text:'ful', meaningZh:'具有……性质的' }], explanation:'help 加形容词后缀 -ful，表示有帮助的。', mnemonic:'想象一个乐于帮助别人的人。', related:[{word:'helpless',partOfSpeech:'adjective',meaningZh:'无助的'}] };
 function output() { return { ...structuredClone(DETAILS), term:'helpful', inflections:[{label:'comparative',value:'more helpful'}], sections:{...structuredClone(DETAILS.sections), roots:[{text:'help',meaningZh:'帮助',morphology:structuredClone(morphology)}], derivatives:[{text:'helpfulness',meaningZh:'乐于助人',partOfSpeech:'noun',family:{base:'help',relation:'helpful 加 -ness 构成名词'}}] } }; }
