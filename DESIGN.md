@@ -304,3 +304,7 @@ Examples group sentences by sense in one paper card per meaning. Each heading pl
 ### Desktop vocabulary widths (2026-11-10)
 
 At viewport widths of at least 1280px, with hover and a fine primary pointer, custom words and the wordbook use a centered 72rem maximum shell. Standalone vocabulary review and its history-scoped wrapper use the same maximum; vocabulary learning cards remain centered at a 56rem maximum within their existing review container. Existing page gutters, type, paper surfaces, six-tab marker navigation, and vertical spacing remain unchanged. Narrower screens and touch-primary tablets retain their incumbent widths and layout. The wordbook no longer exposes the local backup/restore panel, per the user's explicit removal request; existing browser data is retained.
+
+### Desktop generation, reading and history widths (2026-11-10)
+
+The same large-desktop media condition (at least 1280px, hover, fine primary pointer) gives the generation page a 56rem maximum and the history page a 72rem maximum. Reading uses a 72rem shell with a 2:1 grid: the original article and its click-to-reveal paragraph translations on the left, selected vocabulary on the right, with a 24px column gap. Header, audio player and status messages span both columns. Preserve the existing 70ch prose measure, paragraph behavior, colors, font sizes and controls; this is additional workspace, not longer reading lines. On narrow screens and touch-primary tablets, keep the incumbent stacked reading layout and all three page widths unchanged.

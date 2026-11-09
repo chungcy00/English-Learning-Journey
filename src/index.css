@@ -2095,3 +2095,20 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
   .review-page:not(.review-embedded), .history-scoped-review { max-width: 72rem; }
   .review-page .review-flip-stage { max-width: 56rem; }
 }
+
+/* Give desktop generation/history room; keep reading text at its existing measure. */
+@media (min-width: 1280px) and (hover: hover) and (pointer: fine) {
+  .studio-home { max-width: 56rem; }
+  .history-page.history-final { max-width: 72rem; }
+  .reading-page.reading-studio {
+    max-width: 72rem;
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 20px 24px;
+  }
+  .reading-studio > * { grid-column: 1 / -1; min-width: 0; }
+  .reading-studio > * + * { margin-top: 0; }
+  .reading-studio > .reading-studio__body { grid-column: 1; }
+  .reading-studio > .reading-vocabulary { grid-column: 2; width: 100%; margin: 0; }
+}
