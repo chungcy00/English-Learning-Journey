@@ -1,5 +1,5 @@
 import { Type } from '@google/genai';
-import { DETAIL_SECTIONS, VOCABULARY_CATEGORIES, type VocabularyDetails, type LearningEntry } from '../src/types.js';
+import { DETAIL_SECTIONS, VOCABULARY_CATEGORIES, type VocabularyDetails, type LearningEntry, type DetailSection } from '../src/types.js';
 import { inflectionLabel, vocabularyKey } from '../src/utils/vocabularyDetails.js';
 export class VocabularyDetailsError extends Error { name = 'VocabularyDetailsError'; }
 const string = { type: Type.STRING };
@@ -34,6 +34,18 @@ export const detailsSchema = { type: Type.OBJECT, properties: {
   senses: entries, inflections: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { label: string, value: string }, required: ['label', 'value'] } },
   sections: { type: Type.OBJECT, properties: Object.fromEntries(DETAIL_SECTIONS.map(key => [key, key === 'derivatives' ? derivativeEntries : key === 'roots' ? rootEntries : key === 'phrases' ? phraseEntries : key === 'usage' ? usageEntries : entries])), required: [...DETAIL_SECTIONS] },
 }, required: ['isValidTerm', 'term', 'type', 'category', 'phoneticUK', 'phoneticUS', 'senses', 'inflections', 'sections'] };
+// Refreshes request only the selected column. Unexpected columns are discarded
+// before validation so they cannot fail a refresh or replace unrelated cache.
+export function detailsSchemaForSection(section?: DetailSection) {
+  if (!section) return detailsSchema;
+  return { ...detailsSchema, properties: { ...detailsSchema.properties, sections: {
+    type: Type.OBJECT, properties: { [section]: detailsSchema.properties.sections.properties[section] }, required: [section],
+  } } };
+}
+export function isolateRequestedSection(data: any, section?: DetailSection) {
+  if (!section) return data;
+  return { ...data, sections: Object.fromEntries(DETAIL_SECTIONS.map(key => [key, key === section ? data?.sections?.[key] : []])) };
+}
 export const paragraphSchema = { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { source: string, translation: string }, required: ['source', 'translation'] } };
 export function validateDetails(data: any, term: string, type: VocabularyDetails['type'], retainedSenses: LearningEntry[] = [], requireStructured = false, retainedInflections: { label: string; value: string }[] = []): VocabularyDetails {
   if (data?.isValidTerm !== true || data.term !== term || !Array.isArray(data.senses) || !data.senses.length) throw new VocabularyDetailsError('未找到可靠的词条资料，请检查拼写，或先手动保存。');
@@ -69,8 +81,11 @@ export function validateDetails(data: any, term: string, type: VocabularyDetails
         entry.usageKind = item.usageKind;
       }
       if (prefix === 'usage' && item.contrast != null && !(item.contrast.incorrect === '' && item.contrast.correct === '')) {
-        if (item.usageKind !== 'error' || !shortText(item.contrast?.incorrect) || !shortText(item.contrast?.correct) || item.contrast.incorrect.trim() === item.contrast.correct.trim()) throw new VocabularyDetailsError('用法纠错内容不完整，请重试。');
-        entry.contrast = { incorrect: item.contrast.incorrect, correct: item.contrast.correct };
+        // The pair is optional enrichment. Never show partial placeholders or
+        // present style alternatives as errors, and keep the valid explanation.
+        if (item.usageKind === 'error' && shortText(item.contrast?.incorrect) && shortText(item.contrast?.correct) && item.contrast.incorrect.trim() !== item.contrast.correct.trim()) {
+          entry.contrast = { incorrect: item.contrast.incorrect, correct: item.contrast.correct };
+        }
       }
       return entry;
     });

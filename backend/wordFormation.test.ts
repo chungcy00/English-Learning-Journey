@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { validateDetails, detailsSchema } from './learningSchemas';
+import { validateDetails, detailsSchema, detailsSchemaForSection, isolateRequestedSection } from './learningSchemas';
 import { DETAILS } from './testLearningFixtures';
 const morphology = { root: 'help', meaningZh: '帮助', parts: [{ kind:'root', text:'help', meaningZh:'帮助' }, { kind:'suffix', text:'ful', meaningZh:'具有……性质的' }], explanation:'help 加形容词后缀 -ful，表示有帮助的。', mnemonic:'想象一个乐于帮助别人的人。', related:[{word:'helpless',partOfSpeech:'adjective',meaningZh:'无助的'}] };
 function output() { return { ...structuredClone(DETAILS), term:'helpful', inflections:[{label:'comparative',value:'more helpful'}], sections:{...structuredClone(DETAILS.sections), roots:[{text:'help',meaningZh:'帮助',morphology:structuredClone(morphology)}], derivatives:[{text:'helpfulness',meaningZh:'乐于助人',partOfSpeech:'noun',family:{base:'help',relation:'helpful 加 -ness 构成名词'}}] } }; }
@@ -37,11 +37,11 @@ test('practical expressions preserve articles and prepositions, and usage carrie
   assert.equal(result.sections.usage[0].usageKind,'grammar');
   assert.deepEqual(result.sections.usage[1].contrast,input.sections.usage[1].contrast);
 });
-test('invalid usage categories and wrong/correct pairs on mere style preferences are rejected',()=>{
+test('invalid usage categories are rejected and style alternatives are never displayed as errors',()=>{
   const input:any=output();input.sections.usage=[{text:'发音',meaningZh:'重音规则',usageKind:'pronunciation'}];
   assert.throws(()=>validateDetails(input,'helpful','word'));
   input.sections.usage=[{text:'语体',meaningZh:'正式程度不同',usageKind:'register',contrast:{incorrect:'one option',correct:'another valid option'}}];
-  assert.throws(()=>validateDetails(input,'helpful','word'));
+  assert.equal(validateDetails(input,'helpful','word').sections.usage[0].contrast,undefined);
   input.sections.usage=[{text:'旧版提示',meaningZh:'保留原内容'}];assert.equal(validateDetails(input,'helpful','word').sections.usage[0].usageKind,undefined);
 });
 test('new AI responses must include structured learning fields while legacy cache validation stays permissive',()=>{
@@ -86,4 +86,20 @@ test('new phrase/usage meanings must be Chinese, and identical expressions are d
  assert.deepEqual(validateDetails(input,'helpful','word',[],true).sections.phrases.map(entry=>entry.text),['a conflict of interest']);
  input.sections.phrases[0].meaningZh='a clash of interests';assert.throws(()=>validateDetails(input,'helpful','word',[],true),/简体中文/);
  const old:any=output();old.sections.usage=[{text:'legacy',meaningZh:'legacy prose'}];assert.doesNotThrow(()=>validateDetails(old,'helpful','word'));
+});
+
+test('optional incomplete correction data does not discard substantive usage explanations',()=>{
+ for(const contrast of [{}, {incorrect:'bad'}, {incorrect:'same',correct:'same'}, {incorrect:null,correct:''}]) {
+  const input:any=output(); input.sections.usage=[{text:'句型说明',meaningZh:'解释完整句法及真实使用场景。',usageKind:'error',contrast}];
+  const entry=validateDetails(input,'helpful','word',[],true).sections.usage[0];
+  assert.equal(entry.contrast,undefined);assert.equal(entry.meaningZh,'解释完整句法及真实使用场景。');
+ }
+});
+test('section refresh schema and validation isolate the selected column from unrelated generated content',()=>{
+ const schema=detailsSchemaForSection('usage');assert.deepEqual(Object.keys(schema.properties.sections.properties),['usage']);
+ assert.deepEqual(schema.properties.sections.required,['usage']);assert.equal(detailsSchemaForSection(),detailsSchema);
+ const input:any=output();input.sections.usage=[{text:'句型说明',meaningZh:'实际语法用法',usageKind:'grammar'}];input.sections.roots=[{broken:true}];
+ const result=validateDetails(isolateRequestedSection(input,'usage'),'helpful','word',[],true);
+ assert.equal(result.sections.usage.length,1);assert.deepEqual(result.sections.roots,[]);assert.deepEqual(result.sections.derivatives,[]);
+ delete input.sections.usage;assert.throws(()=>validateDetails(isolateRequestedSection(input,'usage'),'helpful','word',[],true));
 });
