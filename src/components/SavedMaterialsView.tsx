@@ -6,7 +6,7 @@ import { materialKey } from '../utils/vocabularyDetails';
 import { notifyVocabularyChange } from '../services/vocabularyDetails';
 import { speakEnglishTerm } from '../utils/speech';
 
-export function SavedMaterialsView({ type, search }: { type: SavedMaterial['type']; search: string }) {
+export function SavedMaterialsView({ type, search, hideWhenEmpty = false }: { type: SavedMaterial['type']; search: string; hideWhenEmpty?: boolean }) {
   const [items, setItems] = useState<SavedMaterial[]>([]);
   const [draft, setDraft] = useState<SavedMaterial | null>(null);
   const [error, setError] = useState('');
@@ -20,6 +20,7 @@ export function SavedMaterialsView({ type, search }: { type: SavedMaterial['type
   useEffect(() => { setDraft(null); setError(''); }, [type]);
   const action = async (work: () => Promise<void>) => { if (busy) return; setBusy(true); setError(''); try { await work(); notifyVocabularyChange(); } catch (error) { setError(error instanceof Error ? error.message : '操作失败，请重试。'); } finally { setBusy(false); } };
   const filtered = items.filter(item => `${item.text} ${item.translation} ${item.note}`.toLowerCase().includes(search.toLowerCase()));
+  if (hideWhenEmpty && !filtered.length && !error) return null;
   return <section className="saved-materials" aria-label={type === 'example' ? '独立收藏的例句' : '独立收藏的词组'}><p className="lexicon-muted">{items.length} 项独立学习素材 · 取消完整词条收藏后仍保留。</p>
     {filtered.map(item => draft?.id === item.id ? <form key={item.id} className="lexicon-editor" onSubmit={event => { event.preventDefault(); void action(async () => {
       if (!draft.text.trim()) throw new Error('英文内容不能为空。');
