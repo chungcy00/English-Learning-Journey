@@ -1,3 +1,4 @@
+import {migrateReviewedUsage,migrateExistingUsage} from './services/usageMigration';
 import { CustomWordsView } from './views/CustomWordsView';
 import { vocabularyKey } from './utils/vocabularyDetails';
 /**
@@ -137,6 +138,7 @@ export default function App() {
   const [processingTopic, setProcessingTopic] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [storageError, setStorageError] = useState('');
+  const [usageMigrationError,setUsageMigrationError]=useState('');
   const [isInstalledApp, setIsInstalledApp] = useState(
     () => isManualUpdateApp()
   );
@@ -178,6 +180,8 @@ export default function App() {
   const loadData = useCallback(async () => {
     try {
       await initDefaultData();
+      await migrateReviewedUsage();
+      void migrateExistingUsage().then(report=>setUsageMigrationError(report.error||'')).catch(()=>setUsageMigrationError('旧 AI 用法说明尚未完成中文更新，原资料已保留。'));
       const [savedSettings, allR, allV] = await Promise.all([
         getSettings(),
         getAllReadings(),
@@ -206,6 +210,12 @@ export default function App() {
     window.addEventListener('vocabulary-data-changed', refresh);
     return () => window.removeEventListener('vocabulary-data-changed', refresh);
   }, []);
+
+  useEffect(()=>{
+    const resume=()=>void migrateExistingUsage().then(report=>setUsageMigrationError(report.error||'')).catch(()=>setUsageMigrationError('旧 AI 用法说明尚未完成中文更新，原资料已保留。'));
+    window.addEventListener('focus',resume);window.addEventListener('online',resume);
+    return ()=>{window.removeEventListener('focus',resume);window.removeEventListener('online',resume);};
+  },[]);
 
   // Set of vocab terms currently in wordbook for O(1) lookup
   const wordbookVocabIds = new Set(
@@ -398,6 +408,7 @@ export default function App() {
       {/* Main Content Router */}
       <main className={`min-w-0 flex-1 ${isBottomNavApp ? 'pb-[calc(5rem+env(safe-area-inset-bottom))]' : ''}`}>
         {storageError && <div className="max-w-3xl mx-auto px-4 pt-4"><RecoveryNotice message={storageError} onRetry={() => void loadData()} /></div>}
+        {usageMigrationError && <div className="max-w-3xl mx-auto px-4 pt-4"><RecoveryNotice message={`旧 AI 用法说明更新：${usageMigrationError}`} onRetry={()=>void migrateExistingUsage(true).then(report=>setUsageMigrationError(report.error||''))}/></div>}
         {errorMessage && (
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-4">
             <div role="alert" className="bg-[var(--status-error-soft)] border border-[var(--status-error-border)] text-[var(--status-error)] px-4 py-3 rounded-sm text-[length:var(--type-body)] leading-[1.6] font-ui flex items-center justify-between shadow-xs">

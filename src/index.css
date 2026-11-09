@@ -2085,6 +2085,8 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
   .lexicon-sense-example { column-gap: 0; }
 }
 
-.lexicon-usage-legacy { margin-top: .75rem; color: var(--text-secondary); font-size: var(--type-translation); }
-.lexicon-usage-legacy > summary { min-height: 44px; padding-block: .625rem; cursor: pointer; color: var(--accent-primary); }
-.lexicon-usage-legacy p + p { margin-top: .5rem; }
+/* The approved marker navigation now has quiet, irregular dashed rules. */
+.lexicon-tabs { position: relative; padding-block: 14px; }
+.lexicon-tabs::before, .lexicon-tabs::after { content: ''; position: absolute; left: 0; right: 0; height: 6px; pointer-events: none; background: var(--border-selected); mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 6'%3E%3Cpath d='M1 3Q32 1.5 63 3T122 2.5T181 3T239 2' fill='none' stroke='black' stroke-width='1.3' stroke-linecap='round' stroke-dasharray='6 8 4 9 7 8 5 9'/%3E%3C/svg%3E") left center / 240px 6px repeat-x; }
+.lexicon-tabs::before { top: 0; }
+.lexicon-tabs::after { bottom: 0; transform: scaleY(-1); mask-position: 12px center; }

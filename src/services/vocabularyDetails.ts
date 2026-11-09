@@ -1,9 +1,11 @@
+import {migrateReviewedUsage} from './usageMigration';
 import { db } from '../db/dexie';
 import type { DetailSection, VocabularyDetails, VocabularyItem, SavedMaterial, LearningEntry } from '../types';
 import { legacyDetails, mergeGeneratedDetails, vocabularyKey, materialKey } from '../utils/vocabularyDetails';
 
 export const notifyVocabularyChange = () => window.dispatchEvent(new Event('vocabulary-data-changed'));
 export async function readVocabularyDetails(vocab: VocabularyItem) {
+  await migrateReviewedUsage();
   return db.transaction('rw', db.vocabularyDetails, async () => {
     const key = vocabularyKey(vocab.term, vocab.type);
     const existing = await db.vocabularyDetails.get(key);

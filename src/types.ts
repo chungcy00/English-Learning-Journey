@@ -37,6 +37,7 @@ export interface LearningEntry {
   category?: string;
   senseId?: string;
   senseMeaningZh?: string;
+  usageChineseVersion?: 1;
   usageKind?: 'scenario' | 'grammar' | 'comparison' | 'error' | 'register' | 'natural';
   contrast?: { incorrect: string; correct: string };
   family?: { base: string; relation: string; parent?: string; parts?: WordPart[] };

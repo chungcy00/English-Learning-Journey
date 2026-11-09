@@ -17,18 +17,18 @@ export function PhraseList({entries,isSaved,busy,pronounce,onToggle}:{entries:Le
     <EntryExample entry={entry} pronounce={pronounce}/>{entry.note&&<p className="lexicon-note lexicon-muted">{entry.note}</p>}
   </li>)}</ul>;
 }
-export function UsageList({entries,pronounce}:{entries:LearningEntry[];pronounce:(text:string)=>void}) {
+export function UsageList({entries,pronounce,manual=false}:{entries:LearningEntry[];pronounce:(text:string)=>void;manual?:boolean}) {
   return <div className="lexicon-usage-list">{entries.map(entry=>{
-    const legacyTitle=isLegacyEnglishExplanation(entry.text);
-    const legacyMeaning=isLegacyEnglishExplanation(entry.meaningZh);
-    const legacyNote=isLegacyEnglishExplanation(entry.note);
-    const legacyTranslation=isLegacyEnglishExplanation(entry.exampleTranslation);
+    const pendingTitle=!manual&&isLegacyEnglishExplanation(entry.text);
+    const pendingMeaning=!manual&&isLegacyEnglishExplanation(entry.meaningZh);
+    const pendingNote=!manual&&isLegacyEnglishExplanation(entry.note);
+    const pendingTranslation=!manual&&isLegacyEnglishExplanation(entry.exampleTranslation);
     const placeholderMeaning=/^(用法辨析|用法说明|补充说明)$/.test(entry.meaningZh.trim());
     return <section key={entry.id} className="lexicon-usage-point">
-      <h4>{legacyTitle ? '用法说明' : entry.text}</h4>{!legacyMeaning&&!placeholderMeaning&&<p>{entry.meaningZh}</p>}{placeholderMeaning&&legacyNote&&<p className="lexicon-muted">旧资料尚无中文讲解，可编辑或重新生成本栏。</p>}
+      <h4>{pendingTitle ? '用法说明' : entry.text}</h4>{!pendingMeaning&&(!placeholderMeaning||manual)&&<p>{entry.meaningZh}</p>}
       {entry.contrast&&<dl className="lexicon-usage-contrast"><div><dt>误用</dt><dd lang="en">{entry.contrast.incorrect}</dd></div><div><dt>正确表达</dt><dd lang="en">{entry.contrast.correct}</dd></div></dl>}
-      <EntryExample entry={legacyTranslation?{...entry,exampleTranslation:''}:entry} pronounce={pronounce}/>{entry.note&&!legacyNote&&<p className="lexicon-note lexicon-muted">{entry.note}</p>}
-      {(legacyTitle||legacyMeaning||legacyNote||legacyTranslation)&&<details className="lexicon-usage-legacy"><summary>旧版英文说明</summary><div>{legacyTitle&&<p lang="en">{entry.text}</p>}{legacyMeaning&&<p lang="en">{entry.meaningZh}</p>}{legacyNote&&<p lang="en">{entry.note}</p>}{legacyTranslation&&<p lang="en">{entry.exampleTranslation}</p>}</div><p className="lexicon-muted">原文已保留，可编辑为中文，或重新生成本栏。</p></details>}
+      <EntryExample entry={pendingTranslation?{...entry,exampleTranslation:''}:entry} pronounce={pronounce}/>{entry.note&&!pendingNote&&<p className="lexicon-note lexicon-muted">{entry.note}</p>}
+      {(pendingTitle||pendingMeaning||pendingNote||pendingTranslation)&&<p className="lexicon-muted" role="status">旧 AI 说明等待更新为中文，成功后会替换并删除旧说明。</p>}
     </section>;
   })}</div>;
 }
