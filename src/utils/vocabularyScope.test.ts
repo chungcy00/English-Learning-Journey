@@ -34,12 +34,12 @@ test('wordbook shows all saved degrees, distinguishes passage addition from coll
 
 test('review count includes vocabulary from every degree', () => {
   const html = renderToStaticMarkup(React.createElement(ReviewView, { allVocabularies: entries, onRate: noop, onRefresh: noop, }));
-  assert.match(html, /全部已收藏词条：2 项/);
+  assert.match(html, /单词本共 2 词/);
   assert.doesNotMatch(html, /Word 1|Reveal Details/);
 });
 
-test('reading count explicitly identifies the selected count and limit', () => {
+test('reading count identifies the current selection without enforcing the generation count', () => {
   const html = renderToStaticMarkup(React.createElement(ReadingVocabularyEditor, { reading, knownVocabulary: entries, onSave: async () => {} }));
-  assert.match(html, /已精选 1\/8 项/);
-  assert.match(html, /当前短文已精选 1 项，上限 8 项/);
+  assert.match(html, /已精选 1 项/);
+  assert.doesNotMatch(html, /上限|已达/);
 });

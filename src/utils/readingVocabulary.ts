@@ -7,7 +7,6 @@ export function replaceReadingTerm(reading: ReadingRecord, item: VocabularyItem,
   if (item.cefrLevel !== reading.cefrLevel) throw new Error(`只可加入 ${reading.cefrLevel} 程度的表达。`);
   if (reading.selectedVocabulary.some(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(item.term))) throw new Error('这个表达已在精选词汇中。');
   if (replaceId && !reading.selectedVocabulary.some(v => v.id === replaceId)) throw new Error('待替换词条已变化，请重新选择。');
-  if (!replaceId && reading.selectedVocabulary.length >= limit) throw new Error(`精选词汇上限为 ${limit} 项，请先选择要替换的词条。`);
   const vocabulary = replaceId ? reading.selectedVocabulary.map(v => v.id === replaceId ? item : v) : [...reading.selectedVocabulary, item];
   const terms = new Set(vocabulary.map(v => normalizeEnglishTerm(v.term)));
   const translations = reading.translations && Object.fromEntries(Object.entries(reading.translations).map(([language, translation]) => {
@@ -44,4 +43,10 @@ export function planReadingVocabularySync(previous: ReadingRecord | undefined, r
     } : { ...v, sourceReadingId: reading.id, sourceCefrLevel: reading.cefrLevel };
   });
   return { removeIds, upserts };
+}
+
+export function removeReadingTerm(reading: ReadingRecord, id: string): ReadingRecord {
+  const selectedVocabulary = reading.selectedVocabulary.filter(word=>word.id!==id);
+  const terms = new Set(selectedVocabulary.map(word=>normalizeEnglishTerm(word.term)));
+  return {...reading,selectedVocabulary,rewritePractice:reading.rewritePractice.filter(item=>terms.has(normalizeEnglishTerm(item.target))),updatedAt:Date.now()};
 }

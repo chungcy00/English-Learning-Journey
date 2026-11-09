@@ -2100,9 +2100,9 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 
 /* The confirmed home reference uses quiet desktop text navigation. */
 @media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
-  .studio-home-active .app-header > div { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); max-width: none; }
-  .studio-home-active .app-header nav { grid-column: 2; }
-  .studio-home-active .app-header nav button[aria-current="page"] { background: transparent; border-bottom-color: transparent; box-shadow: inset 0 -1px 0 var(--accent-primary); }
+  .app-header > div { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); max-width: none; }
+  .app-header nav { grid-column: 2; }
+  .app-header nav button[aria-current="page"] { background: transparent; border-bottom-color: transparent; box-shadow: inset 0 -1px 0 var(--accent-primary); }
 }
 
 /* Browser and installed phone/tablet layouts share bottom navigation. */
@@ -2119,3 +2119,44 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 @media (max-width: 639px) {
   .studio-recipe__panel { padding-inline: 16px; }
 }
+
+/* Random review keeps the existing theme and typography roles. */
+.random-review { padding:1.25rem; border:1px solid var(--border-subtle); border-radius:16px; background:var(--bg-alt); }
+.random-review__controls { display:flex; align-items:center; flex-wrap:wrap; gap:.5rem .75rem; }
+.random-review h2, .random-review h1 { display:flex; align-items:center; gap:.5rem; }
+.random-review__presets, .random-review__custom { display:flex; align-items:center; flex-wrap:wrap; gap:.25rem; }
+.random-review button, .random-review input { min-height:44px; border-radius:999px; font:inherit; }
+.random-review button { padding:.5rem .75rem; }
+.random-review button:disabled { opacity:.45; cursor:not-allowed; }
+.random-review button:not(:disabled):hover { background:var(--surface-selected); }
+.random-review__presets button[aria-pressed="true"], .random-review__presets button[aria-pressed="true"]:hover { background:var(--accent-primary); color:var(--surface-paper); }
+.random-review__presets, .random-review__custom, .random-review__reshuffle { font-size:var(--type-label); }
+.random-review__custom input { width:3rem; padding:.25rem; border:1px solid var(--border-control); background:var(--surface-paper); color:var(--text-primary); text-align:center; }
+.random-review__custom button { padding-inline:.5rem; }
+.random-review__reshuffle { display:inline-flex; align-items:center; gap:.5rem; margin-left:auto; background:var(--surface-paper); }
+.random-review__status { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem; margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border-subtle); }
+.random-review__status p, .random-review__status .lexicon-muted { font-size:var(--type-label); }
+.random-review .review-progress [role="status"] { font-size:var(--type-body); }
+.practice-hub .review-flip-stage, .practice-hub .practice-vocabulary-card { max-width:none; }
+.practice-hub .practice-review { border-top:0; padding-top:0; }
+.practice-entry--wordbook { border:1px solid var(--border-subtle); border-radius:16px; }
+.review-page .review-flip-front .practice-vocabulary-card { min-height:28rem; }
+.review-page .review-flip-front .practice-vocabulary-card__head { display:flex; flex-direction:column; flex:1; }
+.review-page .review-flip-front .practice-vocabulary-card__content { flex:1; }
+@media (min-width:1280px) and (hover:hover) and (pointer:fine) { .practice-hub { max-width:72rem; } }
+@media (max-width:639px) {
+ .random-review { padding:1rem; }
+ .random-review__controls { align-items:flex-start; }
+ .random-review__controls > h2, .random-review__custom { flex-basis:100%; }
+ .random-review__reshuffle { margin-left:0; }
+}
+.reading-add-expression { display:flex; flex-wrap:wrap; align-items:end; gap:.5rem; }
+.reading-add-expression label { flex:1; min-width:10rem; font-size:var(--type-label); }
+.reading-add-expression input { width:100%; min-height:44px; padding:.5rem; border:1px solid var(--border-control); border-radius:10px; background:var(--surface-paper); }
+.reading-add-expression button, .reading-add-toggle { display:inline-flex; align-items:center; gap:.25rem; min-height:44px; padding:.5rem; font-size:var(--type-label); color:var(--accent-primary); }
+.reading-add-toggle { margin-left:auto; }
+.reading-swipe { position:relative; overflow:hidden; border-radius:12px; }
+.reading-swipe + .reading-swipe { border-top:1px solid var(--reading-divider); }
+.reading-swipe__content { position:relative; z-index:1; background:var(--reading-white); touch-action:pan-y; transition:transform var(--motion-feedback) var(--ease-feedback); }
+.reading-swipe__delete { position:absolute; inset:0 0 0 auto; width:72px; min-height:44px; background:var(--status-error-soft); color:var(--status-error); font-size:var(--type-label); }
+@media (prefers-reduced-motion:reduce) { .reading-swipe__content { transition:none; } }

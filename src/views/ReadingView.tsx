@@ -16,13 +16,14 @@ import {
   Play,
   MessageSquare,
   AlignLeft,
-  Copy, MoreHorizontal, RotateCcw, ArrowRight, PencilLine, X
+  Copy, MoreHorizontal, RotateCcw, ArrowRight, PencilLine, X, Plus
 } from 'lucide-react';
 import { ReadingRecord, ReadingTranslation, VocabularyItem } from '../types';
 import { splitReadingSentences, groupReadingSentences, hasCompleteSentenceTranslations, formatAudioTime } from '../utils/readingSegments';
 import { createDeviceSpeechProgress, locateDeviceSpeechPosition } from '../utils/deviceSpeechProgress';
 import { WordDetailModal } from '../components/WordDetailModal';
 import { ReadingVocabularyEditor } from '../components/ReadingVocabularyEditor';
+import {SwipeToRemove} from '../components/SwipeToRemove';
 
 import {
   getI18nText,
@@ -47,6 +48,7 @@ interface ReadingViewProps {
   onToggleWordbookFromDetails?: (vocab: VocabularyItem) => void | Promise<void>;
   onUpdateReading?: (updatedReading: ReadingRecord) => void | Promise<void>;
   onUpdateVocabulary: (updatedReading: ReadingRecord) => Promise<void>;
+  onRemoveVocabulary?: (vocab: VocabularyItem) => Promise<void>;
   onOpenHistory: () => void;
 }
 
@@ -107,6 +109,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   onToggleWordbookFromDetails,
   onUpdateReading,
   onUpdateVocabulary,
+  onRemoveVocabulary,
   onOpenHistory,
 }) => {
   const [selectedVocab, setSelectedVocab] = useState<VocabularyItem | null>(null);
@@ -156,6 +159,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const [translationError, setTranslationError] = useState<string | null>(null);
   const [copiedTranslation, setCopiedTranslation] = useState<boolean>(false);
   const [copyError, setCopyError] = useState('');
+  const [removingTerm, setRemovingTerm] = useState<string|null>(null);
   const [bookmarkError, setBookmarkError] = useState('');
   const [pendingBookmarks, setPendingBookmarks] = useState<Set<string>>(new Set());
   const pendingBookmarkIds = useRef(new Set<string>());
@@ -728,10 +732,10 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
               )}
             </div>
           </div>
+          <button type="button" className="reading-add-toggle" onClick={()=>setLookupOpen(value=>!value)}><Plus size={16}/>添加</button>
           <span className="reading-studio__vocab-count">{reading.selectedVocabulary.length} 个词汇</span>
         </div>
 
-        <p className="reading-studio__vocab-hint">系统精选词汇 · 点击书签加入生词本</p>
         {bookmarkError && <p className="reading-inline-status" role="alert">{bookmarkError}</p>}
         {lookupOpen && <section className="reading-lookup-panel"><div className="reading-studio__section-heading"><h3>查询文中其他表达</h3><button type="button" aria-label="关闭表达查询" onClick={() => setLookupOpen(false)}><X size={18} /></button></div><ReadingVocabularyEditor key={reading.id} reading={reading} knownVocabulary={knownVocabulary} onSave={onUpdateVocabulary} onInspect={vocab => { setSelectedVocab(vocab); setIsDetailOpen(true); }} /></section>}
         <div className="reading-vocabulary__list" role="list">
@@ -740,9 +744,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             const localizedMeaning = getLocalizedVocabMeaning(vocab, currentTranslation);
 
             return (
+              <SwipeToRemove key={vocab.id} label={vocab.term} disabled={!!removingTerm || !onRemoveVocabulary} onRemove={async()=>{if(removingTerm||!onRemoveVocabulary)return;setRemovingTerm(vocab.id);setBookmarkError('');try{await onRemoveVocabulary(vocab);}catch{setBookmarkError('移除失败，已有资料已保留，请重试。');}finally{setRemovingTerm(null);}}}>
               <div
-                key={vocab.id}
-                role="listitem"
                 onClick={() => {
                   setSelectedVocab(vocab);
                   setIsDetailOpen(true);
@@ -768,6 +771,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   <Bookmark className="w-4 h-4" />
                 </button>
               </div>
+              </SwipeToRemove>
             );
           })}
         </div>

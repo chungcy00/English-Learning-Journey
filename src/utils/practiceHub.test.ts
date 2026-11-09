@@ -33,7 +33,7 @@ test('reading no longer duplicates exercises; empty practice and embedded review
   const empty = renderToStaticMarkup(React.createElement(RewritePracticeView, { reading: null, onBack() {} }));
   assert.match(empty, /请先生成或打开一篇短文/);
   const review = renderToStaticMarkup(React.createElement(ReviewView, { embedded: true, allVocabularies: [], onRate: async () => {}, onRefresh() {}, }));
-  assert.match(review, /<h2[^>]*>词汇学习<\/h2>/);
+  assert.match(review, /<h2[^>]*>[\s\S]*?随机复习<\/h2>/);
   assert.doesNotMatch(review, /<h1/);
 });
 

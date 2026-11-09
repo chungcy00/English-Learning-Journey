@@ -41,8 +41,8 @@ export function WordbookCustomAdd({ vocabulary, onSave, initiallyOpen = false }:
     finally { lock.current = false; setBusy(false); }
   };
   return <section className="wordbook-custom-add">
-    <button type="button" className="wordbook-custom-toggle" aria-expanded={open} aria-controls="wordbook-custom-panel" onClick={() => setOpen(!open)}><Plus size={17}/>添加单词／词组</button>
-    {open && <div id="wordbook-custom-panel"><p className="wordbook-custom-hint">不需要关联短文。输入后自动判断单词或多词表达；生成资料时进一步识别短语、习语、搭配等类型。</p>
+    {!initiallyOpen && <button type="button" className="wordbook-custom-toggle" aria-expanded={open} aria-controls="wordbook-custom-panel" onClick={() => setOpen(!open)}><Plus size={17}/>添加单词／词组</button>}
+    {open && <div id="wordbook-custom-panel">
       <form onSubmit={prepare} className="lexicon-add-form"><label>英语词条<input value={query} disabled={busy} maxLength={160} placeholder="例如 considerate 或 break the ice" onChange={event => { setQuery(event.target.value); setPreview(null); setDuplicate(null); setError(''); }}/></label><button className="lexicon-primary" type="submit" disabled={busy || !query.trim()}>检查并预览</button></form>
       {duplicate && <div className="lexicon-confirm"><p>“{duplicate.term}”已存在，不会创建重复词条。</p><button type="button" onClick={() => { setPreview(duplicate); setDuplicate(null); }}>打开原词条</button><button type="button" onClick={() => { setPreview(duplicate); setDuplicate(null); setMessage('在原词条中编辑或补充资料，复习进度保持。'); }}>合并／补充资料</button><button type="button" onClick={() => setDuplicate(null)}>取消</button></div>}
       {preview && <div className="lexicon-add-preview"><h3>{preview.term}</h3><VocabularyDetailsPanel key={preview.id} vocab={preview}/><div className="lexicon-actions"><button type="button" className="lexicon-primary" disabled={busy} onClick={() => void save()}>{busy ? '保存中…' : '保存到单词本'}</button><button type="button" disabled={busy} onClick={() => setPreview(null)}>取消预览</button></div><p className="lexicon-muted">可以先保存基本词条，以后再补充资料。</p></div>}

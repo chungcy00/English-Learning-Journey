@@ -16,6 +16,7 @@ import { Navbar, NavTab } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { ProcessingModal } from './components/ProcessingModal';
 import { AppInstallPrompt } from './components/AppInstallPrompt';
+import {removeReadingTerm} from './utils/readingVocabulary';
 import { InstalledAppBottomNav } from './components/InstalledAppBottomNav';
 import { HomeView } from './views/HomeView';
 import { RecoveryNotice } from './components/RecoveryNotice';
@@ -443,6 +444,15 @@ export default function App() {
             onToggleWordbook={handleToggleWordbook}
             onToggleWordbookFromDetails={handleDetailBookmark}
             onUpdateReading={handleUpdateReading}
+            onRemoveVocabulary={async word=>{
+              const updated=removeReadingTerm(currentReading,word.id);
+              await db.transaction('rw',[db.readings,db.vocabulary,db.savedMaterials],async()=>{
+                await saveReading(updated);
+                const saved=await getAllVocabularies();
+                for(const item of saved.filter(item=>vocabularyKey(item.term,item.type)===vocabularyKey(word.term,word.type)))await deleteVocabulary(item.id);
+              });
+              setCurrentReading(updated);setReadings(await getAllReadings());setVocabularies(await getAllVocabularies());
+            }}
             onUpdateVocabulary={async updated => {
               await saveReadingWithVocabulary(updated);
               setCurrentReading(updated);

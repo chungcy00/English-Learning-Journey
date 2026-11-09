@@ -21,7 +21,7 @@ test('custom navigation renders a dedicated page with its form open and only man
  const html=renderToStaticMarkup(React.createElement(CustomWordsView,{vocabulary:[manual,article],onSave:async()=>{},onRequestRemove:()=>{}}));
  for(const text of ['自定义单词','英语词条','检查并预览','我添加的词条','helpful'])assert.ok(html.includes(text));
  for(const text of ['article-expression','My Wordbook','开始复习','单独收藏的例句'])assert.ok(!html.includes(text));
- assert.ok(html.includes('aria-expanded="true"'));assert.ok(!html.includes('type="select"'));
+ assert.ok(!html.includes('wordbook-custom-toggle'));assert.ok(html.includes('lexicon-add-form'));assert.ok(!html.includes('type="select"'));
 });
 test('original article addition remains in the existing wordbook while custom words mount separately',()=>{
  const app=readFileSync(new URL('../App.tsx',import.meta.url),'utf8');const book=readFileSync(new URL('../views/WordbookView.tsx',import.meta.url),'utf8');

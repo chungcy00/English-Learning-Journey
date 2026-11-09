@@ -1,13 +1,15 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { ReadingRecord, VocabularyItem } from '../types';
-import { replaceReadingTerm, planReadingVocabularySync } from './readingVocabulary';
+import { replaceReadingTerm, planReadingVocabularySync, removeReadingTerm } from './readingVocabulary';
 import { containsEnglishExpression, readingTermSuggestions } from './englishSearch';
 const item = (term: string): VocabularyItem => ({ id: term, term, cefrLevel: 'B1', sourceReadingId: 'r1', status: 'Learning', nextReviewDate: 100, reviewCount: 4 } as VocabularyItem);
 const old = item('pleasant'), next = item('take a break');
 const reading = { id: 'r1', cefrLevel: 'B1', content: 'It was pleasant to take a break.', vocabularyCount: 1, selectedVocabulary: [old], rewritePractice: [{ target: 'pleasant' }], translations: { ja: { language: 'ja', languageName: '日本語', title: '題名', translatedContent: '本文', vocabularyTranslations: { pleasant: { meaning: '楽しい' } }, exerciseTranslations: { pleasant: { originalSentenceMeaning: '文' } }, updatedAt: 1 } } } as unknown as ReadingRecord;
-test('reading custom selection enforces CEFR, uniqueness and requested count', () => {
-  assert.throws(() => replaceReadingTerm(reading, next));
+test('reading custom selection retains CEFR and uniqueness but permits additions beyond the generated count', () => {
+  const added = replaceReadingTerm(reading, next);
+  assert.equal(added.selectedVocabulary.length,2);assert.equal(added.vocabularyCount,1);
+  const removed = removeReadingTerm(added,next.id);assert.deepEqual(removed.selectedVocabulary,[old]);assert.equal(removed.vocabularyCount,1);
   assert.throws(() => replaceReadingTerm(reading, { ...next, cefrLevel: 'B2' }, old.id));
   assert.throws(() => replaceReadingTerm(reading, old, old.id));
   assert.throws(() => replaceReadingTerm(reading, next, 'missing'));
