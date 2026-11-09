@@ -7,10 +7,9 @@ import { DETAILS } from './testLearningFixtures';
 
 test('new reading and paragraph translations share one provider call; vocabulary details share one call', async () => {
   const savedEnv = { ...process.env }; const realFetch = globalThis.fetch;
-  Object.assign(process.env, { UPSTASH_REDIS_REST_URL: 'https://quota.example', UPSTASH_REDIS_REST_TOKEN: 'test-token', AI_RATE_LIMIT_SALT: 'test-salt-which-is-longer-than-32-characters', GEMINI_API_KEY: 'test-key-not-real', VERCEL: '0' });
-  let calls = 0, reservations = 0, scenario = 'reading';
+  Object.assign(process.env, { GEMINI_API_KEY: 'test-key-not-real', VERCEL: '0' });
+  let calls = 0, scenario = 'reading';
   globalThis.fetch = (async (url: any, init: any) => {
-    if (String(url).startsWith('https://quota.example')) { reservations++; return new Response('{"result":[1,0,0]}'); }
     calls++; const request = JSON.parse(init.body);
     if (scenario === 'budget' && calls === 1) return new Response('{"error":{"message":"UNAVAILABLE","code":503,"status":"UNAVAILABLE"}}', { status: 503 });
     const reading = { title: 'A Conflict', reading: 'We resolve a conflict. We listen.', readingType: 'story', cefrLevel: 'B1', vocabulary: [{ term: 'conflict', type: 'word', cefrLevel: 'B1', partOfSpeech: 'noun', meaningZh: '冲突', definitionEn: 'A disagreement.', example: 'We resolve a conflict.' }], paragraphTranslations: [{ source: 'We resolve a conflict. We listen.', translation: '我们解决冲突。我们倾听。' }] };
@@ -25,13 +24,13 @@ test('new reading and paragraph translations share one provider call; vocabulary
   const post = (path: string, body: object) => realFetch(`http://127.0.0.1:${(server.address() as any).port}/api/${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   try {
     const reading = await post('reading/generate', { input: 'Resolving conflict', cefrLevel: 'B1', vocabularyCount: 1 });
-    assert.equal(reading.status, 200); const result = await reading.json(); assert.equal(result.paragraphTranslations.length, 1); assert.equal(result.rewritePractice, undefined); assert.equal(calls, 1); assert.equal(reservations, 1);
-    scenario = 'details'; calls = 0; reservations = 0;
+    assert.equal(reading.status, 200); const result = await reading.json(); assert.equal(result.paragraphTranslations.length, 1); assert.equal(result.rewritePractice, undefined); assert.equal(calls, 1);
+    scenario = 'details'; calls = 0;
     const word = await post('vocabulary/explain', { term: 'conflict', entryType: 'word' }); assert.equal(word.status, 200);
-    const details = await word.json(); assert.equal(Object.keys(details.sections).length, 6); assert.equal(details.sections.roots.length, 0); assert.equal(calls, 1); assert.equal(reservations, 1);
-    scenario = 'budget'; calls = 0; reservations = 0;
+    const details = await word.json(); assert.equal(Object.keys(details.sections).length, 6); assert.equal(details.sections.roots.length, 0); assert.equal(calls, 1);
+    scenario = 'budget'; calls = 0;
     const limited = await post('reading/generate', { input: 'Resolving conflict', cefrLevel: 'B1', vocabularyCount: 1 });
-    assert.equal(limited.status, 502); assert.equal(calls, 2); assert.equal(reservations, 2);
+    assert.equal(limited.status, 502); assert.equal(calls, 2);
   } finally { globalThis.fetch = realFetch; for (const key of Object.keys(process.env)) if (!(key in savedEnv)) delete process.env[key]; Object.assign(process.env, savedEnv); await new Promise<void>(resolve => server.close(() => resolve())); }
 });
 test('incomplete lexical sections are rejected and phrases never receive word inflections', () => {

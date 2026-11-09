@@ -58,7 +58,7 @@ export const ProcessingModal: React.FC<ProcessingModalProps> = ({ isOpen, status
       </button>
       <div id="processing-note" className="processing-dialog__note">
         <p>取消不会更改已有短文或清空输入。</p>
-        <p>已发送的 AI 请求仍可能计入额度。</p>
+        <p>请求发送后，取消操作不一定能中止服务端处理。</p>
       </div>
     </dialog>
   );

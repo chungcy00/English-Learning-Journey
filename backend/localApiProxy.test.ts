@@ -10,14 +10,14 @@ test('development proxy sends only learning data and preserves production quota 
     calls++; assert.equal(String(url), 'https://existing.example/api/vocabulary/explain');
     assert.deepEqual(init.headers, { 'Content-Type': 'application/json', Accept: 'application/json' });
     assert.deepEqual(JSON.parse(init.body), { term: 'rooted' });
-    return new Response('{"code":"AI_QUOTA_EXCEEDED","error":"limit reached"}', { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': '60' } });
+    return new Response('{"code":"GENERATION_PROVIDER_LIMIT","error":"limit reached"}', { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': '60' } });
   }) as typeof fetch)!;
   const app = express(); app.use(express.json()); app.use(proxy); app.use((_req,res)=>res.sendStatus(410));
   const server = app.listen(0,'127.0.0.1'); await once(server,'listening');
   try {
     const base = `http://127.0.0.1:${(server.address() as any).port}`;
     const response = await fetch(`${base}/api/vocabulary/explain`, { method: 'POST', headers: { 'Content-Type':'application/json', Authorization:'Bearer do-not-forward', 'X-Forwarded-For':'spoofed' }, body:'{"term":"rooted"}' });
-    assert.equal(response.status,429); assert.equal(response.headers.get('retry-after'),'60'); assert.equal((await response.json()).code,'AI_QUOTA_EXCEEDED'); assert.equal(calls,1);
+    assert.equal(response.status,429); assert.equal(response.headers.get('retry-after'),'60'); assert.equal((await response.json()).code,'GENERATION_PROVIDER_LIMIT'); assert.equal(calls,1);
     assert.equal((await fetch(`${base}/api/reading/rewrite`,{method:'POST'})).status,410);assert.equal(calls,1);
   } finally { await new Promise<void>(resolve=>server.close(()=>resolve())); }
 });

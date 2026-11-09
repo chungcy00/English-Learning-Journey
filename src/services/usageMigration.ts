@@ -2,7 +2,7 @@ import {db} from '../db/dexie';
 import type {VocabularyDetails,VocabularyItem} from '../types';
 import {vocabularyKey} from '../utils/vocabularyDetails';
 import {correctReviewedUsage,usageNeedsRewrite,applyUsageRewrite,type UsageRewriteJob,type UsageRewriteResult} from '../utils/usageMigration';
-const retryKey='mine-usage-rewrite-retry-at';
+const retryKey='mine-usage-provider-retry-at';
 const notify=()=>window.dispatchEvent(new Event('vocabulary-data-changed'));
 const isManual=(details?:VocabularyDetails)=>details?.provenance?.usage?.source==='user';
 function records(details:VocabularyDetails[],words:VocabularyItem[]) {
@@ -45,6 +45,11 @@ export function migrateExistingUsage(forceRetry=false):Promise<UsageMigrationRep
  pending=(typeof navigator!=='undefined'&&navigator.locks?navigator.locks.request('mine-usage-chinese-migration',work):work()).finally(()=>{pending=undefined;});return pending;
 }
 async function runMigration(forceRetry:boolean):Promise<UsageMigrationReport>{
+ try{
+  if(localStorage.getItem('mine-provider-retry-schema')!=='2'){
+   localStorage.removeItem('mine-usage-rewrite-retry-at');localStorage.removeItem(retryKey);localStorage.setItem('mine-provider-retry-schema','2');
+  }
+ }catch{}
  let updated=await migrateReviewedUsage();
  const [details,words]=await Promise.all([db.vocabularyDetails.toArray(),db.vocabulary.toArray()]);
  const snapshots=records(details,words).filter(detail=>detail.provenance?.usage?.source==='ai'&&!protectedRecord(detail,words)&&detail.sections.usage.some(usageNeedsRewrite));

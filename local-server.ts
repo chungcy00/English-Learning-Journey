@@ -1,8 +1,11 @@
+import dotenv from 'dotenv';
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import app from './backend/app.js';
 import { localApiProxy } from './backend/localApiProxy.js';
+
+if(process.env.NODE_ENV!=='production')dotenv.config({path:'.env.gemini.local'});
 
 const serverApp = express();
 serverApp.use(express.json({ limit: '256kb' }));

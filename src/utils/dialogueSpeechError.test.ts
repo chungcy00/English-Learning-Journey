@@ -4,11 +4,11 @@ import { readFileSync } from 'node:fs';
 import { dialogueSpeechError } from './dialogueSpeechError';
 
 test('quota failures retain their real message, code and retry window', () => {
-  const error = dialogueSpeechError(429, { error: '今日语音额度已用完。', code: 'AI_QUOTA_EXCEEDED' }, '86400');
-  assert.equal(error.message, '今日语音额度已用完。');
+  const error = dialogueSpeechError(429, { error: '语音供应商暂时限制请求。', code: 'GENERATION_PROVIDER_LIMIT' }, '86400');
+  assert.equal(error.message, '语音供应商暂时限制请求。');
   assert.equal((error as any).retryAfter, 86400);
   assert.equal((error as any).status, 429);
-  assert.equal((error as any).code, 'AI_QUOTA_EXCEEDED');
+  assert.equal((error as any).code, 'GENERATION_PROVIDER_LIMIT');
 });
 
 test('configuration and request failures are not labelled as exhausted quota', () => {

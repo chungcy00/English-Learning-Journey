@@ -33,6 +33,6 @@ test('processing overlay uses a bounded, scrollable dialog without changing canc
   const html = renderToStaticMarkup(React.createElement(ProcessingModal, { isOpen: true, status: 'Generating', canCancel: true, onCancel: () => {} }));
   assert.match(html, /app-dialog/);
   assert.match(html, /w-\[calc\(100%_-_2rem\)\]/);
-  assert.match(html, /已发送的 AI 请求仍可能计入额度/);
+  assert.match(html, /请求发送后，取消操作不一定能中止服务端处理/);
   assert.match(html, /取消本次操作/);
 });

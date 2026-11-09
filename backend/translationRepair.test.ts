@@ -11,10 +11,9 @@ test('sentence repair validates exact source list and mode before consuming quot
 });
 test('legacy paragraph translation batches whole turns in one call',async()=>{
  const previousEnv={...process.env};const realFetch=globalThis.fetch;
- Object.assign(process.env,{UPSTASH_REDIS_REST_URL:'https://quota.example',UPSTASH_REDIS_REST_TOKEN:'test-token',AI_RATE_LIMIT_SALT:'test-salt-which-is-longer-than-32-characters',VERCEL:'0',GEMINI_API_KEY:'test-key-not-real'});
+ Object.assign(process.env,{VERCEL:'0',GEMINI_API_KEY:'test-key-not-real'});
  let prompt='';let requests=0;
  globalThis.fetch=(async(url:any,options:any)=>{
-  if(String(url).startsWith('https://quota.example'))return new Response(JSON.stringify({result:[1,0,0]}));
   requests++;
   const body=JSON.parse(options.body);prompt=JSON.stringify(body.contents);
   assert.deepEqual(body.generationConfig.responseSchema.required,['paragraphTranslations']);
