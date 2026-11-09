@@ -17,13 +17,14 @@ export type VocabularyCategory = typeof VOCABULARY_CATEGORIES[number];
 
 export const DETAIL_SECTIONS = ['examples', 'derivatives', 'roots', 'phrases', 'definitions', 'usage'] as const;
 export type DetailSection = typeof DETAIL_SECTIONS[number];
+export interface WordPart { kind: 'prefix' | 'root' | 'suffix'; text: string; meaningZh: string }
 export interface WordFormation {
   root: string;
   meaningZh: string;
-  parts: { kind: 'prefix' | 'root' | 'suffix'; text: string; meaningZh: string }[];
+  parts: WordPart[];
   explanation: string;
   mnemonic: string;
-  related: { word: string; partOfSpeech: string; meaningZh: string }[];
+  related: { word: string; partOfSpeech: string; meaningZh: string; relation?: string; parts?: WordPart[] }[];
 }
 export interface LearningEntry {
   id: string;
@@ -35,9 +36,10 @@ export interface LearningEntry {
   note?: string;
   category?: string;
   senseId?: string;
+  senseMeaningZh?: string;
   usageKind?: 'scenario' | 'grammar' | 'comparison' | 'error' | 'register' | 'natural';
   contrast?: { incorrect: string; correct: string };
-  family?: { base: string; relation: string };
+  family?: { base: string; relation: string; parent?: string; parts?: WordPart[] };
   morphology?: WordFormation;
 }
 export interface VocabularyDetails {

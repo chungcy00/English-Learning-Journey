@@ -2027,3 +2027,60 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
   .custom-words-page .lexicon-add-form input, .custom-words-page .custom-words-search input[type="search"] { font-size: var(--type-example); }
   .custom-words-page .custom-words-list > li { padding: 1rem; }
 }
+
+/* Word-family and root diagrams: one paper surface, real relationships only. */
+.lexicon-tree-card { margin-block: 1.25rem; padding: 1.25rem; border: 1px solid var(--border-subtle); border-radius: 12px; background: var(--surface-paper); overflow-wrap: anywhere; }
+.lexicon-family-origin { margin-bottom: .75rem; color: var(--text-ink); }
+.lexicon-family-origin strong { font-size: var(--type-term); font-weight: 500; }
+.lexicon-tree-card .lexicon-tree-list { margin: 0; padding: 0 0 0 1rem; list-style: none; }
+.lexicon-tree-card .lexicon-tree-node { position: relative; min-width: 0; padding: 0 0 1rem .75rem; margin: 0; }
+.lexicon-tree-node::before { content: ''; position: absolute; left: -.5rem; top: 0; bottom: 0; border-left: 1px solid var(--border-selected); }
+.lexicon-tree-node:last-child::before { bottom: auto; height: 22px; }
+.lexicon-tree-node::after { content: ''; position: absolute; left: -.5rem; top: 22px; width: 1rem; border-top: 1px solid var(--border-selected); }
+.lexicon-tree-node > .lexicon-derivative-heading::before, .lexicon-related-node > details > summary::before { content: ''; position: absolute; left: calc(-.5rem - 2px); top: 20px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent-primary); }
+.lexicon-tree-node .lexicon-derivative-heading { min-height: 44px; justify-content: space-between; gap: .5rem; }
+.lexicon-tree-card .lexicon-word-part--root { color: var(--accent-primary); font-weight: 600; }
+.lexicon-tree-card .lexicon-word-part--prefix { color: var(--status-info); }
+.lexicon-tree-card .lexicon-word-part--suffix { color: var(--text-ink); }
+.lexicon-family-meaning, .lexicon-related-content > p { font-size: var(--type-translation); line-height: 1.6; }
+.lexicon-pos { display: inline; margin-right: .375rem; color: var(--text-secondary); font-size: var(--type-translation); font-weight: 400; white-space: nowrap; }
+.lexicon-family-relation { margin-top: .375rem; color: var(--text-secondary); font-size: var(--type-translation); line-height: 1.6; }
+.lexicon-tree-node > .lexicon-tree-list { margin-top: .75rem; }
+.lexicon-root-map h5 { font-size: var(--type-label); font-weight: 600; color: var(--accent-primary); }
+.lexicon-root-map .lexicon-core-root { margin-bottom: 1.25rem; }
+.lexicon-root-map .lexicon-part-tag { border-radius: 4px; }
+.lexicon-root-map .lexicon-root-related > h5 { margin-bottom: .75rem; }
+.lexicon-root-map .lexicon-related-node { display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: start; column-gap: .5rem; }
+.lexicon-related-node > details { min-width: 0; }
+.lexicon-related-node summary { min-height: 44px; padding-block: .625rem; cursor: pointer; font-size: var(--type-term); font-weight: 500; line-height: 1.5; color: var(--text-ink); }
+.lexicon-related-node summary::marker { color: var(--accent-primary); }
+.lexicon-related-node > button { min-width: 44px; }
+.lexicon-related-content { margin-top: .25rem; }
+.lexicon-root-legacy { margin-block: 1.25rem; overflow-wrap: anywhere; }
+.lexicon-parts-editor { display: grid; gap: .75rem; min-width: 0; flex-basis: 100%; }
+.lexicon-definition-list { display: grid; gap: 1rem; margin-block: 1.25rem; }
+.lexicon-definition-card { display: flex; align-items: flex-start; gap: .75rem; padding: 1.25rem; border: 1px solid var(--border-subtle); border-radius: 12px; background: var(--surface-paper); }
+.lexicon-definition-card > button { flex: 0 0 44px; min-width: 44px; margin: -.375rem 0 -.375rem -.375rem; color: var(--accent-primary); }
+.lexicon-definition-card > p { flex: 1; min-width: 0; font-size: var(--type-body); line-height: 1.6; overflow-wrap: anywhere; }
+.lexicon-sense-meaning { font-size: var(--type-translation); }
+@media (max-width: 639px) {
+  .lexicon-tree-card, .lexicon-definition-card { padding: 1rem; }
+  .lexicon-tree-card .lexicon-tree-list { padding-left: .75rem; }
+  .lexicon-tree-card .lexicon-tree-node { padding-left: .5rem; }
+  .lexicon-definition-card { gap: .5rem; }
+}
+
+/* Example cards group complete sentences under their linked word meaning. */
+.lexicon-sense-cards { display: grid; gap: 1rem; margin-block: 1.25rem; }
+.lexicon-sense-card { min-width: 0; padding: 1.25rem; border: 1px solid var(--border-subtle); border-radius: 12px; background: var(--surface-paper); }
+.lexicon-sense-card > h4 { margin-bottom: .75rem; color: var(--text-ink); font-size: var(--type-translation); font-weight: 500; line-height: 1.6; }
+.lexicon-sense-example { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: start; gap: .375rem; }
+.lexicon-sense-example + .lexicon-sense-example { margin-top: 1.25rem; }
+.lexicon-sense-example > div { min-width: 0; padding-top: .5rem; }
+.lexicon-sense-example > button { min-width: 44px; padding-inline: 0; color: var(--accent-primary); }
+.lexicon-sense-example p[lang="en"] { font-size: var(--type-example); line-height: 1.6; }
+.lexicon-sense-example p + p { margin-top: .375rem; }
+@media (max-width: 639px) {
+  .lexicon-sense-card { padding: .875rem; }
+  .lexicon-sense-example { column-gap: 0; }
+}

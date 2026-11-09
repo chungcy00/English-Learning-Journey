@@ -1,5 +1,6 @@
 import { Type } from '@google/genai';
 import { DETAIL_SECTIONS, VOCABULARY_CATEGORIES, type VocabularyDetails, type LearningEntry, type DetailSection } from '../src/types.js';
+import { hasExactParts } from '../src/utils/wordFormation.js';
 import { inflectionLabel, vocabularyKey } from '../src/utils/vocabularyDetails.js';
 export class VocabularyDetailsError extends Error { name = 'VocabularyDetailsError'; }
 const string = { type: Type.STRING };
@@ -8,15 +9,18 @@ const optionalChinese = { ...chinese, pattern: '^$|[㐀-鿿]' };
 const entries = { type: Type.ARRAY, items: { type: Type.OBJECT, properties: {
   text: string, meaningZh: string, partOfSpeech: string, example: string, exampleTranslation: string, note: string, category: string, senseId: string,
 }, required: ['text', 'meaningZh'] } };
-const family = { type: Type.OBJECT, properties: { base: string, relation: { ...chinese, description: '用简体中文解释真实派生步骤。例：helpful + -ly → helpfully，形容词加 -ly 变为副词；不能把 -fully 虚写成这里的单一后缀。' } }, required: ['base', 'relation'] };
+const wordParts = { type: Type.ARRAY, description: '可选的真实构词分段；按原词表面拼写排列，可留空，不得根据相似字母编造。', items: { type: Type.OBJECT, properties: { kind: { type: Type.STRING, enum: ['prefix','root','suffix'] }, text: string, meaningZh: chinese }, required: ['kind','text','meaningZh'] } };
+const family = { type: Type.OBJECT, properties: { base: string, parent: { ...string, description: '有把握时给出直接派生自的英文词，可为原词或本词族其他词，不得填自身；不确定则省略。' }, parts: wordParts, relation: { ...chinese, description: '用简体中文解释真实派生步骤。例：helpful + -ly → helpfully，形容词加 -ly 变为副词；不能把 -fully 虚写成这里的单一后缀。' } }, required: ['base', 'relation'] };
 const morphology = { type: Type.OBJECT, properties: {
   root: string, meaningZh: chinese,
   parts: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { kind: { type: Type.STRING, enum: ['prefix', 'root', 'suffix'] }, text: string, meaningZh: chinese }, required: ['kind', 'text', 'meaningZh'] } },
   explanation: { ...chinese, description: '用简体中文说明各部分如何组合成原词含义，拼写变化也需解释。不能只介绍词源或整段使用英文。' }, mnemonic: { ...optionalChinese, description: '简短自然的中文辅助记忆联想，不冒充真实词源；无合适联想可留空。' },
-  related: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { word: string, partOfSpeech: string, meaningZh: chinese }, required: ['word', 'partOfSpeech', 'meaningZh'] } },
+  related: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { word: string, partOfSpeech: string, meaningZh: chinese, relation: optionalChinese, parts: wordParts }, required: ['word', 'partOfSpeech', 'meaningZh'] } },
 }, required: ['root', 'meaningZh', 'parts', 'explanation', 'mnemonic', 'related'] };
 const derivativeEntries = { ...entries, description: '只提供通用学习场景下常见、真实的派生词，不以偶见的否定分词或专门术语凑数。若只能想到罕见构词形式，返回空数组。', items: { ...entries.items, properties: { ...entries.items.properties, family }, required: ['text', 'meaningZh', 'partOfSpeech', 'family'] } };
 const rootEntries = { ...entries, items: { ...entries.items, properties: { ...entries.items.properties, morphology }, required: ['text', 'meaningZh', 'morphology'] } };
+const exampleEntries = { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { text: { ...string, description: 'A complete natural English example sentence, never a headword or collocation label.' }, meaningZh: { ...chinese, description: '这句例句的完整中文译文，不是单词词义。单词词义通过 senseId 关联 senses。' }, senseId: string, senseMeaningZh: { ...optionalChinese, description: '本例句对应的简体中文单词词义，不是句子译文。可细分已合并的多义释义，如扎根的与根深蒂固的；仍沿用同一原义项 senseId，不得添加无关新义。' }, note: string }, required: ['text','meaningZh','senseId'] } };
+const definitionEntries = { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { text: { ...string, description: 'A short, clear English-only learner definition of one main sense. No Chinese, translation, IPA, POS labels or heading.' }, meaningZh: { ...string, enum: [''] }, senseId: string }, required: ['text','meaningZh'] } };
 const phraseEntries = { type: Type.ARRAY, description: 'Practical learner-dictionary expressions. Usually 4–8 distinct common expressions if available, at most 10; preserve articles and prepositions. Never pad obscure combinations.', items: { type: Type.OBJECT, properties: { text: { ...string, description: '完整自然的常见英文表达，保留必要冠词、介词和句型结构。' }, meaningZh: chinese, category: string, example: string, exampleTranslation: string, note: string }, required: ['text', 'meaningZh'] } };
 const usageEntries = { type: Type.ARRAY, description: 'Useful actual usage explanations, not pronunciation, stress, IPA, definitions or a repeated collocation list. Select only relevant learning points.', items: { type: Type.OBJECT, properties: {
   text: { ...string, description: 'Short Chinese heading about a real usage distinction, sentence pattern, situation or pitfall. NEVER a pronunciation or stress heading.' },
@@ -32,7 +36,7 @@ export const detailsSchema = { type: Type.OBJECT, properties: {
   isValidTerm: { type: Type.BOOLEAN }, term: string,
   type: { type: Type.STRING, enum: ['word', 'phrase', 'idiom'] }, category: { type: Type.STRING, enum: [...VOCABULARY_CATEGORIES] }, phoneticUK: string, phoneticUS: string,
   senses: entries, inflections: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { label: string, value: string }, required: ['label', 'value'] } },
-  sections: { type: Type.OBJECT, properties: Object.fromEntries(DETAIL_SECTIONS.map(key => [key, key === 'derivatives' ? derivativeEntries : key === 'roots' ? rootEntries : key === 'phrases' ? phraseEntries : key === 'usage' ? usageEntries : entries])), required: [...DETAIL_SECTIONS] },
+  sections: { type: Type.OBJECT, properties: Object.fromEntries(DETAIL_SECTIONS.map(key => [key, key === 'derivatives' ? derivativeEntries : key === 'roots' ? rootEntries : key === 'phrases' ? phraseEntries : key === 'usage' ? usageEntries : key === 'definitions' ? definitionEntries : key === 'examples' ? exampleEntries : entries])), required: [...DETAIL_SECTIONS] },
 }, required: ['isValidTerm', 'term', 'type', 'category', 'phoneticUK', 'phoneticUS', 'senses', 'inflections', 'sections'] };
 // Refreshes request only the selected column. Unexpected columns are discarded
 // before validation so they cannot fail a refresh or replace unrelated cache.
@@ -57,9 +61,22 @@ export function validateDetails(data: any, term: string, type: VocabularyDetails
       const shortText = (value: unknown) => typeof value === 'string' && value.trim().length > 0 && value.length <= 3000;
       const hasChinese = (value: unknown) => typeof value === 'string' && /[\u3400-\u9fff]/.test(value);
       if (requireStructured && (prefix === 'phrases' || prefix === 'usage') && !hasChinese(item.meaningZh)) throw new VocabularyDetailsError('请提供简体中文解释，已有资料已保留。');
+      if (prefix === 'examples' && item.senseMeaningZh) {
+        if (!shortText(item.senseMeaningZh) || (requireStructured && !hasChinese(item.senseMeaningZh))) throw new VocabularyDetailsError('例句对应词义需要简体中文，请重试。');
+        entry.senseMeaningZh = item.senseMeaningZh.trim();
+      }
+      if (prefix === 'definitions' && requireStructured && (!/[a-z]/i.test(item.text) || hasChinese(item.text) || item.meaningZh.trim())) throw new VocabularyDetailsError('英释需要简明纯英文定义，请重试。');
       if (prefix === 'derivatives' && (item.family !== undefined || requireStructured)) {
         if (!shortText(item.family?.base) || !shortText(item.family?.relation) || !shortText(item.partOfSpeech) || (requireStructured && !hasChinese(item.family.relation))) throw new VocabularyDetailsError('派生词构词关系不完整，请重试。');
         entry.family = { base: item.family.base.trim(), relation: item.family.relation.trim() };
+        if (item.family.parent) {
+          if (!shortText(item.family.parent) || item.family.parent.trim().toLowerCase() === item.text.trim().toLowerCase()) throw new VocabularyDetailsError('派生父词关系无效，请重试。');
+          entry.family.parent = item.family.parent.trim();
+        }
+        if (item.family.parts?.length) {
+          if (!hasExactParts(item.family.parts,item.text)) throw new VocabularyDetailsError('派生词分段与单词不符，请重试。');
+          entry.family.parts = item.family.parts.map(({kind,text,meaningZh}: any)=>({kind,text,meaningZh}));
+        }
       }
       if (prefix === 'roots' && (item.morphology !== undefined || requireStructured)) {
         const m = item.morphology;
@@ -74,7 +91,12 @@ export function validateDetails(data: any, term: string, type: VocabularyDetails
           || !m.parts.some((part: any) => part.kind === 'root') || m.parts.map((part: any) => part.text).join('').toLowerCase() !== term.toLowerCase()
           || !Array.isArray(m.related) || m.related.length > 4 || m.related.some((word: any) => !['word','partOfSpeech','meaningZh'].every(key => shortText(word?.[key])))) throw new VocabularyDetailsError('构词拆解不完整或与原词不符，请重试。');
         entry.morphology = { root: m.root, meaningZh: m.meaningZh, parts: m.parts.map(({kind,text,meaningZh}: any) => ({kind,text,meaningZh})), explanation: m.explanation, mnemonic: m.mnemonic,
-          related: [...new Map(m.related.filter((word: any) => word.word.trim().toLowerCase() !== term.toLowerCase()).map(({word,partOfSpeech,meaningZh}: any) => [word.trim().toLowerCase(), {word,partOfSpeech,meaningZh}])).values()] as NonNullable<LearningEntry['morphology']>['related'] };
+          related: [...new Map(m.related.filter((word: any) => word.word.trim().toLowerCase() !== term.toLowerCase()).map((related: any) => {
+            const {word,partOfSpeech,meaningZh,relation,parts}=related;
+            if (relation && (!shortText(relation) || (requireStructured && !hasChinese(relation)))) throw new VocabularyDetailsError('同根词构词说明需要中文，请重试。');
+            if (parts?.length && !hasExactParts(parts,word)) throw new VocabularyDetailsError('同根词分段与单词不符，请重试。');
+            return [word.trim().toLowerCase(), {word,partOfSpeech,meaningZh,...(relation?{relation}:{}),...(parts?.length?{parts:parts.map(({kind,text,meaningZh}:any)=>({kind,text,meaningZh}))}:{})}];
+          })).values()] as NonNullable<LearningEntry['morphology']>['related'] };
       }
       if (prefix === 'usage' && (item.usageKind !== undefined || requireStructured)) {
         if (!['scenario','grammar','comparison','error','register','natural'].includes(item.usageKind)) throw new VocabularyDetailsError('用法辨析类型不受支持，请重试。');
@@ -106,6 +128,15 @@ export function validateDetails(data: any, term: string, type: VocabularyDetails
     if (excluded.has(key) || seen.has(key)) return false;
     seen.add(key); return true;
   });
+  const familyByWord = new Map(sections.derivatives.map(entry=>[entry.text.trim().toLowerCase(),entry]));
+  for (const entry of sections.derivatives) {
+    const seen = new Set<string>([entry.text.trim().toLowerCase()]);
+    let parent = entry.family?.parent?.trim().toLowerCase();
+    while (parent && familyByWord.has(parent)) {
+      if (seen.has(parent)) throw new VocabularyDetailsError('派生词关系形成循环，请重试。');
+      seen.add(parent); parent = familyByWord.get(parent)?.family?.parent?.trim().toLowerCase();
+    }
+  }
   const phraseKeys = new Set<string>();
   sections.phrases = sections.phrases.filter(entry => { const key = entry.text.trim().replace(/\s+/g, ' '); if (phraseKeys.has(key)) return false; phraseKeys.add(key); return true; });
   // A model may incorrectly label a pronunciation note as grammar. Do not present it as usage.

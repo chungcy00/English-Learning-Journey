@@ -78,8 +78,8 @@ test('case-sensitive names and abbreviations are not merged', () => {
 test('structured families, roots, usage and expression bookmarks survive editing, regeneration and backup restore', async()=>{
   await db.open();const word={...basicVocabulary('helpful'),reviewCount:9,nextReviewDate:87654,currentInterval:14};await db.vocabulary.put(word);
   const detail=legacyDetails(word);detail.generated=true;
-  detail.sections.derivatives=[{id:'d',text:'helpfulness',meaningZh:'有用',family:{base:'help',relation:'helpful 加 -ness'}}];
-  detail.sections.roots=[{id:'r',text:'help',meaningZh:'帮助',morphology:{root:'help',meaningZh:'帮助',parts:[{kind:'root',text:'help',meaningZh:'帮助'},{kind:'suffix',text:'ful',meaningZh:'具有……性质'}],explanation:'构成有帮助的含义',mnemonic:'联想到帮助别人的人',related:[]}}];
+  detail.sections.derivatives=[{id:'d',text:'helpfulness',meaningZh:'有用',family:{base:'help',parent:'helpful',relation:'helpful 加 -ness',parts:[{kind:'root',text:'help',meaningZh:'帮助'},{kind:'suffix',text:'ful',meaningZh:'具有……性质'},{kind:'suffix',text:'ness',meaningZh:'性质'}]}}];
+  detail.sections.roots=[{id:'r',text:'help',meaningZh:'帮助',morphology:{root:'help',meaningZh:'帮助',parts:[{kind:'root',text:'help',meaningZh:'帮助'},{kind:'suffix',text:'ful',meaningZh:'具有……性质'}],explanation:'构成有帮助的含义',mnemonic:'联想到帮助别人的人',related:[{word:'helper',partOfSpeech:'noun',meaningZh:'帮手',relation:'help 加 -er 表示帮助的人',parts:[{kind:'root',text:'help',meaningZh:'帮助'},{kind:'suffix',text:'er',meaningZh:'做某事的人'}]}]}}];
   detail.sections.usage=[{id:'u',text:'语法结构',meaningZh:'可接 to 表示帮助的对象',usageKind:'grammar'}];
   detail.sections.phrases=[{id:'p',text:'be helpful to sb',meaningZh:'对某人有帮助'}];
   await saveVocabularyDetails(detail);await toggleMaterial(word,'phrases',detail.sections.phrases[0]);

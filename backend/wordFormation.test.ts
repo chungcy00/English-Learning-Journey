@@ -103,3 +103,26 @@ test('section refresh schema and validation isolate the selected column from unr
  assert.equal(result.sections.usage.length,1);assert.deepEqual(result.sections.roots,[]);assert.deepEqual(result.sections.derivatives,[]);
  delete input.sections.usage;assert.throws(()=>validateDetails(isolateRequestedSection(input,'usage'),'helpful','word',[],true));
 });
+
+test('new tree metadata survives normalization without inventing legacy parents or segments',()=>{
+ const input:any=output();input.sections.derivatives[0].family={base:'help',parent:'helpful',relation:'helpful 加 -ness 构成名词',parts:[{kind:'root',text:'helpful',meaningZh:'有帮助的'},{kind:'suffix',text:'ness',meaningZh:'性质或状态'}]};
+ input.sections.roots[0].morphology.related[0]={word:'helpless',partOfSpeech:'adjective',meaningZh:'无助的',relation:'共同词根 help，加 -less 表示缺少',parts:[{kind:'root',text:'help',meaningZh:'帮助'},{kind:'suffix',text:'less',meaningZh:'缺少'}]};
+ const result=validateDetails(input,'helpful','word',[],true);assert.equal(result.sections.derivatives[0].family?.parent,'helpful');assert.equal(result.sections.derivatives[0].family?.parts?.length,2);assert.ok(result.sections.roots[0].morphology?.related[0].relation?.includes('help'));
+ input.sections.derivatives[0].family.parts[0].text='invented';assert.throws(()=>validateDetails(input,'helpful','word',[],true),/派生词分段/);
+ const old=validateDetails(output(),'helpful','word');assert.equal(old.sections.derivatives[0].family?.parent,undefined);
+});
+test('English definitions reject new translations while preserving legacy translated records',()=>{
+ const input:any=output();input.sections.definitions=[{text:'Giving useful assistance.',meaningZh:''}];assert.doesNotThrow(()=>validateDetails(input,'helpful','word',[],true));
+ input.sections.definitions[0].meaningZh='有帮助的';assert.throws(()=>validateDetails(input,'helpful','word',[],true),/纯英文/);assert.doesNotThrow(()=>validateDetails(input,'helpful','word'));
+ input.sections.definitions[0]={text:'有帮助的',meaningZh:''};assert.throws(()=>validateDetails(input,'helpful','word',[],true),/纯英文/);
+});
+
+test('new cyclic derivational relationships are rejected rather than shown as real hierarchy',()=>{
+ const input:any=output();input.sections.derivatives=[{text:'helpful',meaningZh:'有帮助的',partOfSpeech:'adjective',family:{base:'help',parent:'helpfulness',relation:'测试关系'}},{text:'helpfulness',meaningZh:'有帮助',partOfSpeech:'noun',family:{base:'help',parent:'helpful',relation:'测试关系'}}];
+ input.term='help';input.sections.roots=[];assert.throws(()=>validateDetails(input,'help','word',[],true),/循环/);
+});
+
+test('examples retain precise word-meaning labels without changing the original combined sense',()=>{
+ const input:any=output();input.senses=[{text:'helpful',meaningZh:'有帮助的；乐于助人的',partOfSpeech:'adjective',senseId:'old'}];input.sections.examples=[{text:'Your explanation was helpful.',meaningZh:'你的解释很有帮助。',senseId:'old',senseMeaningZh:'有帮助的'}];
+ const result=validateDetails(input,'helpful','word',[],true);assert.equal(result.senses[0].meaningZh,'有帮助的；乐于助人的');assert.equal(result.sections.examples[0].senseMeaningZh,'有帮助的');assert.equal(result.sections.examples[0].senseId,result.senses[0].id);
+});
