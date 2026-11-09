@@ -16,5 +16,6 @@
         }
       ]
     }
-  ]
+  ],
+  "ignoreCommand": "[ \"$VERCEL_ENV\" = production ] || exit 1; deploy_sha=$(git ls-remote https://github.com/chungcy00/English-Learning-Journey.git refs/heads/main | cut -f1); [ -z \"$deploy_sha\" ] || [ \"${VERCEL_GIT_COMMIT_SHA:-$deploy_sha}\" != \"$deploy_sha\" ]"
 }
