@@ -60,3 +60,7 @@ test('empty optional correction placeholders are omitted rather than rendered as
  const input:any=output();input.sections.usage=[{text:'语体说明',meaningZh:'按场景选择表达。',usageKind:'register',contrast:{incorrect:'',correct:''}}];
  assert.equal(validateDetails(input,'helpful','word',[],true).sections.usage[0].contrast,undefined);
 });
+test('misclassified pronunciation notes cannot appear in usage, while genuine grammar explanations remain',()=>{
+ const input:any=output();input.sections.usage=[{text:'词性重音差异',meaningZh:'名词和动词重音不同。',usageKind:'grammar'},{text:'与 conflict over 的区别',meaningZh:'conflict with 指与人或安排不一致，over 引出争议事项。',usageKind:'comparison',example:'They are in conflict over the budget.'}];
+ const result=validateDetails(input,'helpful','word',[],true);assert.equal(result.sections.usage.length,1);assert.equal(result.sections.usage[0].usageKind,'comparison');
+});

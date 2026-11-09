@@ -15,11 +15,17 @@ const morphology = { type: Type.OBJECT, properties: {
 }, required: ['root', 'meaningZh', 'parts', 'explanation', 'mnemonic', 'related'] };
 const derivativeEntries = { ...entries, items: { ...entries.items, properties: { ...entries.items.properties, family }, required: ['text', 'meaningZh', 'partOfSpeech', 'family'] } };
 const rootEntries = { ...entries, items: { ...entries.items, properties: { ...entries.items.properties, morphology }, required: ['text', 'meaningZh', 'morphology'] } };
-const phraseEntries = { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { text: string, meaningZh: string, category: string, example: string, exampleTranslation: string, note: string }, required: ['text', 'meaningZh'] } };
-const usageEntries = { ...entries, items: { ...entries.items, properties: { ...entries.items.properties,
+const phraseEntries = { type: Type.ARRAY, description: 'Practical learner-dictionary expressions. Usually 4–8 distinct common expressions if available, at most 10; preserve articles and prepositions. Never pad obscure combinations.', items: { type: Type.OBJECT, properties: { text: string, meaningZh: string, category: string, example: string, exampleTranslation: string, note: string }, required: ['text', 'meaningZh'] } };
+const usageEntries = { type: Type.ARRAY, description: 'Useful actual usage explanations, not pronunciation, stress, IPA, definitions or a repeated collocation list. Select only relevant learning points.', items: { type: Type.OBJECT, properties: {
+  text: { ...string, description: 'Short Chinese heading about a real usage distinction, sentence pattern, situation or pitfall. NEVER a pronunciation or stress heading.' },
+  meaningZh: { ...string, description: 'Substantive Chinese explanation of when/how/why. Explain constraints or differences, not merely the translation of a phrase.' },
+  example: { ...string, description: 'A short natural English sentence illustrating the explanation, if useful.' }, exampleTranslation: string, note: string,
   usageKind: { type: Type.STRING, enum: ['scenario','grammar','comparison','error','register','natural'] },
-  contrast: { type: Type.OBJECT, properties: { incorrect: string, correct: string }, required: ['incorrect','correct'] },
+  contrast: { type: Type.OBJECT, description: 'Omit unless there is a genuine grammatical/lexical error. Never mark a valid register alternative as incorrect.', properties: { incorrect: string, correct: string }, required: ['incorrect','correct'] },
 }, required: ['text','meaningZh','usageKind'] } };
+export function isPronunciationOnlyUsage(entry: Pick<LearningEntry, 'text' | 'meaningZh'>) {
+  return /发音|读音|音标|重音|音节|pronunciation|\bipa\b|word stress/i.test(entry.text);
+}
 export const detailsSchema = { type: Type.OBJECT, properties: {
   isValidTerm: { type: Type.BOOLEAN }, term: string,
   type: { type: Type.STRING, enum: ['word', 'phrase', 'idiom'] }, category: { type: Type.STRING, enum: [...VOCABULARY_CATEGORIES] }, phoneticUK: string, phoneticUS: string,
@@ -81,6 +87,8 @@ export function validateDetails(data: any, term: string, type: VocabularyDetails
     if (excluded.has(key) || seen.has(key)) return false;
     seen.add(key); return true;
   });
+  // A model may incorrectly label a pronunciation note as grammar. Do not present it as usage.
+  sections.usage = sections.usage.filter(entry => !isPronunciationOnlyUsage(entry));
   const category = VOCABULARY_CATEGORIES.includes(data.category) ? data.category : data.type === 'idiom' ? 'idiom' : type;
   const resolvedType = type === 'word' ? 'word' : category === 'idiom' ? 'idiom' : 'phrase';
   return { key: vocabularyKey(term, type), term, type: resolvedType, category, phoneticUK: data.phoneticUK, phoneticUS: data.phoneticUS, senses, inflections: category === 'word' ? data.inflections.map((form: any) => ({ label: inflectionLabel(form.label), value: form.value })) : [], sections, generated: true, generatedSections: [...DETAIL_SECTIONS], provenance: {}, updatedAt: Date.now() };
