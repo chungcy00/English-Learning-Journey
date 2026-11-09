@@ -1,5 +1,6 @@
 import { Type } from '@google/genai';
 import { DETAIL_SECTIONS, VOCABULARY_CATEGORIES, type VocabularyDetails, type LearningEntry, type DetailSection } from '../src/types.js';
+import { isChineseUsageExplanation } from '../src/utils/usageLanguage.js';
 import { hasExactParts } from '../src/utils/wordFormation.js';
 import { inflectionLabel, vocabularyKey } from '../src/utils/vocabularyDetails.js';
 export class VocabularyDetailsError extends Error { name = 'VocabularyDetailsError'; }
@@ -22,10 +23,10 @@ const rootEntries = { ...entries, items: { ...entries.items, properties: { ...en
 const exampleEntries = { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { text: { ...string, description: 'A complete natural English example sentence, never a headword or collocation label.' }, meaningZh: { ...chinese, description: '这句例句的完整中文译文，不是单词词义。单词词义通过 senseId 关联 senses。' }, senseId: string, senseMeaningZh: { ...optionalChinese, description: '本例句对应的简体中文单词词义，不是句子译文。可细分已合并的多义释义，如扎根的与根深蒂固的；仍沿用同一原义项 senseId，不得添加无关新义。' }, note: string }, required: ['text','meaningZh','senseId'] } };
 const definitionEntries = { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { text: { ...string, description: 'A short, clear English-only learner definition of one main sense. No Chinese, translation, IPA, POS labels or heading.' }, meaningZh: { ...string, enum: [''] }, senseId: string }, required: ['text','meaningZh'] } };
 const phraseEntries = { type: Type.ARRAY, description: 'Practical learner-dictionary expressions. Usually 4–8 distinct common expressions if available, at most 10; preserve articles and prepositions. Never pad obscure combinations.', items: { type: Type.OBJECT, properties: { text: { ...string, description: '完整自然的常见英文表达，保留必要冠词、介词和句型结构。' }, meaningZh: chinese, category: string, example: string, exampleTranslation: string, note: string }, required: ['text', 'meaningZh'] } };
-const usageEntries = { type: Type.ARRAY, description: 'Useful actual usage explanations, not pronunciation, stress, IPA, definitions or a repeated collocation list. Select only relevant learning points.', items: { type: Type.OBJECT, properties: {
-  text: { ...string, description: 'Short Chinese heading about a real usage distinction, sentence pattern, situation or pitfall. NEVER a pronunciation or stress heading.' },
-  meaningZh: { ...chinese, description: '用简体中文解释适用场景、真实句型约束或词义区别，不能只翻译词组。讲介词时应区分完整句法结构，不臆造抽象/具体等选择规则。' },
-  example: { ...string, description: 'A short natural English sentence illustrating the explanation, if useful.' }, exampleTranslation: string, note: string,
+const usageEntries = { type: Type.ARRAY, description: '面向英语非母语学习者的实用中文说明。每点解释怎么用、何时用或与哪个词易混，用日常词语写一至三句；不讲词源、历史来源、抽象理论或无关学术知识。', items: { type: Type.OBJECT, properties: {
+  text: { ...chinese, description: '简短中文标题，可包含所讨论的英文单词或搭配；不写英文解释句。' },
+  meaningZh: { ...chinese, description: '用简明简体中文讲清怎么用、何时用、和哪个词有何区别，一至三句；英文只用于单词、搭配或句型，完整英文例句放 example。不要讲历史、词源、抽象理论或用术语堆砌。讲介词时不臆造抽象/具体选择规则。' },
+  example: { ...string, description: 'A short natural English sentence illustrating the explanation, if useful.' }, exampleTranslation: optionalChinese, note: { ...optionalChinese, description: '可选简短中文补充，最多一两句，不重复正文。不写英文长解释、词源、历史背景或学术性分析；没有必要则留空。英文术语嵌入中文句子即可。' },
   usageKind: { type: Type.STRING, enum: ['scenario','grammar','comparison','error','register','natural'] },
   contrast: { type: Type.OBJECT, description: 'Omit unless there is a genuine grammatical/lexical error. Never mark a valid register alternative as incorrect.', properties: { incorrect: string, correct: string }, required: ['incorrect','correct'] },
 }, required: ['text','meaningZh','usageKind'] } };
@@ -61,6 +62,11 @@ export function validateDetails(data: any, term: string, type: VocabularyDetails
       const shortText = (value: unknown) => typeof value === 'string' && value.trim().length > 0 && value.length <= 3000;
       const hasChinese = (value: unknown) => typeof value === 'string' && /[\u3400-\u9fff]/.test(value);
       if (requireStructured && (prefix === 'phrases' || prefix === 'usage') && !hasChinese(item.meaningZh)) throw new VocabularyDetailsError('请提供简体中文解释，已有资料已保留。');
+      if (prefix === 'usage' && requireStructured) {
+        for (const field of ['meaningZh','note','exampleTranslation']) {
+          if ((field === 'meaningZh' || item[field]) && !isChineseUsageExplanation(item[field] || '')) throw new VocabularyDetailsError('用法辨析正文和补充说明需要简明中文，英文例句请单独填写。');
+        }
+      }
       if (prefix === 'examples' && item.senseMeaningZh) {
         if (!shortText(item.senseMeaningZh) || (requireStructured && !hasChinese(item.senseMeaningZh))) throw new VocabularyDetailsError('例句对应词义需要简体中文，请重试。');
         entry.senseMeaningZh = item.senseMeaningZh.trim();

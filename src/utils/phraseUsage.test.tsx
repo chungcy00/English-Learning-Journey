@@ -26,3 +26,11 @@ test('refreshing expressions preserves other sections; manual usage is retained 
  assert.deepEqual(result.sections.phrases,incoming.sections.phrases);
  assert.deepEqual(mergeGeneratedDetails(current,incoming).sections.usage,current.sections.usage);
 });
+
+test('legacy English explanations are retained in a closed disclosure while Chinese explanations and English examples stay visible',()=>{
+ const entry:LearningEntry={id:'legacy',text:'rooted vs. ingrained',meaningZh:'用法辨析',note:'Rooted often implies origin or structural foundation, while ingrained suggests something so deeply fixed that it is hard to remove.'};
+ const before=structuredClone(entry);const html=renderToStaticMarkup(<UsageList entries={[entry]} pronounce={()=>{}}/>);
+ assert.match(html,/<details class="lexicon-usage-legacy">/);assert.ok(!html.includes('<details open'));assert.ok(html.includes('旧资料尚无中文讲解'));assert.ok(html.includes(entry.note!));assert.deepEqual(entry,before);
+ const updated=renderToStaticMarkup(<UsageList entries={[{...entry,meaningZh:'rooted 常用 be rooted in，说明观念或感受与什么有关。',note:'ingrained 更强调习惯难以改变。',example:'Her fear is rooted in an earlier experience.',exampleTranslation:'她的恐惧与过去的一次经历有关。'}]} pronounce={()=>{}}/>);
+ assert.ok(!updated.includes('lexicon-usage-legacy'));assert.ok(updated.includes('ingrained 更强调习惯难以改变。'));assert.ok(updated.includes('Her fear is rooted'));
+});

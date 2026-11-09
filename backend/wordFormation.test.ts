@@ -126,3 +126,11 @@ test('examples retain precise word-meaning labels without changing the original 
  const input:any=output();input.senses=[{text:'helpful',meaningZh:'有帮助的；乐于助人的',partOfSpeech:'adjective',senseId:'old'}];input.sections.examples=[{text:'Your explanation was helpful.',meaningZh:'你的解释很有帮助。',senseId:'old',senseMeaningZh:'有帮助的'}];
  const result=validateDetails(input,'helpful','word',[],true);assert.equal(result.senses[0].meaningZh,'有帮助的；乐于助人的');assert.equal(result.sections.examples[0].senseMeaningZh,'有帮助的');assert.equal(result.sections.examples[0].senseId,result.senses[0].id);
 });
+
+test('new usage explanatory fields require Chinese even when the main explanation is already Chinese',()=>{
+ const input:any=output();input.sections.usage=[{text:'近义词区别',meaningZh:'rooted 常用来说明观念或感受与什么有关。',usageKind:'comparison',note:'Rooted often implies origin or structural foundation, while ingrained suggests something deeply fixed.'}];
+ assert.throws(()=>validateDetails(input,'helpful','word',[],true),/简明中文/);
+ assert.doesNotThrow(()=>validateDetails(input,'helpful','word'));
+ input.sections.usage[0].note='ingrained 更强调习惯或观念长期形成、很难改变。';assert.doesNotThrow(()=>validateDetails(input,'helpful','word',[],true));
+ input.sections.usage[0].exampleTranslation='This English paragraph belongs in the example field, not in the Chinese translation field.';assert.throws(()=>validateDetails(input,'helpful','word',[],true),/简明中文/);
+});

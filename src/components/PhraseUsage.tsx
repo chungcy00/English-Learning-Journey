@@ -1,5 +1,6 @@
 import React from 'react';
 import { Bookmark, Volume2 } from 'lucide-react';
+import { isLegacyEnglishExplanation } from '../utils/usageLanguage';
 import type { LearningEntry } from '../types';
 
 export const usageLabels = { scenario:'含义与场景', grammar:'语法与句型', comparison:'近义词辨析', error:'常见误用', register:'语体差异', natural:'自然表达' };
@@ -17,9 +18,17 @@ export function PhraseList({entries,isSaved,busy,pronounce,onToggle}:{entries:Le
   </li>)}</ul>;
 }
 export function UsageList({entries,pronounce}:{entries:LearningEntry[];pronounce:(text:string)=>void}) {
-  return <div className="lexicon-usage-list">{entries.map(entry=><section key={entry.id} className="lexicon-usage-point">
-    <h4>{entry.text}</h4><p>{entry.meaningZh}</p>
-    {entry.contrast&&<dl className="lexicon-usage-contrast"><div><dt>误用</dt><dd lang="en">{entry.contrast.incorrect}</dd></div><div><dt>正确表达</dt><dd lang="en">{entry.contrast.correct}</dd></div></dl>}
-    <EntryExample entry={entry} pronounce={pronounce}/>{entry.note&&<p className="lexicon-note lexicon-muted">{entry.note}</p>}
-  </section>)}</div>;
+  return <div className="lexicon-usage-list">{entries.map(entry=>{
+    const legacyTitle=isLegacyEnglishExplanation(entry.text);
+    const legacyMeaning=isLegacyEnglishExplanation(entry.meaningZh);
+    const legacyNote=isLegacyEnglishExplanation(entry.note);
+    const legacyTranslation=isLegacyEnglishExplanation(entry.exampleTranslation);
+    const placeholderMeaning=/^(用法辨析|用法说明|补充说明)$/.test(entry.meaningZh.trim());
+    return <section key={entry.id} className="lexicon-usage-point">
+      <h4>{legacyTitle ? '用法说明' : entry.text}</h4>{!legacyMeaning&&!placeholderMeaning&&<p>{entry.meaningZh}</p>}{placeholderMeaning&&legacyNote&&<p className="lexicon-muted">旧资料尚无中文讲解，可编辑或重新生成本栏。</p>}
+      {entry.contrast&&<dl className="lexicon-usage-contrast"><div><dt>误用</dt><dd lang="en">{entry.contrast.incorrect}</dd></div><div><dt>正确表达</dt><dd lang="en">{entry.contrast.correct}</dd></div></dl>}
+      <EntryExample entry={legacyTranslation?{...entry,exampleTranslation:''}:entry} pronounce={pronounce}/>{entry.note&&!legacyNote&&<p className="lexicon-note lexicon-muted">{entry.note}</p>}
+      {(legacyTitle||legacyMeaning||legacyNote||legacyTranslation)&&<details className="lexicon-usage-legacy"><summary>旧版英文说明</summary><div>{legacyTitle&&<p lang="en">{entry.text}</p>}{legacyMeaning&&<p lang="en">{entry.meaningZh}</p>}{legacyNote&&<p lang="en">{entry.note}</p>}{legacyTranslation&&<p lang="en">{entry.exampleTranslation}</p>}</div><p className="lexicon-muted">原文已保留，可编辑为中文，或重新生成本栏。</p></details>}
+    </section>;
+  })}</div>;
 }

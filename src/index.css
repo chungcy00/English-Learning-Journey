@@ -2084,3 +2084,7 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
   .lexicon-sense-card { padding: .875rem; }
   .lexicon-sense-example { column-gap: 0; }
 }
+
+.lexicon-usage-legacy { margin-top: .75rem; color: var(--text-secondary); font-size: var(--type-translation); }
+.lexicon-usage-legacy > summary { min-height: 44px; padding-block: .625rem; cursor: pointer; color: var(--accent-primary); }
+.lexicon-usage-legacy p + p { margin-top: .5rem; }
