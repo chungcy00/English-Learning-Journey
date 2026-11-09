@@ -23,7 +23,7 @@ import { ReadingView } from './views/ReadingView';
 import { WordbookView } from './views/WordbookView';
 import { ReviewView } from './views/ReviewView';
 import { ReadingHistoryView } from './views/ReadingHistoryView';
-import { isAppleMobileDevice, isManualUpdateApp, isAndroidPhoneApp } from './utils/pwa';
+import { isAppleMobileDevice, isManualUpdateApp, shouldUseBottomNavigation } from './utils/pwa';
 import { normalizeEnglishTerm } from './utils/englishSearch';
 import { useReadingExpressions } from './hooks/useReadingExpressions';
 import { WordbookRemovalDialog } from './components/WordbookRemovalDialog';
@@ -142,13 +142,14 @@ export default function App() {
   const [isInstalledApp, setIsInstalledApp] = useState(
     () => isManualUpdateApp()
   );
-  const [isBottomNavApp, setIsBottomNavApp] = useState(() => isAndroidPhoneApp());
+  const [isBottomNavApp, setIsBottomNavApp] = useState(() => shouldUseBottomNavigation());
 
   useEffect(() => {
-    const mode = window.matchMedia('(display-mode: standalone)');
-    const syncNavigation = () => setIsBottomNavApp(isAndroidPhoneApp());
-    mode.addEventListener('change', syncNavigation);
-    return () => mode.removeEventListener('change', syncNavigation);
+    const pointer = window.matchMedia('(pointer: coarse)');
+    const syncNavigation = () => setIsBottomNavApp(shouldUseBottomNavigation());
+    window.addEventListener('resize', syncNavigation);
+    pointer.addEventListener('change', syncNavigation);
+    return () => { window.removeEventListener('resize', syncNavigation); pointer.removeEventListener('change', syncNavigation); };
   }, []);
 
   useEffect(() => {
@@ -394,19 +395,18 @@ export default function App() {
 
 
   return (
-    <div className={`min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] selection:bg-[var(--accent-primary)]/20 ${softwareKeyboardOpen ? 'software-keyboard-open' : ''} ${activeTab === 'home' ? 'studio-home-active' : activeTab === 'reading' ? 'studio-reading-active' : ''}`}>
-      {/* All browser sizes use the header; only installed Android phones use bottom tabs. */}
-      {!isBottomNavApp && (
-        <Navbar
-          activeTab={activeTab}
-          setActiveTab={navigateTab}
-          reviewCount={vocabularies.length}
-          hasCurrentReading={!!currentReading}
-        />
-      )}
+    <div className={`min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] selection:bg-[var(--accent-primary)]/20 ${isBottomNavApp ? 'has-bottom-navigation' : ''} ${softwareKeyboardOpen ? 'software-keyboard-open' : ''} ${activeTab === 'home' ? 'studio-home-active' : activeTab === 'reading' ? 'studio-reading-active' : ''}`}>
+      {/* Keep the brand header; phones and tablets use the shared bottom tabs. */}
+      <Navbar
+        activeTab={activeTab}
+        setActiveTab={navigateTab}
+        reviewCount={vocabularies.length}
+        hasCurrentReading={!!currentReading}
+        showNavigation={!isBottomNavApp}
+      />
 
       {/* Main Content Router */}
-      <main className={`min-w-0 flex-1 ${isBottomNavApp ? 'pb-[calc(5rem+env(safe-area-inset-bottom))]' : ''}`}>
+      <main className="min-w-0 flex-1">
         {storageError && <div className="max-w-3xl mx-auto px-4 pt-4"><RecoveryNotice message={storageError} onRetry={() => void loadData()} /></div>}
         {usageMigrationError && <div className="max-w-3xl mx-auto px-4 pt-4"><RecoveryNotice message={`旧 AI 用法说明更新：${usageMigrationError}`} onRetry={()=>void migrateExistingUsage(true).then(report=>setUsageMigrationError(report.error||''))}/></div>}
         {errorMessage && (

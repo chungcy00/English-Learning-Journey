@@ -64,7 +64,7 @@ test('navigation has color-only feedback and source utilities never animate all 
   const nav = readFileSync(new URL('../components/Navbar.tsx', import.meta.url), 'utf8');
   assert.doesNotMatch(nav, /transition-all/);
   const app = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
-  assert.match(app, /!isBottomNavApp && \(\s*<Navbar/);
+  assert.match(app, /showNavigation=\{!isBottomNavApp\}/);
   assert.match(app, /isBottomNavApp && \(\s*<InstalledAppBottomNav/);
 });
 

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { manualUpdatePlatform, usesAndroidPhoneBottomNav } from './pwa';
+import { manualUpdatePlatform, usesBottomNavigation } from './pwa';
 
 test('iPhone and iPad home-screen websites use the web flow, not manual software updates', () => {
   assert.equal(manualUpdatePlatform(true, true, true), false);
@@ -10,14 +10,12 @@ test('iPhone and iPad home-screen websites use the web flow, not manual software
   assert.equal(manualUpdatePlatform(true, false, false), false);
 });
 
-test('bottom navigation is exclusive to installed Android phones, never browser tabs or tablets', () => {
-  const phone = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36';
-  const tablet = 'Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit/537.36 Chrome/130.0 Safari/537.36';
-  assert.equal(usesAndroidPhoneBottomNav(false, phone), false);
-  assert.equal(usesAndroidPhoneBottomNav(true, phone), true);
-  assert.equal(usesAndroidPhoneBottomNav(true, tablet), false);
-  assert.equal(usesAndroidPhoneBottomNav(false, tablet), false);
-  assert.equal(usesAndroidPhoneBottomNav(true, 'iPhone Mobile Safari'), false);
-  assert.equal(usesAndroidPhoneBottomNav(true, 'iPad Safari'), false);
-  assert.equal(usesAndroidPhoneBottomNav(true, 'Windows NT 10.0 Chrome'), false);
+test('phones and tablets use bottom navigation in browsers and installed shells; desktop keeps its header', () => {
+  assert.equal(usesBottomNavigation(375, true), true);
+  assert.equal(usesBottomNavigation(768, true), true);
+  assert.equal(usesBottomNavigation(1366, true), true);
+  assert.equal(usesBottomNavigation(1366, false, true), true);
+  assert.equal(usesBottomNavigation(975, false), true);
+  assert.equal(usesBottomNavigation(1024, false), false);
+  assert.equal(usesBottomNavigation(1440, false), false);
 });

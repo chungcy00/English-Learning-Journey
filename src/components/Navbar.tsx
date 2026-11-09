@@ -8,6 +8,7 @@ interface NavbarProps {
   setActiveTab: (tab: NavTab | 'settings') => void;
   reviewCount: number;
   hasCurrentReading: boolean;
+  showNavigation?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -15,6 +16,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   reviewCount,
   hasCurrentReading,
+  showNavigation = true,
 }) => {
   const tabs = [
     { id: 'home' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '生成' : '生成短文', icon: Sparkles },
@@ -46,7 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
 
         {/* Navigation Tabs */}
-        <nav aria-label="主导航" className="grid grid-cols-5 lg:flex lg:items-center gap-1 sm:gap-2">
+        {showNavigation && <nav aria-label="主导航" className="grid grid-cols-5 lg:flex lg:items-center gap-1 sm:gap-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id || (tab.id === 'practice' && (activeTab === 'wordbook' || activeTab === 'rewrite'));
@@ -76,7 +78,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             );
           })}
-        </nav>
+        </nav>}
       </div>
     </header>
   );
