@@ -2160,3 +2160,37 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 .reading-swipe__content { position:relative; z-index:1; background:var(--reading-white); touch-action:pan-y; transition:transform var(--motion-feedback) var(--ease-feedback); }
 .reading-swipe__delete { position:absolute; inset:0 0 0 auto; width:72px; min-height:44px; background:var(--status-error-soft); color:var(--status-error); font-size:var(--type-label); }
 @media (prefers-reduced-motion:reduce) { .reading-swipe__content { transition:none; } }
+
+/* The personal wordbook follows the confirmed compact reference. */
+.wordbook-collection-bar { display:flex; align-items:center; flex-wrap:wrap; gap:.75rem; padding:.5rem .75rem; border:1px solid var(--border-subtle); border-radius:12px; background:var(--surface-selected); color:var(--accent-primary); }
+.wordbook-collection-bar label { flex:1; min-width:0; }
+.wordbook-collection-bar select { max-width:100%; min-height:44px; font-size:var(--type-body); border:0; background:transparent; color:var(--accent-primary); }
+.wordbook-final .wordbook-collection-bar .wordbook-review { width:auto; min-height:44px; padding:.5rem .75rem; border-radius:10px; background:var(--accent-primary); color:var(--surface-paper); font-size:var(--type-body); }
+.wordbook-final .wordbook-search-capsule { border:1px solid var(--border-control); border-radius:10px; background:var(--surface-paper); }
+.wordbook-final .wordbook-management { padding-top:0; border-top:0; }
+.wordbook-final .wordbook-final-list { padding-inline:1rem; border:1px solid var(--border-subtle); border-radius:12px; background:var(--surface-paper); }
+.wordbook-final .wordbook-final-list:empty { display:none; }
+.wordbook-final .wordbook-final-entry:last-child { border-bottom:0; }
+.wordbook-final .wordbook-final-row { padding-block:.375rem; }
+.wordbook-final .wordbook-entry-text { display:flex; align-items:baseline; flex-wrap:wrap; gap:.25rem .75rem; }
+
+.anchored-select { position:relative; display:inline-flex; align-items:center; min-width:0; }
+.anchored-select > button { display:inline-flex; align-items:center; justify-content:space-between; gap:.75rem; min-width:7.5rem; padding:.5rem .75rem; border:1px solid var(--border-control); border-radius:10px; background:var(--surface-paper); color:var(--text-primary); font-family:var(--font-app); font-size:var(--type-label); }
+.review-category-options { position:absolute; top:calc(100% + 4px); left:0; z-index:50; width:max-content; min-width:100%; max-width:calc(100vw - 2rem); max-height:min(18rem,50dvh); overflow-y:auto; overscroll-behavior:contain; padding:4px; border:1px solid var(--border-control); border-radius:10px; background:var(--surface-paper); }
+.anchored-select .review-category-options button { display:flex; align-items:center; justify-content:space-between; gap:1rem; width:100%; min-height:44px; padding:.5rem .75rem; border-radius:6px; font-size:var(--type-label); text-align:left; white-space:nowrap; color:var(--text-primary); }
+.anchored-select .review-category-options button[aria-selected="true"], .anchored-select .review-category-options button[data-active="true"] { background:var(--surface-selected); color:var(--accent-primary); }
+
+.wordbook-final-list > .reading-swipe { border-radius:0; border-top:0; }
+.wordbook-final-list > .reading-swipe + .reading-swipe { border-top:1px solid var(--border-subtle); }
+.wordbook-final-list .reading-swipe__content { background:var(--surface-paper); }
+
+.anchored-select > button[role="combobox"] { font-size:var(--type-label); }
+
+.wordbook-view-control { display:flex; align-items:center; gap:.5rem; flex:1; min-width:0; }
+.wordbook-collection-bar .wordbook-view-select > button[role="combobox"] { font-size:var(--type-body); }
+.wordbook-clear-view { min-width:44px; min-height:44px; display:grid; place-items:center; color:var(--text-secondary); }
+.wordbook-add-tools { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:.5rem 1rem; }
+.wordbook-add-tools > .wordbook-custom-add { display:contents; }
+.wordbook-add-tools .wordbook-custom-toggle { grid-column:1; grid-row:1; justify-self:start; }
+.wordbook-add-tools #wordbook-custom-panel, .wordbook-add-tools .wordbook-error, .wordbook-add-tools .wordbook-message { grid-column:1 / -1; }
+.wordbook-sort { grid-column:2; grid-row:1; display:inline-flex; align-items:center; gap:.375rem; min-height:44px; font-size:var(--type-label); color:var(--text-secondary); }

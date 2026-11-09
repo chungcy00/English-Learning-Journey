@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import assert from 'node:assert/strict';
 import { test, beforeEach, afterEach } from 'node:test';
-import { db, EnglishLearningDatabase, deleteVocabulary, exportMyData, importMyData, initDefaultData } from './dexie';
+import { db, EnglishLearningDatabase, saveReadingWithVocabulary, saveVocabulary, getAllVocabularies, deleteVocabulary, exportMyData, importMyData, initDefaultData } from './dexie';
 import { basicVocabulary, legacyDetails, vocabularyKey } from '../utils/vocabularyDetails';
 import { generateVocabularyDetails, saveVocabularyDetails, toggleMaterial } from '../services/vocabularyDetails';
 
@@ -89,4 +89,16 @@ test('structured families, roots, usage and expression bookmarks survive editing
   assert.equal((await db.savedMaterials.toArray())[0].text,'be helpful to sb');
   const realFetch=globalThis.fetch;globalThis.fetch=(async()=>new Response(JSON.stringify({...detail,sections:{...detail.sections,phrases:[{id:'p2',text:'helpful advice',meaningZh:'有用的建议'}]}}))) as typeof fetch;
   try{await generateVocabularyDetails(word,'phrases',true);assert.equal((await db.savedMaterials.toArray())[0].text,'be helpful to sb');assert.deepEqual((await db.vocabularyDetails.get(detail.key))?.sections.roots,detail.sections.roots);}finally{globalThis.fetch=realFetch;}
+});
+
+test('global wordbook collects different passages and manual words once, retaining progress and respecting deletion', async()=>{
+ await db.open();
+ const shared={...basicVocabulary('shared'),id:'shared',reviewCount:9,nextReviewDate:12345};
+ const first={...basicVocabulary('first'),id:'first'};const second={...basicVocabulary('second'),id:'second'};
+ const reading=(id:string,words:any[])=>({id,content:'shared first second',cefrLevel:'B1',selectedVocabulary:words,rewritePractice:[],createdAt:1,updatedAt:1} as any);
+ await saveReadingWithVocabulary(reading('passage-a',[shared,first]));
+ await saveReadingWithVocabulary(reading('passage-b',[{...shared,id:'different-copy',reviewCount:0},second]));
+ await saveVocabulary({...basicVocabulary('custom'),id:'custom'});
+ const words=await getAllVocabularies();assert.deepEqual(words.map(word=>word.term).sort(),['custom','first','second','shared']);assert.equal(words.find(word=>word.term==='shared')!.reviewCount,9);
+ await deleteVocabulary('first');assert.ok(!(await getAllVocabularies()).some(word=>word.term==='first'));assert.equal((await db.readings.get('passage-a'))!.selectedVocabulary.length,2);
 });

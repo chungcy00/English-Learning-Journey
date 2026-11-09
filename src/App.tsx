@@ -9,7 +9,6 @@ import { vocabularyKey } from './utils/vocabularyDetails';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { createHistoryReviewRequest, historyReviewWords, vocabularyForLevel, vocabularyLevelLabel, type HistoryReviewRequest, type HistoryVocabularyLevel } from './utils/historyVocabulary';
-import { currentReadingSavedVocabulary } from './utils/savedVocabulary';
 import { vocabularyWithReadingSources } from './utils/readingVocabularyOwnership';
 import { toggleWordDetailBookmark } from './utils/wordDetailBookmark';
 import { Navbar, NavTab } from './components/Navbar';
@@ -116,9 +115,8 @@ export default function App() {
   };
   const removedDetailVocabulary = useRef(new Map<string, VocabularyItem>());
   useEffect(() => { removedDetailVocabulary.current.clear(); }, [currentReading?.id]);
-  const reviewVocabulary = useMemo(() => currentReadingSavedVocabulary(vocabularies, currentReading), [vocabularies, currentReading]);
   const historyVocabulary = useMemo(() => vocabularyWithReadingSources(vocabularies, readings), [vocabularies, readings]);
-  const wordbookVocabulary = useMemo(() => historyWordbookLevel === undefined ? vocabularies : vocabularyForLevel(historyVocabulary, historyWordbookLevel), [reviewVocabulary, historyVocabulary, historyWordbookLevel]);
+  const wordbookVocabulary = useMemo(() => historyWordbookLevel === undefined ? vocabularies : vocabularyForLevel(historyVocabulary, historyWordbookLevel), [vocabularies, historyVocabulary, historyWordbookLevel]);
   const scopedHistoryReview = useMemo(() => historyReview ? historyReviewWords(historyVocabulary, historyReview) : [], [historyVocabulary, historyReview]);
   const [removalTarget, setRemovalTarget] = useState<VocabularyItem | null>(null);
   const removalPresence = useMotionPresence(!!removalTarget);
