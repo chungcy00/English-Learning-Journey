@@ -51,3 +51,12 @@ test('new AI responses must include structured learning fields while legacy cach
  assert.doesNotThrow(()=>validateDetails(old,'helpful','word'));
  assert.throws(()=>validateDetails(old,'helpful','word',[],true));
 });
+test('dictionary affix notation is normalized only if the resulting segments exactly reconstruct the word',()=>{
+ const input=output();input.sections.roots[0].morphology.parts[1].text='-ful';
+ const result=validateDetails(input,'helpful','word',[],true);assert.equal(result.sections.roots[0].morphology?.parts[1].text,'ful');
+ input.sections.roots[0].morphology.parts[0].text='invented-';assert.throws(()=>validateDetails(input,'helpful','word',[],true));
+});
+test('empty optional correction placeholders are omitted rather than rendered as false errors',()=>{
+ const input:any=output();input.sections.usage=[{text:'语体说明',meaningZh:'按场景选择表达。',usageKind:'register',contrast:{incorrect:'',correct:''}}];
+ assert.equal(validateDetails(input,'helpful','word',[],true).sections.usage[0].contrast,undefined);
+});

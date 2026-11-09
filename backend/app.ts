@@ -1,4 +1,4 @@
-import { detailsSchema, paragraphSchema, validateDetails } from './learningSchemas.js';
+import { detailsSchema, paragraphSchema, validateDetails, VocabularyDetailsError } from './learningSchemas.js';
 import { DETAIL_SECTIONS } from '../src/types.js';
 import express from 'express';
 import { AiDeadlineError, withAiDeadline } from './aiDeadline.js';
@@ -472,7 +472,7 @@ Roots: focus on useful, accurate word formation and memory support, not a standa
     return res.json(details);
   } catch (error: any) {
     if (sendQuotaError(res, error)) return;
-    console.error('Vocabulary details generation failed:', error?.name);
+    console.error('Vocabulary details generation failed:', error?.name, error instanceof VocabularyDetailsError ? error.message : '');
     return res.status(502).json({ error: '词条资料生成失败，已有资料已保留。请检查拼写后重试，或手动填写。' });
   }
 });
