@@ -1872,6 +1872,7 @@ button.lexicon-primary:hover, .lexicon-panel button.lexicon-primary:hover { back
 .lexicon-entry-actions button[aria-pressed="true"] { color: var(--accent-primary); }
 .lexicon-example { display: flex; align-items: flex-start; gap: 4px; margin-top: 12px; padding: 10px; background: var(--bg-alt); border-radius: 10px; }
 .lexicon-example > div { flex: 1; min-width: 0; }
+.lexicon-example p[lang="en"] { font-size: var(--type-example); line-height: 1.6; }
 .lexicon-note { margin-top: 12px; }
 .lexicon-empty { padding: 28px 0; color: var(--text-secondary); }
 .lexicon-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
