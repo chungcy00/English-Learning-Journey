@@ -1,3 +1,4 @@
+import { vocabularyKey } from './vocabularyDetails';
 import type { VocabularyItem } from '../types';
 
 export async function toggleWordDetailBookmark(
@@ -6,10 +7,10 @@ export async function toggleWordDetailBookmark(
   readingId: string | undefined,
   removed: Map<string, VocabularyItem>,
   store: { save: (item: VocabularyItem) => Promise<unknown>; remove: (id: string) => Promise<void> },
-  isCurrentlySaved = items.some(item => item.term.toLowerCase() === vocab.term.toLowerCase()),
+  isCurrentlySaved = items.some(item => vocabularyKey(item.term, item.type) === vocabularyKey(vocab.term, vocab.type)),
 ): Promise<VocabularyItem[]> {
-  const key = vocab.term.toLowerCase();
-  const existing = items.find(item => item.term.toLowerCase() === key);
+  const key = vocabularyKey(vocab.term, vocab.type);
+  const existing = items.find(item => vocabularyKey(item.term, item.type) === key);
   if (existing && isCurrentlySaved) {
     await store.remove(existing.id);
     removed.set(key, existing);

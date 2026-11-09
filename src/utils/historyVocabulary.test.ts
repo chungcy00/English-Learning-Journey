@@ -44,11 +44,10 @@ test('history scope is wired to the existing review and wordbook without changin
  const review=readFileSync(new URL('../views/ReviewView.tsx',import.meta.url),'utf8');
  assert.match(app,/vocabulary=\{historyVocabulary\}/);
  assert.match(app,/allVocabularies=\{scopedHistoryReview\}/);
- assert.match(app,/allVocabularies=\{reviewVocabulary\}/);
+ assert.match(app,/allVocabularies=\{vocabularies\}/);
  assert.match(app,/vocabularyList=\{wordbookVocabulary\}/);
- assert.match(app,/practiceOnly=\{historyReview.mode === 'free'\}/);
- assert.match(review,/if \(!practiceOnly\) await onRate\(currentVocab.id, rating\)/);
- assert.match(review,/practiceOnly \? '本轮练习' : reviewDelayLabel/);
+ assert.doesNotMatch(review,/onRate|handleRating|reviewDelayLabel/);
+ assert.match(review,/PracticeVocabularyCard/);
 });
 
 test('refresh rebuilds the chosen status and never substitutes other categories or dates',()=>{

@@ -1,3 +1,4 @@
+import { vocabularyKey } from './utils/vocabularyDetails';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -26,7 +27,7 @@ import { useReadingExpressions } from './hooks/useReadingExpressions';
 import { WordbookRemovalDialog } from './components/WordbookRemovalDialog';
 import { useMotionPresence } from './hooks/useMotionPresence';
 import { PracticeHubView } from './views/PracticeHubView';
-import { RewritePracticeView } from './views/RewritePracticeView';
+
 import { useSoftwareKeyboard } from './hooks/useSoftwareKeyboard';
 
 import {
@@ -37,7 +38,6 @@ import {
   ReadingType,
   ReadingLength,
   VocabStatus,
-  ReviewRating,
 } from './types';
 
 import {
@@ -50,14 +50,12 @@ import {
   getAllVocabularies,
   saveVocabulary,
   deleteVocabulary,
-  recordReview,
   getSettings,
   saveSettings,
 } from './db/dexie';
 
 import {
   generateReadingWithPipeline,
-  rewriteReadingWithPipeline,
 } from './services/api';
 
 export default function App() {
@@ -118,7 +116,7 @@ export default function App() {
   useEffect(() => { removedDetailVocabulary.current.clear(); }, [currentReading?.id]);
   const reviewVocabulary = useMemo(() => currentReadingSavedVocabulary(vocabularies, currentReading), [vocabularies, currentReading]);
   const historyVocabulary = useMemo(() => vocabularyWithReadingSources(vocabularies, readings), [vocabularies, readings]);
-  const wordbookVocabulary = useMemo(() => historyWordbookLevel === undefined ? reviewVocabulary : vocabularyForLevel(historyVocabulary, historyWordbookLevel), [reviewVocabulary, historyVocabulary, historyWordbookLevel]);
+  const wordbookVocabulary = useMemo(() => historyWordbookLevel === undefined ? vocabularies : vocabularyForLevel(historyVocabulary, historyWordbookLevel), [reviewVocabulary, historyVocabulary, historyWordbookLevel]);
   const scopedHistoryReview = useMemo(() => historyReview ? historyReviewWords(historyVocabulary, historyReview) : [], [historyVocabulary, historyReview]);
   const [removalTarget, setRemovalTarget] = useState<VocabularyItem | null>(null);
   const removalPresence = useMotionPresence(!!removalTarget);
@@ -134,9 +132,7 @@ export default function App() {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const readingOperation = useRef<AbortController | null>(null);
-  const pendingRatings = useRef(new Set<string>());
   const [isSavingReading, setIsSavingReading] = useState(false);
-  const [isRewriting, setIsRewriting] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [processingTopic, setProcessingTopic] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -205,9 +201,15 @@ export default function App() {
     loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    const refresh = () => { void getAllVocabularies().then(setVocabularies).catch(() => setStorageError('词汇更新读取失败，请重试。')); };
+    window.addEventListener('vocabulary-data-changed', refresh);
+    return () => window.removeEventListener('vocabulary-data-changed', refresh);
+  }, []);
+
   // Set of vocab terms currently in wordbook for O(1) lookup
   const wordbookVocabIds = new Set(
-    reviewVocabulary.map((v) => v.term.toLowerCase())
+    vocabularies.map((v) => vocabularyKey(v.term, v.type))
   );
 
   // Navigation and both learning views share the current passage's saved expressions.
@@ -289,77 +291,7 @@ export default function App() {
     readingOperation.current = null;
     controller.abort();
     setIsGenerating(false);
-    setIsRewriting(false);
     setProcessingStatus('');
-  };
-
-  // 2. Rewrite Reading (PRD Section 21)
-  const handleRewrite = async (mode: string, keepVocab: boolean) => {
-    if (!currentReading || readingOperation.current) return;
-    const controller = new AbortController();
-    readingOperation.current = controller;
-    setIsRewriting(true);
-    setErrorMessage(null);
-    setProcessingStatus('Generating reading...');
-    try {
-      const currentVocabTerms = keepVocab
-        ? currentReading.selectedVocabulary.map((v) => v.term)
-        : undefined;
-
-      const revised = await rewriteReadingWithPipeline(
-        {
-          readingId: currentReading.id,
-          reading: currentReading.content,
-          mode: mode as any,
-          cefrLevel: currentReading.cefrLevel,
-          keepVocabulary: keepVocab,
-          currentVocabulary: currentVocabTerms,
-          vocabularyCount: currentReading.vocabularyCount || currentReading.selectedVocabulary.length,
-        },
-        (status) => { if (readingOperation.current === controller && !controller.signal.aborted) setProcessingStatus(status); }, controller.signal
-      );
-
-      const updatedRecord: ReadingRecord = {
-        ...currentReading,
-        vocabularyCount: currentReading.vocabularyCount || currentReading.selectedVocabulary.length,
-        translations: undefined,
-        content: revised.reading || currentReading.content,
-        readingType: revised.readingType || currentReading.readingType,
-        speakers: revised.speakers && revised.speakers.length > 0
-          ? revised.speakers
-          : currentReading.speakers,
-        selectedVocabulary:
-          revised.vocabulary && revised.vocabulary.length > 0
-            ? (revised.vocabulary as VocabularyItem[])
-            : currentReading.selectedVocabulary,
-        rewritePractice:
-          revised.rewritePractice && revised.rewritePractice.length > 0
-            ? (revised.rewritePractice as any)
-            : currentReading.rewritePractice,
-        updatedAt: Date.now(),
-      };
-
-      controller.signal.throwIfAborted();
-      setIsSavingReading(true);
-      setProcessingStatus('Saving');
-      await saveReadingWithVocabulary(updatedRecord);
-      setVocabularies(await getAllVocabularies());
-      setCurrentReading(updatedRecord);
-
-      const allR = await getAllReadings();
-      setReadings(allR);
-    } catch (err: any) {
-      if (controller.signal.aborted || readingOperation.current !== controller) return;
-      console.error('Rewrite failed:', err);
-      setErrorMessage(err?.message || '短文改写遇到问题，请重试');
-    } finally {
-      if (readingOperation.current === controller) {
-        readingOperation.current = null;
-        setIsSavingReading(false);
-        setIsRewriting(false);
-        setProcessingStatus('');
-      }
-    }
   };
 
   const handleUpdateReading = async (updated: ReadingRecord) => {
@@ -371,10 +303,10 @@ export default function App() {
   // 3. Toggle Word in Wordbook
   const handleToggleWordbook = async (vocab: VocabularyItem) => {
     const exists = vocabularies.find(
-      (v) => v.term.toLowerCase() === vocab.term.toLowerCase()
+      (v) => vocabularyKey(v.term, v.type) === vocabularyKey(vocab.term, vocab.type)
     );
 
-    if (exists && reviewVocabulary.some(v => v.id === exists.id)) {
+    if (exists && vocabularies.some(v => v.id === exists.id)) {
       setRemovalTarget(exists);
       return;
     } else {
@@ -391,9 +323,9 @@ export default function App() {
 
   // 5. Delete Vocabulary from Wordbook
   const handleDetailBookmark = async (vocab: VocabularyItem) => {
-    const updated = await toggleWordDetailBookmark(vocab, vocabularies, currentReading?.id, removedDetailVocabulary.current, { save: saveVocabulary, remove: deleteVocabulary }, reviewVocabulary.some(item => item.term.toLowerCase() === vocab.term.toLowerCase()));
-    const key = vocab.term.toLowerCase();
-    setVocabularies(items => [...items.filter(item => item.term.toLowerCase() !== key), ...updated.filter(item => item.term.toLowerCase() === key)]);
+    const updated = await toggleWordDetailBookmark(vocab, vocabularies, currentReading?.id, removedDetailVocabulary.current, { save: saveVocabulary, remove: deleteVocabulary }, vocabularies.some(item => vocabularyKey(item.term, item.type) === vocabularyKey(vocab.term, vocab.type)));
+    const key = vocabularyKey(vocab.term, vocab.type);
+    setVocabularies(items => [...items.filter(item => vocabularyKey(item.term, item.type) !== key), ...updated.filter(item => vocabularyKey(item.term, item.type) === key)]);
   };
 
   const handleDeleteVocab = (id: string) => {
@@ -407,18 +339,6 @@ export default function App() {
     const updated = await db.vocabulary.update(id, { status, updatedAt });
     if (!updated) throw new Error('词条已不存在');
     setVocabularies(items => items.map(item => item.id === id ? { ...item, status, updatedAt } : item));
-  };
-
-  // 7. Rate Review Flashcard (PRD Section 29)
-  const handleRateReview = async (vocabId: string, rating: ReviewRating) => {
-    if (pendingRatings.current.has(vocabId)) throw new Error('此词条评分仍在保存');
-    pendingRatings.current.add(vocabId);
-    try {
-      const updated = await recordReview(vocabId, rating);
-      // Use the record returned by the committed transaction; no second read
-      // can leave the task counts stale or invite a duplicate rating.
-      setVocabularies(items => items.map(item => item.id === updated.id ? updated : item));
-    } finally { pendingRatings.current.delete(vocabId); }
   };
 
   // 8. Generate From Wordbook (PRD Section 20)
@@ -442,7 +362,7 @@ export default function App() {
   const handleDeleteReading = async (readingId: string) => {
     // Read the committed result in the same transaction: a failed refresh must
     // not report failure after permanently removing a history record.
-    const [updated, updatedVocabulary] = await db.transaction('rw', [db.readings, db.vocabulary, db.reviews, db.rewriteRecords, db.notes], async () => {
+    const [updated, updatedVocabulary] = await db.transaction('rw', [db.readings, db.vocabulary, db.reviews, db.rewriteRecords, db.notes, db.savedMaterials], async () => {
       await deleteReading(readingId);
       return Promise.all([getAllReadings(), getAllVocabularies()]);
     });
@@ -462,14 +382,13 @@ export default function App() {
 
 
   return (
-    <div className={`min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] selection:bg-[var(--accent-primary)]/20 ${softwareKeyboardOpen ? 'software-keyboard-open' : ''} ${activeTab === 'home' ? 'studio-home-active' : activeTab === 'reading' ? 'studio-reading-active' : ''}`}
-      style={{ '--review-nav-offset': isBottomNavApp ? '4.5rem' : '0px' } as React.CSSProperties}>
+    <div className={`min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] selection:bg-[var(--accent-primary)]/20 ${softwareKeyboardOpen ? 'software-keyboard-open' : ''} ${activeTab === 'home' ? 'studio-home-active' : activeTab === 'reading' ? 'studio-reading-active' : ''}`}>
       {/* All browser sizes use the header; only installed Android phones use bottom tabs. */}
       {!isBottomNavApp && (
         <Navbar
           activeTab={activeTab}
           setActiveTab={navigateTab}
-          reviewCount={reviewVocabulary.length}
+          reviewCount={vocabularies.length}
           hasCurrentReading={!!currentReading}
         />
       )}
@@ -517,16 +436,13 @@ export default function App() {
               setReadings(await getAllReadings());
               setVocabularies(await getAllVocabularies());
             }}
-            onRewrite={handleRewrite}
             onOpenHistory={() => setActiveTab('history')}
-            onOpenPractice={() => setActiveTab('rewrite')}
-            isRewriting={isRewriting}
           />
         )}
 
         {activeTab === 'wordbook' && (
           <>
-          <div className="practice-back-bar"><button type="button" className="practice-back" onClick={() => setActiveTab(historyWordbookLevel === undefined ? 'practice' : 'history')}><ArrowLeft aria-hidden="true" className="w-4 h-4" />{historyWordbookLevel === undefined ? '练习与生词' : '返回历史词汇看板'}</button></div>
+          <div className="practice-back-bar"><button type="button" className="practice-back" onClick={() => setActiveTab(historyWordbookLevel === undefined ? 'practice' : 'history')}><ArrowLeft aria-hidden="true" className="w-4 h-4" />{historyWordbookLevel === undefined ? '词汇与复习' : '返回历史词汇看板'}</button></div>
           <WordbookView
             key={historyWordbookLevel || 'current-reading'}
             scopeLabel={historyWordbookLevel === undefined ? undefined : `${vocabularyLevelLabel(historyWordbookLevel)} 已收录词汇`}
@@ -534,26 +450,26 @@ export default function App() {
             readings={readings}
             currentReading={historyWordbookLevel === undefined ? currentReading : null}
             onDeleteVocab={handleDeleteVocab}
-            onRemoveVocab={historyWordbookLevel === undefined ? handleDetailBookmark : async vocab => {
+            onRemoveVocab={async vocab => {
               await toggleWordDetailBookmark(vocab, vocabularies, undefined, removedDetailVocabulary.current, {save: saveVocabulary, remove: deleteVocabulary}, true);
               setVocabularies(items => items.filter(item => item.id !== vocab.id));
             }}
             onRestoreVocab={async (vocab) => {
               const items = await getAllVocabularies();
-              const key = normalizeEnglishTerm(vocab.term);
-              const existing = items.find(item => normalizeEnglishTerm(item.term) === key);
+              const key = vocabularyKey(vocab.term, vocab.type);
+              const existing = items.find(item => vocabularyKey(item.term, item.type) === key);
               if (existing) {
-                setVocabularies(previous => [...previous.filter(item => normalizeEnglishTerm(item.term) !== key), existing]);
+                setVocabularies(previous => [...previous.filter(item => vocabularyKey(item.term, item.type) !== key), existing]);
                 return;
               }
               const updated = await toggleWordDetailBookmark(vocab, items, currentReading?.id, removedDetailVocabulary.current,
                 { save: saveVocabulary, remove: deleteVocabulary }, false);
-              setVocabularies(previous => [...previous.filter(item => normalizeEnglishTerm(item.term) !== key), ...updated.filter(item => normalizeEnglishTerm(item.term) === key)]);
+              setVocabularies(previous => [...previous.filter(item => vocabularyKey(item.term, item.type) !== key), ...updated.filter(item => vocabularyKey(item.term, item.type) === key)]);
             }}
             onDeleteVocabularies={async (ids) => {
               const allowed = new Set(wordbookVocabulary.map(v => v.id));
               const targets = ids.filter(id => allowed.has(id));
-              await db.transaction('rw', db.vocabulary, async () => {
+              await db.transaction('rw', db.vocabulary, db.savedMaterials, async () => {
                 for (const id of targets) await deleteVocabulary(id);
               });
               setVocabularies(items => items.filter(item => !targets.includes(item.id)));
@@ -563,14 +479,8 @@ export default function App() {
             isGenerating={isGenerating}
             currentCefr={settings.cefr}
             onSaveVocab={async (vocab) => {
-              const existing = vocabularies.find(v => normalizeEnglishTerm(v.term) === normalizeEnglishTerm(vocab.term));
-              const saved = existing ? {
-                ...existing,
-                savedManually: true,
-                addedFromReadingIds: [...new Set([...(existing.addedFromReadingIds || []), ...(vocab.addedFromReadingIds || [])])],
-                updatedAt: vocab.updatedAt,
-                wordbookLevels: [...new Set([...(existing.wordbookLevels || []), ...(vocab.wordbookLevels || [])])],
-              } : vocab;
+              const existing = (await getAllVocabularies()).find(v => vocabularyKey(v.term, v.type) === vocabularyKey(vocab.term, vocab.type));
+              const saved = existing ? { ...vocab, ...existing, details: vocab.details || existing.details, savedManually: true, updatedAt: Date.now() } : vocab;
               await saveVocabulary(saved);
               setVocabularies(items => [...items.filter(item => item.id !== saved.id), saved]);
             }}
@@ -579,21 +489,20 @@ export default function App() {
           </>
         )}
 
-        {activeTab === 'rewrite' && <RewritePracticeView reading={currentReading} onBack={() => setActiveTab('practice')} />}
 
         {activeTab === 'practice' && historyReview && <div className="page-shell page-shell--review history-scoped-review">
           <button type="button" className="practice-back" onClick={() => { setHistoryReview(null); setActiveTab('history'); }}><ArrowLeft size={17} aria-hidden="true"/>返回历史词汇看板</button>
-          <ReviewView key={historyReview.run} embedded allVocabularies={scopedHistoryReview} onRate={handleRateReview} onRefresh={refreshHistoryReview}
-            practiceOnly={historyReview.mode === 'free'} sessionKey={`history:${historyReview.level || 'all'}:${historyReview.mode}:${historyReview.status || 'all'}:${historyReview.run}`}
-            scopeLabel={`${historyReview.level ? vocabularyLevelLabel(historyReview.level) : '全部词汇'} · ${historyReview.mode === 'free' ? '全部复习（不更改复习排程）' : `${historyStatusLabel(historyReview.status)}分类复习`}`} />
+          <ReviewView key={historyReview.run} embedded allVocabularies={scopedHistoryReview} onRefresh={refreshHistoryReview}
+            sessionKey={`history:${historyReview.level || 'all'}:${historyReview.mode}:${historyReview.status || 'all'}:${historyReview.run}`}
+            scopeLabel={`${historyReview.level ? vocabularyLevelLabel(historyReview.level) : '全部词汇'} · ${historyReview.mode === 'free' ? '全部词汇' : `${historyStatusLabel(historyReview.status)}分类词汇`}`} />
         </div>}
         {activeTab === 'practice' && !historyReview && (
-          <PracticeHubView exerciseCount={currentReading?.rewritePractice?.length || 0} vocabularyCount={vocabularies.length}
-            onOpenRewrite={() => setActiveTab('rewrite')} onOpenWordbook={() => setActiveTab('wordbook')}>
+          <PracticeHubView vocabularyCount={vocabularies.length}
+            onOpenWordbook={() => setActiveTab('wordbook')}>
           <ReviewView
             embedded
-            allVocabularies={reviewVocabulary}
-            onRate={handleRateReview}
+            allVocabularies={vocabularies}
+
             onRefresh={loadData}
           />
           </PracticeHubView>
@@ -627,10 +536,10 @@ export default function App() {
         }} />}
 
       <ProcessingModal
-        isOpen={isGenerating || isRewriting}
+        isOpen={isGenerating}
         status={processingStatus}
         topic={processingTopic}
-        operation={isRewriting ? 'rewrite' : 'generate'}
+        operation="generate"
         canCancel={!isSavingReading}
         onCancel={handleCancelReadingOperation}
       />
@@ -645,7 +554,7 @@ export default function App() {
         <InstalledAppBottomNav
           activeTab={activeTab}
           setActiveTab={navigateTab}
-          reviewCount={reviewVocabulary.length}
+          reviewCount={vocabularies.length}
           hasCurrentReading={!!currentReading}
         />
       )}

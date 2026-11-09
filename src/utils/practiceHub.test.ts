@@ -9,15 +9,10 @@ import { Navbar } from '../components/Navbar';
 import { InstalledAppBottomNav } from '../components/InstalledAppBottomNav';
 import { ReviewView } from '../views/ReviewView';
 
-test('hub presents actual counts and two entrances before the live review', () => {
-  const html = renderToStaticMarkup(React.createElement(PracticeHubView, { exerciseCount: 4, vocabularyCount: 5, onOpenRewrite() {}, onOpenWordbook() {}, children: React.createElement('div', null, 'Actual review') }));
-  assert.match(html, /4 道练习 · 巩固英文表达/);
-  assert.match(html, /已添加 5 个表达/);
-  assert.ok(html.indexOf('句子改写') < html.indexOf('practice-review'));
-  assert.equal((html.match(/<button/g) || []).length, 2);
-  assert.ok(html.indexOf('我的生词本') < html.indexOf('Actual review'));
-  assert.doesNotMatch(html, /practice-entry-action|Rewrite the Sentence/);
-  assert.match(html, /id="practice-review"/);
+test('hub presents the all-vocabulary entrance and review without rewrite practice', () => {
+ const html=renderToStaticMarkup(React.createElement(PracticeHubView,{vocabularyCount:5,onOpenWordbook(){},children:React.createElement('div',null,'Actual review')}));
+ assert.match(html,/已收藏 5 个词条/); assert.match(html,/我的单词本/); assert.doesNotMatch(html,/句子改写|practice-entry--rewrite/);
+ assert.ok(html.indexOf('我的单词本')<html.indexOf('Actual review'));
 });
 
 test('web and installed navigation keep the unified destination active in both detail views', () => {
@@ -25,7 +20,7 @@ test('web and installed navigation keep the unified destination active in both d
     const props = { activeTab, setActiveTab() {}, reviewCount: 5, hasCurrentReading: true, };
     for (const Component of [Navbar, InstalledAppBottomNav]) {
       const html = renderToStaticMarkup(React.createElement(Component, props));
-      assert.match(html, /aria-label="练习与生词，5 个词条"[^>]*aria-current="page"/);
+      assert.match(html, /aria-label="词汇与复习，5 个词条"[^>]*aria-current="page"/);
       assert.doesNotMatch(html, /aria-label="复习，|aria-label="生词本"/);
     }
   }
@@ -34,11 +29,11 @@ test('web and installed navigation keep the unified destination active in both d
 test('reading no longer duplicates exercises; empty practice and embedded review have correct heading hierarchy', () => {
   const reading = readFileSync(new URL('../views/ReadingView.tsx', import.meta.url), 'utf8');
   assert.doesNotMatch(reading, /<RewritePracticeCard/);
-  assert.match(reading, /onOpenPractice/);
+  assert.doesNotMatch(reading, /onOpenPractice|onRewrite/);
   const empty = renderToStaticMarkup(React.createElement(RewritePracticeView, { reading: null, onBack() {} }));
   assert.match(empty, /请先生成或打开一篇短文/);
   const review = renderToStaticMarkup(React.createElement(ReviewView, { embedded: true, allVocabularies: [], onRate: async () => {}, onRefresh() {}, }));
-  assert.match(review, /<h2[^>]*>词汇复习<\/h2>/);
+  assert.match(review, /<h2[^>]*>词汇学习<\/h2>/);
   assert.doesNotMatch(review, /<h1/);
 });
 
@@ -55,12 +50,9 @@ test('rewrite workspace keeps real evaluated progress and renders one keyed ques
 });
 
 
-test('hub disables unavailable rewrite and keeps the empty wordbook accessible', () => {
-  const html = renderToStaticMarkup(React.createElement(PracticeHubView, { exerciseCount: 0, vocabularyCount: 0, onOpenRewrite() {}, onOpenWordbook() {}, children: null }));
-  assert.match(html, /practice-entry--rewrite[^>]*disabled=""/);
-  assert.match(html, /当前短文暂无改写练习/);
-  assert.match(html, /已添加 0 个表达/);
-  assert.doesNotMatch(html, /practice-entry--wordbook[^>]*disabled/);
+test('empty wordbook remains accessible without a passage', () => {
+ const html=renderToStaticMarkup(React.createElement(PracticeHubView,{vocabularyCount:0,onOpenWordbook(){},children:null}));
+ assert.match(html,/已收藏 0 个词条/); assert.doesNotMatch(html,/句子改写|disabled/);
 });
 
 test('embedded review has bounded one-item pagination and no empty pager', () => {

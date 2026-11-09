@@ -1,10 +1,11 @@
+import { LocalDataBackup } from '../components/LocalDataBackup';
+import { SavedMaterialsView } from '../components/SavedMaterialsView';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X, Plus, BookOpenCheck, ArrowRight, ArrowDownAZ, ArrowUpZA, ListChecks, ChevronDown } from 'lucide-react';
 import type { VocabularyItem, VocabStatus, CEFRLevel, ReadingType, ReadingLength, ReadingRecord } from '../types';
 import { WordbookCustomAdd } from '../components/WordbookCustomAdd';
 import { WordbookEntryDetails } from '../components/WordbookEntryDetails';
 import { WordbookRemovalDialog } from '../components/WordbookRemovalDialog';
-import { explainVocabularyTerm } from '../services/api';
 import { normalizeEnglishTerm } from '../utils/englishSearch';
 import { useReadingExpressions } from '../hooks/useReadingExpressions';
 import { wordbookStatuses, wordbookMeta, wordbookResults, wordbookSuggestions, toggleVisibleSelection } from '../utils/wordbookManagement';
@@ -27,6 +28,7 @@ interface WordbookViewProps {
 }
 export const WordbookView: React.FC<WordbookViewProps> = ({ vocabularyList, scopeLabel, currentReading, onDeleteVocab, onRemoveVocab, onRestoreVocab, onDeleteVocabularies, onUpdateStatus, currentCefr, onSaveVocab, onOpenReview, onGenerateFromWordbook, isGenerating }) => {
   const [search,setSearch]=useState('');
+  const [contentView, setContentView] = useState<'words' | 'example' | 'phrase'>('words');
   const [readingType,setReadingType]=useState<ReadingType>('story');
   const [length,setLength]=useState<ReadingLength>('medium');
   const [statusFilter,setStatusFilter]=useState('All');
@@ -90,7 +92,8 @@ export const WordbookView: React.FC<WordbookViewProps> = ({ vocabularyList, scop
     addLock.current=true;setAdding(term);setError('');setSuccess('');
     const reading=currentReading;
     try{
-      const details=await explainVocabularyTerm(term,reading.content,true,{requireInReading:true});
+      const details = existing || reading.selectedVocabulary.find(item => item.term === term);
+      if (!details) throw new Error('请使用添加单词／词组入口，按需补充资料。');
       if(readingId.current!==reading.id)return;
       const now=Date.now();
       const item:VocabularyItem=existing?{...existing,...details}: {id:`vocab_custom_${crypto.randomUUID()}`,term:details.term||term,type:details.type||(term.includes(' ')?'phrase':'word'),phonetic:details.phonetic||'',partOfSpeech:details.partOfSpeech||'',meaningZh:details.meaningZh||'',definitionEn:details.definitionEn||'',example:details.example||'',collocations:details.collocations||[],status:'New',createdAt:now,updatedAt:now,nextReviewDate:now,reviewCount:0,currentInterval:0};
@@ -106,20 +109,21 @@ export const WordbookView: React.FC<WordbookViewProps> = ({ vocabularyList, scop
     finally{removeLock.current=false;}
   };
   return <div className="page-shell page-stack type-body wordbook-page wordbook-final">
-    <header className="wordbook-final-heading"><h1 className="type-page font-ui font-semibold">个人生词本</h1><p className="wordbook-subtitle">My Wordbook</p><p className="wordbook-total">{scopeLabel || '当前短文已添加词条'}：{vocabularyList.length} 项</p></header>
+    <header className="wordbook-final-heading"><h1 className="type-page font-ui font-semibold">个人生词本</h1><p className="wordbook-subtitle">My Wordbook</p><p className="wordbook-total">{scopeLabel || '全部词条'}：{vocabularyList.length} 项</p></header>
     <button type="button" disabled={!vocabularyList.length} onClick={onOpenReview} className="wordbook-review"><BookOpenCheck aria-hidden="true" size={20}/>开始复习<ArrowRight aria-hidden="true" size={18}/></button>
+    <div className="lexicon-views" role="group" aria-label="单词本内容视图">{([['words','全部词条'],['example','单独收藏的例句'],['phrase','单独收藏的词组']] as const).map(([key,label]) => <button key={key} type="button" aria-pressed={contentView === key} onClick={() => { setContentView(key); setSearch(''); }}>{label}</button>)}</div>
     <section className="wordbook-unified-search" aria-label="搜索与添加表达">
-      <div className="wordbook-search-capsule"><Search aria-hidden="true" size={20}/><input ref={input} type="search" value={search} maxLength={160} aria-label={scopeLabel ? '搜索已收录的词汇' : '搜索并添加当前短文的表达'} placeholder={scopeLabel ? '搜索已收录的词汇…' : '搜索并添加当前短文的表达…'}
+      <div className="wordbook-search-capsule"><Search aria-hidden="true" size={20}/><input ref={input} type="search" value={search} maxLength={160} aria-label={scopeLabel ? '搜索已收录的词汇' : '搜索并添加当前短文的表达'} placeholder="搜索词条或收藏内容…"
         onChange={e=>{setSearch(e.target.value);setDismissed(false);setError('');setSuccess('');}} onFocus={()=>setDismissed(false)} onKeyDown={e=>{if(e.key==='Escape')setDismissed(true);}}/>
         {!!search&&<button type="button" aria-label="清除搜索" onClick={()=>{setSearch('');setError('');setSuccess('');input.current?.focus();}}><X aria-hidden="true" size={20}/></button>}
       </div>
-      {panelVisible&&!!suggestions.length&&<div className="wordbook-suggestions" aria-label="当前短文可添加的表达"><h2>当前短文可添加的表达</h2><ul>{suggestions.map(({term,item,type})=><li key={term}><div><p className="wordbook-term">{item?.term||term}</p><p className="wordbook-meta">{wordbookMeta({partOfSpeech:item?.partOfSpeech||'',type})}</p></div><button type="button" aria-label={`添加 ${term}`} disabled={!!adding} onClick={()=>void add(term,item)} className="wordbook-add"><Plus aria-hidden="true" size={16}/>{adding===term?'添加中…':'添加'}</button></li>)}</ul></div>}
-      {panelVisible&&catalogue.loading&&<p role="status" className="wordbook-message">正在加载短文表达…</p>}
-      {panelVisible&&catalogue.error&&<p className="wordbook-message">{catalogue.error} <button type="button" onClick={catalogue.retry}>重试加载</button></p>}
+      {contentView === 'words' && panelVisible&&!!suggestions.length&&<div className="wordbook-suggestions" aria-label="当前短文可添加的表达"><h2>当前短文可添加的表达</h2><ul>{suggestions.map(({term,item,type})=><li key={term}><div><p className="wordbook-term">{item?.term||term}</p><p className="wordbook-meta">{wordbookMeta({partOfSpeech:item?.partOfSpeech||'',type})}</p></div><button type="button" aria-label={`添加 ${term}`} disabled={!!adding} onClick={()=>void add(term,item)} className="wordbook-add"><Plus aria-hidden="true" size={16}/>{adding===term?'添加中…':'添加'}</button></li>)}</ul></div>}
+      {contentView === 'words' && panelVisible&&catalogue.loading&&<p role="status" className="wordbook-message">正在加载短文表达…</p>}
+      {contentView === 'words' && panelVisible&&catalogue.error&&<p className="wordbook-message">{catalogue.error} <button type="button" onClick={catalogue.retry}>重试加载</button></p>}
       {error&&<p role="alert" className="wordbook-error">{error}</p>}{success&&<p role="status" className="wordbook-message">{success}</p>}
     </section>
-    {!scopeLabel && <div key={currentReading?.id || 'no-reading'}><WordbookCustomAdd reading={currentReading} vocabulary={vocabularyList} onSave={onSaveVocab}/></div>}
-    <section className="wordbook-management" aria-label="生词列表管理">
+    {contentView === 'words' && <div><WordbookCustomAdd reading={currentReading} vocabulary={vocabularyList} onSave={onSaveVocab}/></div>}
+    {contentView !== 'words' ? <SavedMaterialsView type={contentView} search={search}/> : <section className="wordbook-management" aria-label="生词列表管理">
       <div className="wordbook-status-filters flex flex-wrap" role="group" aria-label="按学习状态筛选">{(['All','New','Learning','Difficult','Mastered'] as const).map(status=><button key={status} type="button" aria-pressed={statusFilter===status} onClick={()=>setStatusFilter(status)}>{status==='All'?'全部':wordbookStatuses[status]} <span className="wordbook-filter-count">{status==='All'?vocabularyList.length:vocabularyList.filter(v=>v.status===status).length}</span></button>)}</div>
       <div className="wordbook-action-bar"><button type="button" onClick={()=>setDescending(!descending)} aria-label={`字母排序：${descending?'Z 到 A，切换为 A 到 Z':'A 到 Z，切换为 Z 到 A'}`}>{descending?<ArrowUpZA aria-hidden="true" size={18}/>:<ArrowDownAZ aria-hidden="true" size={18}/>}字母排序 {descending?'Z–A':'A–Z'}</button><button type="button" aria-pressed={batch} onClick={()=>{setBatch(!batch);setSelected([]);setDetailId(null);}}><ListChecks aria-hidden="true" size={18}/>{batch?'完成管理':'批量管理'}</button></div>
       {batch&&<div className="wordbook-batch-bar"><button type="button" disabled={!filtered.length} onClick={()=>setSelected(previous=>toggleVisibleSelection(previous,filtered.map(v=>v.id)))}>{filtered.length>0&&filtered.every(v=>selected.includes(v.id))?'取消全选当前':'全选当前'}</button><span role="status">已选 {selected.length} 项</span><button type="button" disabled={!selected.length||!onDeleteVocabularies} onClick={()=>setConfirmIds([...selected])}>移出所选（{selected.length}）</button></div>}
@@ -135,7 +139,9 @@ export const WordbookView: React.FC<WordbookViewProps> = ({ vocabularyList, scop
       </div>{expanded&&!batch&&<div id={panelId} role="region" aria-label={`${vocab.term} 的词条详情`}><WordbookEntryDetails vocab={vocab} reading={currentReading} onRemove={onRemoveVocab?removeEntry:undefined} onUpdateStatus={onUpdateStatus}/></div>}</div>;})}</div>
       {!filtered.length&&!(search.trim()&&suggestions.length)&&<p className="wordbook-empty" role="status">{search.trim()?'没有匹配的词条。':vocabularyList.length?'此状态暂无词条。':'暂无词条，可在上方搜索添加。'}</p>}
     </section>
+    }
     {removed&&<div className="wordbook-undo" role="status"><span>已移出生词本：{removed.term}</span><button type="button" disabled={undoBusy||!onRestoreVocab} onClick={()=>void undoRemoval()}>{undoBusy?'正在恢复…':'撤销'}</button>{undoError&&<p role="alert">{undoError}</p>}</div>}
+    <LocalDataBackup/>
     {confirmIds&&<WordbookRemovalDialog term={`${confirmIds.length} 个所选词条`} onCancel={()=>setConfirmIds(null)} onConfirm={remove}/>}
   </div>;
 };

@@ -8,30 +8,19 @@ import type { VocabularyItem, RewritePracticeItem } from '../types';
 
 const vocab = { id: 'reference', term: 'undivided attention', type: 'phrase', partOfSpeech: 'noun phrase', meaningZh: '全神贯注', definitionEn: 'Complete attention.', example: 'Please give me your undivided attention.', collocations: ['give undivided attention'] } as VocabularyItem;
 
-test('desktop inline detail preserves teaching content and actions without modal-only closing controls', () => {
-  const props = { vocab, isOpen: true, isInWordbook: true, onClose: () => {}, onToggleWordbook: () => {} };
-  const panel = renderToStaticMarkup(React.createElement(WordDetailModal, { ...props, inline: true }));
-  assert.match(panel, /<aside/);
-  assert.doesNotMatch(panel.match(/<details[^>]*>/)![0], /\bopen/);
-  assert.doesNotMatch(panel, /<dialog|关闭词汇详情/);
-  for (const text of [vocab.term, vocab.definitionEn, vocab.example, vocab.collocations[0], '移出生词本']) assert.ok(panel.includes(text));
-  const modal = renderToStaticMarkup(React.createElement(WordDetailModal, props));
-  assert.match(modal, /<dialog/);
-  assert.match(modal, /关闭词汇详情/);
-  assert.match(modal, /data-dialog-initial-focus/);
+test('inline word details use the same six-section learning panel without a native dialog', () => {
+ const html=renderToStaticMarkup(React.createElement(WordDetailModal,{vocab,isOpen:true,inline:true,isInWordbook:true,onClose(){},onToggleWordbook(){}}));
+ assert.doesNotMatch(html,/<dialog/); assert.match(html,/word-detail-inline/); assert.match(html,/用法辨析/); assert.ok(html.includes(vocab.example));
 });
 
-test('selecting a desktop term can expand its native disclosure', () => {
-  const panel = renderToStaticMarkup(React.createElement(WordDetailModal, { vocab, isOpen: true, inline: true, inlineExpanded: true, isInWordbook: true, onClose: () => {}, onToggleWordbook: () => {} }));
-  assert.match(panel, /<details[^>]*open=""/);
-  assert.match(panel, /<summary/);
+test('word details show one initial example tab and six keyboard tabs', () => {
+ const html=renderToStaticMarkup(React.createElement(WordDetailModal,{vocab,isOpen:true,inline:true,isInWordbook:true,onClose(){},onToggleWordbook(){}}));
+ assert.equal((html.match(/role="tab"/g)||[]).length,6); assert.equal((html.match(/aria-selected="true"/g)||[]).length,1);
 });
 
-test('mobile accordion details preserve learning content without opening a dialog', () => {
-  const html = renderToStaticMarkup(React.createElement(WordDetailModal, { vocab, isOpen: true, embedded: true, isInWordbook: true, onClose: () => {}, onToggleWordbook: () => {} }));
-  assert.match(html, /wordbook-accordion-content/);
-  assert.doesNotMatch(html, /<dialog|<aside|关闭词汇详情|data-dialog-initial-focus/);
-  for (const text of [vocab.definitionEn, vocab.example, vocab.collocations[0], '移出生词本']) assert.ok(html.includes(text));
+test('embedded details retain local learning material without a modal', () => {
+ const html=renderToStaticMarkup(React.createElement(WordDetailModal,{vocab,isOpen:true,embedded:true,isInWordbook:true,onClose(){},onToggleWordbook(){}}));
+ assert.doesNotMatch(html,/<dialog/); assert.match(html,/word-detail-inline/); assert.ok(html.includes(vocab.example)); assert.match(html,/一次生成六栏资料/);
 });
 
 test('workbook presents the target before the original and uses a multiline answer without revealing the reference', () => {

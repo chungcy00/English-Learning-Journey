@@ -213,6 +213,7 @@ export async function generateReadingWithPipeline(
   const vocabularyItems: VocabularyItem[] = (resultData.vocabulary || []).map((v: any, index: number) => ({
     id: `vocab_${readingId}_${index}`,
     term: v.term,
+    origin: 'reading',
     type: v.type === 'idiom' ? 'idiom' : (v.type === 'phrase' || v.term.includes(' ')) ? 'phrase' : 'word',
     cefrLevel: v.cefrLevel,
     sourceCefrLevel: request.cefrLevel,
@@ -261,7 +262,8 @@ export async function generateReadingWithPipeline(
     readingStyle: request.readingStyle || 'auto',
     selectedVocabulary: vocabularyItems,
     vocabularyCount: request.vocabularyCount,
-    rewritePractice: rewriteItems,
+    rewritePractice: [],
+    paragraphTranslations: resultData.paragraphTranslations,
     humanised: true,
     createdAt: now,
     updatedAt: now

@@ -6,24 +6,22 @@ import { PracticeVocabularyCard } from '../components/PracticeVocabularyCard';
 import type { VocabularyItem } from '../types';
 
 const vocab = { id: 'a', type: 'word', term: 'considerate', phonetic: '/kənˈsɪd.ər.ət/', partOfSpeech: '形容词', definitionEn: 'Showing care.', example: 'She said, “Be considerate.”', collocations: ['considerate of others'] } as VocabularyItem;
-test('both faces preserve the same word header; reverse details and ratings stay inside the card', () => {
+test('revealed review uses the shared six-section panel without memory ratings', () => {
   const html = renderToStaticMarkup(React.createElement(PracticeVocabularyCard, {
     vocab, meaning: '体贴的', revealed: true, disabled: false, onFlip() {}, onPronounce() {},
     ratings: React.createElement('button', null, 'Good'),
   }));
   assert.equal((html.match(/<h3 class="practice-vocabulary-card__term">considerate<\/h3>/g) ?? []).length, 2);
-  assert.equal((html.match(/practice-vocabulary-card__phonetic/g) ?? []).length, 2);
-  assert.equal((html.match(/practice-vocabulary-card__pos/g) ?? []).length, 2);
-  assert.doesNotMatch(html, /data-flip-ignore="true"[^>]*role="region"/);
-  assert.match(html, /<details data-flip-ignore="true"/);
-  assert.match(html, /<footer class="practice-vocabulary-card__footer">.*Good<\/button><\/footer>/);
-  assert.match(html, /She said, “Be considerate.”/);
-  assert.doesNotMatch(html, /查看学习详情/);
+  assert.equal((html.match(/role="tab"/g) || []).length, 6);
+  for (const text of ['例句','派生','词根','词组','英释','用法辨析','编辑基本资料','一次生成六栏资料','返回正面',vocab.example]) assert.ok(html.includes(text));
+  assert.match(html, /data-flip-ignore="true"[^>]*role="region"/);
+  assert.doesNotMatch(html, /practice-vocabulary-card__footer|review-rating-bar|>Good<|>Again</);
+  assert.doesNotMatch(html, /practice-vocabulary-card__collocations|<details/);
 });
-test('missing phonetics produce no empty placeholder and collocations start collapsed', () => {
+test('the front does not mount learning details or expose answer tabs', () => {
   const html = renderToStaticMarkup(React.createElement(PracticeVocabularyCard, {
     vocab: {...vocab, phonetic: ''}, meaning: '体贴的', revealed: false, disabled: false,
     onFlip() {}, onPronounce() {}, ratings: null,
   }));
-  assert.doesNotMatch(html, /practice-vocabulary-card__phonetic|<details open/);
+  assert.doesNotMatch(html, /practice-vocabulary-card__phonetic|role="tab"|lexicon-panel|Showing care|Be considerate/);
 });

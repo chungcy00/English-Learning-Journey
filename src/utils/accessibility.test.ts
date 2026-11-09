@@ -14,18 +14,17 @@ test('four navigation destinations consolidate study tasks and retain current-st
   const html = renderToStaticMarkup(React.createElement(Navbar, { activeTab: 'reading', setActiveTab: () => {}, reviewCount: 22, hasCurrentReading: true, }));
   assert.equal((html.match(/aria-label=/g) || []).length, 5); // nav + four destinations
   assert.match(html, /aria-label="阅读" aria-current="page"/);
-  assert.match(html, /aria-label="练习与生词，22 个词条"/);
+  assert.match(html, /aria-label="词汇与复习，22 个词条"/);
   assert.doesNotMatch(html, /hidden md:inline/);
 });
 
-test('word details use a named native dialog and explicit removal, not a misleading saved-state button', () => {
-  const html = renderToStaticMarkup(React.createElement(WordDetailModal, { vocab, isOpen: true, onClose: () => {}, isInWordbook: true, onToggleWordbook: () => {} }));
-  assert.match(html, /<dialog[^>]+aria-labelledby="word-detail-title"/);
-  assert.match(html, /aria-label="关闭词汇详情"/);
-  assert.match(html, /aria-label="移出生词本：break the ice"/);
-  assert.match(html, /移出生词本<\/span>/);
-  assert.match(html, /class="word-detail-body[^\"]*" tabindex="0" aria-label="词汇释义、例句与搭配"/);
-  assert.match(html, /class="word-detail-actions/);
+test('word details use a named native dialog and independent bookmark semantics', () => {
+ const html = renderToStaticMarkup(React.createElement(WordDetailModal, { vocab, isOpen:true, onClose(){}, isInWordbook:true, onToggleWordbook(){} }));
+ assert.match(html, /<dialog[^>]+aria-labelledby="word-detail-title"/);
+ assert.match(html, /aria-label="关闭词汇详情"/);
+ assert.match(html, /取消完整词条收藏/);
+ assert.match(html, /独立收藏的例句和词组会单独保留/);
+ assert.match(html, /role="tablist"/); assert.equal((html.match(/role="tab"/g)||[]).length,6);
 });
 
 test('rendering a removal request does not delete anything and provides a safe cancel-first choice', () => {

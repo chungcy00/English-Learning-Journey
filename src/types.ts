@@ -12,12 +12,62 @@ export type VocabStatus = 'New' | 'Learning' | 'Difficult' | 'Mastered';
 export type ReviewRating = 'Again' | 'Hard' | 'Good' | 'Easy';
 export type RewriteRating = 'Excellent' | 'Very Good' | 'Good' | 'Needs Improvement';
 
+export const VOCABULARY_CATEGORIES = ['word', 'phrase', 'idiom', 'collocation', 'phrasal-verb'] as const;
+export type VocabularyCategory = typeof VOCABULARY_CATEGORIES[number];
+
+export const DETAIL_SECTIONS = ['examples', 'derivatives', 'roots', 'phrases', 'definitions', 'usage'] as const;
+export type DetailSection = typeof DETAIL_SECTIONS[number];
+export interface LearningEntry {
+  id: string;
+  text: string;
+  meaningZh: string;
+  partOfSpeech?: string;
+  example?: string;
+  exampleTranslation?: string;
+  note?: string;
+  category?: string;
+  senseId?: string;
+}
+export interface VocabularyDetails {
+  key: string;
+  term: string;
+  type: 'word' | 'phrase' | 'idiom';
+  category?: VocabularyCategory;
+  phoneticUK: string;
+  phoneticUS: string;
+  senses: LearningEntry[];
+  inflections: { label: string; value: string }[];
+  sections: Record<DetailSection, LearningEntry[]>;
+  generated: boolean;
+  generatedSections?: DetailSection[];
+  provenance: Partial<Record<DetailSection | 'basic', { source: 'ai' | 'user'; updatedAt: number }>>;
+  updatedAt: number;
+}
+export interface SavedMaterial {
+  id: string;
+  key: string;
+  type: 'example' | 'phrase';
+  text: string;
+  translation: string;
+  note: string;
+  vocabularyId?: string;
+  sourceReadingId?: string;
+  sourceSection?: DetailSection;
+  sourceEntryId?: string;
+  source: 'ai' | 'user';
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface VocabularyItem {
   id: string;
   term: string;
   type: 'word' | 'phrase' | 'idiom';
   cefrLevel?: CEFRLevel | 'A1' | 'C2';
+  category?: VocabularyCategory;
+  origin?: 'manual' | 'reading';
   savedManually?: boolean;
+  details?: VocabularyDetails;
   addedFromReadingIds?: string[];
   phonetic: string;
   partOfSpeech: string;
@@ -83,6 +133,7 @@ export interface DialogueSpeaker {
 
 export interface ReadingRecord {
   sourceText?: string;
+  paragraphTranslations?: { source: string; translation: string }[];
   id: string;
   title: string;
   content: string;

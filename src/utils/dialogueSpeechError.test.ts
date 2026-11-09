@@ -20,15 +20,9 @@ test('configuration and request failures are not labelled as exhausted quota', (
   assert.match(dialogueSpeechError(500, null, null).message, /HTTP 500/);
 });
 
-test('legacy speech uses the model default format and page visits never retry speech automatically', () => {
-  const backend = readFileSync(new URL('../../backend/app.ts', import.meta.url), 'utf8');
-  const speech = backend.slice(backend.indexOf('async function generateDialogueAudio'), backend.indexOf('function isDialogueTtsQuotaError'));
-  assert.match(speech, /browserDialogueAudio\(audioData/);
-  assert.match(speech, /mimeType: 'audio\/wav'/);
-  assert.doesNotMatch(speech, /mime_type:|delivery:|bit_rate/);
-  const app = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
-  const api = readFileSync(new URL('../services/api.ts', import.meta.url), 'utf8');
+test('the reading UI only starts system speech after a user action', () => {
   const reading = readFileSync(new URL('../views/ReadingView.tsx', import.meta.url), 'utf8');
-  assert.doesNotMatch(app + api + reading, /refreshPendingDialogueSpeech|queueDialogueSpeechGeminiRetry/);
-  assert.doesNotMatch(reading, /Gemini 免费语音额度暂不可用/);
+  assert.doesNotMatch(reading, /await generateDialogueSpeech|await rememberCompletedDialogueSpeech|cloudSpeech/);
+  assert.match(reading, /window.speechSynthesis.speak\(utterance\)/);
+  assert.match(reading, /selectDialogueVoicePair\(resolvedVoices\)/);
 });

@@ -26,5 +26,5 @@ test('whole-card flip remains keyboard accessible without replacing nested contr
   assert.match(source, /closest\('button, summary, input, select, textarea, label, a, \[role="button"\]'\)/);
   const view = readFileSync(new URL('../views/ReviewView.tsx', import.meta.url), 'utf8');
   assert.doesNotMatch(view, /data-flip-focus|review-flip-button/);
-  assert.match(view, /onFlip=\{\(\) => setIsRevealed/);
+  assert.match(view, /if \(!detailsBusy\) setIsRevealed/);
 });

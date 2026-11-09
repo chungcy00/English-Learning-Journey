@@ -40,24 +40,18 @@ test('legacy and partial caches require upgrading; only complete unambiguous map
   assert.equal(hasCompleteSentenceTranslations(sources, complete), true);
   assert.equal(hasCompleteSentenceTranslations(sources, {...complete, sentenceTranslations:[...complete.sentenceTranslations,{source:'Second.',translation:'另一个译文。'}]}), false);
 });
-test('reading keeps a single player, real metadata, matching sentence actions and no removed export feature', () => {
-  const html = renderToStaticMarkup(React.createElement(ReadingView,{reading,knownVocabulary:[],wordbookVocabIds:new Set(),onToggleWordbook:()=>{},onUpdateVocabulary:async()=>{},onRewrite:()=>{},onOpenHistory:()=>{},onOpenPractice:()=>{},isRewriting:false}));
-  assert.ok(html.includes('A real article'));
-  assert.equal((html.match(/aria-label="英文朗读播放器"/g)||[]).length,1);
-  assert.ok(html.includes('本篇精选词汇'));
-  assert.ok(html.includes('开始句子改写练习'));
-  assert.ok(html.includes('查看句子翻译：Her smile was genuine!'));
-  assert.ok(html.includes('查看句子翻译：Dr. Maya paid $3.50 for tea.'));
-  assert.doesNotMatch(html,/PDF|LanguageSelector/);
-});
-test('reading word details use the shared centered dialog with fixed actions and complete content', () => {
-  const html = renderToStaticMarkup(React.createElement(WordDetailModal,{vocab,isOpen:true,readingContext:true,onClose:()=>{},onToggleWordbook:()=>{},isInWordbook:true}));
-  for(const content of ['中文释义','英英释义',vocab.example,'genuine concern','已加入生词本','移出']) assert.ok(html.includes(content));
-  assert.match(html,/class="app-dialog word-detail-dialog reading-word-dialog"/);
-  assert.match(html,/reading-word-dialog__footer/);
-  assert.doesNotMatch(html,/<aside|<details|border-l/);
+test('reading keeps one player and whole-paragraph toggles without rewrite or full-text translation UI', () => {
+ const html=renderToStaticMarkup(React.createElement(ReadingView,{reading,knownVocabulary:[],wordbookVocabIds:new Set(),onToggleWordbook(){},onUpdateVocabulary:async()=>{},onOpenHistory(){}}));
+ assert.ok(html.includes('A real article')); assert.equal((html.match(/aria-label="英文朗读播放器"/g)||[]).length,1);
+ assert.match(html,/查看段落翻译：Dr. Maya paid/); assert.match(html,/本篇精选词汇/);
+ assert.doesNotMatch(html,/查看句子翻译|全文翻译|开始句子改写练习/);
 });
 
+test('word details share six tabs and a persistent bookmark footer', () => {
+ const html=renderToStaticMarkup(React.createElement(WordDetailModal,{vocab,isOpen:true,readingContext:true,onClose(){},onToggleWordbook(){},isInWordbook:true}));
+ for(const text of ['例句','派生','词根','词组','英释','用法辨析',vocab.example,'取消完整词条收藏']) assert.ok(html.includes(text));
+ assert.match(html,/lexicon-dialog-footer/); assert.match(html,/<dialog/);
+});
 
 test('multi-sentence source mappings stay one exact span and preserve original spacing', () => {
   const text = 'Dr. Maya arrived.  Her smile was genuine! Next came tea.';

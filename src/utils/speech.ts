@@ -200,15 +200,15 @@ export function stopEnglishSpeech(): void {
   }
 }
 
-export function speakEnglishTerm(text: string, onError?: (message: string) => void): void {
+export function speakEnglishTerm(text: string, onError?: (message: string) => void, accent?: 'en-GB' | 'en-US'): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) { onError?.('当前设备不支持词汇发音。'); return; }
   const normalizedText = text.trim();
   if (!normalizedText) return;
 
   stopEnglishSpeech();
   const utterance = new SpeechSynthesisUtterance(normalizedText);
-  utterance.lang = 'en-US';
-  utterance.voice = selectVocabularyVoice() || null;
+  utterance.lang = accent || 'en-US';
+  utterance.voice = accent ? getAvailableSpeechVoices().find(voice => voice.lang.toLowerCase() === accent.toLowerCase()) || null : selectVocabularyVoice() || null;
   utterance.rate = WORD_SPEECH_RATE;
   utterance.pitch = 1;
   utterance.volume = 1;

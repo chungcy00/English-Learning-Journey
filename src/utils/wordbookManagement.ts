@@ -1,8 +1,9 @@
+import { categoryLabels } from './vocabularyDetails';
 import type { ReadingExpression, ReadingRecord, VocabularyItem, VocabStatus } from '../types';
 import { extractEnglishWords, containsEnglishExpression, getEnglishTermMatchRank, normalizeEnglishTerm } from './englishSearch';
 import { filterSavedVocabulary } from './savedVocabulary';
 export const wordbookStatuses: Record<VocabStatus, string> = { New: '新词', Learning: '学习中', Difficult: '困难', Mastered: '已掌握' };
-export function wordbookMeta(item: Pick<VocabularyItem, 'partOfSpeech' | 'type'>) {
+export function wordbookMeta(item: Pick<VocabularyItem, 'partOfSpeech' | 'type' | 'category'>) {
   const positions: Record<string,string> = {
     noun:'名词', n:'名词', 'n.':'名词', verb:'动词', v:'动词', 'v.':'动词',
     adjective:'形容词', adj:'形容词', 'adj.':'形容词', adverb:'副词', adv:'副词', 'adv.':'副词',
@@ -16,7 +17,7 @@ export function wordbookMeta(item: Pick<VocabularyItem, 'partOfSpeech' | 'type'>
     'intransitive verb':'不及物动词', 'vi.':'不及物动词',
   };
   const pos = item.partOfSpeech?.trim();
-  const type = ({word:'单词',phrase:'短语',idiom:'习语'})[item.type];
+  const type = categoryLabels[item.category || item.type];
   return [...new Set([pos ? positions[pos.toLowerCase()] || pos : '',type].filter(Boolean))].join(' · ');
 }
 export function wordbookResults(items: VocabularyItem[], query: string, status: string, descending: boolean) {

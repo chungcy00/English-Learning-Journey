@@ -12,7 +12,7 @@ export function readingVocabularyOwners(items: readonly VocabularyItem[], readin
   }
   return new Map(items.map(word => {
     const ids = new Set([...(word.sourceReadingId ? [word.sourceReadingId] : []),
-      ...(word.addedFromReadingIds || []), ...(byTerm.get(normalizeEnglishTerm(word.term)) || [])]);
+      ...(word.addedFromReadingIds || []), ...(word.origin === 'manual' ? [] : byTerm.get(normalizeEnglishTerm(word.term)) || [])]);
     return [word.id, [...ids].flatMap(id => byId.has(id) ? [byId.get(id)!] : [])] as const;
   }));
 }
@@ -30,6 +30,7 @@ export function planReadingDeletion(id: string, items: readonly VocabularyItem[]
   for (const word of items) {
     const linked = owners.get(word.id)!;
     if (word.sourceReadingId !== id && !word.addedFromReadingIds?.includes(id) && !linked.some(reading => reading.id === id)) continue;
+    if (word.origin === 'manual') { upserts.push({ ...word, sourceReadingId: word.sourceReadingId === id ? undefined : word.sourceReadingId, addedFromReadingIds: word.addedFromReadingIds?.filter(source => source !== id) }); continue; }
     const remaining = linked.filter(reading => reading.id !== id);
     if (!remaining.length) { removeIds.push(word.id); continue; }
     const primary = remaining.find(reading => reading.id === word.sourceReadingId) || remaining[0];

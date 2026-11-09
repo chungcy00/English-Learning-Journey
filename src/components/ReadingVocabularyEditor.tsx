@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReadingRecord, VocabularyItem } from '../types';
-import { explainVocabularyTerm } from '../services/api';
 import { containsEnglishExpression, normalizeEnglishTerm } from '../utils/englishSearch';
 import { replaceReadingTerm } from '../utils/readingVocabulary';
 import { useReadingExpressions } from '../hooks/useReadingExpressions';
@@ -44,7 +43,8 @@ export const ReadingVocabularyEditor: React.FC<{
       if (reading.selectedVocabulary.some(item => normalizeEnglishTerm(item.term) === normalizeEnglishTerm(value))) {
         setMessage('这个表达已在精选词汇中。'); return;
       }
-      const details = await explainVocabularyTerm(value, reading.content, true, { cefrLevel: reading.cefrLevel, requireInReading: true });
+      const details = knownVocabulary.find(item => normalizeEnglishTerm(item.term) === normalizeEnglishTerm(value));
+      if (!details) throw new Error('这个表达暂无本地资料，请先到单词本添加并补充资料。');
       if (currentIdentity.current !== requestedIdentity) return;
       if (details.cefrLevel !== reading.cefrLevel) throw new Error('该表达不符合 ' + reading.cefrLevel + ' 程度。');
       const now = Date.now();

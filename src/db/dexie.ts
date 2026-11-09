@@ -1,4 +1,5 @@
 import Dexie, { Table } from 'dexie';
+import type { VocabularyDetails, SavedMaterial } from '../types';
 import { ReadingRecord, VocabularyItem, ReviewLog, AppSettings, VocabStatus, ReviewRating } from '../types';
 import { planReadingVocabularySync } from '../utils/readingVocabulary';
 import { preserveCatalogue } from '../utils/expressionCache';
@@ -39,6 +40,9 @@ export class EnglishLearningDatabase extends Dexie {
   notes!: Table<UserNote, number>;
   dialogueAudio!: Table<DialogueAudioRecord, string>;
 
+  vocabularyDetails!: Table<VocabularyDetails, string>;
+  savedMaterials!: Table<SavedMaterial, string>;
+
   constructor() {
     super('EnglishLearningDB');
     this.version(1).stores({
@@ -55,6 +59,11 @@ export class EnglishLearningDatabase extends Dexie {
       rewriteRecords: '++id, readingId, target, createdAt',
       notes: '++id, targetId, createdAt',
       dialogueAudio: 'id, createdAt, lastPlayedAt'
+    });
+    // Additive migration: no old records, keys, review fields or tables are rewritten.
+    this.version(3).stores({
+      vocabularyDetails: 'key, updatedAt',
+      savedMaterials: 'id, &key, type, vocabularyId, sourceReadingId, createdAt',
     });
   }
 }
@@ -109,7 +118,7 @@ export async function seedInitialDataIfNeeded() {
   // Existing user-created readings are never touched. The former bundled sample
   // is migrated once in place so returning users also receive the new default.
   if (count > 0 && !existingSeed) return;
-  if (existingSeed && !existingSeed.topic.includes('体贴的男朋友')) return;
+  if (existingSeed) return;
 
   const now = Date.now();
 
@@ -335,26 +344,30 @@ export interface BackupData {
   rewritePractice: RewriteRecord[];
   notes: UserNote[];
   settings: AppSettings;
+  vocabularyDetails?: VocabularyDetails[];
+  savedMaterials?: SavedMaterial[];
 }
 
 export async function exportMyData(): Promise<string> {
-  const [vocabulary, readings, reviews, rewritePractice, notes] = await Promise.all([
+  const [vocabulary, readings, reviews, rewritePractice, notes, vocabularyDetails, savedMaterials] = await Promise.all([
     db.vocabulary.toArray(),
     db.readings.toArray(),
     db.reviews.toArray(),
     db.rewriteRecords.toArray(),
-    db.notes.toArray()
+    db.notes.toArray(),
+    db.vocabularyDetails.toArray(),
+    db.savedMaterials.toArray()
   ]);
 
   const backup: BackupData = {
-    version: 1,
+    version: 3,
     exportedAt: new Date().toISOString(),
     vocabulary,
     readings,
     reviews,
     rewritePractice,
     notes,
-    settings: loadSettings()
+    settings: loadSettings(), vocabularyDetails, savedMaterials
   };
 
   return JSON.stringify(backup, null, 2);
@@ -371,7 +384,15 @@ export async function importMyData(jsonString: string): Promise<{
     throw new Error('Invalid backup file structure.');
   }
 
-  await db.transaction('rw', [db.vocabulary, db.readings, db.reviews, db.rewriteRecords, db.notes], async () => {
+  for (const key of ['vocabulary', 'readings', 'reviews', 'rewritePractice', 'notes', 'vocabularyDetails', 'savedMaterials'] as const) {
+    if (parsed[key] !== undefined && !Array.isArray(parsed[key])) throw new Error('备份列表格式错误。');
+  }
+  for (const word of parsed.vocabulary || []) if (!word || typeof word.id !== 'string' || typeof word.term !== 'string' || !word.term.trim() || typeof word.reviewCount !== 'number') throw new Error('词汇备份格式错误。');
+  for (const reading of parsed.readings || []) if (!reading || typeof reading.id !== 'string' || typeof reading.content !== 'string' || !Array.isArray(reading.selectedVocabulary)) throw new Error('短文备份格式错误。');
+  for (const detail of parsed.vocabularyDetails || []) if (!detail || typeof detail.key !== 'string' || !detail.sections || !Array.isArray(detail.senses)) throw new Error('词汇详情备份格式错误。');
+  for (const material of parsed.savedMaterials || []) if (!material || typeof material.id !== 'string' || typeof material.key !== 'string' || typeof material.text !== 'string' || !['example','phrase'].includes(material.type)) throw new Error('收藏备份格式错误。');
+
+  await db.transaction('rw', [db.vocabulary, db.readings, db.reviews, db.rewriteRecords, db.notes, db.vocabularyDetails, db.savedMaterials], async () => {
     if (parsed.vocabulary && Array.isArray(parsed.vocabulary)) {
       await db.vocabulary.bulkPut(parsed.vocabulary);
     }
@@ -383,6 +404,13 @@ export async function importMyData(jsonString: string): Promise<{
     }
     if (parsed.rewritePractice && Array.isArray(parsed.rewritePractice)) {
       await db.rewriteRecords.bulkPut(parsed.rewritePractice);
+    }
+    if (parsed.vocabularyDetails && Array.isArray(parsed.vocabularyDetails)) await db.vocabularyDetails.bulkPut(parsed.vocabularyDetails);
+    if (parsed.savedMaterials && Array.isArray(parsed.savedMaterials)) {
+      for (const material of parsed.savedMaterials) {
+        const existing = await db.savedMaterials.where('key').equals(material.key).first();
+        await db.savedMaterials.put({ ...material, id: existing?.id || material.id });
+      }
     }
     if (parsed.notes && Array.isArray(parsed.notes)) {
       await db.notes.bulkPut(parsed.notes);
@@ -416,19 +444,22 @@ export async function saveReading(reading: ReadingRecord): Promise<string> {
 }
 
 export async function saveReadingWithVocabulary(reading: ReadingRecord): Promise<void> {
-  await db.transaction('rw', db.readings, db.vocabulary, async () => {
+  await db.transaction('rw', db.readings, db.vocabulary, db.savedMaterials, async () => {
     const [previous, saved, readings] = await Promise.all([db.readings.get(reading.id), db.vocabulary.toArray(), db.readings.toArray()]);
     const plan = planReadingVocabularySync(previous, reading, saved, readings);
     await db.readings.put(preserveCatalogue(reading, previous));
+    if (plan.removeIds.length) await db.savedMaterials.where('vocabularyId').anyOf(plan.removeIds).modify(material => { delete material.vocabularyId; });
     await db.vocabulary.bulkDelete(plan.removeIds);
     await db.vocabulary.bulkPut(plan.upserts);
   });
 }
 
 export async function deleteReading(id: string): Promise<void> {
-  await db.transaction('rw', [db.readings, db.vocabulary, db.reviews, db.rewriteRecords, db.notes], async () => {
+  await db.transaction('rw', [db.readings, db.vocabulary, db.reviews, db.rewriteRecords, db.notes, db.savedMaterials], async () => {
     const [readings, words] = await Promise.all([db.readings.toArray(), db.vocabulary.toArray()]);
     const plan = planReadingDeletion(id, words, readings);
+    if (plan.removeIds.length) await db.savedMaterials.where('vocabularyId').anyOf(plan.removeIds).modify(material => { delete material.vocabularyId; });
+    await db.savedMaterials.where('sourceReadingId').equals(id).modify(material => { delete material.sourceReadingId; });
     await db.vocabulary.bulkDelete(plan.removeIds);
     await db.vocabulary.bulkPut(plan.upserts);
     if (plan.removeIds.length) await db.reviews.where('vocabularyId').anyOf(plan.removeIds).delete();
@@ -452,7 +483,10 @@ export async function saveVocabulary(vocab: VocabularyItem): Promise<string> {
 }
 
 export async function deleteVocabulary(id: string): Promise<void> {
-  return db.vocabulary.delete(id);
+  await db.transaction('rw', db.vocabulary, db.savedMaterials, async () => {
+    await db.savedMaterials.where('vocabularyId').equals(id).modify(material => { delete material.vocabularyId; });
+    await db.vocabulary.delete(id);
+  });
 }
 
 export const recordReview = updateVocabularyReview;

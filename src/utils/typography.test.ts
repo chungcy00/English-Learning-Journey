@@ -44,9 +44,8 @@ test('repeated teaching content shares type roles across reading, wordbook and r
     const source = readFileSync(new URL(`../views/${name}.tsx`, import.meta.url), 'utf8');
     assert.match(source, /type-body/);
   }
-  const details = readFileSync(new URL('../components/WordDetailModal.tsx', import.meta.url), 'utf8');
-  assert.match(details, /type-example/);
-  assert.match(details, /type-translation/);
+  assert.match(css, /\.lexicon-entry-heading p \{ font-size: var\(--type-body\)/);
+  assert.match(css, /\.lexicon-muted[^}]*font-size: var\(--type-translation\)/);
   const select = readFileSync(new URL('../components/ExpressionSelect.tsx', import.meta.url), 'utf8');
   assert.match(select, /type-label italic/);
 });

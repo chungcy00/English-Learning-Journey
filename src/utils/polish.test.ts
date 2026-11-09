@@ -2,13 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-test('review reserve follows overlay height and cleans up observers', () => {
-  const view = readFileSync(new URL('../views/ReviewView.tsx', import.meta.url), 'utf8');
+test('learning card scrolling cleans up measurement observers and has no rating overlay', () => {
+  const view = readFileSync(new URL('../components/PracticeVocabularyCard.tsx', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8');
   assert.match(view, /ResizeObserver\(measure\)/);
-  assert.match(view, /observer\?\.disconnect\(\)/);
-  assert.match(view, /removeProperty\('--review-rating-height'\)/);
-  assert.match(css, /padding-bottom: calc\(var\(--review-rating-height, 6rem\)/);
+  assert.match(view, /observer.disconnect\(\)/);
+  assert.doesNotMatch(view + css, /review-rating-bar|review-rating-height/);
   assert.match(css, /prefers-reduced-motion: reduce/);
 });
 

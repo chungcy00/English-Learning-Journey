@@ -1,26 +1,8 @@
-import { useEffect, useState } from 'react';
-import type { ReadingExpression, ReadingRecord } from '../types';
-import { loadReadingExpressions } from '../services/readingExpressions';
-
+import type { ReadingRecord } from '../types';
+// Local catalogue only. Opening a passage or a menu never invokes AI.
 export function useReadingExpressions(reading: ReadingRecord | null) {
-  const [expressions, setExpressions] = useState<ReadingExpression[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [attempt, setAttempt] = useState(0);
-  const key = reading ? `${reading.id}:${reading.content}` : '';
-  useEffect(() => {
-    setExpressions([]); setError(''); setLoading(false);
-    if (!reading) return;
-    let active = true;
-    setLoading(true);
-    loadReadingExpressions(reading).then(items => { if (active) setExpressions(items); })
-      .catch(error => { if (active) setError(error instanceof Error ? error.message : '加载失败，请重试。'); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [key, attempt]);
-  return { expressions, loading, error, load: () => {}, retry: () => {
-    if (!reading || loading) return;
-    void loadReadingExpressions(reading, true).catch(() => {});
-    setAttempt(value => value + 1);
-  } };
+  const expressions = reading?.expressionCatalogue?.content === reading?.content
+    ? reading?.expressionCatalogue?.expressions || []
+    : (reading?.selectedVocabulary || []).map(item => ({ term: item.term, type: item.type, cefrLevel: item.cefrLevel || reading!.cefrLevel, contextQuote: '' }));
+  return { expressions, loading: false, error: '', load: () => {}, retry: () => {} };
 }

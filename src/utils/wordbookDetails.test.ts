@@ -13,14 +13,14 @@ test('example cache is reused only when it describes the exact same example',()=
  assert.equal(wordbookExampleTranslation(vocab,null),undefined);
  assert.equal(wordbookExampleTranslation({...vocab,translations:{'zh-CN':{meaning:'体贴的',exampleTranslation:'词条自身译文'}}},reading),'词条自身译文');
 });
-test('inline details do not duplicate the term metadata or add modal semantics',()=>{
+test('inline details preserve old examples and cached translations inside the unified panel',()=>{
  const html=renderToStaticMarkup(React.createElement(WordbookEntryDetails,{vocab,reading,onUpdateStatus:async()=>{},onRemove:async()=>{}}));
- assert.doesNotMatch(html,/<dialog|<aside|<h2|adjective|· word|wordbook-detail-panel/);
- for(const content of ['中文释义','英英释义',vocab.definitionEn,vocab.example,'她说：“那很体贴。”','已加入生词本','移出','学习状态'])assert.ok(html.includes(content));
- assert.match(html,/wordbook-detail-pronunciation/);
- assert.match(html,/aria-label="播放 considerate 的发音"/);
+ assert.doesNotMatch(html,/<dialog|<aside/);
+ for(const text of ['体贴的；考虑周到的',vocab.example,'她说：“那很体贴。”','学习状态','用法辨析'])assert.ok(html.includes(text));
+ assert.equal((html.match(/role="tab"/g)||[]).length,6);
  assert.match(html,/value="Learning" selected=""|selected="" value="Learning"/);
 });
+
 test('missing example translation adds no invented filler or unrelated cache',()=>{
  const html=renderToStaticMarkup(React.createElement(WordbookEntryDetails,{vocab,reading:null,onUpdateStatus:async()=>{},onRemove:async()=>{}}));
  assert.doesNotMatch(html,/她说|暂无翻译|店主/);

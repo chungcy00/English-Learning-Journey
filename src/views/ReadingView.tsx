@@ -1,3 +1,5 @@
+import { vocabularyKey } from '../utils/vocabularyDetails';
+import { cachedParagraphTranslation } from '../utils/paragraphTranslation';
 import { mergeReadingTranslations } from '../utils/translationResults';
 import { parseDialogueTurns, mappedDialogueTranslation, type DialogueTurn } from '../utils/dialogueReading';
 import React, { useState, useEffect, useRef } from 'react';
@@ -21,11 +23,7 @@ import { splitReadingSentences, groupReadingSentences, hasCompleteSentenceTransl
 import { createDeviceSpeechProgress, locateDeviceSpeechPosition } from '../utils/deviceSpeechProgress';
 import { WordDetailModal } from '../components/WordDetailModal';
 import { ReadingVocabularyEditor } from '../components/ReadingVocabularyEditor';
-import {
-  generateDialogueSpeech,
-  rememberCompletedDialogueSpeech,
-  translateReading,
-} from '../services/api';
+
 import {
   getI18nText,
   getLocalizedVocabMeaning,
@@ -47,12 +45,9 @@ interface ReadingViewProps {
   wordbookVocabIds: Set<string>;
   onToggleWordbook: (vocab: VocabularyItem) => void;
   onToggleWordbookFromDetails?: (vocab: VocabularyItem) => void | Promise<void>;
-  onUpdateReading?: (updatedReading: ReadingRecord) => void;
+  onUpdateReading?: (updatedReading: ReadingRecord) => void | Promise<void>;
   onUpdateVocabulary: (updatedReading: ReadingRecord) => Promise<void>;
-  onRewrite: (mode: string, keepVocab: boolean) => void;
   onOpenHistory: () => void;
-  onOpenPractice?: () => void;
-  isRewriting: boolean;
 }
 
 interface SpeechQueueItem {
@@ -112,15 +107,11 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   onToggleWordbookFromDetails,
   onUpdateReading,
   onUpdateVocabulary,
-  onRewrite,
   onOpenHistory,
-  onOpenPractice,
-  isRewriting,
 }) => {
   const [selectedVocab, setSelectedVocab] = useState<VocabularyItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isRewriteMenuOpen, setIsRewriteMenuOpen] = useState(false);
-  useEffect(() => { setIsDetailOpen(false); setSelectedVocab(null); setIsRewriteMenuOpen(false); }, [reading.id]);
+  useEffect(() => { setIsDetailOpen(false); setSelectedVocab(null); }, [reading.id]);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -138,15 +129,13 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const deviceSpeechProgress = useRef(createDeviceSpeechProgress());
   const deviceUtteranceActive = useRef(false);
   const [deviceSpeechPercent, setDeviceSpeechPercent] = useState(0);
-  const [isDeviceSpeech, setIsDeviceSpeech] = useState(reading.readingType !== 'dialogue');
+  const [isDeviceSpeech, setIsDeviceSpeech] = useState(true);
   const deviceSeekRef = useRef<((percent: number) => void) | null>(null);
   const deviceRevisionRef = useRef(0);
   const suspendDeviceForVocabulary = useRef<(() => void) | null>(null);
   const draggingDeviceSeek = useRef(false);
   const resumeAfterDeviceSeek = useRef(false);
   const [deviceSeekDraft, setDeviceSeekDraft] = useState<number | null>(null);
-  const [mobileReadingMode, setMobileReadingMode] = useState<'original' | 'translation'>('original');
-  const [keepVocab, setKeepVocab] = useState(true);
   const translationRunRef = useRef(0);
   const translationControllerRef = useRef<AbortController | null>(null);
   const translationPriorityRef = useRef(false);
@@ -243,7 +232,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
   const startReadingAloud = async (restart = false, seekPercent = 0, startPaused = false, forceDevice = false) => {
     if (restart) stopReadingAloud();
-    if ((!isDetectedDialogue || forceDevice) && !('speechSynthesis' in window)) {
+    if (!('speechSynthesis' in window)) {
       setSpeechError('当前浏览器不支持朗读，请尝试 Chrome、Safari 或 Edge。');
       return;
     }
@@ -258,7 +247,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     setDeviceSpeechPercent(0);
     deviceSpeechProgress.current.reset();
     deviceUtteranceActive.current = false;
-    setIsDeviceSpeech(!isDetectedDialogue || forceDevice);
+    setIsDeviceSpeech(true);
     setSpeechError(null);
     setSpeechNotice(null);
     speechPausedRef.current = startPaused;
@@ -368,6 +357,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         dialogueVoicePair?.male &&
         dialogueVoicePair.female.voiceURI !== dialogueVoicePair.male.voiceURI
       );
+
+      if (useDialogueVoices && !hasDistinctRoleVoices) setSpeechNotice('当前设备未提供完整的英文男女声，已使用音高区分角色。');
 
       const speakNext = (queueIndex: number, startChar = 0, revision = deviceRevisionRef.current) => {
         const current = () => speechRunRef.current === runId && deviceRevisionRef.current === revision;
@@ -481,108 +472,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       else speakNext(0);
     };
 
-    const startFreeDeviceFallback = (error: Error) => {
-      if (!('speechSynthesis' in window)) return false;
-      setIsPreparingSpeech(false);
-      setIsSpeaking(true);
-      setSpeechError(null);
-      setSpeechNotice(`${error?.message || '云端语音连接失败。'} 已自动切换为设备语音。`);
-
-      const availableVoices = getAvailableSpeechVoices();
-      if (availableVoices.length > 0) {
-        beginBrowserPlayback(availableVoices, true);
-      } else {
-        speechPauseTimerRef.current = window.setTimeout(() => {
-          if (speechRunRef.current === runId) {
-            beginBrowserPlayback(getAvailableSpeechVoices(), true);
-          }
-        }, 180);
-      }
-      return true;
-    };
-
-    if (isDetectedDialogue && !forceDevice) {
-      const controller = new AbortController();
-      speechAbortRef.current = controller;
-      setIsPreparingSpeech(true);
-
-      const playAudioBlob = async (blob: Blob) => {
-        const objectUrl = URL.createObjectURL(blob);
-        dialogueAudioUrlRef.current = objectUrl;
-        const audio = new Audio(objectUrl);
-        dialogueAudioRef.current = audio;
-        audio.preload = 'auto';
-        audio.playbackRate = 1;
-        audio.onloadedmetadata = () => { if (speechRunRef.current === runId && Number.isFinite(audio.duration)) setSpeechDuration(audio.duration); };
-        audio.ontimeupdate = () => { if (speechRunRef.current === runId) setSpeechPosition(audio.currentTime); };
-
-        try {
-          await new Promise<void>((resolve, reject) => {
-            let settled = false;
-            const finish = () => {
-              if (settled) return;
-              settled = true;
-              finishDialogueAudioRef.current = null;
-              resolve();
-            };
-            const fail = () => {
-              if (settled) return;
-              settled = true;
-              finishDialogueAudioRef.current = null;
-              reject(new Error('角色语音音频无法播放'));
-            };
-            finishDialogueAudioRef.current = finish;
-            audio.onended = finish;
-            audio.onerror = fail;
-            audio.play().catch(fail);
-          });
-        } finally {
-          if (dialogueAudioRef.current === audio) dialogueAudioRef.current = null;
-          if (dialogueAudioUrlRef.current === objectUrl) dialogueAudioUrlRef.current = null;
-          URL.revokeObjectURL(objectUrl);
-        }
-      };
-
-      try {
-        // One multi-speaker request generates the complete conversation. This
-        // preserves fixed Kore/Orus voices without consuming one API request per
-        // sentence, and the resulting audio is reused by the device cache.
-        const dialogueAudio = await generateDialogueSpeech(
-          queue.map(item => ({ text: item.text, gender: item.gender })),
-          controller.signal
-        );
-        if (speechRunRef.current !== runId) return;
-        setIsPreparingSpeech(false);
-        setIsSpeaking(true);
-
-        setActiveSpeechTurn(null);
-        await playAudioBlob(dialogueAudio);
-        void rememberCompletedDialogueSpeech(
-          queue.map(item => ({ text: item.text, gender: item.gender })),
-          dialogueAudio
-        );
-
-        if (speechRunRef.current === runId) {
-          setIsSpeaking(false);
-          setSpeechNotice('朗读已结束');
-          setActiveSpeechTurn(null);
-        }
-      } catch (error: any) {
-        if (error?.name !== 'AbortError' && speechRunRef.current === runId) {
-          console.error('Dialogue speech failed:', error);
-          if (!startFreeDeviceFallback(error)) {
-            setSpeechError(error?.message || '当前设备暂时无法朗读角色语音');
-            setIsPreparingSpeech(false);
-            setIsSpeaking(false);
-            setActiveSpeechTurn(null);
-          }
-        }
-      } finally {
-        if (speechAbortRef.current === controller) speechAbortRef.current = null;
-      }
-      return;
-    }
-
     setIsSpeaking(true);
 
     if (voices.length > 0) {
@@ -626,101 +515,26 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     const timer = window.setInterval(() => setSpeechPosition(deviceSpeechProgress.current.snapshot().seconds), 200);
     return () => window.clearInterval(timer);
   }, [isDeviceSpeech, isSpeaking, isSpeechPaused]);
-  useEffect(() => { deviceSpeechProgress.current.reset(); setDeviceSpeechPercent(0); setDeviceSeekDraft(null); draggingDeviceSeek.current = false; setIsDeviceSpeech(!isDetectedDialogue); setSpeechPosition(0); setSpeechDuration(null); setExpandedSentence(null); setMobileReadingMode('original'); setMoreOpen(false); setLookupOpen(false); }, [reading.id, reading.content]);
+  useEffect(() => { deviceSpeechProgress.current.reset(); setDeviceSpeechPercent(0); setDeviceSeekDraft(null); draggingDeviceSeek.current = false; setIsDeviceSpeech(true); setSpeechPosition(0); setSpeechDuration(null); setExpandedSentence(null); setMoreOpen(false); setLookupOpen(false); }, [reading.id, reading.content]);
 
   const currentTranslation = reading.translations?.['zh-CN'];
-  const translationBlocks = (isDetectedDialogue ? dialogueTurns.map(turn => turn.speech) : reading.content.split(/\n\s*\n/)).filter(block => block.trim()).map(splitReadingSentences);
-  const translationSegments = translationBlocks.flat().map(segment => segment.trim());
-  const completeTranslation = (translation?: ReadingTranslation) => translationBlocks.length > 0 && translationBlocks.every(block => hasCompleteSentenceTranslations(block, translation));
-
-  const fetchTranslation = async (force = false, focusedSource?: string, refreshAll = false) => {
-    const existing = reading.translations?.['zh-CN'];
-    if (translationControllerRef.current && focusedSource && !translationPriorityRef.current) {
-      translationControllerRef.current.abort();
-      translationControllerRef.current = null;
-    }
-    if (translationControllerRef.current || (!force && existing && completeTranslation(existing))) {
-      return;
-    }
-    const controller = new AbortController();
-    translationControllerRef.current = controller;
-    translationPriorityRef.current = !!focusedSource;
-    setIsTranslating(true);
-    setTranslationError(null);
-    const runId = ++translationRunRef.current;
+  const paragraphSources = isDetectedDialogue ? dialogueTurns.map(turn => turn.speech) : reading.content.split(/\n\s*\n/).filter(block => block.trim());
+  const missingParagraphs = paragraphSources.some((source, index) => !cachedParagraphTranslation(reading, source, index, paragraphSources.length));
+  // Old readings are never translated automatically. A deliberate action fills all paragraphs once.
+  const prepareLegacyParagraphs = async () => {
+    if (translationControllerRef.current || !onUpdateReading) return;
+    const controller = new AbortController(); translationControllerRef.current = controller;
+    setIsTranslating(true); setTranslationError(null);
     try {
-      const sentenceOnly = !refreshAll && (!!focusedSource || !!existing?.translatedContent?.trim() || !!existing?.sentenceTranslations?.length);
-      const missingSegments = translationBlocks.flatMap(block => groupReadingSentences(block, existing).filter(segment => !segment.translation).map(segment => segment.source.trim()));
-      if (sentenceOnly && !focusedSource && !missingSegments.length) return;
-      const received = await translateReading({
-        text: reading.content,
-        translationSegments: focusedSource ? [focusedSource.trim()] : sentenceOnly ? [...new Set(missingSegments)] : translationSegments,
-        sentenceOnly,
-        title: reading.title,
-        readingType: reading.readingType,
-        vocabulary: sentenceOnly ? [] : reading.selectedVocabulary,
-        rewriteExercises: sentenceOnly ? [] : reading.rewritePractice,
-      }, controller.signal);
-
-      if (runId !== translationRunRef.current || controller.signal.aborted) return;
-      const result = mergeReadingTranslations(existing, received, translationBlocks, isDetectedDialogue ? dialogueTurns.map(turn => turn.speaker) : undefined);
-      if (!result.title.trim()) result.title = reading.title;
-      if (!result.translatedContent.trim() && !result.sentenceTranslations?.length) {
-        throw new Error('未生成有效翻译，请重试。');
-      }
-
-      const updatedReading: ReadingRecord = {
-        ...reading,
-        translations: {
-          ...(reading.translations || {}),
-          'zh-CN': result,
-        },
-      };
-      if (runId !== translationRunRef.current) return;
-      await onUpdateReading?.(updatedReading);
-      if (!completeTranslation(result) && runId === translationRunRef.current) {
-        setTranslationError(result.translatedContent.trim()
-          ? '全文译文已保留，部分句子译文尚未完整生成，可重试补全。'
-          : '已有句子译文已保留，其余句子可重试补全。');
-      }
-    } catch (err: any) {
-      if (runId !== translationRunRef.current || controller.signal.aborted) return;
-      console.error('Translation failed:', err);
-      setTranslationError(err?.message || '地道翻译生成失败，请点击重试');
-    } finally {
-      if (translationControllerRef.current === controller) {
-        translationControllerRef.current = null;
-        translationPriorityRef.current = false;
-        setIsTranslating(false);
-      }
-    }
+      const response = await fetch('/api/reading/translate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: reading.content, readingType: reading.readingType }), signal: controller.signal });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || '段落翻译失败，请重试。');
+      if (!Array.isArray(data.paragraphTranslations) || data.paragraphTranslations.length !== paragraphSources.length || paragraphSources.some((source, index) => data.paragraphTranslations[index]?.source !== source || !data.paragraphTranslations[index]?.translation?.trim())) throw new Error('段落译文不完整，已有内容已保留。');
+      if (!controller.signal.aborted) await onUpdateReading({ ...reading, paragraphTranslations: data.paragraphTranslations, updatedAt: Date.now() });
+    } catch (error) { if (!controller.signal.aborted) setTranslationError(error instanceof Error ? error.message : '段落翻译失败，请重试。'); }
+    finally { if (translationControllerRef.current === controller) { translationControllerRef.current = null; setIsTranslating(false); } }
   };
-
-  useEffect(() => () => {
-    translationRunRef.current += 1;
-    translationControllerRef.current?.abort();
-    translationControllerRef.current = null;
-  }, [reading.id, reading.content, vocabularySignature]);
-
-  // Upgrade legacy full-text caches once on entry; failures wait for explicit retry.
-  useEffect(() => {
-    setIsTranslating(false);
-    setTranslationError(null);
-    void fetchTranslation();
-  }, [reading.id, reading.content, vocabularySignature]);
-
-  const handleCopyTranslation = async () => {
-    if (!currentTranslation) return;
-    setCopyError('');
-    try {
-      await navigator.clipboard.writeText(`${currentTranslation.title}\n\n${currentTranslation.translatedContent}`);
-      setCopiedTranslation(true);
-      setTimeout(() => setCopiedTranslation(false), 2000);
-    } catch (e) {
-      console.error('Copy failed:', e);
-      setCopyError('复制失败，请允许剪贴板访问，或直接选择译文复制。');
-    }
-  };
+  useEffect(() => () => { translationControllerRef.current?.abort(); translationControllerRef.current = null; }, [reading.id, reading.content]);
 
   // Synchronize format mode when reading changes
   React.useEffect(() => {
@@ -730,17 +544,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       turns.filter(t => t.speaker !== null).length >= 2;
     setFormatMode(hasDialogue ? 'dialogue' : 'paragraph');
   }, [reading.id, reading.readingType, reading.content]);
-
-  const rewriteOptions = [
-    { id: 'easier', label: '更平易近人 (Easier)' },
-    { id: 'harder', label: '提升词汇句型 (Harder)' },
-    { id: 'shorter', label: '精简版 (Shorter)' },
-    { id: 'longer', label: '丰富细节 (Longer)' },
-    { id: 'moreConversational', label: '更生活口语 (More Conversational)' },
-    { id: 'story', label: '转为故事叙事 (Story)' },
-    { id: 'non-story', label: '转为说明见解 (Non-story)' },
-    { id: 'dialogue', label: '转为情境对话 (Dialogue)' },
-  ];
 
   // Helper to click on term
   const handleTermClick = (term: string) => {
@@ -797,27 +600,21 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     }
   }
 
-  const renderSentences = (text: string, prefix: string) => groupReadingSentences(splitReadingSentences(text), currentTranslation).map(({ source: sentence, index, translation: translated }) => {
-    const key = `${prefix}-${index}`;
-    const expanded = expandedSentence === key && !!translated;
-    const open = (fromKeyboard = false) => {
-      if (window.getSelection()?.toString()) return;
-      setExpandedSentence(expanded ? null : key);
-      if (fromKeyboard && translated) requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(`[data-expanded-sentence="${key}"] .reading-sentence-card__close`)?.focus({ preventScroll: true }));
-      if (!translated) void fetchTranslation(true, sentence);
-    };
-    return <React.Fragment key={key}>{expanded ? <span className="reading-sentence-card" data-expanded-sentence={key}>
-      <span className="reading-sentence-card__original">{renderTextWithHighlights(sentence.trim())}</span>
-      <button type="button" aria-label="关闭句子翻译" className="reading-sentence-card__close" onClick={event => { event.stopPropagation(); setExpandedSentence(null); requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-sentence-id="${key}"]`)?.focus({ preventScroll: true })); }}><X size={17} /></button>
-      <span className="reading-sentence-card__translation">{translated}</span>
-    </span> : <span className="reading-sentence" data-sentence-id={key} role="button" tabIndex={0} aria-label={`查看句子翻译：${sentence.trim()}`} aria-expanded={false} onClick={() => open()} onKeyDown={event => { if (event.target === event.currentTarget && ['Enter', ' '].includes(event.key)) { event.preventDefault(); open(true); } }}>{renderTextWithHighlights(sentence)}</span>}</React.Fragment>;
-  });
+  const renderParagraph = (text: string, key: string, index: number) => {
+    const translated = cachedParagraphTranslation(reading, text, index, paragraphSources.length);
+    const expanded = expandedSentence === key;
+    const toggle = () => { if (!window.getSelection()?.toString()) setExpandedSentence(expanded ? null : key); };
+    return <div className={`reading-paragraph${expanded ? ' is-expanded' : ''}`}>
+      <div className="reading-paragraph__original" role="button" tabIndex={0} aria-label={`查看段落翻译：${text.slice(0, 40)}`} aria-expanded={expanded} onClick={toggle} onKeyDown={event => { if (event.target === event.currentTarget && ['Enter',' '].includes(event.key)) { event.preventDefault(); toggle(); } }}>{renderTextWithHighlights(text)}</div>
+      {expanded && <div className="reading-paragraph__translation"><p>{translated || '这篇旧短文尚无本段译文，可点击下方按钮一次补充所有段落。'}</p><button type="button" aria-label="收起段落翻译" onClick={() => setExpandedSentence(null)}><X size={16}/></button></div>}
+    </div>;
+  };
 
   const renderDialogueTurns = (turns: DialogueTurn[], translated = false) => (
     <div className="reading-dialogue-turns">
       {turns.map((turn, index) => {
         if (!turn.speaker || ['setting', 'scene', '场景', '背景', 'note'].includes(turn.speaker.toLowerCase())) {
-          return <div key={index} className="reading-dialogue-scene">{turn.speaker && <span>{turn.speaker}: </span>}{translated ? turn.speech : renderSentences(turn.speech, `turn-${index}`)}</div>;
+          return <div key={index} className="reading-dialogue-scene">{turn.speaker && <span>{turn.speaker}: </span>}{translated ? turn.speech : renderParagraph(turn.speech, `turn-${index}`, index)}</div>;
         }
         const style = SPEAKER_STYLES[speakerMap.get(turn.speaker) ?? 0];
         return <div key={index} className={`reading-dialogue-turn ${isSpeaking && activeSpeechTurn === index ? 'is-reading' : ''}`}>
@@ -826,7 +623,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             <span className="reading-dialogue-name">{turn.speaker}</span>
           </div>
           <div className={`reading-dialogue-speech ${translated ? 'reading-dialogue-speech--translated' : ''}`}>
-            {translated ? turn.speech : renderSentences(turn.speech, `turn-${index}`)}
+            {translated ? turn.speech : renderParagraph(turn.speech, `turn-${index}`, index)}
           </div>
         </div>;
       })}
@@ -837,38 +634,15 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   // Render paragraph format
   const renderParagraphContent = () => {
     if (isDetectedDialogue) return dialogueTurns.map((turn, index) => (
-      <p key={index} className="type-reading mb-5 font-editorial text-[var(--text-primary)]">
-        {turn.speaker && <span>{turn.speaker}: </span>}{renderSentences(turn.speech, `turn-${index}`)}
-      </p>
+      <div key={index} className="type-reading mb-5 font-editorial text-[var(--text-primary)]">
+        {turn.speaker && <span>{turn.speaker}: </span>}{renderParagraph(turn.speech, `turn-${index}`, index)}
+      </div>
     ));
     const paragraphs = reading.content.split(/\n\s*\n/).filter(Boolean);
     return paragraphs.map((para, pIdx) => (
-      <p key={pIdx} className="type-reading mb-5 font-editorial text-[var(--text-primary)]">
-        {renderSentences(para, `paragraph-${pIdx}`)}
-      </p>
-    ));
-  };
-
-  const renderTranslatedDialogue = (translatedText: string) => {
-    const mapped = mappedDialogueTranslation(dialogueTurns, currentTranslation);
-    // Keep legacy cached text readable without guessing which Chinese sentence
-    // belongs to an English turn. Exact sentence mappings take priority.
-    const legacy = parseDialogueTurns(translatedText, dialogueTurns.flatMap(turn => turn.speaker ? [turn.speaker] : []));
-    return renderDialogueTurns(mapped || legacy, true);
-  };
-
-  const renderTranslatedParagraphs = (translatedText: string) => {
-    const mapped = isDetectedDialogue ? mappedDialogueTranslation(dialogueTurns, currentTranslation) : null;
-    if (mapped) return mapped.map((turn, index) => (
-      <p key={index} className="type-translation mb-5 font-ui text-[var(--text-primary)]">
-        {turn.speaker && <span>{turn.speaker}: </span>}{turn.speech}
-      </p>
-    ));
-    const paragraphs = translatedText.split(/\n\s*\n/).filter(Boolean);
-    return paragraphs.map((para, pIdx) => (
-      <p key={pIdx} className="type-translation mb-5 font-ui text-[var(--text-primary)]">
-        {para}
-      </p>
+      <div key={pIdx} className="type-reading mb-5 font-editorial text-[var(--text-primary)]">
+        {renderParagraph(para, `paragraph-${pIdx}`, pIdx)}
+      </div>
     ));
   };
 
@@ -903,12 +677,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     if (deviceSeekRef.current) deviceSeekRef.current(percent);
     else void startReadingAloud(true, percent, true, true);
   };
-  const translationState = <>
-    {isTranslating && !currentTranslation && <p role="status" className="reading-inline-status">正在准备全文翻译…</p>}
-    {translationError && <p role="alert" className="reading-inline-status">{translationError} <button type="button" onClick={() => fetchTranslation(true)} disabled={isTranslating}>重试翻译</button></p>}
-    {currentTranslation ? (isDetectedDialogue && formatMode === 'dialogue' ? renderTranslatedDialogue(currentTranslation.translatedContent) : renderTranslatedParagraphs(currentTranslation.translatedContent)) : !isTranslating && !translationError && <p>暂无全文翻译。</p>}
-  </>;
-
   return (
     <div className={`page-shell page-shell--reading page-stack--reading reading-page reading-studio ${isDetectedDialogue ? 'reading-studio--dialogue' : ''}`}>
       <header className="reading-studio__header">
@@ -916,17 +684,13 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         <div ref={moreMenuRef} className="reading-more" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setMoreOpen(false); }} onKeyDown={event => { if (event.key === 'Escape') { setMoreOpen(false); (event.currentTarget.querySelector('button') as HTMLButtonElement | null)?.focus(); } }}>
           <button type="button" className="reading-more__trigger" aria-label="更多阅读操作" aria-expanded={moreOpen} aria-controls={moreOpen ? "reading-more-menu" : undefined} onClick={() => setMoreOpen(value => !value)}><MoreHorizontal size={21} /></button>
           {moreOpen && <div id="reading-more-menu" className="reading-more__menu">
-            <button type="button" aria-expanded={isRewriteMenuOpen} onClick={() => { setIsRewriteMenuOpen(value => !value); setMoreOpen(false); }}><PencilLine size={17} />改写短文</button>
             <button type="button" onClick={() => { setMoreOpen(false); onOpenHistory(); }}><History size={17} />历史记录</button>
             <button type="button" onClick={() => { setMoreOpen(false); setLookupOpen(true); }}><AlignLeft size={17} />查询文中其他表达</button>
             {isDetectedDialogue && <button type="button" onClick={() => { setFormatMode(value => value === 'dialogue' ? 'paragraph' : 'dialogue'); setMoreOpen(false); }}><AlignLeft size={17} />{formatMode === 'dialogue' ? '切换段落排版' : '切换剧本排版'}</button>}
-            <button type="button" disabled={isTranslating} onClick={() => { setMoreOpen(false); void fetchTranslation(true, undefined, true); }}><RefreshCw size={17} />更新全文及句子翻译</button>
-            <button type="button" disabled={!currentTranslation} onClick={() => { setMoreOpen(false); void handleCopyTranslation(); }}><Copy size={17} />{copiedTranslation ? '已复制译文' : '复制全文译文'}</button>
           </div>}
         </div>
       </header>
       {copyError && <p role="alert" className="reading-inline-status">{copyError}</p>}
-      {isRewriteMenuOpen && <section className="reading-rewrite-panel" aria-label="改写短文设置"><div className="reading-studio__section-heading"><h2>改写短文</h2><button type="button" aria-label="关闭改写设置" onClick={() => setIsRewriteMenuOpen(false)}><X size={19} /></button></div><label><input type="checkbox" checked={keepVocab} onChange={event => setKeepVocab(event.target.checked)} />保留当前精选词汇</label><div>{rewriteOptions.map(option => <button type="button" key={option.id} disabled={isRewriting} onClick={() => { setIsRewriteMenuOpen(false); onRewrite(option.id, keepVocab); }}>{option.label}</button>)}</div></section>}
       <section className="reading-player" aria-label="英文朗读播放器">
         <button type="button" className="reading-player__play" disabled={isPreparingSpeech} aria-label={isPreparingSpeech ? '正在准备语音' : isSpeaking && !isSpeechPaused ? '暂停朗读' : isSpeaking ? '继续朗读' : '播放英文朗读'} aria-busy={isPreparingSpeech} onClick={() => { if (isSpeaking) toggleSpeechPause(); else void startReadingAloud(); }}>{isPreparingSpeech ? <RefreshCw size={19} /> : isSpeaking && !isSpeechPaused ? <Pause size={19} /> : <Play size={19} />}</button>
         <span className="reading-player__time" title={isDeviceSpeech ? '本次实际播放时间（不含暂停与跳过的内容）' : undefined}>{formatAudioTime(speechPosition)}</span>
@@ -941,15 +705,12 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       {speechError && <p role="alert" className="reading-inline-status">{speechError}</p>}
       {speechNotice && <p role="status" className="reading-inline-status">{speechNotice}</p>}
       <section className="reading-studio__body">
-        <div className="reading-studio__switch" role="tablist" aria-label="阅读内容模式">
-          <button type="button" role="tab" id="reading-original-tab" aria-controls="reading-body-panel" aria-selected={mobileReadingMode === 'original'} onClick={() => setMobileReadingMode('original')}>原文</button>
-          <button type="button" role="tab" id="reading-translation-tab" aria-controls="reading-body-panel" aria-selected={mobileReadingMode === 'translation'} onClick={() => setMobileReadingMode('translation')}>全文翻译</button>
-        </div>
-        {mobileReadingMode === 'original' && isTranslating && <p role="status" className="reading-inline-status">正在准备句子翻译，完成后可点击句子查看。</p>}
-        {mobileReadingMode === 'original' && translationError && <p role="alert" className="reading-inline-status">{translationError} <button type="button" onClick={() => void fetchTranslation(true)} disabled={isTranslating}>重试翻译</button></p>}
-        <article id="reading-body-panel" role="tabpanel" aria-labelledby={mobileReadingMode === 'original' ? 'reading-original-tab' : 'reading-translation-tab'} className="reading-prose">
-          {mobileReadingMode === 'original' ? (isDetectedDialogue && formatMode === 'dialogue' ? renderDialogueContent() : renderParagraphContent()) : translationState}
+        <p className="reading-paragraph-hint">点击段落查看中文翻译 · 重点词汇可单独打开</p>
+        <article id="reading-body-panel" className="reading-prose">
+          {isDetectedDialogue && formatMode === 'dialogue' ? renderDialogueContent() : renderParagraphContent()}
         </article>
+        {missingParagraphs && <div className="reading-legacy-translation"><p>旧短文的已有译文会继续使用，缺少的段落可按需补充。</p><button type="button" disabled={isTranslating} onClick={() => void prepareLegacyParagraphs()}>{isTranslating ? '正在生成段落译文…' : '一次补充本篇段落译文'}</button></div>}
+        {translationError && <p role="alert" className="reading-inline-status">{translationError}</p>}
       </section>
 
       <section className="reading-vocabulary space-y-4">
@@ -975,7 +736,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         {lookupOpen && <section className="reading-lookup-panel"><div className="reading-studio__section-heading"><h3>查询文中其他表达</h3><button type="button" aria-label="关闭表达查询" onClick={() => setLookupOpen(false)}><X size={18} /></button></div><ReadingVocabularyEditor key={reading.id} reading={reading} knownVocabulary={knownVocabulary} onSave={onUpdateVocabulary} onInspect={vocab => { setSelectedVocab(vocab); setIsDetailOpen(true); }} /></section>}
         <div className="reading-vocabulary__list" role="list">
           {reading.selectedVocabulary.map((vocab) => {
-            const inWordbook = wordbookVocabIds.has(vocab.term.toLowerCase());
+            const inWordbook = wordbookVocabIds.has(vocabularyKey(vocab.term, vocab.type));
             const localizedMeaning = getLocalizedVocabMeaning(vocab, currentTranslation);
 
             return (
@@ -1012,18 +773,14 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         </div>
       </section>
 
-      {onOpenPractice && <button type="button" onClick={onOpenPractice} className="reading-studio__practice">
-        <PencilLine size={19} aria-hidden="true" />开始句子改写练习 <ArrowRight aria-hidden="true" size={19} />
-      </button>}
-
       {/* Modals */}
       <WordDetailModal
-        vocab={selectedVocab}
+        vocab={selectedVocab ? knownVocabulary.find(item => item.term === selectedVocab.term && item.type === selectedVocab.type) || selectedVocab : null}
         readingContext
         onBeforePronunciation={pauseForVocabulary}
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
-        isInWordbook={selectedVocab ? wordbookVocabIds.has(selectedVocab.term.toLowerCase()) : false}
+        isInWordbook={selectedVocab ? wordbookVocabIds.has(vocabularyKey(selectedVocab.term, selectedVocab.type)) : false}
         onToggleWordbook={onToggleWordbookFromDetails || onToggleWordbook}
         currentTranslation={currentTranslation}
       />

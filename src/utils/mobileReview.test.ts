@@ -6,7 +6,7 @@ import { ReviewView } from '../views/ReviewView';
 import { writeReviewProgress } from './reviewProgress';
 import type { VocabularyItem } from '../types';
 
-test('revealed review uses a closed native collocation disclosure and large rating controls', () => {
+test('revealed review uses six learning tabs with independent bookmarks without memory ratings', () => {
   const original = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage');
   let stored = '';
   try {
@@ -17,13 +17,12 @@ test('revealed review uses a closed native collocation disclosure and large rati
     const html = renderToStaticMarkup(React.createElement(ReviewView, {
       allVocabularies: [{ id: 'qa', term: 'catch up', collocations: ['catch up with friends'], partOfSpeech: 'phrasal verb' } as VocabularyItem],
       onRate: async () => {}, onRefresh: () => {}, }));
-    assert.match(html, /<details[^>]*>/);
-    assert.doesNotMatch(html, /<details[^>]*open/);
-    assert.match(html, /review-rating-bar/);
-    assert.equal((html.match(/min-h-14/g) || []).length, 4);
-    assert.match(html, /aria-label="评价记忆程度"/);
+    assert.equal((html.match(/role="tab"/g) || []).length,6);
+    assert.match(html, /词汇六栏学习资料/);
+    assert.match(html, /用法辨析/);
+    assert.doesNotMatch(html, /review-rating-bar|评价记忆程度|>Again<|>Hard<|>Good<|>Easy</);
     assert.match(html, /aria-label="播放 catch up 的发音"/);
-    assert.match(html, /catch up with friends/);
+    assert.match(html, /一次生成六栏资料/);
   } finally {
     if (original) Object.defineProperty(globalThis, 'sessionStorage', original);
     else Reflect.deleteProperty(globalThis, 'sessionStorage');

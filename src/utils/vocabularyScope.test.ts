@@ -16,9 +16,9 @@ test('wordbook shows all saved degrees, distinguishes passage addition from coll
     vocabularyList: entries, readings: [], currentReading: reading, onDeleteVocab: noop, onUpdateStatus: async () => {},
     onGenerateFromWordbook: noop, isGenerating: false, currentCefr: 'B1', onSaveVocab: async () => {}, onOpenReview: noop,
   }));
-  assert.match(html, /当前短文已添加词条：2 项/);
+  assert.match(html, /全部词条：2 项/);
   assert.doesNotMatch(html, /输入已添加的英文单词、短语或习语/);
-  assert.equal((html.match(/<input/g)||[]).length,1);
+  assert.equal((html.match(/type="search"/g)||[]).length,1);
   assert.match(html, /dread/);
   assert.match(html, /开始复习/);
   assert.match(html, /搜索并添加当前短文的表达/);
@@ -34,7 +34,7 @@ test('wordbook shows all saved degrees, distinguishes passage addition from coll
 
 test('review count includes vocabulary from every degree', () => {
   const html = renderToStaticMarkup(React.createElement(ReviewView, { allVocabularies: entries, onRate: noop, onRefresh: noop, }));
-  assert.match(html, /当前短文已添加词条：2 项/);
+  assert.match(html, /全部已收藏词条：2 项/);
   assert.doesNotMatch(html, /Word 1|Reveal Details/);
 });
 

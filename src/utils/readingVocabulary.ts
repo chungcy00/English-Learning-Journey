@@ -1,3 +1,4 @@
+import { vocabularyKey } from './vocabularyDetails';
 import type { ReadingRecord, VocabularyItem } from '../types';
 import { normalizeEnglishTerm } from './englishSearch';
 
@@ -27,10 +28,10 @@ export function planReadingVocabularySync(previous: ReadingRecord | undefined, r
   const removeIds = saved.filter(v => oldTerms.has(normalizeEnglishTerm(v.term)) && !nextTerms.has(normalizeEnglishTerm(v.term)) &&
     v.sourceReadingId === reading.id && !v.savedManually && !v.wordbookLevels?.length && !otherTerms.has(normalizeEnglishTerm(v.term))).map(v => v.id);
   const upserts = reading.selectedVocabulary.map(v => {
-    const existing = saved.find(s => normalizeEnglishTerm(s.term) === normalizeEnglishTerm(v.term));
+    const existing = saved.find(s => vocabularyKey(s.term, s.type) === vocabularyKey(v.term, v.type) || (!s.origin && !v.origin && normalizeEnglishTerm(s.term) === normalizeEnglishTerm(v.term)));
     // Reusing a term must never erase its ID, review progress or manual ownership.
     return existing ? {
-      ...existing, ...v, id: existing.id,
+      ...existing, ...v, ...(existing.details || existing.origin === 'manual' ? existing : {}), id: existing.id,
       status: existing.status, createdAt: existing.createdAt, updatedAt: existing.updatedAt,
       nextReviewDate: existing.nextReviewDate, lastReviewedAt: existing.lastReviewedAt,
       reviewCount: existing.reviewCount, currentInterval: existing.currentInterval,

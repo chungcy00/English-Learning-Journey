@@ -19,7 +19,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const tabs = [
     { id: 'home' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '生成' : '生成短文', icon: Sparkles },
     { id: 'reading' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '阅读' : '当前阅读', icon: BookOpen, disabled: !hasCurrentReading },
-    { id: 'practice' as NavTab, label: '练习与生词', icon: Bookmark, badge: reviewCount },
+    { id: 'practice' as NavTab, label: '词汇与复习', icon: Bookmark, badge: reviewCount },
     { id: 'history' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '历史' : '历史记录', icon: History },
   ];
 

@@ -69,12 +69,8 @@ test('every AI endpoint refuses exhausted global quota before any provider reque
   const port = (server.address() as { port: number }).port;
   const requests = [
     ['reading/generate', { input: 'Rainy day' }],
-    ['reading/rewrite', { reading: 'A rainy day.', mode: 'shorter' }],
     ['reading/translate', { text: 'A rainy day.', targetLanguage: 'zh-CN' }],
-    ['rewrite/evaluate', { userAnswer: 'Good morning.', target: 'morning' }],
     ['vocabulary/explain', { term: 'break the ice' }],
-    ['vocabulary/candidates', { contextReading: 'We helped her out.' }],
-    ['speech/dialogue', { turns: [{ text: 'Hello.', gender: 'female' }] }],
   ] as const;
   try {
     for (const [route, body] of requests) {

@@ -34,7 +34,7 @@ test('dialogue shares the reading player and word modal, with compact roles and 
   assert.equal((html.match(/class="reading-dialogue-turn "/g)||[]).length,2);
   assert.equal((html.match(/aria-label="英文朗读播放器"/g)||[]).length,1);
   assert.match(html,/reading-dialogue-name">Maya/);
-  assert.match(html,/查看句子翻译：The train is here\./);
+  assert.match(html,/查看段落翻译：Look outside\. The train is here\./);
   assert.doesNotMatch(html,/PDF|角色朗读|rounded-sm bg-\[var\(--surface-paper\)\]\/80/);
 });
 

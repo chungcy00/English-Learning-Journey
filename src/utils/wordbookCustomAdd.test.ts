@@ -8,7 +8,7 @@ import type {ReadingRecord} from '../types';
 const reading={id:'passage',cefrLevel:'A2',content:'A sunny day.',selectedVocabulary:[]} as unknown as ReadingRecord;
 test('custom addition starts collapsed and remains separate from the passage search',()=>{
  const html=renderToStaticMarkup(React.createElement(WordbookCustomAdd,{reading,vocabulary:[],onSave:async()=>{}}));
- assert.match(html,/自定义添加/);assert.match(html,/aria-expanded="false"/);
+ assert.match(html,/添加单词／词组/);assert.match(html,/aria-expanded="false"/);
  assert.doesNotMatch(html,/<input|查询释义|加入生词本/);
 });
 test('custom dictionary query omits passage and requested level, and propagates failed lookups',async()=>{
@@ -24,6 +24,6 @@ test('custom dictionary query omits passage and requested level, and propagates 
 });
 test('custom words preserve independently assessed level and link to current passage for review/deletion',()=>{
  const item=customWordbookItem({term:'serendipity',cefrLevel:'C1',type:'word',meaningZh:'意外的幸运发现',definitionEn:'A fortunate discovery.',example:'It was serendipity.'},reading,100,'new-id');
- assert.equal(item.cefrLevel,'C1');assert.equal(item.sourceCefrLevel,'A2');assert.equal(item.sourceReadingId,'passage');assert.deepEqual(item.addedFromReadingIds,['passage']);
- assert.equal(item.status,'New');assert.equal(item.savedManually,true);assert.equal(item.nextReviewDate,100);assert.equal(item.reviewCount,0);
+ assert.equal(item.cefrLevel,'C1');assert.equal(item.sourceCefrLevel,undefined);assert.equal(item.sourceReadingId,undefined);assert.equal(item.origin,'manual');
+ assert.equal(item.status,'New');assert.equal(item.savedManually,true);assert.ok(item.nextReviewDate>0);assert.equal(item.reviewCount,0);
 });

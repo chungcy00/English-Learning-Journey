@@ -26,7 +26,7 @@ test('generation failures distinguish timeout, upstream limits, configuration an
 test('generation repairs malformed JSON, rejects incomplete results and shares one deadline across policy retries', async () => {
   const env = {...process.env}; const realFetch = globalThis.fetch; const realNow = Date.now;
   Object.assign(process.env,{UPSTASH_REDIS_REST_URL:'https://quota.example',UPSTASH_REDIS_REST_TOKEN:'test-token',AI_RATE_LIMIT_SALT:'test-salt-which-is-longer-than-32-characters',VERCEL:'0',GEMINI_API_KEY:'test-key-not-real'});
-  const good = {title:'A kind visit', reading:'A considerate friend came to visit.', cefrLevel:'B1', readingType:'story', vocabulary:[{term:'considerate',type:'word',cefrLevel:'B1',meaningZh:'体贴的',definitionEn:'Thoughtful.',example:'She is considerate.',partOfSpeech:'adjective'}],rewritePractice:[{target:'considerate', originalSentence:'She is kind.',referenceAnswer:'She is considerate.'}]};
+  const good = {title:'A kind visit', reading:'A considerate friend came to visit.', cefrLevel:'B1', readingType:'story', vocabulary:[{term:'considerate',type:'word',cefrLevel:'B1',meaningZh:'体贴的',definitionEn:'Thoughtful.',example:'She is considerate.',partOfSpeech:'adjective'}],paragraphTranslations:[{source:'A considerate friend came to visit.',translation:'一位体贴的朋友来访。'}]};
   let mode = 'repair'; let calls = 0; let now = realNow();
   globalThis.fetch = (async (url: any) => {
     if (String(url).startsWith('https://quota.example')) return new Response('{"result":[1,0,0]}');
