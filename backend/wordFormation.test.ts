@@ -77,3 +77,13 @@ test('section refresh excludes known cached inflections even if the new response
  const input:any=output();input.term='help';input.inflections=[];input.sections.roots=[];input.sections.derivatives=[{text:'helping',meaningZh:'帮助中',partOfSpeech:'participle',family:{base:'help',relation:'现在分词'}},{text:'helper',meaningZh:'帮手',partOfSpeech:'noun',family:{base:'help',relation:'help 加 -er，表示提供帮助的人'}}];
  assert.deepEqual(validateDetails(input,'help','word',[],true,[{label:'现在分词',value:'helping'}]).sections.derivatives.map(entry=>entry.text),['helper']);
 });
+test('an English legacy stress-change heading is excluded even when mislabeled as grammar',()=>{
+ const input:any=output();input.sections.usage=[{text:'Note the stress change: noun vs verb.',meaningZh:'注意重音变化。',usageKind:'grammar'},{text:'动词与名词句型',meaningZh:'动词用 conflict with，名词结构用 be in conflict with。',usageKind:'grammar'}];
+ assert.deepEqual(validateDetails(input,'helpful','word',[],true).sections.usage.map(entry=>entry.text),['动词与名词句型']);
+});
+test('new phrase/usage meanings must be Chinese, and identical expressions are deduplicated without stripping articles',()=>{
+ const input:any=output();input.sections.phrases=[{text:'a conflict of interest',meaningZh:'利益冲突'},{text:'a  conflict of interest',meaningZh:'利益冲突'}];
+ assert.deepEqual(validateDetails(input,'helpful','word',[],true).sections.phrases.map(entry=>entry.text),['a conflict of interest']);
+ input.sections.phrases[0].meaningZh='a clash of interests';assert.throws(()=>validateDetails(input,'helpful','word',[],true),/简体中文/);
+ const old:any=output();old.sections.usage=[{text:'legacy',meaningZh:'legacy prose'}];assert.doesNotThrow(()=>validateDetails(old,'helpful','word'));
+});

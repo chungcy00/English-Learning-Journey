@@ -15,18 +15,18 @@ const morphology = { type: Type.OBJECT, properties: {
   explanation: { ...chinese, description: '用简体中文说明各部分如何组合成原词含义，拼写变化也需解释。不能只介绍词源或整段使用英文。' }, mnemonic: { ...optionalChinese, description: '简短自然的中文辅助记忆联想，不冒充真实词源；无合适联想可留空。' },
   related: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { word: string, partOfSpeech: string, meaningZh: chinese }, required: ['word', 'partOfSpeech', 'meaningZh'] } },
 }, required: ['root', 'meaningZh', 'parts', 'explanation', 'mnemonic', 'related'] };
-const derivativeEntries = { ...entries, items: { ...entries.items, properties: { ...entries.items.properties, family }, required: ['text', 'meaningZh', 'partOfSpeech', 'family'] } };
+const derivativeEntries = { ...entries, description: '只提供通用学习场景下常见、真实的派生词，不以偶见的否定分词或专门术语凑数。若只能想到罕见构词形式，返回空数组。', items: { ...entries.items, properties: { ...entries.items.properties, family }, required: ['text', 'meaningZh', 'partOfSpeech', 'family'] } };
 const rootEntries = { ...entries, items: { ...entries.items, properties: { ...entries.items.properties, morphology }, required: ['text', 'meaningZh', 'morphology'] } };
-const phraseEntries = { type: Type.ARRAY, description: 'Practical learner-dictionary expressions. Usually 4–8 distinct common expressions if available, at most 10; preserve articles and prepositions. Never pad obscure combinations.', items: { type: Type.OBJECT, properties: { text: string, meaningZh: string, category: string, example: string, exampleTranslation: string, note: string }, required: ['text', 'meaningZh'] } };
+const phraseEntries = { type: Type.ARRAY, description: 'Practical learner-dictionary expressions. Usually 4–8 distinct common expressions if available, at most 10; preserve articles and prepositions. Never pad obscure combinations.', items: { type: Type.OBJECT, properties: { text: { ...string, description: '完整自然的常见英文表达，保留必要冠词、介词和句型结构。' }, meaningZh: chinese, category: string, example: string, exampleTranslation: string, note: string }, required: ['text', 'meaningZh'] } };
 const usageEntries = { type: Type.ARRAY, description: 'Useful actual usage explanations, not pronunciation, stress, IPA, definitions or a repeated collocation list. Select only relevant learning points.', items: { type: Type.OBJECT, properties: {
   text: { ...string, description: 'Short Chinese heading about a real usage distinction, sentence pattern, situation or pitfall. NEVER a pronunciation or stress heading.' },
-  meaningZh: { ...string, description: 'Substantive Chinese explanation of when/how/why. Explain constraints or differences, not merely the translation of a phrase.' },
+  meaningZh: { ...chinese, description: '用简体中文解释适用场景、真实句型约束或词义区别，不能只翻译词组。讲介词时应区分完整句法结构，不臆造抽象/具体等选择规则。' },
   example: { ...string, description: 'A short natural English sentence illustrating the explanation, if useful.' }, exampleTranslation: string, note: string,
   usageKind: { type: Type.STRING, enum: ['scenario','grammar','comparison','error','register','natural'] },
   contrast: { type: Type.OBJECT, description: 'Omit unless there is a genuine grammatical/lexical error. Never mark a valid register alternative as incorrect.', properties: { incorrect: string, correct: string }, required: ['incorrect','correct'] },
 }, required: ['text','meaningZh','usageKind'] } };
 export function isPronunciationOnlyUsage(entry: Pick<LearningEntry, 'text' | 'meaningZh'>) {
-  return /发音|读音|音标|重音|音节|pronunciation|\bipa\b|word stress/i.test(entry.text);
+  return /发音|读音|音标|重音|音节|pronunciation|\bipa\b|word stress|stress (?:change|pattern|shift)|stress.*syllable/i.test(entry.text);
 }
 export const detailsSchema = { type: Type.OBJECT, properties: {
   isValidTerm: { type: Type.BOOLEAN }, term: string,
@@ -44,6 +44,7 @@ export function validateDetails(data: any, term: string, type: VocabularyDetails
       const entry: LearningEntry = { ...Object.fromEntries(['text','meaningZh','partOfSpeech','example','exampleTranslation','note','category','senseId'].map(k => [k, typeof item[k] === 'string' ? item[k].slice(0, 3000) : ''])), text: item.text, meaningZh: item.meaningZh, id: crypto.randomUUID() };
       const shortText = (value: unknown) => typeof value === 'string' && value.trim().length > 0 && value.length <= 3000;
       const hasChinese = (value: unknown) => typeof value === 'string' && /[\u3400-\u9fff]/.test(value);
+      if (requireStructured && (prefix === 'phrases' || prefix === 'usage') && !hasChinese(item.meaningZh)) throw new VocabularyDetailsError('请提供简体中文解释，已有资料已保留。');
       if (prefix === 'derivatives' && (item.family !== undefined || requireStructured)) {
         if (!shortText(item.family?.base) || !shortText(item.family?.relation) || !shortText(item.partOfSpeech) || (requireStructured && !hasChinese(item.family.relation))) throw new VocabularyDetailsError('派生词构词关系不完整，请重试。');
         entry.family = { base: item.family.base.trim(), relation: item.family.relation.trim() };
@@ -90,6 +91,8 @@ export function validateDetails(data: any, term: string, type: VocabularyDetails
     if (excluded.has(key) || seen.has(key)) return false;
     seen.add(key); return true;
   });
+  const phraseKeys = new Set<string>();
+  sections.phrases = sections.phrases.filter(entry => { const key = entry.text.trim().replace(/\s+/g, ' '); if (phraseKeys.has(key)) return false; phraseKeys.add(key); return true; });
   // A model may incorrectly label a pronunciation note as grammar. Do not present it as usage.
   sections.usage = sections.usage.filter(entry => !isPronunciationOnlyUsage(entry));
   const category = VOCABULARY_CATEGORIES.includes(data.category) ? data.category : data.type === 'idiom' ? 'idiom' : type;
