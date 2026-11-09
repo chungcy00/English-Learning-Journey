@@ -64,3 +64,16 @@ test('misclassified pronunciation notes cannot appear in usage, while genuine gr
  const input:any=output();input.sections.usage=[{text:'词性重音差异',meaningZh:'名词和动词重音不同。',usageKind:'grammar'},{text:'与 conflict over 的区别',meaningZh:'conflict with 指与人或安排不一致，over 引出争议事项。',usageKind:'comparison',example:'They are in conflict over the budget.'}];
  const result=validateDetails(input,'helpful','word',[],true);assert.equal(result.sections.usage.length,1);assert.equal(result.sections.usage[0].usageKind,'comparison');
 });
+test('new analyses require Chinese explanations and omit the original word and duplicate same-root entries',()=>{
+ const input=output();input.sections.roots[0].morphology.related.push({word:'helpful',partOfSpeech:'adjective',meaningZh:'有帮助的'},{word:'helpless',partOfSpeech:'adjective',meaningZh:'无助的'});
+ const result=validateDetails(input,'helpful','word',[],true);
+ assert.deepEqual(result.sections.roots[0].morphology?.related.map(word=>word.word),['helpless']);
+ input.sections.roots[0].morphology.explanation='Derived from help with ful.';
+ assert.throws(()=>validateDetails(input,'helpful','word',[],true),/构词拆解/);
+ const wrong=output();wrong.sections.derivatives[0].family.relation='suffixed with -fulness';
+ assert.throws(()=>validateDetails(wrong,'helpful','word',[],true),/派生词/);
+});
+test('section refresh excludes known cached inflections even if the new response omits its inflections list',()=>{
+ const input:any=output();input.term='help';input.inflections=[];input.sections.roots=[];input.sections.derivatives=[{text:'helping',meaningZh:'帮助中',partOfSpeech:'participle',family:{base:'help',relation:'现在分词'}},{text:'helper',meaningZh:'帮手',partOfSpeech:'noun',family:{base:'help',relation:'help 加 -er，表示提供帮助的人'}}];
+ assert.deepEqual(validateDetails(input,'help','word',[],true,[{label:'现在分词',value:'helping'}]).sections.derivatives.map(entry=>entry.text),['helper']);
+});

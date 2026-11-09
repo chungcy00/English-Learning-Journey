@@ -35,7 +35,7 @@ export async function generateVocabularyDetails(vocab: VocabularyItem, section?:
     const existing = await readVocabularyDetails(vocab);
     if (!section && existing.generated) return existing;
     const response = await fetch('/api/vocabulary/explain', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ term: vocab.term, entryType: vocab.type, currentSenses: existing.senses.map(({ id, text, meaningZh, partOfSpeech }) => ({ id, text, meaningZh, partOfSpeech: partOfSpeech || '' })), ...(section ? { section } : {}) }), signal: AbortSignal.timeout(60_000) });
+      body: JSON.stringify({ term: vocab.term, entryType: vocab.type, currentInflections: existing.inflections, currentSenses: existing.senses.map(({ id, text, meaningZh, partOfSpeech }) => ({ id, text, meaningZh, partOfSpeech: partOfSpeech || '' })), ...(section ? { section } : {}) }), signal: AbortSignal.timeout(60_000) });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || '资料生成失败，请稍后重试。');
     const latest = await readVocabularyDetails(vocab);
