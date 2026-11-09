@@ -1,4 +1,3 @@
-import { LocalDataBackup } from '../components/LocalDataBackup';
 import { SavedMaterialsView } from '../components/SavedMaterialsView';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X, Plus, BookOpenCheck, ArrowRight, ArrowDownAZ, ArrowUpZA, ListChecks, ChevronDown } from 'lucide-react';
@@ -137,7 +136,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({ vocabularyList, scop
     </section>
     }
     {removed&&<div className="wordbook-undo" role="status"><span>已移出生词本：{removed.term}</span><button type="button" disabled={undoBusy||!onRestoreVocab} onClick={()=>void undoRemoval()}>{undoBusy?'正在恢复…':'撤销'}</button>{undoError&&<p role="alert">{undoError}</p>}</div>}
-    <LocalDataBackup/>
     {confirmIds&&<WordbookRemovalDialog term={`${confirmIds.length} 个所选词条`} onCancel={()=>setConfirmIds(null)} onConfirm={remove}/>}
   </div>;
 };

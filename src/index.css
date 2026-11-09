@@ -1897,8 +1897,6 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 .lexicon-add-preview { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-subtle); }
 .lexicon-add-preview > h3 { font-size: var(--type-section); font-weight: 700; }
 .wordbook-custom-add .lexicon-editor { display: grid; align-items: stretch; }
-.wordbook-backup { border-top: 1px solid var(--border-subtle); padding-top: 24px; margin-top: 24px; }
-.wordbook-backup button { min-height: 44px; padding: 8px 12px; color: var(--accent-primary); text-decoration: underline; }
 .reading-paragraph { margin-bottom: 20px; }
 .reading-paragraph__original { cursor: pointer; border-radius: 6px; }
 .reading-paragraph__original:hover { background: var(--bg-alt); }
@@ -2090,3 +2088,10 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 .lexicon-tabs::before, .lexicon-tabs::after { content: ''; position: absolute; left: 0; right: 0; height: 6px; pointer-events: none; background: var(--border-selected); mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 6'%3E%3Cpath d='M1 3Q32 1.5 63 3T122 2.5T181 3T239 2' fill='none' stroke='black' stroke-width='1.3' stroke-linecap='round' stroke-dasharray='6 8 4 9 7 8 5 9'/%3E%3C/svg%3E") left center / 240px 6px repeat-x; }
 .lexicon-tabs::before { top: 0; }
 .lexicon-tabs::after { bottom: 0; transform: scaleY(-1); mask-position: 12px center; }
+
+/* Wider vocabulary workspaces on large mouse-operated desktop screens only. */
+@media (min-width: 1280px) and (hover: hover) and (pointer: fine) {
+  .custom-words-page, .wordbook-page.wordbook-final,
+  .review-page:not(.review-embedded), .history-scoped-review { max-width: 72rem; }
+  .review-page .review-flip-stage { max-width: 56rem; }
+}
