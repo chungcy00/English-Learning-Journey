@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Sparkles, ArrowRight, Minus, Plus, BookOpen, Bookmark, Coffee, BriefcaseBusiness, Plane, Sprout, RefreshCw, AlignLeft, ChevronDown, ChevronUp, SlidersHorizontal, Check, X } from 'lucide-react';
+import { ArrowRight, Minus, Plus, Bookmark, Coffee, BriefcaseBusiness, Plane, Sprout, RefreshCw, AlignLeft, ChevronDown, ChevronUp, SlidersHorizontal, Check, X } from 'lucide-react';
 import { CEFRLevel, ReadingType, ReadingLength, ReadingStyle, AppSettings, ReadingRecord, GenerationRequest } from '../types';
 import { READING_STYLES } from '../utils/readingStyles';
 import { CEFR_ABILITY_HINTS, parseSpecifiedVocabulary } from '../utils/generationInput';
@@ -15,7 +15,6 @@ const SCENES = [
 ];
 const TYPE_LABELS: [ReadingType, string][] = [['story', '故事'], ['dialogue', '对话'], ['non-story', '说明'], ['random', '随机']];
 const LENGTH_LABELS: [ReadingLength, string][] = [['short', '短篇'], ['medium', '中篇'], ['long', '长篇']];
-const LEVEL_LABELS = { A1: '初学', C2: '精通', A2: '入门', B1: '进阶', B2: '中高阶', C1: '高级' };
 
 interface HomeViewProps {
   settings: AppSettings;
@@ -39,7 +38,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ settings, onGenerate, isLoad
   const [vocabCount, setVocabCount] = useState(settings.vocabularyCount);
   const [scene, setScene] = useState(0);
   const [groups, setGroups] = useState([0, 0, 0, 0]);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [styleOpen, setStyleOpen] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
   const [customDraft, setCustomDraft] = useState('');
@@ -86,14 +85,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ settings, onGenerate, isLoad
 
   return (
     <div className="page-shell studio-home">
-      <div className="studio-brand">
-        <div className="studio-brand__identity"><span className="studio-brand__mark"><Sparkles size={21} aria-hidden="true" /></span><div><strong>Language Studio</strong><small>YOUR ENGLISH SPACE</small></div></div>
-        <span className="studio-brand__book" aria-hidden="true"><BookOpen size={19} /></span>
-      </div>
-      <section className="studio-intro">
-        <h1>每一个想法，<br /><span>都能成为一篇故事。</span></h1>
-        <p>从熟悉的生活出发，创造属于你的英语阅读。</p>
-      </section>
       {currentReading && onContinueReading && <button type="button" className="studio-continue" onClick={onContinueReading} aria-label={`继续阅读：${currentReading.title}`}>
         <span className="studio-continue__eyebrow"><Bookmark size={15} aria-hidden="true" /> CONTINUE READING · 继续阅读</span>
         <strong>{currentReading.title}</strong>
@@ -102,9 +93,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ settings, onGenerate, isLoad
       </button>}
       <section className="studio-inspiration" aria-labelledby="inspiration-title">
         <div className="studio-section-heading"><h2 id="inspiration-title">寻找创作灵感</h2><button type="button" className="studio-refresh" disabled={isLoading} onClick={() => setGroups(previous => previous.map((group, index) => index === scene ? (group + 1) % SCENES[scene].groups.length : group))}><RefreshCw size={15} aria-hidden="true" />换一组</button></div>
-        <p>选择一个场景，再挑选感兴趣的主题</p>
         <div className="studio-scenes" role="group" aria-label="灵感场景">{SCENES.map(({ label, icon: Icon }, index) => <button type="button" key={label} aria-pressed={scene === index} disabled={isLoading} onClick={() => setScene(index)}><Icon size={20} aria-hidden="true" /><span>{label}</span></button>)}</div>
-        <div className="studio-topics">{SCENES[scene].groups[groups[scene]].map((topic, index) => <button type="button" key={topic} disabled={isLoading} onClick={() => chooseInspiration(topic)}><span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>{topic}</button>)}</div>
+        <div className="studio-topics">{SCENES[scene].groups[groups[scene]].map((topic, index) => <button type="button" key={topic} disabled={isLoading} onClick={() => chooseInspiration(topic)}><span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>{topic}<ArrowRight size={17} aria-hidden="true" /></button>)}</div>
       </section>
       <form className="studio-creation" onSubmit={handleSubmit}>
         <h2>创作你的短文</h2>
@@ -124,8 +114,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ settings, onGenerate, isLoad
           {specifiedVocabulary && <div id="generation-input-preview" className="studio-input-preview" role="status">{specifiedVocabulary.length ? `将按词表处理（${specifiedVocabulary.length} 项）：${specifiedVocabulary.join(' · ')}` : '尚未识别到词条，请在分隔符之间输入表达。'}<p>逗号、顿号和分号会分隔词条；主题描述请避免这些分隔符。</p></div>}
         </section>}
         <section className="studio-recipe" aria-labelledby="recipe-title">
-          <div className="studio-recipe__heading"><h3 id="recipe-title">你的学习配方</h3><button type="button" aria-expanded={expanded} aria-controls={expanded ? 'recipe-panel' : undefined} onClick={() => setExpanded(value => !value)}>{expanded ? <ChevronUp size={17} /> : <SlidersHorizontal size={16} />}{expanded ? '收起设置' : '自定义参数'}</button></div>
-          {!expanded && <div className="studio-summary" aria-label="当前学习参数"><span>{cefr} · {LEVEL_LABELS[cefr]}</span><span>{TYPE_LABELS.find(([value]) => value === type)![1]}</span><span>{LENGTH_LABELS.find(([value]) => value === length)![1]}</span><span>{vocabCount} 个精选词汇</span><span>{styleLabel}</span></div>}
+          <div className="studio-recipe__heading"><h3 id="recipe-title">学习配方</h3><button type="button" aria-expanded={expanded} aria-controls={expanded ? 'recipe-panel' : undefined} onClick={() => setExpanded(value => !value)}>{expanded ? <ChevronUp size={17} /> : <SlidersHorizontal size={16} />}{expanded ? '收起设置' : '自定义参数'}</button></div>
           {expanded && <div id="recipe-panel" className="studio-recipe__panel">
             <div className="studio-recipe__group"><span id="cefr-label">学习等级</span><div className="studio-choices" role="group" aria-labelledby="cefr-label" aria-describedby="cefr-ability-hint">{(['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as CEFRLevel[]).map(level => <button type="button" key={level} aria-pressed={cefr === level} disabled={isLoading} onClick={() => { setCefr(level); onCefrChange?.(level); }}>{level}</button>)}</div><p id="cefr-ability-hint" className="sr-only">能力参考：{CEFR_ABILITY_HINTS[cefr]}</p></div>
             <div className="studio-recipe__group"><span id="reading-type">文体</span><div className="studio-choices" role="group" aria-labelledby="reading-type">{TYPE_LABELS.map(([value, label]) => <button type="button" key={value} aria-pressed={type === value} disabled={isLoading} onClick={() => setType(value)}>{label}</button>)}</div></div>
@@ -134,7 +123,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ settings, onGenerate, isLoad
             <button id="reading-style" type="button" className="studio-style-trigger studio-recipe__inline" aria-haspopup="dialog" disabled={isLoading} onClick={() => setStyleOpen(true)}><span>风格</span><span className="studio-style-label"><span>{styleLabel}</span><ChevronDown size={17} /></span></button>
           </div>}
         </section>
-        <button type="submit" className="studio-generate" disabled={!(importMode ? sourceText.trim() : input.trim()) || isLoading}><Sparkles size={22} aria-hidden="true" /><span>{isLoading ? '生成中…' : importMode ? '改写为学习短文' : '生成专属短文'}</span><ArrowRight size={19} aria-hidden="true" /></button>
+        <button type="submit" className="studio-generate" disabled={!(importMode ? sourceText.trim() : input.trim()) || isLoading}><span>{isLoading ? '生成中…' : importMode ? '改写为学习短文' : '生成专属短文'}</span><ArrowRight size={19} aria-hidden="true" /></button>
       </form>
       <dialog ref={sheet} className={`studio-style-sheet ${stylePresence.closing ? 'is-closing' : ''}`} aria-labelledby="style-sheet-title" onCancel={() => setStyleOpen(false)} onClick={e => { if (e.target === e.currentTarget) { const bounds = e.currentTarget.getBoundingClientRect(); if (e.clientX < bounds.left || e.clientX > bounds.right || e.clientY < bounds.top || e.clientY > bounds.bottom) setStyleOpen(false); } }}>
         <div className="studio-sheet-header" onTouchStart={e => { touchStart.current = e.touches[0].clientY; }} onTouchEnd={e => { if (touchStart.current !== null && e.changedTouches[0].clientY - touchStart.current > 70) setStyleOpen(false); touchStart.current = null; }}>

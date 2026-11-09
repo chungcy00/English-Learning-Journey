@@ -9,13 +9,14 @@ import type { AppSettings, ReadingRecord } from '../types';
 const settings = { cefr: 'B2', defaultReadingType: 'dialogue', defaultReadingStyle: 'warm', defaultLength: 'long', vocabularyCount: 10 } as AppSettings;
 const render = (isLoading = false) => renderToStaticMarkup(React.createElement(HomeView, { settings, onGenerate: () => {}, isLoading }));
 
-test('home starts with a collapsed recipe showing actual saved parameters', () => {
+test('home starts with the confirmed expanded recipe and saved parameters', () => {
   const html = render();
-  assert.match(html, /aria-expanded="false"/);
-  assert.doesNotMatch(html, /id="recipe-panel"|id="reading-style"/);
-  for (const text of ['B2 · 中高阶', '对话', '长篇', '10 个精选词汇', 'Warm（温暖治愈）']) assert.ok(html.includes(text));
-  for (const text of ['Language Studio', 'YOUR ENGLISH SPACE', '每一个想法，', '都能成为一篇故事。', '寻找创作灵感', '创作你的短文', '生成专属短文']) assert.ok(html.includes(text));
+  assert.match(html, /aria-expanded="true"/);
+  assert.match(html, /id="recipe-panel"/); assert.match(html, /id="reading-style"/);
+  for (const text of ['B2', '对话', '长篇', '>10</output>', 'Warm（温暖治愈）']) assert.ok(html.includes(text));
+  for (const text of ['寻找创作灵感', '创作你的短文', '学习配方', '生成专属短文']) assert.ok(html.includes(text));
   assert.match(html, /<label for="generation-input"/);
+  assert.doesNotMatch(html, /Language Studio|YOUR ENGLISH SPACE|每一个想法|都能成为一篇故事|选择一个场景|studio-summary/);
 });
 
 test('inspiration provides four scenes and three local themes without duplicate controls', () => {
@@ -25,7 +26,7 @@ test('inspiration provides four scenes and three local themes without duplicate 
   const topics = html.match(/<div class="studio-topics"[\s\S]*?<\/div>/)![0];
   assert.equal((topics.match(/<button/g) || []).length, 3);
   assert.ok(topics.includes('如何礼貌地拒绝别人'));
-  assert.doesNotMatch(topics, /svg/);
+  assert.equal((topics.match(/<svg/g) || []).length, 3);
 });
 
 test('continue reading uses real article data and omits unsupported progress', () => {
