@@ -459,7 +459,7 @@ app.post('/api/vocabulary/explain', async (req, res) => {
     if (section !== undefined && !DETAIL_SECTIONS.includes(section)) return res.status(400).json({ error: '栏目不受支持。' });
     const type = entryType === 'phrase' || entryType === 'idiom' ? entryType : term.includes(' ') ? 'phrase' : 'word';
     const response = await callGeminiWithFallback({
-      operationName: 'Vocabulary Details', deadlineMs: 45000,
+      operationName: 'Vocabulary Details', preferredModel: 'gemini-flash-latest', deadlineMs: 45000,
       contents: JSON.stringify({ term, type, section: section || 'all', currentSenses }),
       config: {
         responseMimeType: 'application/json', responseSchema: detailsSchema,
