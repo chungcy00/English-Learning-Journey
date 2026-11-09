@@ -19,7 +19,7 @@ test('derivatives are grouped by lexical base and render separate word, POS, mea
  assert.equal(html.split('class="lexicon-tree-card lexicon-families"').length-1,1);for(const text of ['有帮助的','无助的','adj.','朗读：helpful','派生关系'])assert.ok(html.includes(text));
 });
 test('Chinese labels translate legacy API aliases without changing saved word forms or custom labels',()=>{
- for(const [input,expected] of Object.entries({plural:'复数','third-person singular':'三单',past:'过去式',participle:'过去分词','present_participle':'现在分词',comparative:'比较级',superlative:'最高级','自定义':'自定义'}))assert.equal(inflectionLabel(input),expected);
+ for(const [input,expected] of Object.entries({plural:'名词复数','third-person singular':'动词单数','复数':'名词复数','三单':'动词单数','第三人称单数':'动词单数','名词复数':'名词复数','动词单数':'动词单数',past:'过去式',participle:'过去分词','present_participle':'现在分词',comparative:'比较级',superlative:'最高级','自定义':'自定义'}))assert.equal(inflectionLabel(input),expected);
 });
 test('section regeneration retains structured manual edits and all other sections',()=>{
  const current=legacyDetails(basicVocabulary('helpful'));current.sections.roots=[entry];current.provenance.roots={source:'user',updatedAt:1};
