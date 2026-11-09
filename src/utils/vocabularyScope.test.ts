@@ -24,7 +24,7 @@ test('wordbook shows all saved degrees, distinguishes passage addition from coll
   assert.match(html, /搜索并添加当前短文的表达/);
   assert.match(html, /全部/);
   assert.doesNotMatch(html, /wordbook-collection-panel/);
-  assert.match(html, /wordbook-filter-count[^>]*>2</);
+  assert.doesNotMatch(html, /wordbook-filter-count|wordbook-state-badge|按学习状态筛选/);
   assert.doesNotMatch(html, /显示 2 个词条/);
   assert.match(html, /字母排序/);
   assert.doesNotMatch(html, /wordbook-add-disclosure/);

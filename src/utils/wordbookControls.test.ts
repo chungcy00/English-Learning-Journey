@@ -4,14 +4,11 @@ import { existsSync, readFileSync } from 'node:fs';
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
-test('status updates keep native menus, translated labels and existing scheduling fields', () => {
-  const select = read('../components/VocabularyStatusSelect.tsx');
-  assert.match(select, /await onUpdate\(vocab.id, status\)/);
-  assert.match(select, /wordbookStatuses\[status\]/);
-  assert.match(select, /状态未保存，请重试/);
-  assert.match(read('../App.tsx'), /db\.vocabulary\.update\(id, \{ status, updatedAt \}\)/);
-  assert.equal(existsSync(new URL('../components/LearningStatusPicker.tsx', import.meta.url)), false);
+test('all learning-status inputs and live update wiring are removed', () => {
+ assert.equal(existsSync(new URL('../components/VocabularyStatusSelect.tsx',import.meta.url)),false);
+ for(const path of ['../App.tsx','../views/WordbookView.tsx','../components/WordbookEntryDetails.tsx','../components/HistoryVocabularyTasks.tsx'])assert.doesNotMatch(read(path),/onUpdateStatus|handleUpdateStatus|wordbook-state-badge|wordbook-status-filters|StatusReview|history-mastery/);
 });
+
 test('suggestions use normal keyboard-accessible add buttons rather than nested listbox actions', () => {
   const source = read('../views/WordbookView.tsx');
   assert.match(source, /aria-label=\{`添加 \$\{term\}`\}/);

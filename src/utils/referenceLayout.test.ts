@@ -20,7 +20,7 @@ test('word details show one initial example tab and six keyboard tabs', () => {
 
 test('embedded details retain local learning material without a modal', () => {
  const html=renderToStaticMarkup(React.createElement(WordDetailModal,{vocab,isOpen:true,embedded:true,isInWordbook:true,onClose(){},onToggleWordbook(){}}));
- assert.doesNotMatch(html,/<dialog/); assert.match(html,/word-detail-inline/); assert.ok(html.includes(vocab.example)); assert.match(html,/一次生成六栏资料/);
+ assert.doesNotMatch(html,/<dialog/); assert.match(html,/word-detail-inline/); assert.ok(html.includes(vocab.example)); assert.doesNotMatch(html,/一次生成六栏资料|lexicon-generate/);
 });
 
 test('workbook presents the target before the original and uses a multiline answer without revealing the reference', () => {

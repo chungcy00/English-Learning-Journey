@@ -6,7 +6,7 @@ import { ReadingLevelPieChart } from '../components/ReadingLevelPieChart';
 import { HistoryLevelBadge } from '../components/HistoryLevelBadge';
 import { HistoryDeletionDialog } from '../components/HistoryDeletionDialog';
 import { HistoryVocabularyTasks } from '../components/HistoryVocabularyTasks';
-import { vocabularyLevel, type HistoryVocabularyLevel, type HistoryReviewMode } from '../utils/historyVocabulary';
+import { vocabularyLevel, type HistoryVocabularyLevel } from '../utils/historyVocabulary';
 import { distributionSource, filterReadingsByLevel, type DistributionDimension } from '../utils/readingLevelDistribution';
 
 interface ReadingHistoryViewProps {
@@ -15,7 +15,7 @@ interface ReadingHistoryViewProps {
   onDeleteReading: (readingId: string) => Promise<void>;
   onCreateReading?: () => void;
   vocabulary?: VocabularyItem[];
-  onReviewVocabulary?: (level: HistoryVocabularyLevel | null, mode: HistoryReviewMode, status?: VocabularyItem['status']) => void;
+  onReviewVocabulary?: (level: HistoryVocabularyLevel | null) => void;
   onOpenLevelWordbook?: (level: HistoryVocabularyLevel) => void;
   active?: boolean;
 }
@@ -49,7 +49,7 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({ readings
     <ReadingLevelPieChart readings={readings} dimension={dimension} selectedLevel={activeLevel} vocabulary={vocabulary}
       onDimensionChange={value => { setDimension(value); setSelectedLevel(null); }}
       onLevelSelect={value => setSelectedLevel(current => current === value ? null : value)} />
-    {dimension === 'vocabulary' ? <HistoryVocabularyTasks vocabulary={vocabulary} selectedLevel={activeLevel as HistoryVocabularyLevel | null} onSelectLevel={value => setSelectedLevel(current => current === value ? null : value)} onReview={(level, mode, status) => onReviewVocabulary?.(level, mode, status)} onOpenWordbook={level => onOpenLevelWordbook?.(level)}/> : <section className="history-records" aria-labelledby="history-list-title">
+    {dimension === 'vocabulary' ? <HistoryVocabularyTasks vocabulary={vocabulary} selectedLevel={activeLevel as HistoryVocabularyLevel | null} onSelectLevel={value => setSelectedLevel(current => current === value ? null : value)} onReview={level => onReviewVocabulary?.(level)} onOpenWordbook={level => onOpenLevelWordbook?.(level)}/> : <section className="history-records" aria-labelledby="history-list-title">
       <div className="history-list-heading"><h2 id="history-list-title">历史短文 {activeLevel && <HistoryLevelBadge level={activeLevel}/>}</h2><button ref={manager} type="button" disabled={!readings.length && !managing} aria-pressed={managing} onClick={() => setManaging(value => !value)}>{managing ? '完成' : '管理'}</button></div>
       <p className="history-list-description">{activeLevel ? dimension === 'vocabulary' ? `含 ${activeLevel} 精选词汇的历史短文` : '已筛选的历史短文' : '按最近生成时间排列'}</p>
       <div className="history-list" aria-label="历史短文列表">

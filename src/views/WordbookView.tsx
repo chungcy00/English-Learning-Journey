@@ -2,13 +2,13 @@ import { LocalDataBackup } from '../components/LocalDataBackup';
 import { SavedMaterialsView } from '../components/SavedMaterialsView';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X, Plus, BookOpenCheck, ArrowRight, ArrowDownAZ, ArrowUpZA, ListChecks, ChevronDown } from 'lucide-react';
-import type { VocabularyItem, VocabStatus, CEFRLevel, ReadingType, ReadingLength, ReadingRecord } from '../types';
+import type { VocabularyItem, CEFRLevel, ReadingType, ReadingLength, ReadingRecord } from '../types';
 import { WordbookCustomAdd } from '../components/WordbookCustomAdd';
 import { WordbookEntryDetails } from '../components/WordbookEntryDetails';
 import { WordbookRemovalDialog } from '../components/WordbookRemovalDialog';
 import { normalizeEnglishTerm } from '../utils/englishSearch';
 import { useReadingExpressions } from '../hooks/useReadingExpressions';
-import { wordbookStatuses, wordbookMeta, wordbookResults, wordbookSuggestions, toggleVisibleSelection } from '../utils/wordbookManagement';
+import { wordbookMeta, wordbookResults, wordbookSuggestions, toggleVisibleSelection } from '../utils/wordbookManagement';
 
 interface WordbookViewProps {
   vocabularyList: VocabularyItem[];
@@ -19,19 +19,17 @@ interface WordbookViewProps {
   onRemoveVocab?: (vocab: VocabularyItem) => Promise<void>;
   onRestoreVocab?: (vocab: VocabularyItem) => Promise<void>;
   onDeleteVocabularies?: (ids: string[]) => Promise<void>;
-  onUpdateStatus: (id: string, status: VocabStatus) => Promise<void>;
   onGenerateFromWordbook?: (params: {selectedTerms: string[]; cefrLevel: CEFRLevel; readingType: ReadingType; length: ReadingLength}) => void;
   isGenerating?: boolean;
   currentCefr: CEFRLevel;
   onSaveVocab: (vocab: VocabularyItem) => Promise<void>;
   onOpenReview: () => void;
 }
-export const WordbookView: React.FC<WordbookViewProps> = ({ vocabularyList, scopeLabel, currentReading, onDeleteVocab, onRemoveVocab, onRestoreVocab, onDeleteVocabularies, onUpdateStatus, currentCefr, onSaveVocab, onOpenReview, onGenerateFromWordbook, isGenerating }) => {
+export const WordbookView: React.FC<WordbookViewProps> = ({ vocabularyList, scopeLabel, currentReading, onDeleteVocab, onRemoveVocab, onRestoreVocab, onDeleteVocabularies, currentCefr, onSaveVocab, onOpenReview, onGenerateFromWordbook, isGenerating }) => {
   const [search,setSearch]=useState('');
   const [contentView, setContentView] = useState<'words' | 'example' | 'phrase'>('words');
   const [readingType,setReadingType]=useState<ReadingType>('story');
   const [length,setLength]=useState<ReadingLength>('medium');
-  const [statusFilter,setStatusFilter]=useState('All');
   const [descending,setDescending]=useState(false);
   const [batch,setBatch]=useState(false);
   const [selected,setSelected]=useState<string[]>([]);
@@ -76,11 +74,11 @@ export const WordbookView: React.FC<WordbookViewProps> = ({ vocabularyList, scop
   const readingId=useRef(currentReading?.id); readingId.current=currentReading?.id;
   const catalogue=useReadingExpressions(currentReading);
   const suggestions=useMemo(()=>wordbookSuggestions(currentReading,catalogue.expressions,vocabularyList,search),[currentReading,catalogue.expressions,vocabularyList,search]);
-  const {visible:filtered,fallback}=useMemo(()=>wordbookResults(vocabularyList,search,statusFilter,descending),[vocabularyList,search,statusFilter,descending]);
+  const {visible:filtered}=useMemo(()=>wordbookResults(vocabularyList,search,descending),[vocabularyList,search,descending]);
   const [dismissed,setDismissed]=useState(false);
   const panelVisible=!!search.trim()&&!dismissed;
-  useEffect(()=>{setSelected([]);},[search,statusFilter,currentReading?.id]);
-  useEffect(()=>{setSearch('');setStatusFilter('All');setDetailId(null);setBatch(false);setError('');setSuccess('');},[currentReading?.id]);
+  useEffect(()=>{setSelected([]);},[search,currentReading?.id]);
+  useEffect(()=>{setSearch('');setDetailId(null);setBatch(false);setError('');setSuccess('');},[currentReading?.id]);
   useEffect(()=>{const ids=new Set(vocabularyList.map(v=>v.id));setSelected(previous=>previous.filter(id=>ids.has(id)));},[vocabularyList]);
   useEffect(()=>{
     const viewport=window.visualViewport; if(!viewport)return;
@@ -124,7 +122,6 @@ export const WordbookView: React.FC<WordbookViewProps> = ({ vocabularyList, scop
     </section>
     {contentView === 'words' && <div><WordbookCustomAdd reading={currentReading} vocabulary={vocabularyList} onSave={onSaveVocab}/></div>}
     {contentView !== 'words' ? <SavedMaterialsView type={contentView} search={search}/> : <section className="wordbook-management" aria-label="生词列表管理">
-      <div className="wordbook-status-filters flex flex-wrap" role="group" aria-label="按学习状态筛选">{(['All','New','Learning','Difficult','Mastered'] as const).map(status=><button key={status} type="button" aria-pressed={statusFilter===status} onClick={()=>setStatusFilter(status)}>{status==='All'?'全部':wordbookStatuses[status]} <span className="wordbook-filter-count">{status==='All'?vocabularyList.length:vocabularyList.filter(v=>v.status===status).length}</span></button>)}</div>
       <div className="wordbook-action-bar"><button type="button" onClick={()=>setDescending(!descending)} aria-label={`字母排序：${descending?'Z 到 A，切换为 A 到 Z':'A 到 Z，切换为 Z 到 A'}`}>{descending?<ArrowUpZA aria-hidden="true" size={18}/>:<ArrowDownAZ aria-hidden="true" size={18}/>}字母排序 {descending?'Z–A':'A–Z'}</button><button type="button" aria-pressed={batch} onClick={()=>{setBatch(!batch);setSelected([]);setDetailId(null);}}><ListChecks aria-hidden="true" size={18}/>{batch?'完成管理':'批量管理'}</button></div>
       {batch&&<div className="wordbook-batch-bar"><button type="button" disabled={!filtered.length} onClick={()=>setSelected(previous=>toggleVisibleSelection(previous,filtered.map(v=>v.id)))}>{filtered.length>0&&filtered.every(v=>selected.includes(v.id))?'取消全选当前':'全选当前'}</button><span role="status">已选 {selected.length} 项</span><button type="button" disabled={!selected.length||!onDeleteVocabularies} onClick={()=>setConfirmIds([...selected])}>移出所选（{selected.length}）</button></div>}
       {batch&&selected.length>0&&onGenerateFromWordbook&&<details className="wordbook-regenerate"><summary>用所选词汇生成短文</summary><div>
@@ -132,12 +129,11 @@ export const WordbookView: React.FC<WordbookViewProps> = ({ vocabularyList, scop
         <label>篇幅<select aria-label="生成短文的篇幅" value={length} onChange={e=>setLength(e.target.value as ReadingLength)}><option value="short">短篇</option><option value="medium">中篇</option><option value="long">长篇</option></select></label>
         <button type="button" disabled={isGenerating} onClick={()=>onGenerateFromWordbook({selectedTerms:vocabularyList.filter(v=>selected.includes(v.id)).map(v=>v.term),cefrLevel:currentCefr,readingType,length})}>{isGenerating?'正在生成…':'生成短文'}</button>
       </div></details>}
-      {fallback&&<p className="wordbook-message" role="status">部分匹配词条在其他学习状态中，已显示全部匹配结果。<button type="button" onClick={()=>setStatusFilter('All')}>查看全部状态</button></p>}
       <div className="wordbook-final-list" role="list" aria-label="已添加词条">{filtered.map(vocab=>{const expanded=detailId===vocab.id;const panelId=`wordbook-details-${vocab.id}`;return <div role="listitem" key={vocab.id} className={`wordbook-final-entry${expanded&&!batch?' is-expanded':''}`}><div className="wordbook-final-row">
         {batch&&<label className="wordbook-check"><input type="checkbox" aria-label={`选择 ${vocab.term}`} checked={selected.includes(vocab.id)} onChange={()=>setSelected(previous=>previous.includes(vocab.id)?previous.filter(id=>id!==vocab.id):[...previous,vocab.id])}/></label>}
-        <button type="button" className="wordbook-entry-open" aria-label={`查看 ${vocab.term} 的词汇释义`} aria-expanded={expanded} aria-controls={panelId} onClick={()=>batch?setSelected(previous=>previous.includes(vocab.id)?previous.filter(id=>id!==vocab.id):[...previous,vocab.id]):setDetailId(expanded?null:vocab.id)}><span className="wordbook-entry-text"><span className="wordbook-term">{vocab.term}</span><span className="wordbook-meta">{wordbookMeta(vocab)}</span></span>{!batch&&<span className="wordbook-header-status"><span className="wordbook-state-badge" data-vocab-status={vocab.status}>{wordbookStatuses[vocab.status]}</span><ChevronDown aria-hidden="true" size={18} className={expanded?'rotate-180':''} /></span>}</button>
-      </div>{expanded&&!batch&&<div id={panelId} role="region" aria-label={`${vocab.term} 的词条详情`}><WordbookEntryDetails vocab={vocab} reading={currentReading} onRemove={onRemoveVocab?removeEntry:undefined} onUpdateStatus={onUpdateStatus}/></div>}</div>;})}</div>
-      {!filtered.length&&!(search.trim()&&suggestions.length)&&<p className="wordbook-empty" role="status">{search.trim()?'没有匹配的词条。':vocabularyList.length?'此状态暂无词条。':'暂无词条，可在上方搜索添加。'}</p>}
+        <button type="button" className="wordbook-entry-open" aria-label={`查看 ${vocab.term} 的词汇释义`} aria-expanded={expanded} aria-controls={panelId} onClick={()=>batch?setSelected(previous=>previous.includes(vocab.id)?previous.filter(id=>id!==vocab.id):[...previous,vocab.id]):setDetailId(expanded?null:vocab.id)}><span className="wordbook-entry-text"><span className="wordbook-term">{vocab.term}</span><span className="wordbook-meta">{wordbookMeta(vocab)}</span></span>{!batch&&<ChevronDown aria-hidden="true" size={18} className={expanded?'rotate-180':''} />}</button>
+      </div>{expanded&&!batch&&<div id={panelId} role="region" aria-label={`${vocab.term} 的词条详情`}><WordbookEntryDetails vocab={vocab} reading={currentReading} onRemove={onRemoveVocab?removeEntry:undefined}/></div>}</div>;})}</div>
+      {!filtered.length&&!(search.trim()&&suggestions.length)&&<p className="wordbook-empty" role="status">{search.trim()?'没有匹配的词条。':vocabularyList.length?'暂无匹配词条。':'暂无词条，可在上方搜索添加。'}</p>}
     </section>
     }
     {removed&&<div className="wordbook-undo" role="status"><span>已移出生词本：{removed.term}</span><button type="button" disabled={undoBusy||!onRestoreVocab} onClick={()=>void undoRemoval()}>{undoBusy?'正在恢复…':'撤销'}</button>{undoError&&<p role="alert">{undoError}</p>}</div>}

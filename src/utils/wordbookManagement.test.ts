@@ -12,25 +12,25 @@ test('unified search suggests actual passage terms and excludes saved terms case
  assert.equal(wordbookSuggestions(reading,[],[{...items[0],term:'GENUINE'}],'genuine').length,0);
 });
 test('a saved search hit remains visible under a conflicting status filter without changing source state',()=>{
- const result=wordbookResults(items,'genuine','New',false);
- assert.equal(result.fallback,true);assert.deepEqual(result.visible,[items[0]]);
+ const result=wordbookResults(items,'genuine',false);
+ assert.equal('fallback' in result,false);assert.deepEqual(result.visible,[items[0]]);
  assert.equal(items[0].status,'Learning');
- assert.equal(wordbookResults(items,'','Difficult',false).visible.length,0);
+ assert.equal(wordbookResults(items,'',false).visible.length,2);
 });
 test('search shows all saved matches even when the active filter also has a match',()=>{
  const matching=[{...items[0],term:'genuine care'},{...items[1],term:'genuine concern'}];
- const result=wordbookResults(matching,'genuine','New',false);
- assert.equal(result.fallback,true);
+ const result=wordbookResults(matching,'genuine',false);
+ assert.equal('fallback' in result,false);
  assert.deepEqual(result.visible.map(v=>v.id),['a','b']);
- assert.equal(wordbookResults(matching,'','New',false).visible.length,1);
+ assert.equal(wordbookResults(matching,'',false).visible.length,2);
 });
 test('stale selected vocabulary and catalogue entries are never suggested outside the actual passage',()=>{
  const stale={...reading,selectedVocabulary:[...items,{...items[0],term:'moonlight'}]};
  assert.deepEqual(wordbookSuggestions(stale,[{term:'moonlight',type:'word',cefrLevel:'B1',contextQuote:'Old content.'}],[],'moon'),[]);
 });
 test('alphabetical order can reverse without mutating the saved collection',()=>{
- assert.deepEqual(wordbookResults(items,'','All',false).visible.map(v=>v.id),['b','a']);
- assert.deepEqual(wordbookResults(items,'','All',true).visible.map(v=>v.id),['a','b']);
+ assert.deepEqual(wordbookResults(items,'',false).visible.map(v=>v.id),['b','a']);
+ assert.deepEqual(wordbookResults(items,'',true).visible.map(v=>v.id),['a','b']);
  assert.equal(items[0].id,'a');
 });
 test('English abbreviations and phrase categories use Chinese display metadata without changing stored data',()=>{

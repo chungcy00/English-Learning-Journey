@@ -16,9 +16,9 @@ test('example cache is reused only when it describes the exact same example',()=
 test('inline details preserve old examples and cached translations inside the unified panel',()=>{
  const html=renderToStaticMarkup(React.createElement(WordbookEntryDetails,{vocab,reading,onUpdateStatus:async()=>{},onRemove:async()=>{}}));
  assert.doesNotMatch(html,/<dialog|<aside/);
- for(const text of ['体贴的；考虑周到的',vocab.example,'她说：“那很体贴。”','学习状态','用法辨析'])assert.ok(html.includes(text));
+ for(const text of ['体贴的；考虑周到的',vocab.example,'她说：“那很体贴。”','用法辨析'])assert.ok(html.includes(text));
  assert.equal((html.match(/role="tab"/g)||[]).length,6);
- assert.match(html,/value="Learning" selected=""|selected="" value="Learning"/);
+ assert.doesNotMatch(html,/学习状态|<select/);
 });
 
 test('missing example translation adds no invented filler or unrelated cache',()=>{

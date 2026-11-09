@@ -1,8 +1,7 @@
 import { categoryLabels } from './vocabularyDetails';
-import type { ReadingExpression, ReadingRecord, VocabularyItem, VocabStatus } from '../types';
+import type { ReadingExpression, ReadingRecord, VocabularyItem } from '../types';
 import { extractEnglishWords, containsEnglishExpression, getEnglishTermMatchRank, normalizeEnglishTerm } from './englishSearch';
 import { filterSavedVocabulary } from './savedVocabulary';
-export const wordbookStatuses: Record<VocabStatus, string> = { New: '新词', Learning: '学习中', Difficult: '困难', Mastered: '已掌握' };
 export function wordbookMeta(item: Pick<VocabularyItem, 'partOfSpeech' | 'type' | 'category'>) {
   const positions: Record<string,string> = {
     noun:'名词', n:'名词', 'n.':'名词', verb:'动词', v:'动词', 'v.':'动词',
@@ -20,13 +19,9 @@ export function wordbookMeta(item: Pick<VocabularyItem, 'partOfSpeech' | 'type' 
   const type = categoryLabels[item.category || item.type];
   return [...new Set([pos ? positions[pos.toLowerCase()] || pos : '',type].filter(Boolean))].join(' · ');
 }
-export function wordbookResults(items: VocabularyItem[], query: string, status: string, descending: boolean) {
-  const matching = filterSavedVocabulary(items,query,'All');
-  const filtered = filterSavedVocabulary(items,query,status);
-  // A saved expression must stay discoverable even under a mismatching status filter.
-  const fallback = !!query.trim() && matching.length > filtered.length;
-  const visible = fallback ? matching : filtered;
-  return { visible: descending ? [...visible].reverse() : visible, fallback };
+export function wordbookResults(items: VocabularyItem[], query: string, descending: boolean) {
+  const visible = filterSavedVocabulary(items, query, 'All');
+  return { visible: descending ? [...visible].reverse() : visible };
 }
 export function wordbookSuggestions(reading: ReadingRecord | null, expressions: ReadingExpression[], saved: VocabularyItem[], query: string) {
   if (!reading || !query.trim()) return [];

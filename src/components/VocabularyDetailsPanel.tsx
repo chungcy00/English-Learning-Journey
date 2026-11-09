@@ -19,12 +19,12 @@ export function VocabularyDetailsPanel({ vocab, onBeforePronunciation, onInterac
   const [savedKeys, setSavedKeys] = useState<Set<string>>(new Set());
   const lock = useRef(false);
   const run = useRef(0);
-  useEffect(() => { onInteractionStateChange?.(busy || !!editing); }, [busy, editing, onInteractionStateChange]);
+  useEffect(() => { onInteractionStateChange?.(!!editing); }, [busy, editing, onInteractionStateChange]);
   useEffect(() => () => onInteractionStateChange?.(false), [onInteractionStateChange]);
   useEffect(() => {
     const id = ++run.current;
     setDetails(legacyDetails(vocab)); setDraft(null); setEditing(null); setConfirm(false); setError(''); setMessage(''); setReady(false); setTab('examples');
-    readVocabularyDetails(vocab).then(value => { if (run.current === id) { setDetails(value); setReady(true); } }).catch(() => { if (run.current === id) setError('本地资料读取失败，请关闭后重试。'); });
+    readVocabularyDetails(vocab).then(value => { if (run.current === id) { setDetails(value); setReady(true); if (!value.generated) generate(); } }).catch(() => { if (run.current === id) setError('本地资料读取失败，请关闭后重试。'); });
     return () => { run.current++; };
   }, [vocab.id, vocab.term]);
   useEffect(() => {
@@ -80,10 +80,12 @@ export function VocabularyDetailsPanel({ vocab, onBeforePronunciation, onInterac
       {(details.category || details.type) === 'word' && !!details.inflections.length && <dl className="lexicon-inflections">{details.inflections.map((form, i) => <div key={i}><dt>{form.label}</dt><dd>{form.value}</dd></div>)}</dl>}
       <p className="lexicon-source">来源：{vocab.sourceReadingId ? '阅读短文' : '手动添加'} · {details.provenance.basic?.source === 'user' ? '基本资料已手动编辑' : details.generated ? 'AI 生成，可编辑更正' : '已有基础资料'}</p>
     </div>
-    {!details.generated && <div className="lexicon-generate"><p>按需生成例句、派生、词根、词组、英释与用法辨析，完成后缓存在本机。手动修改会保留。</p><button type="button" className="lexicon-primary" disabled={busy || !ready || !!editing} onClick={() => generate()}>{busy ? '正在处理…' : '一次生成六栏资料'}</button></div>}
     <div className="lexicon-tabs" role="tablist" aria-label="词汇资料栏目">{DETAIL_SECTIONS.map((key, index) => <button type="button" key={key} id={`lexicon-tab-${vocab.id}-${key}`} role="tab" aria-selected={tab === key} tabIndex={tab === key ? 0 : -1} aria-controls={`lexicon-content-${vocab.id}`} disabled={!!editing} onClick={() => { setTab(key); setConfirm(false); setMessage(''); }} onKeyDown={event => {
-      if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const next = event.key === 'Home' ? 0 : event.key === 'End' ? 5 : (index + (event.key === 'ArrowRight' ? 1 : 5)) % 6; setTab(DETAIL_SECTIONS[next]); setConfirm(false); (event.currentTarget.parentElement?.children[next] as HTMLButtonElement)?.focus(); }
-    }}>{sectionLabels[key]}</button>)}</div>
+      if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const next = event.key === 'Home' ? 0 : event.key === 'End' ? 5 : (index + (event.key === 'ArrowRight' ? 1 : 5)) % 6; setTab(DETAIL_SECTIONS[next]); setConfirm(false); const row = event.currentTarget.parentElement;
+        const target = row?.children[next] as HTMLButtonElement | undefined;
+        target?.focus({ preventScroll: true });
+        if (row && target) { const bounds = row.getBoundingClientRect(); const button = target.getBoundingClientRect(); row.scrollLeft += button.left < bounds.left ? button.left - bounds.left : button.right > bounds.right ? button.right - bounds.right : 0; } }
+    }}><span className="lexicon-tab-label">{sectionLabels[key]}</span></button>)}</div>
     {!editing && <div id={`lexicon-content-${vocab.id}`} role="tabpanel" tabIndex={0} aria-labelledby={`lexicon-tab-${vocab.id}-${tab}`} className="lexicon-content">
       <div className="lexicon-section-tools"><span className="lexicon-muted">{details.provenance[tab] ? `${details.provenance[tab]!.source === 'user' ? '手动编辑' : 'AI 生成'} · ${new Date(details.provenance[tab]!.updatedAt).toLocaleDateString('zh-CN')}` : '基础资料'}</span><button type="button" disabled={!ready || busy} onClick={() => startEdit(tab)}>编辑本栏</button><button type="button" disabled={!ready || busy} onClick={() => setConfirm(value => !value)}>重新生成本栏</button></div>
       {confirm && <div className="lexicon-confirm"><p>将调用 AI 替换「{sectionLabels[tab]}」的内容{details.provenance[tab]?.source === 'user' ? '，包括本栏的手动修改' : ''}。其他栏目、独立收藏和复习进度保留。</p><button type="button" disabled={busy} onClick={() => generate(tab, true)}>确认替换本栏</button><button type="button" disabled={busy} onClick={() => setConfirm(false)}>取消</button></div>}
@@ -104,6 +106,6 @@ export function VocabularyDetailsPanel({ vocab, onBeforePronunciation, onInterac
       {editing === 'basic' && (details.category || details.type) === 'word' && <fieldset><legend>适用的词形变化</legend>{draft.inflections.map((form, index) => <div className="lexicon-form-row" key={index}><label>变化名称<input value={form.label} onChange={event => setDraft({ ...draft, inflections: draft.inflections.map((v, i) => i === index ? { ...v, label: event.target.value } : v) })}/></label><label>词形<input value={form.value} onChange={event => setDraft({ ...draft, inflections: draft.inflections.map((v, i) => i === index ? { ...v, value: event.target.value } : v) })}/></label><button type="button" aria-label="删除词形" onClick={() => setDraft({ ...draft, inflections: draft.inflections.filter((_, i) => i !== index) })}><X size={16}/></button></div>)}<button type="button" onClick={() => setDraft({ ...draft, inflections: [...draft.inflections, { label: '', value: '' }] })}>添加词形</button></fieldset>}
       <div className="lexicon-actions"><button type="submit" className="lexicon-primary" disabled={busy}>保存修改</button><button type="button" disabled={busy} onClick={() => { setDraft(null); setEditing(null); }}>取消</button></div>
     </form>}
-    {busy && <p role="status" className="lexicon-muted">正在处理，请稍候…</p>}{error && <p role="alert" className="wordbook-error">{error}</p>}{message && <p role="status" className="lexicon-muted">{message}</p>}
+    {busy && <p role="status" className="lexicon-muted">正在处理，请稍候…</p>}{error && <div role="alert" className="wordbook-error"><p>{error}</p>{!details.generated && <button type="button" disabled={busy || !ready || !!editing} onClick={() => generate()}>重试生成资料</button>}</div>}{message && <p role="status" className="lexicon-muted">{message}</p>}
   </div>;
 }

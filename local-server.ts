@@ -2,6 +2,13 @@ import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import app from './backend/app.js';
+import { localApiProxy } from './backend/localApiProxy.js';
+
+const serverApp = express();
+serverApp.use(express.json({ limit: '256kb' }));
+const apiProxy = localApiProxy(process.env);
+if (apiProxy) serverApp.use(apiProxy);
+serverApp.use(app);
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -22,7 +29,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  serverApp.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
   });
 }

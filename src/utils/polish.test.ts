@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-test('learning card scrolling cleans up measurement observers and has no rating overlay', () => {
+test('learning cards use page scrolling without a height cap or rating overlay', () => {
   const view = readFileSync(new URL('../components/PracticeVocabularyCard.tsx', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8');
-  assert.match(view, /ResizeObserver\(measure\)/);
-  assert.match(view, /observer.disconnect\(\)/);
+  assert.doesNotMatch(view, /ResizeObserver|review-card-limit/);
+  assert.match(css, /\.review-page \.practice-vocabulary-card__body \{ overflow: visible; overscroll-behavior: auto; touch-action: auto/);
   assert.doesNotMatch(view + css, /review-rating-bar|review-rating-height/);
   assert.match(css, /prefers-reduced-motion: reduce/);
 });

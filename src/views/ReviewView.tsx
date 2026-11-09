@@ -64,7 +64,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ allVocabularies, onRefre
         <span role="status" aria-live="polite" aria-atomic="true">{currentIndex + 1} / {reviewList.length}</span>
         <button type="button" aria-label="下一张词汇" disabled={detailsBusy || currentIndex === reviewList.length - 1} onClick={() => { setCurrentIndex(index => Math.min(reviewList.length - 1, index + 1)); setIsRevealed(false); }} className="min-h-11 min-w-11"><ChevronRight aria-hidden="true" size={22}/></button>
       </div></div>
-      <PracticeVocabularyCard onDetailsBusyChange={setDetailsBusy} vocab={currentVocab} meaning={getLocalizedVocabMeaning(currentVocab)} exampleTranslation={getLocalizedExampleTranslation(currentVocab)} revealed={isRevealed} disabled={false} flipLocked={detailsBusy} onFlip={() => { if (!detailsBusy) setIsRevealed(value => !value); }} onPronounce={() => { setSpeechError(null); speakEnglishTerm(currentVocab.term, setSpeechError); }}/>
+      <PracticeVocabularyCard onDetailsBusyChange={setDetailsBusy} vocab={currentVocab} meaning={getLocalizedVocabMeaning(currentVocab)} exampleTranslation={getLocalizedExampleTranslation(currentVocab)} revealed={isRevealed} disabled={false} onFlip={() => { if (!detailsBusy) setIsRevealed(value => !value); }} onPronounce={() => { setSpeechError(null); speakEnglishTerm(currentVocab.term, setSpeechError); }}/>
       {speechError && <p role="alert" className="practice-review-speech-error">{speechError}</p>}
     </div>}
   </div>;

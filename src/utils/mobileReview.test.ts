@@ -22,7 +22,7 @@ test('revealed review uses six learning tabs with independent bookmarks without 
     assert.match(html, /用法辨析/);
     assert.doesNotMatch(html, /review-rating-bar|评价记忆程度|>Again<|>Hard<|>Good<|>Easy</);
     assert.match(html, /aria-label="播放 catch up 的发音"/);
-    assert.match(html, /一次生成六栏资料/);
+    assert.doesNotMatch(html, /一次生成六栏资料|lexicon-generate/);
   } finally {
     if (original) Object.defineProperty(globalThis, 'sessionStorage', original);
     else Reflect.deleteProperty(globalThis, 'sessionStorage');

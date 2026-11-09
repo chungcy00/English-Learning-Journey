@@ -254,7 +254,7 @@ select:disabled:is(:hover, :active), [aria-disabled="true"]:is(:hover, :active) 
   transform: none;
   cursor: not-allowed;
 }
-button[role="tab"][aria-selected="true"], .wordbook-status-filters button[aria-pressed="true"],
+button[role="tab"][aria-selected="true"],
 .learning-choices button[aria-pressed="true"] {
   background-color: var(--surface-selected);
   color: var(--accent-primary);
@@ -948,11 +948,9 @@ main {
   border-radius: 16px;
 }
 .wordbook-controls { min-width: 0; grid-template-columns: minmax(0, 1fr); }
-.wordbook-status-filters { min-width: 0; max-width: 100%; }
 .wordbook-saved-search summary { list-style: none; }
 .wordbook-saved-search summary::-webkit-details-marker { display: none; }
 .wordbook-saved-search[open] summary svg { transform: rotate(90deg); }
-.wordbook-status-filters button { border-radius: 999px; }
 
 /* One study destination: two gateways, followed by the live review session. */
 /* Final practice hub: two whole-card entrances and a quiet review surface. */
@@ -1078,7 +1076,6 @@ main {
   .reading-mode-parallel .reading-translation { border-radius: 0 16px 16px 0; background: var(--bg-alt); border-left: 1px solid var(--border-subtle); }
 }
 @media (max-width: 639px) {
-  .wordbook-status-filters { flex-wrap: wrap; width: 100%; gap: 0.5rem; }
   .wordbook-controls { gap: 0.5rem; }
   .wordbook-workspace { gap: 1rem; }
   .word-detail-dialog::before { flex-shrink: 0; }
@@ -1103,8 +1100,6 @@ main {
 .wordbook-saved-search { position: relative; }
 .wordbook-saved-search > svg { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none; }
 .wordbook-saved-search input { padding-left: 2.75rem; border-radius: 12px; background: var(--surface-white); }
-.wordbook-status-filters button { border-radius: 999px; font-size: var(--type-label); line-height: 1.4; padding-inline: .875rem; }
-.wordbook-filter-count { font-size: var(--type-meta); line-height: 1.4; font-variant-numeric: tabular-nums; margin-left: .25rem; }
 .wordbook-list-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; margin-top: 1.5rem; font-size: var(--type-meta); line-height: 1.4; color: var(--text-muted); }
 .wordbook-add-summary { display: flex; align-items: center; gap: .5rem; min-height: 44px; width: fit-content; cursor: pointer; color: var(--text-secondary); font-size: var(--type-label); line-height: 1.4; list-style: none; }
 .wordbook-add-summary::-webkit-details-marker { display: none; }
@@ -1130,7 +1125,6 @@ main {
 }
 @media (max-width: 639px) {
   .wordbook-collection-panel { padding: 1rem; }
-  .wordbook-status-filters button { padding-inline: .75rem; }
   .wordbook-accordion-toggle { gap: .5rem; }
   .wordbook-accordion-toggle > span:nth-child(2) { font-size: var(--type-label); line-height: 1.4; }
 }
@@ -1562,7 +1556,7 @@ html .reading-word-dialog::backdrop { background: rgb(255 255 255 / 70%); backdr
 /* Audio and learning controls keep independent actions on both faces. */
 .practice-vocabulary-card__head { flex: none; position: relative; }
 .practice-vocabulary-card__hint { margin-top: auto; padding-top: 2rem; }
-.review-embedded .practice-vocabulary-card--back { min-height: 0; max-height: var(--review-card-limit, calc(100dvh - 10rem)); padding-bottom: calc(1.25rem + env(safe-area-inset-bottom)); }
+.review-embedded .practice-vocabulary-card--back { min-height: 0; padding-bottom: calc(1.25rem + env(safe-area-inset-bottom)); }
 .practice-vocabulary-card__body { min-height: 0; overflow-y: auto; overflow-wrap: anywhere; touch-action: pan-y; font-size: var(--type-body); line-height: 1.7; color: var(--text-ink); }
 .practice-vocabulary-card__body > * + * { margin-top: 1.5rem; }
 .practice-vocabulary-card__body h4 { margin-bottom: .5rem; font-size: var(--type-label); line-height: 1.6; font-weight: 400; color: var(--text-secondary); }
@@ -1638,9 +1632,6 @@ html .reading-word-dialog::backdrop { background: rgb(255 255 255 / 70%); backdr
 .wordbook-final .wordbook-add { display: flex; align-items: center; justify-content: center; gap: .375rem; flex-shrink: 0; min-height: 44px; padding: .5rem .75rem; border: 0; border-radius: 12px; background: var(--accent-primary); color: var(--surface-paper); font-size: var(--type-label); line-height: 1.6; font-weight: 600; }
 .wordbook-final .wordbook-add:disabled { background: var(--surface-disabled); color: var(--text-disabled); }
 .wordbook-final .wordbook-management { padding-top: 1.5rem; border-top: 1px solid var(--border-subtle); }
-.wordbook-final .wordbook-status-filters { display: flex; flex-wrap: wrap; gap: .5rem; }
-.wordbook-final .wordbook-status-filters button { display: flex; align-items: center; justify-content: center; gap: .375rem; min-height: 44px; padding: .5rem .875rem; border: 0; border-radius: 999px; background: var(--bg-alt); color: var(--text-secondary); font-size: var(--type-label); line-height: 1.6; }
-.wordbook-final .wordbook-status-filters button[aria-pressed="true"] { background: var(--surface-selected); color: var(--accent-primary); font-weight: 600; }
 .wordbook-final .wordbook-action-bar { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .5rem 1rem; margin-block: 1rem .5rem; }
 .wordbook-final .wordbook-action-bar button, .wordbook-final .wordbook-batch-bar button { display: flex; align-items: center; justify-content: center; gap: .375rem; min-height: 44px; padding-block: .5rem; color: var(--text-secondary); font-size: var(--type-label); line-height: 1.6; }
 .wordbook-final .wordbook-batch-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; font-size: var(--type-label); line-height: 1.6; }
@@ -1671,11 +1662,6 @@ html .reading-word-dialog::backdrop { background: rgb(255 255 255 / 70%); backdr
 .wordbook-final .wordbook-entry-open { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
 .wordbook-final .wordbook-entry-text { display: grid; gap: .375rem; min-width: 0; flex: 1; }
 .wordbook-final .wordbook-header-status { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; color: var(--text-secondary); }
-.wordbook-final .wordbook-state-badge { padding: .5rem .625rem; border-radius: 10px; font-size: var(--type-label); line-height: 1.6; font-weight: 400; }
-.wordbook-final .wordbook-state-badge[data-vocab-status="New"] { background: var(--status-info-soft); color: var(--status-info); }
-.wordbook-final .wordbook-state-badge[data-vocab-status="Learning"] { background: var(--surface-selected); color: var(--accent-primary); }
-.wordbook-final .wordbook-state-badge[data-vocab-status="Difficult"] { background: var(--status-warning-soft); color: var(--status-warning); }
-.wordbook-final .wordbook-state-badge[data-vocab-status="Mastered"] { background: var(--surface-disabled); color: var(--text-secondary); }
 .wordbook-entry-details { padding-bottom: .5rem; overflow-wrap: anywhere; font-size: var(--type-body); line-height: 1.7; color: var(--text-ink); }
 .wordbook-detail-pronunciation { display: flex; align-items: center; gap: .75rem; padding-block: .5rem 1.25rem; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: var(--type-label); line-height: 1.6; }
 .wordbook-detail-pronunciation > span { min-width: 0; overflow-wrap: anywhere; }
@@ -1688,13 +1674,10 @@ html .reading-word-dialog::backdrop { background: rgb(255 255 255 / 70%); backdr
 .wordbook-detail-example > p + p { margin-top: .875rem; padding-top: .875rem; border-top: 1px solid var(--border-subtle); font-size: var(--type-translation); font-style: normal; font-weight: 400; color: var(--text-secondary); }
 .wordbook-detail-collocations { display: flex; flex-wrap: wrap; align-items: flex-start; gap: .5rem; }
 .wordbook-detail-collocations > span { display: inline-block; max-width: 100%; padding: .375rem .625rem; border-radius: 12px; background: var(--bg-alt); color: var(--accent-primary); font-size: var(--type-body); line-height: 1.6; overflow-wrap: anywhere; }
-.wordbook-detail-bookmark, .wordbook-detail-status { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem 1rem; padding-block: .75rem; border-top: 1px solid var(--border-subtle); }
 .wordbook-detail-bookmark > span, .wordbook-detail-bookmark button { display: flex; align-items: center; gap: .5rem; font-size: var(--type-label); line-height: 1.6; }
 .wordbook-detail-bookmark > span { color: var(--accent-primary); }
 .wordbook-detail-bookmark button { min-height: 44px; padding-inline: .5rem; color: var(--text-secondary); background: transparent; }
 .wordbook-detail-bookmark button:disabled { color: var(--text-disabled); background: transparent; }
-.wordbook-detail-status { font-size: var(--type-body); line-height: 1.6; }
-.wordbook-detail-status > div { max-width: 100%; }
 .wordbook-detail-error { margin-block: .75rem; color: var(--status-error); font-size: var(--type-label); line-height: 1.7; }
 .wordbook-final .wordbook-undo { position: sticky; bottom: calc(var(--review-nav-offset, 0px) + 1rem + env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem 1rem; padding: .75rem 1rem; border-radius: 12px; background: var(--surface-selected); color: var(--accent-primary); font-size: var(--type-label); line-height: 1.6; z-index: 10; }
 .wordbook-final .wordbook-undo button { min-height: 44px; padding-inline: .5rem; font-weight: 600; }
@@ -1794,24 +1777,12 @@ html .reading-word-dialog::backdrop { background: rgb(255 255 255 / 70%); backdr
 .history-task-title { color: var(--text-ink); font-size: var(--type-page); font-weight: 700; line-height: 1.4; margin-bottom: 1rem; }
 .history-review-all { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; padding: 1rem; border-radius: 20px; background: #EFF3EA; color: var(--accent-primary); }
 .history-review-all > svg { flex-shrink: 0; }
-.history-review-all > div:not(.history-status-review) { min-width: 0; flex: 1 1 10rem; }
+.history-review-all > div { min-width: 0; flex: 1 1 10rem; }
 .history-review-all h3 { font-size: var(--type-section); font-weight: 650; line-height: 1.5; }
 .history-review-all p, .history-task-card > p, .history-vocabulary-detail header p { font-size: var(--type-label); line-height: 1.7; color: var(--text-secondary); margin-top: .5rem; overflow-wrap: anywhere; }
 .history-review-all strong { color: var(--accent-primary); font-weight: 650; }
 .history-task-start-all { display: flex; align-items: center; justify-content: center; gap: .5rem; min-height: 44px; padding: .625rem .875rem; border-radius: 12px; background: #4B6E5B; color: white; font-size: var(--type-label); font-weight: 600; }
 .history-task-start-all:disabled { background: var(--surface-disabled); color: var(--text-disabled); }
-.history-status-review { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; width: 100%; max-width: 32rem; min-width: 0; margin-top: .875rem; }
-.history-review-all > .history-status-review { flex: 1 0 100%; margin-top: .25rem; }
-.history-status-choice { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: .5rem .375rem; border-radius: 12px; color: var(--accent-primary); background: var(--surface-selected); font-size: var(--type-label); line-height: 1.5; white-space: nowrap; transition: filter 150ms var(--ease-feedback); }
-.history-status-choice--new { background: var(--status-error-soft); color: var(--status-error); }
-.history-status-choice--learning { background: var(--status-warning-soft); color: var(--status-warning); }
-.history-status-choice--mastered { background: var(--accent-primary); color: white; }
-.history-status-choice:enabled:hover { filter: brightness(.96); }
-.history-status-choice:disabled { opacity: .5; cursor: not-allowed; }
-@media (max-width: 480px) {
-  .history-status-review { gap: .375rem; }
-  .history-status-choice { padding-inline: .125rem; border-radius: 10px; font-size: var(--type-meta); }
-}
 .history-specialized-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin-block: 1.75rem 1rem; }
 .history-specialized-heading h3 { color: var(--text-ink); font-size: var(--type-section); font-weight: 600; }
 .history-specialized-heading > span { color: var(--text-secondary); font-size: var(--type-meta); }
@@ -1825,18 +1796,11 @@ html .reading-word-dialog::backdrop { background: rgb(255 255 255 / 70%); backdr
 .history-task-info .history-level-badge { flex-shrink: 0; padding: .75rem .625rem; border-radius: 12px; }
 .history-task-start { display: flex; align-items: center; justify-content: center; gap: .375rem; min-height: 44px; padding: .5rem .75rem; background: #E8F0E9; color: #4B6E5B; font-size: var(--type-label); line-height: 1.6; font-weight: 600; border-radius: 12px; }
 .history-task-card > p > strong, .history-vocabulary-detail header strong { color: var(--cefr-text); font-weight: 650; }
-.history-mastery { margin-top: 1.25rem; }
-.history-mastery > div:first-child { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .375rem .75rem; color: var(--text-secondary); font-size: var(--type-label); line-height: 1.7; margin-bottom: .5rem; }
-.history-mastery strong { color: var(--text-ink); font-weight: 600; }
-.history-mastery [role="progressbar"] { height: 5px; overflow: hidden; border-radius: 999px; background: var(--surface-track); }
-.history-mastery [role="progressbar"] > span { display: block; height: 100%; background: var(--cefr-color); transform-origin: left; border-radius: inherit; transition: transform 200ms var(--ease-feedback); }
-.history-mastery.is-detailed [role="progressbar"] { height: 8px; }
 .history-vocabulary-detail { padding: 1.25rem; }
 .history-vocabulary-detail > header { display: flex; align-items: flex-start; gap: .875rem; }
 .history-vocabulary-detail header > div { min-width: 0; flex: 1; }
 .history-vocabulary-detail h2 { color: var(--text-ink); font-size: var(--type-section); line-height: 1.5; font-weight: 700; overflow-wrap: anywhere; }
 .history-task-icon { display: grid; place-items: center; min-width: 44px; min-height: 44px; border-radius: 14px; background: var(--cefr-background); color: var(--cefr-text); flex-shrink: 0; }
-.history-vocabulary-detail .history-mastery { margin-top: 1.75rem; }
 .history-recent-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; border-top: 1px solid var(--divider); padding-top: 1.25rem; margin-top: 1.5rem; }
 .history-recent-heading h3 { font-size: var(--type-body); color: var(--text-ink); font-weight: 600; }
 .history-recent-heading button { display: flex; align-items: center; gap: .375rem; min-height: 44px; color: var(--text-secondary); font-size: var(--type-label); }
@@ -1887,13 +1851,16 @@ html .reading-word-dialog::backdrop { background: rgb(255 255 255 / 70%); backdr
 .lexicon-inflections { display: flex; flex-wrap: wrap; gap: 10px 20px; margin-block: 16px; }
 .lexicon-inflections > div { display: flex; gap: 8px; }
 .lexicon-inflections dt { color: var(--text-secondary); }
-.lexicon-generate { margin-block: 20px; padding: 16px; border-radius: 12px; background: var(--bg-alt); }
-.lexicon-generate p { margin-bottom: 12px; color: var(--text-secondary); }
 button.lexicon-primary, .lexicon-panel button.lexicon-primary { color: var(--surface-paper); background: var(--accent-primary); }
 button.lexicon-primary:hover, .lexicon-panel button.lexicon-primary:hover { background: var(--accent-hover); }
-.lexicon-tabs { display: flex; overflow-x: auto; border-bottom: 1px solid var(--border-subtle); gap: 4px; margin-top: 24px; scrollbar-width: thin; scrollbar-color: var(--accent-secondary) transparent; }
-.lexicon-tabs button { white-space: nowrap; border-radius: 0; flex-shrink: 0; color: var(--text-secondary); border-bottom: 2px solid transparent; }
-.lexicon-tabs button[aria-selected="true"] { color: var(--accent-primary); border-bottom-color: var(--accent-primary); font-weight: 700; }
+.lexicon-tabs { display: flex; justify-content: space-between; gap: .75rem; max-width: 100%; overflow-x: auto; overflow-y: hidden; padding: 6px 2px; margin-top: 24px; border: 0; background: transparent; scrollbar-width: thin; scrollbar-color: var(--accent-secondary) transparent; }
+.lexicon-tabs button { flex-shrink: 0; white-space: nowrap; padding-inline: 10px; border: 0; border-radius: 0; background: transparent; color: var(--text-secondary); }
+.lexicon-tabs button:hover { background: transparent; color: var(--accent-primary); }
+.lexicon-tabs button[role="tab"][aria-selected="true"] { background: transparent; color: var(--accent-primary); font-weight: 700; }
+.lexicon-tab-label { position: relative; isolation: isolate; }
+.lexicon-tab-label::before { content: ''; position: absolute; z-index: -1; inset: -.2em -.32em -.16em; background: var(--accent-secondary); opacity: 0; pointer-events: none; transform: rotate(-3deg); mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 40' preserveAspectRatio='none'%3E%3Cpath d='M7 9C17 5 23 8 34 6C47 3 56 7 67 5C81 2 92 6 107 4C115 3 119 9 116 15L113 27C111 34 106 34 96 33C82 37 73 33 61 35C47 36 40 33 28 35C17 38 12 33 5 34C1 32 2 25 3 20Z'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+.lexicon-tabs button[aria-selected="true"] .lexicon-tab-label::before { opacity: .5; }
+.lexicon-tabs button:nth-child(even) .lexicon-tab-label::before { transform: rotate(2deg); }
 .lexicon-section-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-block: 12px; font-size: var(--type-label); }
 .lexicon-section-tools > span { margin-right: auto; }
 .lexicon-entry { padding-block: 16px; border-bottom: 1px solid var(--border-subtle); }
@@ -1948,13 +1915,10 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 /* All review entry points use the same six-section word details as reading and the wordbook. */
 .review-page .review-flip-stage { width: 100%; max-width: 40rem; }
 .review-page .practice-vocabulary-card { width: 100%; padding: 1.25rem; display: flex; flex-direction: column; border: 1px solid var(--border-subtle); border-radius: 16px; background: var(--surface-paper); }
-.review-page .practice-vocabulary-card--back { min-height: 0; max-height: var(--review-card-limit, calc(100dvh - 10rem)); padding-bottom: calc(1.25rem + env(safe-area-inset-bottom)); }
-.review-page .practice-vocabulary-card--back.is-natural { max-height: none; }
-.review-page .review-lexicon-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-bottom: .75rem; border-bottom: 1px solid var(--border-subtle); }
+.review-page .practice-vocabulary-card--back { min-height: 0; padding-bottom: calc(1.25rem + env(safe-area-inset-bottom)); }
+.review-page .review-lexicon-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-bottom: .75rem; }
 .review-page .review-lexicon-heading .practice-vocabulary-card__term { font-size: var(--type-section); font-weight: 700; line-height: 1.4; text-align: left; }
-.review-lexicon-heading > button { flex-shrink: 0; min-height: 44px; padding-inline: .75rem; color: var(--accent-primary); font-size: var(--type-label); border-radius: 10px; }
-.review-lexicon-heading > button:hover { background: var(--bg-alt); }
-.review-page .practice-vocabulary-card__body { overscroll-behavior: contain; padding-top: .75rem; }
+.review-page .practice-vocabulary-card__body { overflow: visible; overscroll-behavior: auto; touch-action: auto; padding-top: .75rem; }
 @media (max-width: 359px) {
   .review-page .practice-vocabulary-card { padding: 1rem; }
 }
@@ -1965,3 +1929,7 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 .review-page .review-flip-inner { grid-template-columns: minmax(0, 1fr); }
 .review-page { min-width: 0; grid-template-columns: minmax(0, 1fr); }
 .review-page > * { min-width: 0; }
+.reading-word-dialog__body:has(.lexicon-tabs) { touch-action: auto; }
+.review-page .practice-vocabulary-card--back { max-height: none; }
+.lexicon-panel .lexicon-entry, .lexicon-panel .lexicon-editor-entry { border: 0; }
+.lexicon-dialog .reading-word-dialog__body, .lexicon-dialog .lexicon-dialog-footer { border: 0; }

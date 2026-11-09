@@ -6,7 +6,7 @@ import { vocabularyKey } from './utils/vocabularyDetails';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { createHistoryReviewRequest, historyReviewWords, vocabularyForLevel, vocabularyLevelLabel, historyStatusLabel, type HistoryReviewRequest, type HistoryVocabularyLevel } from './utils/historyVocabulary';
+import { createHistoryReviewRequest, historyReviewWords, vocabularyForLevel, vocabularyLevelLabel, type HistoryReviewRequest, type HistoryVocabularyLevel } from './utils/historyVocabulary';
 import { currentReadingSavedVocabulary } from './utils/savedVocabulary';
 import { vocabularyWithReadingSources } from './utils/readingVocabularyOwnership';
 import { toggleWordDetailBookmark } from './utils/wordDetailBookmark';
@@ -37,7 +37,6 @@ import {
   CEFRLevel,
   ReadingType,
   ReadingLength,
-  VocabStatus,
 } from './types';
 
 import {
@@ -96,7 +95,7 @@ export default function App() {
     if (!previous) return;
     const [latest, latestReadings] = await Promise.all([getAllVocabularies(), getAllReadings()]);
     if (historyReviewRef.current?.run !== previous.run) return;
-    const request = createHistoryReviewRequest(vocabularyWithReadingSources(latest, latestReadings), previous.level, previous.mode, previous.status) || { ...previous, ids: [] };
+    const request = createHistoryReviewRequest(vocabularyWithReadingSources(latest, latestReadings), previous.level) || { ...previous, ids: [] };
     setVocabularies(latest);
     setReadings(latestReadings);
     setHistoryReview({ ...request, run: Math.max(Date.now(), previous.run + 1) });
@@ -106,8 +105,8 @@ export default function App() {
     setHistoryReview(null); setHistoryWordbookLevel(undefined);
     if (tab !== 'settings') setActiveTab(tab);
   };
-  const openHistoryReview = (level: HistoryVocabularyLevel | null, mode: HistoryReviewRequest['mode'] = 'free', status?: VocabularyItem['status']) => {
-    const request = createHistoryReviewRequest(historyVocabulary, level, mode, status);
+  const openHistoryReview = (level: HistoryVocabularyLevel | null) => {
+    const request = createHistoryReviewRequest(historyVocabulary, level);
     if (!request) return;
     setHistoryReview({ ...request, run: Date.now() });
     setActiveTab('practice');
@@ -333,14 +332,6 @@ export default function App() {
     if (target) setRemovalTarget(target);
   };
 
-  const handleUpdateStatus = async (id: string, status: VocabStatus) => {
-    const updatedAt = Date.now();
-    // Update only these fields; preserve review scheduling and passage associations.
-    const updated = await db.vocabulary.update(id, { status, updatedAt });
-    if (!updated) throw new Error('词条已不存在');
-    setVocabularies(items => items.map(item => item.id === id ? { ...item, status, updatedAt } : item));
-  };
-
   // 8. Generate From Wordbook (PRD Section 20)
   const handleGenerateFromWordbook = (params: {
     selectedTerms: string[];
@@ -474,7 +465,6 @@ export default function App() {
               });
               setVocabularies(items => items.filter(item => !targets.includes(item.id)));
             }}
-            onUpdateStatus={handleUpdateStatus}
             onGenerateFromWordbook={handleGenerateFromWordbook}
             isGenerating={isGenerating}
             currentCefr={settings.cefr}
@@ -493,8 +483,8 @@ export default function App() {
         {activeTab === 'practice' && historyReview && <div className="page-shell page-shell--review history-scoped-review">
           <button type="button" className="practice-back" onClick={() => { setHistoryReview(null); setActiveTab('history'); }}><ArrowLeft size={17} aria-hidden="true"/>返回历史词汇看板</button>
           <ReviewView key={historyReview.run} embedded allVocabularies={scopedHistoryReview} onRefresh={refreshHistoryReview}
-            sessionKey={`history:${historyReview.level || 'all'}:${historyReview.mode}:${historyReview.status || 'all'}:${historyReview.run}`}
-            scopeLabel={`${historyReview.level ? vocabularyLevelLabel(historyReview.level) : '全部词汇'} · ${historyReview.mode === 'free' ? '全部词汇' : `${historyStatusLabel(historyReview.status)}分类词汇`}`} />
+            sessionKey={`history:${historyReview.level || 'all'}:${historyReview.run}`}
+            scopeLabel={historyReview.level ? vocabularyLevelLabel(historyReview.level) : '全部词汇'} />
         </div>}
         {activeTab === 'practice' && !historyReview && (
           <PracticeHubView vocabularyCount={vocabularies.length}
