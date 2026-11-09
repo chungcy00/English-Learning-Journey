@@ -281,3 +281,10 @@ The inline SVG pie uses the named CEFR series colors and thin paper-colored slic
 - Don't enlarge the confirmed compact type scale or style the topic placeholder as editorial text.
 - Don't interpret incumbent local radii or semantic status colors as permission to normalize unrelated screens.
 - Don't describe saved-reading distribution as completion, ability, or mastery.
+
+
+## Vocabulary details and custom words (2026-11-09)
+
+New vocabulary surfaces reuse the shared palette, Nunito / Noto Sans TC font stack, and confirmed type scale. Derivative headwords, root breakdowns and phrase titles use the 16px term role at weight 500; their Chinese meanings use the 14px translation role. Usage explanations use the 15px body role, with 12px part labels and metadata. Phrase cards use the existing warm-gray surface and 12px radius; editable controls retain 44px touch height and visible shared focus.
+
+The six vocabulary tabs are an explicitly approved exception to the main navigation treatment: preserve their irregular marker highlight, transparent surface and absence of dividers or underlines. Desktop appearance stays unchanged. Below 640px, use compact 12px labels in six equal columns with 44px touch height. If the actual detail container is 300px or narrower (including increased text size), use three columns in two rows so all six full labels remain visible without horizontal scrolling. Do not shorten labels or change tab switching, content, bookmarks or generation behavior.

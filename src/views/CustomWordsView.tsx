@@ -16,7 +16,7 @@ export function CustomWordsView({ vocabulary, onSave, onRequestRemove }: {
   const manual = useMemo(() => vocabulary.filter(isCustomVocabulary), [vocabulary]);
   const visible = useMemo(() => wordbookResults(manual, query, false).visible, [manual, query]);
   return <div className="page-shell page-stack custom-words-page">
-    <header className="custom-words-heading"><h1 className="type-page font-editorial font-semibold">自定义单词</h1><p className="lexicon-muted">添加文章以外的单词、短语和表达。</p></header>
+    <header className="custom-words-heading"><h1 className="type-page font-editorial font-bold">自定义单词</h1><p className="lexicon-muted">添加文章以外的单词、短语和表达。</p></header>
     <WordbookCustomAdd reading={null} vocabulary={vocabulary} onSave={onSave} initiallyOpen/>
     <section className="custom-words-collection" aria-labelledby="custom-words-title">
       <div className="custom-words-list-heading"><h2 id="custom-words-title" className="type-section font-semibold">我添加的词条</h2><span className="lexicon-muted">{manual.length} 项</span></div>

@@ -1824,17 +1824,17 @@ html .reading-word-dialog::backdrop { background: rgb(255 255 255 / 70%); backdr
 .wordbook-custom-hint { color: var(--text-secondary); font-size: var(--type-label); line-height: 1.7; margin-bottom: .75rem; }
 .wordbook-custom-add form { display: flex; align-items: center; gap: .625rem; }
 .wordbook-custom-add .wordbook-search-capsule { flex: 1; min-width: 0; }
-.wordbook-custom-action { min-height: 44px; padding: .5rem .875rem; border-radius: 12px; background: var(--accent-primary); color: white; font-size: var(--type-label); flex-shrink: 0; }
+.wordbook-custom-action { min-height: 44px; padding: .5rem .875rem; border-radius: 10px; background: var(--accent-primary); color: var(--surface-paper); font-size: var(--type-label); flex-shrink: 0; }
 .wordbook-custom-action:disabled { background: var(--surface-disabled); color: var(--text-disabled); }
 .wordbook-custom-result { margin-top: 1rem; padding: 1rem; border: 1px solid var(--divider); border-radius: 16px; }
 .wordbook-custom-result > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: .5rem; }
-.wordbook-custom-result strong { color: var(--text-ink); font-size: var(--type-section); }
+.wordbook-custom-result strong { color: var(--text-ink); font-size: var(--type-term); font-weight: 500; }
 .wordbook-custom-result span, .wordbook-custom-result p { color: var(--text-secondary); font-size: var(--type-label); line-height: 1.7; overflow-wrap: anywhere; }
 .wordbook-custom-result p { margin-top: .5rem; }
 .wordbook-custom-result > button { margin-top: .75rem; }
 
 /* On-demand vocabulary learning: reuse the existing paper and forest palette. */
-.lexicon-panel { min-width: 0; color: var(--text-primary); font-size: var(--type-body); line-height: 1.65; }
+.lexicon-panel { container-type: inline-size; min-width: 0; color: var(--text-primary); font-size: var(--type-body); line-height: 1.65; }
 .lexicon-panel button, .saved-materials button, .lexicon-views button, .lexicon-add-form button, .lexicon-dialog-footer button, .reading-legacy-translation button { min-height: 44px; padding: 8px 12px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .lexicon-panel button:hover, .saved-materials button:hover, .lexicon-views button:hover { background: var(--bg-alt); }
 .lexicon-panel button:disabled, .lexicon-add-form button:disabled { opacity: .55; cursor: wait; }
@@ -1940,13 +1940,14 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 .lexicon-family ul, .lexicon-root-related ul { list-style: none; padding: 0; }
 .lexicon-derivative, .lexicon-root-related li { margin-block: 1rem 1.5rem; }
 .lexicon-derivative-heading { display: flex; align-items: center; gap: .5rem; overflow-wrap: anywhere; }
-.lexicon-derivative-heading strong { font-size: var(--type-section); color: var(--accent-primary); }
+.lexicon-derivative-heading strong { font-size: var(--type-term); font-weight: 500; line-height: 1.4; color: var(--accent-primary); }
+.lexicon-derivative > p, .lexicon-root-related li > p { font-size: var(--type-translation); }
 .lexicon-derivative-heading button { flex-shrink: 0; }
 .lexicon-morphology { margin-block: 1.5rem; overflow-wrap: anywhere; }
 .lexicon-core-root { display: flex; align-items: baseline; flex-wrap: wrap; gap: .75rem; margin-bottom: 1.5rem; }
-.lexicon-core-root > span:first-child { font-size: var(--type-section); font-weight: 700; color: var(--accent-primary); }
-.lexicon-core-root > span:last-child { font-size: var(--type-body); font-weight: 400; }
-.lexicon-word-parts { margin-block: .75rem 1rem; font-size: var(--type-section); font-weight: 700; }
+.lexicon-core-root > span:first-child { font-size: var(--type-term); font-weight: 500; color: var(--accent-primary); }
+.lexicon-core-root > span:last-child { font-size: var(--type-translation); font-weight: 400; }
+.lexicon-word-parts { margin-block: .75rem 1rem; font-size: var(--type-term); font-weight: 500; line-height: 1.4; }
 .lexicon-word-part--root { color: var(--status-warning); }
 .lexicon-word-part--prefix, .lexicon-word-part--suffix { color: var(--accent-primary); }
 .lexicon-part-meanings { display: grid; gap: .75rem; }
@@ -1962,10 +1963,10 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 .lexicon-formation-editor-row label { flex: 1 1 8rem; min-width: 0; }
 .lexicon-phrase-list { display: grid; gap: 1rem; list-style: none; padding: 0; margin-block: 1.25rem; }
 .lexicon-phrase-card { background: var(--bg-alt); border-radius: 12px; padding: 1rem; overflow-wrap: anywhere; }
-.lexicon-phrase-text { font-size: var(--type-section); color: var(--accent-primary); }
-.lexicon-phrase-meaning { color: var(--text-secondary); margin-top: .375rem; }
+.lexicon-phrase-card .lexicon-phrase-text { font-size: var(--type-term); font-weight: 500; line-height: 1.4; color: var(--accent-primary); }
+.lexicon-phrase-meaning { font-size: var(--type-translation); color: var(--text-secondary); margin-top: .375rem; }
 .lexicon-usage-point { margin-block: 1.5rem 2rem; overflow-wrap: anywhere; }
-.lexicon-usage-point > h4 { font-size: var(--type-body); font-weight: 700; color: var(--accent-primary); margin-bottom: .625rem; }
+.lexicon-usage-point > h4 { font-size: var(--type-body); font-weight: 600; color: var(--accent-primary); margin-bottom: .625rem; }
 .lexicon-usage-contrast { display: grid; gap: .625rem; margin-top: 1rem; }
 .lexicon-usage-contrast > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: .375rem .75rem; }
 .lexicon-usage-contrast dt { font-size: var(--type-label); color: var(--accent-primary); }
@@ -1976,11 +1977,21 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 .custom-words-collection { margin-top: 1.5rem; }
 .custom-words-list-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
 .custom-words-search { display: flex; align-items: center; gap: .5rem; padding-inline: 1rem; border-radius: 12px; background: var(--bg-alt); color: var(--text-secondary); }
-.custom-words-search input { min-width: 0; width: 100%; background: transparent; border: 0; }
+.custom-words-search input { min-height: 44px; min-width: 0; width: 100%; background: transparent; border: 0; }
 .custom-words-list { list-style: none; padding: 0; margin-top: 1rem; }
 .custom-words-list > li { margin-bottom: 1rem; }
 .custom-word-open { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%; min-height: 60px; padding: .75rem 0; text-align: left; }
 .custom-word-open > span { display: grid; gap: .375rem; min-width: 0; overflow-wrap: anywhere; }
-.custom-word-open strong { color: var(--accent-primary); font-size: var(--type-body); }
+.custom-word-open strong { color: var(--accent-primary); font-size: var(--type-term); font-weight: 500; line-height: 1.4; }
 .custom-word-open small { color: var(--text-secondary); font-size: var(--type-label); }
 .custom-words-list .wordbook-entry-details { padding: 1rem; border-radius: 16px; background: var(--surface-paper); }
+
+/* Compact phone tabs retain the desktop marker and all six complete labels. */
+@media (max-width: 639px) {
+  .lexicon-tabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; overflow: visible; padding-inline: 4px; }
+  .lexicon-tabs button { min-width: 0; min-height: 44px; padding-inline: 0; font-size: var(--type-label); line-height: 1.4; }
+  /* Narrow cards and enlarged text reflow instead of clipping or shrinking type. */
+  @container (max-width: 18.75rem) {
+    .lexicon-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+}
