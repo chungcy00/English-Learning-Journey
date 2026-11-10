@@ -23,7 +23,7 @@ export function ReadingLevelPieChart({ readings, dimension: controlledDimension,
   const unit = dimension === 'readings' ? '篇' : '词';
   const levelLabel = (level: string) => level === '未知' ? '未标注' : level;
   let offset = 0;
-  return <section className="reading-distribution history-distribution-final" aria-labelledby="reading-distribution-title"><HandOutline/><Companion className="chart-companion"/>
+  return <section className="reading-distribution history-distribution-final" aria-labelledby="reading-distribution-title"><HandOutline/><Companion pose="cat-peek-history" className="chart-companion"/>
     <header className="reading-distribution__header">
       <div className="reading-distribution__title"><ChartPie size={23} aria-hidden="true" /><h2 id="reading-distribution-title">{dimension === 'readings' ? '短文难度等级分布' : '词汇难度等级分布'}（CEFR）</h2></div>
       <p>{dimension === 'vocabulary' && vocabulary ? `基于本机已收录的 ${vocabulary.length} 个可复习词条` : `基于已生成的 ${readings.length} 篇情境短文及 ${totalWords} 条精选词汇`}</p>

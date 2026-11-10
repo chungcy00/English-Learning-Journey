@@ -95,11 +95,11 @@
 /* One companion per major region, never per vocabulary item. */
 #root .practice-hub { padding-top:60px; }
 #root .practice-entry { overflow:visible; --hand-line:var(--status-warning); }
-#root .wordbook-entry-companion { left:20px; right:auto; width:120px; top:8px; }
+#root .wordbook-entry-companion { left:-20px; right:auto; width:192px; top:8px; }
 #root .practice-review { margin-top:24px; }
 #root .random-review { padding:20px 24px; background:var(--bg-alt); }
 #root .review-page .review-flip-stage { margin-top:48px; }
-#root .review-companion { top:8px; right:12%; width:112px; }
+#root .review-companion { top:8px; right:8%; width:168px; }
 #root .review-flip-front .practice-vocabulary-card { overflow:visible; }
 #root .practice-vocabulary-card { --hand-line:var(--accent-subtle); }
 #root .practice-vocabulary-card__label { border-radius:48% 42% 46% 40% / 42% 50% 40% 50%; }
@@ -182,7 +182,7 @@
   #root .wordbook-final .wordbook-final-entry.is-expanded { padding-inline:0; }
   #root .practice-hub { padding-top:48px; }
   #root .random-review { padding:16px; }
-  #root .review-companion { width:88px; top:8px; right:16px; }
+  #root .review-companion { width:140px; top:8px; right:0; }
   #root .study-empty { padding:20px 16px; }
   #root .study-empty > .learning-art { width:96px; }
   #root .study-empty--compact { padding:10px 0; gap:12px; }
@@ -222,16 +222,23 @@
 #root .has-bottom-navigation .processing-dialog[open] { bottom:calc(5rem + env(safe-area-inset-bottom) + 12px); max-height:calc(100dvh - 6rem - env(safe-area-inset-bottom)); }
 
 /* Official illustration placement: no crop, mirrored accents or CSS-drawn characters. */
-#root .reading-companion[data-pose="hamster-peek"] { width:104px; }
+#root .reading-companion[data-pose="hamster-peek-reading"] { width:104px; }
 #root .wordbook-mascot-footer { display:flex; justify-content:flex-end; min-height:100px; margin-top:8px; pointer-events:none; }
 #root .wordbook-mascot-footer > .learning-art { width:116px; }
-#root .history-list-heading { position:relative; }
-#root .history-records-companion { position:absolute; width:100px; right:100px; top:-54px; }
+#root .history-records .history-list-heading { margin-bottom:8px; }
+#root .history-records-companion { position:absolute; width:96px; left:clamp(120px,16%,180px); right:auto; top:1px; }
 @media (max-width:639px) {
   #root .expression-select { flex:0 0 auto; width:100%; }
   #root .reading-companion { width:112px; }
-  #root .reading-companion[data-pose="hamster-peek"] { width:88px; }
+  #root .reading-companion[data-pose="hamster-peek-reading"] { width:88px; }
   #root .wordbook-mascot-footer { min-height:80px; }
   #root .wordbook-mascot-footer > .learning-art { width:88px; }
-  #root .history-records-companion { width:80px; right:72px; top:-44px; }
+  #root .history-records-companion { width:88px; left:120px; top:1px; }
+  #root .wordbook-entry-companion { width:160px; left:-16px; }
 }
+
+/* Compact navigation keeps the mobile/tablet learning surface free of the desktop footer. */
+#root .has-bottom-navigation > .learning-footer { display:none; }
+
+/* The supplied reading hamster has a stray mark in its far-right empty margin. */
+#root .reading-companion[data-pose="hamster-peek-reading"] > img { clip-path:inset(0 16% 0 0); }

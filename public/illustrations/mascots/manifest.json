@@ -95,6 +95,46 @@
       "rgbaSha256": "b5d7944600e7732562ce9a072b20982b704b2db02119f6a93dbe5f261ced7037",
       "source": "codex-mascot-assets/hamster-reminder.png",
       "pixelChanges": false
+    },
+    {
+      "file": "cat-peeking-history-page.png",
+      "width": 704,
+      "height": 674,
+      "rgbaSha256": "ac89887766bde4d9a9d87c2a3969952516f58eea6b3564e2f1317821d1cfce36",
+      "source": "codex-mascot-assets 2/cat-peeking-history-page.png",
+      "pixelChanges": false
+    },
+    {
+      "file": "cat-peeking-reading-page.png",
+      "width": 693,
+      "height": 673,
+      "rgbaSha256": "e96084f1b53d8cb24668915204462f41161cb9c38305b5f50ab71c1be0a9e183",
+      "source": "codex-mascot-assets 2/cat-peeking-reading-page.png",
+      "pixelChanges": false
+    },
+    {
+      "file": "cat-peeking-vocabulary.png",
+      "width": 928,
+      "height": 662,
+      "rgbaSha256": "61556c1a4cb290d7637644b7eb83004fec84c604952b3a146d1e590427a3ef69",
+      "source": "codex-mascot-assets 2/cat-peeking-vocabulary.png",
+      "pixelChanges": false
+    },
+    {
+      "file": "hamster-peeking-flashcard.png",
+      "width": 1049,
+      "height": 641,
+      "rgbaSha256": "85d46d1f2fd86aaa3a6b6ee188b945c12581d06babc4acef64fb2df65635c4a8",
+      "source": "codex-mascot-assets 2/hamster-peeking-flashcard.png",
+      "pixelChanges": false
+    },
+    {
+      "file": "hamster-peeking-reading-page.png",
+      "width": 723,
+      "height": 609,
+      "rgbaSha256": "3197fd0d244a0434727b09e0d7b43f25d65a91a44185cae2fa7d58417954cac4",
+      "source": "codex-mascot-assets 2/hamster-peeking-reading-page.png",
+      "pixelChanges": false
     }
   ],
   "note": "Original independent transparent PNGs; only provenance metadata added. Existing loading animations unchanged."

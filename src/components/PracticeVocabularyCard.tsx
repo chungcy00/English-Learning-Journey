@@ -27,7 +27,7 @@ export function PracticeVocabularyCard({ vocab, meaning, exampleTranslation, rev
   revealed: boolean; disabled: boolean; onFlip: () => void; onPronounce: () => void; onDetailsBusyChange?: (busy: boolean) => void;
 }) {
   const header = (back: boolean) => <VocabularyHeader vocab={vocab} back={back} onPronounce={onPronounce} />;
-  const front = <div className="review-flashcard practice-vocabulary-card art-anchor"><HandOutline/><Companion pose="hamster-peek" className="review-companion"/>
+  const front = <div className="review-flashcard practice-vocabulary-card art-anchor"><HandOutline/><Companion pose="hamster-peek-flashcard" className="review-companion"/>
     {header(false)}
     <p className="practice-vocabulary-card__hint"><RefreshCw aria-hidden="true" size={15} />点击卡片翻面</p>
   </div>;

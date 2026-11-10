@@ -2,6 +2,11 @@ import React, { useLayoutEffect, useRef, useState } from 'react';
 
 /** Official independent PNGs, copied without pixel or alpha changes. */
 export const mascotPoses = {
+  'cat-peek-vocabulary': { file: 'cat-peeking-vocabulary.png', width: 928, height: 662, perch: '-71.6%' },
+  'hamster-peek-flashcard': { file: 'hamster-peeking-flashcard.png', width: 1049, height: 641, perch: '-69.1%' },
+  'cat-peek-reading': { file: 'cat-peeking-reading-page.png', width: 693, height: 673, perch: '-73.8%' },
+  'hamster-peek-reading': { file: 'hamster-peeking-reading-page.png', width: 723, height: 609, perch: '-74.1%' },
+  'cat-peek-history': { file: 'cat-peeking-history-page.png', width: 704, height: 674, perch: '-72.6%' },
   together: { file: 'cat-hamster-book-logo.png', width: 708, height: 724, perch: '-75.7%' },
   'cat-peek': { file: 'cat-peeking.png', width: 651, height: 639, perch: '-70.9%' },
   'cat-peek-alt': { file: 'cat-peeking-alt.png', width: 724, height: 685, perch: '-74.6%' },

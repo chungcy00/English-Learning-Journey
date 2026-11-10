@@ -1,4 +1,4 @@
-import { HandOutline, Mascot } from '../components/LearningArt';
+import { HandOutline, Mascot, Companion } from '../components/LearningArt';
 import React, { useRef } from 'react';
 import { ArrowRight, ChevronRight, Trash2 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
@@ -51,11 +51,11 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({ readings
       onDimensionChange={value => { setDimension(value); setSelectedLevel(null); }}
       onLevelSelect={value => setSelectedLevel(current => current === value ? null : value)} />
     {dimension === 'vocabulary' ? <HistoryVocabularyTasks vocabulary={vocabulary} selectedLevel={activeLevel as HistoryVocabularyLevel | null} onSelectLevel={value => setSelectedLevel(current => current === value ? null : value)} onReview={level => onReviewVocabulary?.(level)} onOpenWordbook={level => onOpenLevelWordbook?.(level)}/> : <section className="history-records" aria-labelledby="history-list-title">
-      <div className="history-list-heading"><Mascot pose="hamster-reading-alt" className="history-records-companion"/><h2 id="history-list-title">历史短文 {activeLevel && <HistoryLevelBadge level={activeLevel}/>}</h2><button ref={manager} type="button" disabled={!readings.length && !managing} aria-pressed={managing} onClick={() => setManaging(value => !value)}>{managing ? '完成' : '管理'}</button></div>
-      <p className="history-list-description">{activeLevel ? dimension === 'vocabulary' ? `含 ${activeLevel} 精选词汇的历史短文` : '已筛选的历史短文' : '按最近生成时间排列'}</p>
+      <div className="history-list-heading"><h2 id="history-list-title">历史短文 {activeLevel && <HistoryLevelBadge level={activeLevel}/>}</h2><button ref={manager} type="button" disabled={!readings.length && !managing} aria-pressed={managing} onClick={() => setManaging(value => !value)}>{managing ? '完成' : '管理'}</button></div>
+      {activeLevel && <p className="history-list-description">已筛选的历史短文</p>}
       <div className="history-list" aria-label="历史短文列表">
         <AnimatePresence initial={false}>
-          {visibleReadings.map(item => <motion.article layout="position" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0, margin: 0, paddingBlock: 0 }} transition={transition} key={item.id} className={`history-entry history-card${managing ? ' is-managing' : ''}`}><HandOutline/>
+          {visibleReadings.map((item, index) => <motion.article layout="position" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0, margin: 0, paddingBlock: 0 }} transition={transition} key={item.id} className={`history-entry history-card${managing ? ' is-managing' : ''}`}><HandOutline/>{index === 0 && !activeLevel && <Companion pose="hamster-reading" className="history-records-companion"/>}
             {!managing && <button className="history-card-open" type="button" aria-label={`阅读：${item.title}`} onClick={() => onSelectReading(item)} />}
             <div className="history-entry__heading"><h3>{item.title}</h3><span className="history-read-arrow" aria-hidden="true"><ChevronRight size={20}/></span></div>
             <div className="history-card-metadata" aria-hidden={managing} inert={managing}><div><div className="history-badges"><HistoryLevelBadge level={item.cefrLevel || '未知'}/><span>{types[item.readingType] || '未知文体'}</span><span>{lengths[item.length] || '未知篇幅'}</span></div></div></div>
