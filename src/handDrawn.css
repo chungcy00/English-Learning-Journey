@@ -131,7 +131,7 @@
 #root .history-final .reading-distribution__details { width:100%; }
 #root .history-final .reading-distribution__ring { width:200px; }
 #root .history-final .reading-distribution__levels { grid-template-columns:repeat(2,minmax(0,1fr)); }
-#root .history-distribution-final .reading-distribution__switch { border-radius:var(--hand-control-corner); }
+#root .history-distribution-final .reading-distribution__switch { border-radius:var(--hand-control-corner); margin-top:6px; }
 #root .history-distribution-final .reading-distribution__switch::before { border-radius:var(--hand-control-corner); }
 #root .history-final .history-card { border-radius:var(--hand-corner); }
 #root .history-vocabulary-tasks { position:relative; margin-top:48px; }
