@@ -282,7 +282,8 @@
   #root .random-review__custom > span { display:none; }
   #root .random-review__custom :is(button,input) { box-sizing:border-box; min-height:44px; padding:4px 6px; }
   #root .random-review__custom button { display:inline-flex; align-items:center; justify-content:center; width:28px; min-width:28px; flex:0 0 auto; }
-  #root .random-review__custom input { width:44px; min-width:44px; }
+  #root .random-review__custom input { width:44px; min-width:44px; appearance:textfield; }
+  #root .random-review__custom input::-webkit-inner-spin-button, #root .random-review__custom input::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
   #root .random-review__custom button[type="submit"] { width:max-content; min-width:44px; }
   #root .random-review__reshuffle { grid-column:2; justify-self:end; justify-content:center; width:max-content; min-width:44px; min-height:44px; padding:8px 10px; gap:6px; margin:0; white-space:nowrap; }
   #root .practice-module-divider { margin-block:16px; }
