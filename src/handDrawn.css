@@ -96,13 +96,18 @@
 #root .wordbook-final .wordbook-review, #root .lexicon-add-form > button { border-radius:var(--hand-control-corner); }
 
 /* One companion per major region, never per vocabulary item. */
-#root .practice-hub { padding-top:60px; }
+#root .practice-hub { padding-top:60px; row-gap:0; }
 #root .practice-entry { overflow:visible; --hand-line:var(--status-warning); }
 #root .wordbook-entry-companion { left:-16px; right:auto; width:240px; top:8px; }
-#root .practice-review { margin-top:24px; }
+#root .practice-review { margin-top:0; }
+#root .practice-module-divider { position:static; display:block; height:8px; margin-block:20px; color:var(--accent-secondary); opacity:.8; }
+#root .review-embedded { gap:16px; margin-block:0; }
 #root .random-review { padding:20px 24px; background:var(--bg-alt); }
-#root .random-review__status { justify-content:flex-end; }
-#root .review-page .review-flip-stage { margin-top:48px; }
+#root .review-pagination { display:flex; align-items:center; justify-content:center; gap:8px; border:0; margin-top:0; padding:0; }
+#root .review-pagination + .review-card-content { margin-top:0; }
+#root .review-embedded .review-pagination + .review-card-content { margin-top:-16px; }
+#root .review-pagination .review-progress [role="status"] { font-size:var(--type-body); }
+#root .review-page .review-flip-stage { margin-top:0; }
 #root .review-companion { top:8px; right:10%; width:208px; }
 #root .review-flip-front .practice-vocabulary-card { overflow:visible; }
 #root .practice-vocabulary-card { --hand-line:var(--accent-subtle); }
@@ -267,17 +272,32 @@
 
 /* Phone review controls retain 44px targets in four compact rows. */
 @media (max-width:639px) {
-  #root .random-review__controls { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px; }
+  #root .random-review__controls { display:grid; grid-template-columns:minmax(0,1fr) 104px; align-items:center; gap:8px; }
   #root .random-review__controls > :is(h1,h2) { grid-column:1; flex-basis:auto; }
-  #root .random-review__category { grid-column:2; justify-self:end; }
-  #root .random-review__category > button { min-height:44px; padding:8px; }
+  #root .random-review__category { grid-column:2; justify-self:end; width:max-content; }
+  #root .random-review__category > button { min-height:44px; padding:8px; white-space:nowrap; }
   #root .random-review__presets { grid-column:1 / -1; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; }
   #root .random-review__presets > button { min-width:0; padding:8px 4px; }
   #root .random-review__custom { grid-column:1; display:grid; grid-template-columns:repeat(4,44px); gap:2px; flex-basis:auto; }
   #root .random-review__custom > span { display:none; }
   #root .random-review__custom :is(button,input) { box-sizing:border-box; width:44px; min-width:44px; min-height:44px; padding:4px; }
-  #root .random-review__reshuffle { grid-column:2; min-width:64px; min-height:44px; padding:4px; gap:4px; margin:0; }
-  #root .random-review__status { justify-content:center; margin-top:8px; padding-top:8px; }
+  #root .random-review__reshuffle { grid-column:2; min-width:64px; min-height:44px; padding:4px; gap:4px; margin:0; white-space:nowrap; }
+  #root .practice-module-divider { margin-block:16px; }
+  #root .review-pagination { justify-content:flex-start; }
+  #root .review-pagination .review-progress > div { gap:12px; }
+  #root .review-pagination .review-progress [role="status"] { min-width:48px; }
 }
 
 #root .lexicon-add-preview > .lexicon-muted { font-size:var(--type-meta); font-style:italic; }
+
+@media (min-width:640px) and (max-width:767px) {
+  #root .review-pagination { padding-right:48px; }
+}
+
+@media (min-width:360px) and (max-width:639px) {
+  #root .review-pagination { padding-left:12px; }
+}
+@media (max-width:359px) {
+  #root .random-review__custom { grid-column:1 / -1; }
+  #root .random-review__reshuffle { grid-column:2; justify-self:end; }
+}

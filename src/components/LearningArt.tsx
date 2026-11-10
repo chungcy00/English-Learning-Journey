@@ -43,8 +43,8 @@ export function Companion({ pose = 'cat-peek', className = '' }: {
   return <Mascot pose={pose} className={`learning-companion ${className}`}/>;
 }
 /** Pure geometry; the stroke inherits the existing theme and never captures input. */
-export function HandRule({ className = '' }: { className?: string }) {
-  return <svg className={`hand-rule ${className}`} viewBox="0 0 1000 8" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M1 4 C75 1 115 7 190 4 S300 2 375 4 S465 7 545 4 S675 1 745 4 S885 7 999 3"/></svg>;
+export function HandRule({ className = '', dashed = false }: { className?: string; dashed?: boolean }) {
+  return <svg className={`hand-rule ${className}`} viewBox="0 0 1000 8" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path strokeDasharray={dashed ? '7 13 10 16 5 12 8 15' : undefined} strokeLinecap={dashed ? 'round' : undefined} d="M1 4 C75 1 115 7 190 4 S300 2 375 4 S465 7 545 4 S675 1 745 4 S885 7 999 3"/></svg>;
 }
 export function StudyEmptyState({ children, compact = false, pose = 'hamster-reading', busy = false }: {
   children: React.ReactNode; compact?: boolean; pose?: MascotPose; busy?: boolean;

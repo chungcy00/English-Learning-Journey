@@ -13,7 +13,7 @@ export function inflectionLabel(label: string) {
 }
 const inflectionOrder = ['名词复数', '单数', '动词单数', '过去式', '过去分词', '现在分词', '动名词', '比较级', '最高级', '原形', '不定式'];
 /** Sort a copy for display; saved forms and user-defined labels remain untouched. */
-export function orderedInflections<T extends { label: string }>(forms: readonly T[]): T[] {
+export function orderedInflections(forms: Readonly<VocabularyDetails['inflections']>): VocabularyDetails['inflections'] {
   const rank = (label: string) => { const index = inflectionOrder.indexOf(inflectionLabel(label)); return index < 0 ? inflectionOrder.length : index; };
   return [...forms].sort((a, b) => rank(a.label) - rank(b.label));
 }
