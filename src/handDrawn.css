@@ -278,10 +278,10 @@
   #root .random-review__category > button { min-height:44px; padding:8px; white-space:nowrap; }
   #root .random-review__presets { grid-column:1 / -1; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; }
   #root .random-review__presets > button { min-width:0; padding:8px 4px; }
-  #root .random-review__custom { grid-column:1; display:grid; grid-template-columns:repeat(4,44px); gap:2px; flex-basis:auto; }
+  #root .random-review__custom { grid-column:1; display:grid; grid-template-columns:repeat(4,44px); gap:0; flex-basis:auto; }
   #root .random-review__custom > span { display:none; }
   #root .random-review__custom :is(button,input) { box-sizing:border-box; width:44px; min-width:44px; min-height:44px; padding:4px; }
-  #root .random-review__reshuffle { grid-column:2; min-width:64px; min-height:44px; padding:4px; gap:4px; margin:0; white-space:nowrap; }
+  #root .random-review__reshuffle { grid-column:2; justify-self:end; justify-content:center; width:max-content; min-width:44px; min-height:44px; padding:8px 10px; gap:6px; margin:0; white-space:nowrap; }
   #root .practice-module-divider { margin-block:16px; }
   #root .review-pagination { justify-content:flex-start; }
   #root .review-pagination .review-progress > div { gap:12px; }
