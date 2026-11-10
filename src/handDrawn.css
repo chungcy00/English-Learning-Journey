@@ -272,15 +272,18 @@
 
 /* Phone review controls retain 44px targets in four compact rows. */
 @media (max-width:639px) {
-  #root .random-review__controls { display:grid; grid-template-columns:minmax(0,1fr) 104px; align-items:center; gap:8px; }
+  #root .random-review__controls { display:grid; grid-template-columns:minmax(0,1fr) 92px; align-items:center; gap:8px; }
   #root .random-review__controls > :is(h1,h2) { grid-column:1; flex-basis:auto; }
   #root .random-review__category { grid-column:2; justify-self:end; width:max-content; }
   #root .random-review__category > button { min-height:44px; padding:8px; white-space:nowrap; }
   #root .random-review__presets { grid-column:1 / -1; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; }
   #root .random-review__presets > button { min-width:0; padding:8px 4px; }
-  #root .random-review__custom { grid-column:1; display:grid; grid-template-columns:repeat(4,44px); gap:0; flex-basis:auto; }
+  #root .random-review__custom { grid-column:1; display:flex; flex-wrap:nowrap; align-items:center; gap:2px; width:max-content; flex-basis:auto; }
   #root .random-review__custom > span { display:none; }
-  #root .random-review__custom :is(button,input) { box-sizing:border-box; width:44px; min-width:44px; min-height:44px; padding:4px; }
+  #root .random-review__custom :is(button,input) { box-sizing:border-box; min-height:44px; padding:4px 6px; }
+  #root .random-review__custom button { display:inline-flex; align-items:center; justify-content:center; width:28px; min-width:28px; flex:0 0 auto; }
+  #root .random-review__custom input { width:44px; min-width:44px; }
+  #root .random-review__custom button[type="submit"] { width:max-content; min-width:44px; }
   #root .random-review__reshuffle { grid-column:2; justify-self:end; justify-content:center; width:max-content; min-width:44px; min-height:44px; padding:8px 10px; gap:6px; margin:0; white-space:nowrap; }
   #root .practice-module-divider { margin-block:16px; }
   #root .review-pagination { justify-content:flex-start; }
@@ -296,8 +299,4 @@
 
 @media (min-width:360px) and (max-width:639px) {
   #root .review-pagination { padding-left:12px; }
-}
-@media (max-width:359px) {
-  #root .random-review__custom { grid-column:1 / -1; }
-  #root .random-review__reshuffle { grid-column:2; justify-self:end; }
 }
