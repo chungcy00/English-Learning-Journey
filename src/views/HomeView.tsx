@@ -103,7 +103,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ settings, onGenerate, isLoad
           <button type="button" aria-pressed={!importMode} disabled={isLoading} onClick={() => setImportMode(false)}>自定义主题</button>
           <button type="button" aria-pressed={importMode} disabled={isLoading} onClick={() => setImportMode(true)}>导入英文稿</button>
         </div>
-        {importMode ? <section className="studio-composer studio-transcript"><HandOutline/>
+        {importMode ? <section className="studio-composer studio-transcript art-anchor"><HandOutline/><Mascot pose="sprig" className="composer-sprig"/>
           <label htmlFor="source-title">稿件标题（选填）</label>
           <input id="source-title" value={sourceTitle} maxLength={160} disabled={isLoading} onChange={e => setSourceTitle(e.target.value)} placeholder="例如：TED 演讲标题" />
           <label htmlFor="source-transcript">英文原稿</label>

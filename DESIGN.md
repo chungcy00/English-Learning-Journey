@@ -285,3 +285,9 @@ Style selection, word details, removal confirmation and existing notices share t
 - Don't add accounts, pet progression, currencies, fabricated statistics or other reference-only features.
 - Don't change storage keys, schemas, user edits, existing generation rules or API flows for a visual skin.
 - Don't present a static storyboard as an animation, show fabricated progress or keep a finished loader visible.
+
+### Reference-calibrated ornament anchors
+
+Character illustrations keep their original pixels and aspect ratio. Align the visible paws/book base rather than the full transparent PNG rectangle. The history book hamster's horizontal anchor uses the measured section-title width (`--history-title-width`) instead of a percentage of the whole card: visible left edge ≈ 1.45 × title width, keeping a consistent reference gap as the viewport changes. Its book base remains ≈ 2px inside the first history card's outer edge. ResizeObserver measures only the heading; it never changes stored learning data or text size.
+
+The continuation-card sprig points up-left (`scaleX(-1)`); the top-right header sprig points down-left (`rotate(180deg)`). Composer sprigs point up-right in both custom-topic and transcript-import modes. These transforms are foliage-only: never mirror a cat/hamster or its baked-in emphasis marks. Reading companions follow their own panel corners; practice companions follow their own card edges; the wordbook A–Z hamster sits at the enclosing frame's lower-right edge. Scale decoration down on narrow screens rather than moving text or controls.

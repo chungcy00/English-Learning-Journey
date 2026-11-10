@@ -33,6 +33,20 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({ readings
   const [managing, setManaging] = React.useState(false);
   const [deletion, setDeletion] = React.useState<ReadingRecord | null>(null);
   const manager = useRef<HTMLButtonElement>(null);
+  const records = useRef<HTMLElement>(null);
+  const listTitle = useRef<HTMLHeadingElement>(null);
+  React.useLayoutEffect(() => {
+    const title = listTitle.current, section = records.current;
+    if (!title || !section) return;
+    const align = () => {
+      const width = title.getBoundingClientRect().width;
+      if (width > 0) section.style.setProperty('--history-title-width', `${width}px`);
+    };
+    align();
+    const observer = new ResizeObserver(align);
+    observer.observe(title);
+    return () => observer.disconnect();
+  }, [dimension]);
   const reducedMotion = useReducedMotion();
   // If deletion removes the last record of the selected level, reset the filter.
   const activeLevel = selectedLevel && (dimension === 'vocabulary' ? vocabulary.some(item => vocabularyLevel(item) === selectedLevel) : distributionSource(readings, dimension).some(item => item.cefrLevel === selectedLevel)) ? selectedLevel : null;
@@ -50,8 +64,8 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({ readings
     <ReadingLevelPieChart readings={readings} dimension={dimension} selectedLevel={activeLevel} vocabulary={vocabulary}
       onDimensionChange={value => { setDimension(value); setSelectedLevel(null); }}
       onLevelSelect={value => setSelectedLevel(current => current === value ? null : value)} />
-    {dimension === 'vocabulary' ? <HistoryVocabularyTasks vocabulary={vocabulary} selectedLevel={activeLevel as HistoryVocabularyLevel | null} onSelectLevel={value => setSelectedLevel(current => current === value ? null : value)} onReview={level => onReviewVocabulary?.(level)} onOpenWordbook={level => onOpenLevelWordbook?.(level)}/> : <section className="history-records" aria-labelledby="history-list-title">
-      <div className="history-list-heading"><h2 id="history-list-title">历史短文 {activeLevel && <HistoryLevelBadge level={activeLevel}/>}</h2><button ref={manager} type="button" disabled={!readings.length && !managing} aria-pressed={managing} onClick={() => setManaging(value => !value)}>{managing ? '完成' : '管理'}</button></div>
+    {dimension === 'vocabulary' ? <HistoryVocabularyTasks vocabulary={vocabulary} selectedLevel={activeLevel as HistoryVocabularyLevel | null} onSelectLevel={value => setSelectedLevel(current => current === value ? null : value)} onReview={level => onReviewVocabulary?.(level)} onOpenWordbook={level => onOpenLevelWordbook?.(level)}/> : <section ref={records} className="history-records" aria-labelledby="history-list-title">
+      <div className="history-list-heading"><h2 ref={listTitle} id="history-list-title">历史短文 {activeLevel && <HistoryLevelBadge level={activeLevel}/>}</h2><button ref={manager} type="button" disabled={!readings.length && !managing} aria-pressed={managing} onClick={() => setManaging(value => !value)}>{managing ? '完成' : '管理'}</button></div>
       {activeLevel && <p className="history-list-description">已筛选的历史短文</p>}
       <div className="history-list" aria-label="历史短文列表">
         <AnimatePresence initial={false}>
