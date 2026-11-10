@@ -1,3 +1,5 @@
+import { LoadingAnimation } from '../components/LoadingAnimation';
+import { HandOutline, Companion } from '../components/LearningArt';
 import { vocabularyKey } from '../utils/vocabularyDetails';
 import { cachedParagraphTranslation } from '../utils/paragraphTranslation';
 import { mergeReadingTranslations } from '../utils/translationResults';
@@ -708,16 +710,16 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       </section>
       {speechError && <p role="alert" className="reading-inline-status">{speechError}</p>}
       {speechNotice && <p role="status" className="reading-inline-status">{speechNotice}</p>}
-      <section className="reading-studio__body">
+      <section className="reading-studio__body art-anchor"><HandOutline/><Companion className="reading-companion"/>
         <p className="reading-paragraph-hint">点击段落查看中文翻译 · 重点词汇可单独打开</p>
         <article id="reading-body-panel" className="reading-prose">
           {isDetectedDialogue && formatMode === 'dialogue' ? renderDialogueContent() : renderParagraphContent()}
         </article>
         {missingParagraphs && <div className="reading-legacy-translation"><p>旧短文的已有译文会继续使用，缺少的段落可按需补充。</p><button type="button" disabled={isTranslating} onClick={() => void prepareLegacyParagraphs()}>{isTranslating ? '正在生成段落译文…' : '一次补充本篇段落译文'}</button></div>}
-        {translationError && <p role="alert" className="reading-inline-status">{translationError}</p>}
+        <LoadingAnimation active={isTranslating || isPreparingSpeech} operation={isTranslating ? 'analysis' : 'wait'} label={isTranslating ? '正在准备段落译文…' : '正在准备朗读…'}/>{translationError && <p role="alert" className="reading-inline-status">{translationError}</p>}
       </section>
 
-      <section className="reading-vocabulary space-y-4">
+      <section className="reading-vocabulary space-y-4 art-anchor"><HandOutline/><Companion pose="hamster-peek" className="reading-companion"/>
         <div className="reading-vocabulary__header flex items-center justify-between pb-2 border-b border-[var(--border-subtle)] flex-wrap gap-2">
           <div>
             <div className="flex items-center gap-2">

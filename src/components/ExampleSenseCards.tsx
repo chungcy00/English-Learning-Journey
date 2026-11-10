@@ -1,3 +1,4 @@
+import { HandOutline } from './LearningArt';
 import React from 'react';
 import { Bookmark, Volume2 } from 'lucide-react';
 import type { LearningEntry } from '../types';
@@ -22,7 +23,7 @@ export function groupSenseExamples(entries: LearningEntry[], senses: LearningEnt
   return [...groups.values()];
 }
 export function ExampleSenseCards({entries,senses,defaultPos,isSaved,busy,pronounce,onToggle}:{entries:LearningEntry[];senses:LearningEntry[];defaultPos?:string;isSaved:(text:string)=>boolean;busy:boolean;pronounce:(text:string)=>void;onToggle:(entry:LearningEntry)=>void}) {
-  return <div className="lexicon-sense-cards">{groupSenseExamples(entries,senses,defaultPos).map(group=><section className="lexicon-sense-card" key={group.key}>
+  return <div className="lexicon-sense-cards">{groupSenseExamples(entries,senses,defaultPos).map(group=><section className="lexicon-sense-card" key={group.key}><HandOutline/>
     {group.meaning&&<h4><span className="lexicon-pos">{partOfSpeechAbbreviation(group.pos)}</span>{group.meaning}</h4>}
     {group.examples.map(({source,sentence,translation,legacyKey},index)=>{
       const legacySaved=!!legacyKey&&isSaved(legacyKey);const saved=isSaved(sentence)||legacySaved;

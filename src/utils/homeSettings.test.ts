@@ -26,7 +26,7 @@ test('inspiration provides four scenes and three local themes without duplicate 
   const topics = html.match(/<div class="studio-topics"[\s\S]*?<\/div>/)![0];
   assert.equal((topics.match(/<button/g) || []).length, 3);
   assert.ok(topics.includes('如何礼貌地拒绝别人'));
-  assert.equal((topics.match(/<svg/g) || []).length, 3);
+  assert.equal((topics.match(/lucide-arrow-right/g) || []).length, 3);
 });
 
 test('continue reading uses real article data and omits unsupported progress', () => {

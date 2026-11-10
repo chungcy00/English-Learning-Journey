@@ -1,3 +1,4 @@
+import { HandOutline, Companion, Mascot } from '../components/LearningArt';
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Minus, Plus, Bookmark, Coffee, BriefcaseBusiness, Plane, Sprout, RefreshCw, AlignLeft, ChevronDown, ChevronUp, SlidersHorizontal, Check, X } from 'lucide-react';
 import { CEFRLevel, ReadingType, ReadingLength, ReadingStyle, AppSettings, ReadingRecord, GenerationRequest } from '../types';
@@ -85,16 +86,16 @@ export const HomeView: React.FC<HomeViewProps> = ({ settings, onGenerate, isLoad
 
   return (
     <div className="page-shell studio-home">
-      {currentReading && onContinueReading && <button type="button" className="studio-continue" onClick={onContinueReading} aria-label={`继续阅读：${currentReading.title}`}>
-        <span className="studio-continue__eyebrow"><Bookmark size={15} aria-hidden="true" /> CONTINUE READING · 继续阅读</span>
+      {currentReading && onContinueReading && <button type="button" className="studio-continue" onClick={onContinueReading} aria-label={`继续阅读：${currentReading.title}`}><HandOutline/>
+        <Companion/><Mascot pose="sprig" className="continue-sprig"/><span className="studio-continue__eyebrow"><Bookmark size={15} aria-hidden="true" /> CONTINUE READING · 继续阅读</span>
         <strong>{currentReading.title}</strong>
         <span className="studio-continue__meta">{currentReading.cefrLevel} · {TYPE_LABELS.find(([value]) => value === currentReading.readingType)?.[1] || '短文'}</span>
         <span className="studio-continue__action">继续阅读 <ArrowRight size={16} aria-hidden="true" /></span>
       </button>}
       <section className="studio-inspiration" aria-labelledby="inspiration-title">
         <div className="studio-section-heading"><h2 id="inspiration-title">寻找创作灵感</h2><button type="button" className="studio-refresh" disabled={isLoading} onClick={() => setGroups(previous => previous.map((group, index) => index === scene ? (group + 1) % SCENES[scene].groups.length : group))}><RefreshCw size={15} aria-hidden="true" />换一组</button></div>
-        <div className="studio-scenes" role="group" aria-label="灵感场景">{SCENES.map(({ label, icon: Icon }, index) => <button type="button" key={label} aria-pressed={scene === index} disabled={isLoading} onClick={() => setScene(index)}><Icon size={20} aria-hidden="true" /><span>{label}</span></button>)}</div>
-        <div className="studio-topics">{SCENES[scene].groups[groups[scene]].map((topic, index) => <button type="button" key={topic} disabled={isLoading} onClick={() => chooseInspiration(topic)}><span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>{topic}<ArrowRight size={17} aria-hidden="true" /></button>)}</div>
+        <div className="studio-scenes" role="group" aria-label="灵感场景"><Companion pose="hamster-peek" className="inspiration-companion"/>{SCENES.map(({ label, icon: Icon }, index) => <button type="button" key={label} aria-pressed={scene === index} disabled={isLoading} onClick={() => setScene(index)}><Icon size={20} aria-hidden="true" /><span>{label}</span></button>)}</div>
+        <div className="studio-topics">{SCENES[scene].groups[groups[scene]].map((topic, index) => <button type="button" key={topic} disabled={isLoading} onClick={() => chooseInspiration(topic)}><HandOutline/><span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>{topic}<ArrowRight size={17} aria-hidden="true" /></button>)}</div>
       </section>
       <form className="studio-creation" onSubmit={handleSubmit}>
         <h2>创作你的短文</h2>
@@ -102,20 +103,20 @@ export const HomeView: React.FC<HomeViewProps> = ({ settings, onGenerate, isLoad
           <button type="button" aria-pressed={!importMode} disabled={isLoading} onClick={() => setImportMode(false)}>自定义主题</button>
           <button type="button" aria-pressed={importMode} disabled={isLoading} onClick={() => setImportMode(true)}>导入英文稿</button>
         </div>
-        {importMode ? <section className="studio-composer studio-transcript">
+        {importMode ? <section className="studio-composer studio-transcript"><HandOutline/>
           <label htmlFor="source-title">稿件标题（选填）</label>
           <input id="source-title" value={sourceTitle} maxLength={160} disabled={isLoading} onChange={e => setSourceTitle(e.target.value)} placeholder="例如：TED 演讲标题" />
           <label htmlFor="source-transcript">英文原稿</label>
           <textarea id="source-transcript" value={sourceText} maxLength={30000} rows={8} disabled={isLoading} aria-describedby="transcript-help" onChange={e => { setSourceText(e.target.value); saveGenerationDraft(e.target.value, 'transcript'); }} placeholder="在这里粘贴 TED 稿件或其他英文文章…" />
           <p id="transcript-help" className="studio-input-preview">{sourceText.length.toLocaleString()} / 30,000 字符 · 保留核心观点，按 {cefr} 等级和下方配方改写。生成的词汇将关联到新短文。</p>
-        </section> : <section className="studio-composer">
+        </section> : <section className="studio-composer art-anchor"><HandOutline/><Mascot pose="sprig" className="composer-sprig"/>
           <label htmlFor="generation-input"><AlignLeft size={17} aria-hidden="true" />自定义主题与要求</label>
           <textarea ref={textarea} id="generation-input" value={input} onChange={e => setInput(e.target.value)} rows={3} disabled={isLoading} aria-describedby={specifiedVocabulary ? 'generation-input-preview' : undefined} placeholder="例如：如何礼貌地拒绝别人，或输入想学习的英文单词…" />
           {specifiedVocabulary && <div id="generation-input-preview" className="studio-input-preview" role="status">{specifiedVocabulary.length ? `将按词表处理（${specifiedVocabulary.length} 项）：${specifiedVocabulary.join(' · ')}` : '尚未识别到词条，请在分隔符之间输入表达。'}<p>逗号、顿号和分号会分隔词条；主题描述请避免这些分隔符。</p></div>}
         </section>}
         <section className="studio-recipe" aria-labelledby="recipe-title">
           <div className="studio-recipe__heading"><h3 id="recipe-title">学习配方</h3><button type="button" aria-expanded={expanded} aria-controls={expanded ? 'recipe-panel' : undefined} onClick={() => setExpanded(value => !value)}>{expanded ? <ChevronUp size={17} /> : <SlidersHorizontal size={16} />}{expanded ? '收起设置' : '自定义参数'}</button></div>
-          {expanded && <div id="recipe-panel" className="studio-recipe__panel">
+          {expanded && <div id="recipe-panel" className="studio-recipe__panel"><HandOutline/>
             <div className="studio-recipe__group"><span id="cefr-label">学习等级</span><div className="studio-choices" role="group" aria-labelledby="cefr-label" aria-describedby="cefr-ability-hint">{(['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as CEFRLevel[]).map(level => <button type="button" key={level} aria-pressed={cefr === level} disabled={isLoading} onClick={() => { setCefr(level); onCefrChange?.(level); }}>{level}</button>)}</div><p id="cefr-ability-hint" className="sr-only">能力参考：{CEFR_ABILITY_HINTS[cefr]}</p></div>
             <div className="studio-recipe__group"><span id="reading-type">文体</span><div className="studio-choices" role="group" aria-labelledby="reading-type">{TYPE_LABELS.map(([value, label]) => <button type="button" key={value} aria-pressed={type === value} disabled={isLoading} onClick={() => setType(value)}>{label}</button>)}</div></div>
             <div className="studio-recipe__group"><span id="reading-length">篇幅</span><div className="studio-choices" role="group" aria-labelledby="reading-length">{LENGTH_LABELS.map(([value, label]) => <button type="button" key={value} title={({ short: '80–120 词', medium: '150–200 词', long: '250–350 词' })[value]} aria-pressed={length === value} disabled={isLoading} onClick={() => setLength(value)}>{label}</button>)}</div></div>

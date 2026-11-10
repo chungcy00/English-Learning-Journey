@@ -1,5 +1,6 @@
+import { HandOutline, Mascot } from '../components/LearningArt';
 import React, { useRef } from 'react';
-import { ArrowRight, ChevronRight, History, Trash2 } from 'lucide-react';
+import { ArrowRight, ChevronRight, Trash2 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ReadingRecord, VocabularyItem } from '../types';
 import { ReadingLevelPieChart } from '../components/ReadingLevelPieChart';
@@ -45,7 +46,7 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({ readings
     requestAnimationFrame(() => manager.current?.focus({ preventScroll: true }));
   };
   return <div className="page-shell history-page history-final">
-    <header><h1 className="type-page font-ui font-semibold">阅读历史记录</h1><p className="history-total">共保存了 {readings.length} 篇学习短文</p></header>
+    <header className="history-page-heading"><Mascot pose="sprig"/><h1 className="type-page font-ui font-semibold">阅读历史记录</h1><p className="history-total">共保存了 {readings.length} 篇学习短文</p></header>
     <ReadingLevelPieChart readings={readings} dimension={dimension} selectedLevel={activeLevel} vocabulary={vocabulary}
       onDimensionChange={value => { setDimension(value); setSelectedLevel(null); }}
       onLevelSelect={value => setSelectedLevel(current => current === value ? null : value)} />
@@ -54,7 +55,7 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({ readings
       <p className="history-list-description">{activeLevel ? dimension === 'vocabulary' ? `含 ${activeLevel} 精选词汇的历史短文` : '已筛选的历史短文' : '按最近生成时间排列'}</p>
       <div className="history-list" aria-label="历史短文列表">
         <AnimatePresence initial={false}>
-          {visibleReadings.map(item => <motion.article layout="position" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0, margin: 0, paddingBlock: 0 }} transition={transition} key={item.id} className={`history-entry history-card${managing ? ' is-managing' : ''}`}>
+          {visibleReadings.map(item => <motion.article layout="position" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0, margin: 0, paddingBlock: 0 }} transition={transition} key={item.id} className={`history-entry history-card${managing ? ' is-managing' : ''}`}><HandOutline/>
             {!managing && <button className="history-card-open" type="button" aria-label={`阅读：${item.title}`} onClick={() => onSelectReading(item)} />}
             <div className="history-entry__heading"><h3>{item.title}</h3><span className="history-read-arrow" aria-hidden="true"><ChevronRight size={20}/></span></div>
             <div className="history-card-metadata" aria-hidden={managing} inert={managing}><div><div className="history-badges"><HistoryLevelBadge level={item.cefrLevel || '未知'}/><span>{types[item.readingType] || '未知文体'}</span><span>{lengths[item.length] || '未知篇幅'}</span></div></div></div>
@@ -62,7 +63,7 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({ readings
             <div className="history-delete-action" aria-hidden={!managing} inert={!managing}><button type="button" aria-label={`删除 ${item.title}`} onClick={() => setDeletion(item)}><Trash2 size={18} aria-hidden="true"/>删除</button></div>
           </motion.article>)}
         </AnimatePresence>
-        {visibleReadings.length === 0 && <div className="history-empty" role="status"><History aria-hidden="true" size={28}/><p>{readings.length ? '没有符合筛选的短文。' : '还没有保存的短文记录'}</p>{activeLevel ? <button type="button" onClick={() => setSelectedLevel(null)}>清除筛选</button> : onCreateReading && <button type="button" onClick={onCreateReading}>生成第一篇短文<ArrowRight size={18} aria-hidden="true"/></button>}</div>}
+        {visibleReadings.length === 0 && <div className="history-empty" role="status"><Mascot pose="together" className="history-empty-companion"/><p>{readings.length ? '没有符合筛选的短文。' : '还没有保存的短文记录'}</p>{activeLevel ? <button type="button" onClick={() => setSelectedLevel(null)}>清除筛选</button> : onCreateReading && <button type="button" onClick={onCreateReading}>生成第一篇短文<ArrowRight size={18} aria-hidden="true"/></button>}</div>}
       </div>
     </section>}
     {deletion && <HistoryDeletionDialog title={deletion.title} onCancel={() => setDeletion(null)} onConfirm={confirmDeletion}/>}

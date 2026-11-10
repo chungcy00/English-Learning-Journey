@@ -9,6 +9,7 @@ const render = (props = {}) => renderToStaticMarkup(React.createElement(Processi
 test('generation dialog announces the submitted topic with one title and complete cancellation notes', () => {
   const html = render();
   for (const text of ['正在为你定制专属短文…', '正在根据「如何礼貌地拒绝别人」构思内容，请稍候。', '取消本次操作', '取消不会更改已有短文或清空输入。', '请求发送后，取消操作不一定能中止服务端处理。']) assert.ok(html.includes(text));
+  assert.match(html, /aria-modal="false"/);
   assert.match(html, /aria-describedby="processing-description processing-note"/);
   assert.match(html, /role="status" aria-live="polite" aria-atomic="true"/);
   assert.doesNotMatch(html, /animate-spin|正在准备|预计|progressbar|>\d+%/);

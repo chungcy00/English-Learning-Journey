@@ -1,3 +1,4 @@
+import { HandOutline } from '../components/LearningArt';
 import React, { useState, useEffect, useRef } from 'react';
 import { readReviewProgress, restoreReviewProgress, writeReviewProgress } from '../utils/reviewProgress';
 import { BookOpen, ChevronLeft, ChevronRight, Shuffle, RefreshCw, Minus, Plus } from 'lucide-react';
@@ -85,7 +86,7 @@ const RandomReviewView: React.FC<ReviewViewProps & {key?:string;collectionCount:
   const move = (step:number) => { if(!detailsBusy){setCurrentIndex(index=>Math.min(reviewList.length-1,Math.max(0,index+step)));setIsRevealed(false);} };
   const Heading = embedded ? 'h2' : 'h1';
   return <div className={`${embedded ? 'review-embedded' : 'page-shell page-shell--review'} page-stack review-page type-body`} onKeyDown={event=>{if(!event.defaultPrevented && !detailsBusy && !(event.target as Element).closest('button,input,textarea,select,a,[role="tab"]') && ['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();move(event.key==='ArrowRight'?1:-1);}}}>
-    <section className="random-review" aria-label="随机复习">
+    <section className="random-review" aria-label="随机复习"><HandOutline/>
       <div className="random-review__controls"><Heading ref={scopeHeading} tabIndex={scopeLabel ? -1 : undefined} className="type-section font-semibold"><Shuffle size={18} aria-hidden="true"/>随机复习</Heading>
         <ReviewCategorySelect value={category} categories={categories} disabled={detailsBusy||!collectionCount} onChange={onCategoryChange}/>
         <div className="random-review__presets" role="group" aria-label="随机复习数量">{[10,20,50].map(count=><button type="button" key={count} aria-pressed={selection.count===count} disabled={detailsBusy||!allVocabularies.length} onClick={()=>choose(count)}>{count} 词</button>)}<button type="button" aria-pressed={selection.count===null} disabled={detailsBusy||!allVocabularies.length} onClick={()=>choose(null)}>全部 {allVocabularies.length} 词</button></div>

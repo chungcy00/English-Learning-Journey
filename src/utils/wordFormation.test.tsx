@@ -45,7 +45,7 @@ test('English definition cards show only ordered English text and left-side spee
  const entries=[{id:'one',text:'Giving useful assistance.',meaningZh:'隐藏中文',note:'隐藏补充',category:'隐藏标签',partOfSpeech:'adjective'},{id:'two',text:'Making something easier.',meaningZh:'隐藏翻译'}];
  const before=structuredClone(entries);const html=renderToStaticMarkup(<DefinitionCards entries={entries} pronounce={()=>{}}/>);
  for(const hidden of ['隐藏中文','隐藏补充','隐藏标签','隐藏翻译','adjective'])assert.ok(!html.includes(hidden));
- assert.equal(html.split('class="lexicon-definition-card"').length-1,2);assert.ok(html.indexOf('<button')<html.indexOf('<p'));assert.deepEqual(entries,before);
+ assert.equal(html.split('class="lexicon-definition-card"').length-1,2);assert.ok(html.indexOf('<button')<html.indexOf('<p lang='));assert.deepEqual(entries,before);
  assert.ok(renderToStaticMarkup(<DefinitionCards entries={[{id:'old',text:'只有中文',meaningZh:'旧数据'}]} pronounce={()=>{}}/>).includes('No English definition'));
 });
 test('POS labels are abbreviated locally without changing stored parts of speech',()=>{

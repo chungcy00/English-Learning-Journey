@@ -1,5 +1,6 @@
+import { Mascot, HandRule } from './LearningArt';
 import React from 'react';
-import { BookOpen, BookA, Bookmark, History, Sparkles } from 'lucide-react';
+import { BookOpen, BookA, Bookmark, History, Sprout } from 'lucide-react';
 
 export type NavTab = 'words' | 'home' | 'reading' | 'history' | 'practice' | 'wordbook' | 'rewrite';
 
@@ -19,7 +20,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   showNavigation = true,
 }) => {
   const tabs = [
-    { id: 'home' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '生成' : '生成短文', icon: Sparkles },
+    { id: 'home' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '生成' : '生成短文', icon: Sprout },
     { id: 'reading' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '阅读' : '当前阅读', icon: BookOpen, disabled: !hasCurrentReading },
     { id: 'words' as NavTab, label: '单词', icon: BookA },
     { id: 'practice' as NavTab, label: '词汇与复习', icon: Bookmark, badge: reviewCount },
@@ -34,12 +35,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() => setActiveTab('home')}
           className="flex items-center gap-3 min-h-11 text-left group self-start shrink-0"
         >
-          <img
-            src="/site-icon.png"
-            alt=""
-            aria-hidden="true"
-            className="w-10 h-10 object-contain flex-shrink-0"
-          />
+          <Mascot pose="together" className="brand-companions" eager/>
           <div>
             <span className="font-editorial text-[length:var(--type-section)] leading-[1.3]  font-semibold text-[var(--text-primary)] tracking-tight group-hover:text-[var(--accent-vocab)] transition-colors">
               Mine English
@@ -80,6 +76,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           })}
         </nav>}
       </div>
+      <Mascot pose="sprig" className="header-sprig"/>
+      <HandRule/>
     </header>
   );
 };

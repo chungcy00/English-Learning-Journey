@@ -1,0 +1,23 @@
+.loading-companions { display:flex; align-items:center; gap:12px; max-width:100%; padding-block:8px; pointer-events:none; color:var(--text-secondary); }
+.loading-companions__viewport { display:block; position:relative; width:88px; aspect-ratio:1; flex-shrink:0; overflow:hidden; }
+.loading-companions__frames { display:block; max-width:none; width:400%; height:300%; animation:companion-frames var(--loading-duration) steps(1,end) infinite; }
+.loading-companions__label { min-width:0; overflow-wrap:anywhere; font-family:var(--font-app); font-size:var(--type-label); line-height:1.6; }
+.loading-companions--large { flex-direction:column; justify-content:center; padding:0; }
+.loading-companions--large .loading-companions__viewport { width:152px; }
+/* Twelve registered cels, not a static reference sheet. Frame 12 returns to 1. */
+@keyframes companion-frames {
+  0% { transform:translate(0,0); }
+  8.333% { transform:translate(-25%,0); }
+  16.666% { transform:translate(-50%,0); }
+  25% { transform:translate(-75%,0); }
+  33.333% { transform:translate(0,-33.333333%); }
+  41.666% { transform:translate(-25%,-33.333333%); }
+  50% { transform:translate(-50%,-33.333333%); }
+  58.333% { transform:translate(-75%,-33.333333%); }
+  66.666% { transform:translate(0,-66.666667%); }
+  75% { transform:translate(-25%,-66.666667%); }
+  83.333% { transform:translate(-50%,-66.666667%); }
+  91.666%,100% { transform:translate(-75%,-66.666667%); }
+}
+@media (max-width:639px) { .loading-companions--large .loading-companions__viewport { width:128px; } }
+@media (prefers-reduced-motion:reduce) { .loading-companions__frames { animation:none; transform:none; } }

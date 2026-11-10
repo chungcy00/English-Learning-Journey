@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, BookA, Bookmark, History, Sparkles } from 'lucide-react';
+import { BookOpen, BookA, Bookmark, History, Sprout } from 'lucide-react';
 import { NavTab } from './Navbar';
 
 interface InstalledAppBottomNavProps {
@@ -16,7 +16,7 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
   hasCurrentReading,
 }) => {
   const tabs = [
-    { id: 'home' as NavTab, label: '生成', icon: Sparkles },
+    { id: 'home' as NavTab, label: '生成', icon: Sprout },
     { id: 'reading' as NavTab, label: '阅读', icon: BookOpen, disabled: !hasCurrentReading },
     { id: 'words' as NavTab, label: '单词', icon: BookA },
     { id: 'practice' as NavTab, label: '词汇与复习', icon: Bookmark, badge: reviewCount },

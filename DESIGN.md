@@ -1,6 +1,6 @@
 ---
 name: Mine English
-description: A compact learning workspace in warm white and forest green.
+description: A warm hand-drawn learning workspace with consistent cat and hamster companions.
 colors:
   bg-primary: "#F8F7F2"
   bg-alt: "#F0F3EC"
@@ -84,6 +84,8 @@ typography:
     lineHeight: 1.4
     letterSpacing: "normal"
 rounded:
+  hand-surface: "16px 14px 17px 13px / 14px 17px 13px 16px"
+  hand-control: "11px 13px 10px 12px / 12px 10px 13px 11px"
   nav: "4px"
   control: "10px"
   card: "12px"
@@ -99,9 +101,8 @@ components:
   button-generate:
     backgroundColor: "{colors.accent-primary}"
     textColor: "{colors.bg-primary}"
-    rounded: "{rounded.nav}"
-    padding: "0.625rem 1.25rem"
-    height: "44px"
+    rounded: "{rounded.hand-surface}"
+    height: "64px"
   button-generate-hover:
     backgroundColor: "{colors.accent-vocab}"
   button-continue:
@@ -115,7 +116,7 @@ components:
   composer:
     backgroundColor: "{colors.surface-paper}"
     textColor: "{colors.text-primary}"
-    rounded: "{rounded.workspace}"
+    rounded: "{rounded.hand-surface}"
     padding: "1.25rem 1.375rem"
   choice:
     textColor: "{colors.text-secondary}"
@@ -126,27 +127,21 @@ components:
     backgroundColor: "{colors.accent-primary}"
     textColor: "{colors.surface-paper}"
     rounded: "{rounded.pill}"
-  level-selected:
-    backgroundColor: "{colors.surface-paper}"
-    textColor: "{colors.accent-primary}"
-    rounded: "{rounded.card}"
-    padding: "0.5rem 0.25rem"
-    height: "64px"
   select:
     backgroundColor: "{colors.surface-paper}"
     textColor: "{colors.text-primary}"
-    rounded: "{rounded.control}"
+    rounded: "{rounded.hand-control}"
     padding: "0.625rem 2.5rem 0.625rem 0.875rem"
     height: "44px"
   nav-active:
-    backgroundColor: "{colors.bg-alt}"
-    textColor: "{colors.text-primary}"
+    backgroundColor: "transparent"
+    textColor: "{colors.accent-primary}"
     typography: "{typography.label}"
-    rounded: "{rounded.nav}"
+    rounded: "{rounded.hand-control}"
   history-card:
     backgroundColor: "{colors.surface-paper}"
     textColor: "{colors.text-primary}"
-    rounded: "{rounded.card}"
+    rounded: "{rounded.hand-surface}"
     padding: "1.5rem"
   stepper-button:
     textColor: "{colors.text-primary}"
@@ -159,182 +154,132 @@ components:
 
 ## Overview
 
-**Creative North Star: "Compact learning workspace"**
+**Creative North Star: "A warm illustrated learning companion"**
 
-Mine English uses warm white surfaces, forest green actions, and readable green-gray supporting text. The 2026-10-09 typography brief replaces the serif pairing with platform-native / Inter sans typography. Interface controls support the learning task through visible labels, clear selected states, and accessible focus outlines.
+Mine English is a readable, compact learning workspace in warm white and forest green, accompanied by a cream-white cat and a golden, round hamster. The approved 2026-11-10 redesign changes the visual construction across the website: gently hand-drawn outlines, quiet paper surfaces, controlled rounded forms and a small shared family of character illustrations. It does not replace the palette, the Nunito / Noto Sans TC typography, the confirmed size hierarchy or the learning functions.
 
-This document captures the implemented shared palette and the first reviewed batch: Home, learning settings, reading history, and the saved-reading level chart. Other existing screens provide incumbent evidence, but their presence here does not claim completion or finish review of later implementation phases. CSS custom properties in `src/index.css` are the source of truth; frontmatter records their current values and observed component dimensions.
+The current implementation is defined by the palette and type variables in `src/index.css`, the shared skin in `src/handDrawn.css`, and `src/components/LearningArt.tsx`. These current rules supersede the earlier visual descriptions of rigid rectangular navigation, the old site-icon logo and unrelated page-specific card treatments. Functional decisions and their history remain in `PRODUCT.md`.
 
 **Key Characteristics:**
 
-- Warm white backgrounds and forest green actions.
-- Compact controls with room for readable learning text.
-- Rounded surfaces, pill choices, and visible keyboard focus.
-- Factual saved-reading metadata and labeled chart values.
+- Existing warm-white surfaces, forest-green actions and readable supporting text.
+- Consistent cream cat and golden hamster from the approved character reference, reused across pages.
+- Thin measured outlines with fixed-size corners and restrained, sub-pixel irregularity.
+- Compact, unchanged typography and clear task-oriented alignment.
+- Decorative art outside reading and input areas; standard geometric charts with factual values.
+- Real-state loading animations, delayed to avoid flashing during quick operations.
 
 ## Colors
 
-The palette combines warm white neutrals with a forest green accent and muted supporting greens.
+The frontmatter retains the incumbent palette. Shared UI colors come from the existing CSS variables; the redesign introduces no replacement theme.
 
 ### Primary
 
-- Forest green (`accent-primary`) identifies generation, continuation, selected parameter pills, and the A2 chart series.
-- Deeper forest green (`accent-vocab`) supports vocabulary emphasis, general focus outlines, and generation-button hover.
-- Dark forest green (`accent-hover`) appears on continuation-action hover.
-- Muted green (`accent-secondary`) supports quieter icons and the B2 chart series.
+Forest green identifies generation, continuation, selected choices, vocabulary emphasis and the active navigation item. The deeper existing hover accent supports available primary actions. Muted greens supply hand-drawn boundaries and quiet botanical details.
+
+### Secondary
+
+The existing warm accent and gold provide the hamster's identity and small count badges. The cream character and paper fill use the existing warm-white family. The generated artwork follows these roles; it is not a source of new UI color tokens.
 
 ### Neutral
 
-- Warm white (`bg-primary`) is the page canvas and generation-button text; `surface-paper` is the slightly lighter composer, settings, and card surface.
-- Warm gray (`bg-alt`) groups controls, navigation selection, and metadata badges. `surface-white`, `surface-selected`, `surface-warm`, and `surface-track` serve existing collection, practice, and progress surfaces.
-- Deep green-gray (`text-primary`) carries main text; `text-secondary` carries supporting content; `text-muted` carries readable dates and metadata. Only placeholders and disabled content use `text-placeholder` / `text-disabled`.
-- `border-subtle` separates surfaces and rows; `border-control` gives native selects stronger boundaries; `border-selected` marks existing collection selection.
-- Muted warm brown (`accent-warm`) is the incumbent navigation-count badge color.
+Warm white is the page canvas; paper is the main content surface. Existing selected, alternate, disabled and warm surfaces group controls without texture behind prose. Primary, secondary and muted text roles retain their current responsibilities. Error, warning, success and information feedback continue to use the existing semantic variables.
 
-The chart keeps separate semantic series tokens even where values match action colors. B1 uses `chart-b1`, C1 uses `chart-c1`, and missing or unrecognized levels use `chart-unknown`. Counts and percentages accompany color.
+Chart series retain separate named CEFR tokens and textual level/count/percentage labels. The diagram's true geometry and color meanings are independent of the hand-drawn outer panel.
 
-Existing semantic feedback is not a unified root-token palette: error text uses Tailwind red, translation warnings use amber, saved feedback uses emerald, and history-delete hover has a local muted red-brown. These are observed incumbent treatments, not a new palette normalization instruction.
-
-**The Source of Truth Rule.** Reuse the root CSS custom properties for shared palette decisions; preserve the chart's semantic series names.
+**The Existing Palette Rule.** Read the root theme variables. Never copy a reference image's incidental color into a new UI token.
 
 ## Typography
 
-**Font:** font_requirements.md explicitly specifies Nunito for Latin and all digits, followed by Noto Sans TC for Chinese, including simplified Chinese UI copy. The Fontsource variable packages bundle WOFF2 resources with unicode-range subsets and swap loading from the application origin. Nunito supports real weights 200–1000 and italic; Noto Sans TC supports real weights 100–900. Existing 400/500/600/700 hierarchy is retained, with no synthetic weight/italic. First-family precedence ensures Latin digits in mixed Chinese strings remain Nunito. PingFang SC / Microsoft YaHei are recovery fallbacks only. The existing editorial variable remains an alias to the app family. OFL licenses are distributed under public/fonts/licenses.
-
-All headings, reading passages, controls, translations and metadata now use sans typography. At 640px, only page and section sizes change. All application components reference the global scale in src/index.css. Heading ink is #2C3E35; normal content remains soft gray-black and readable secondary text uses #5F655D / #6A7068.
+**Font:** Nunito for Latin letters and digits, then Noto Sans TC for Chinese, with the existing platform fallbacks. Local Fontsource variable assets and font licenses remain unchanged. The editorial variable remains an alias to the app family; hand-drawn artwork is not permission to introduce a handwriting font.
 
 ### Hierarchy
 
-- Page titles use 24px / 28px and weight 700, preserving line-height 1.2.
-- Section headings use 18px / 20px and weight 600, preserving line-height 1.3.
-- Terms and card titles use 16px and weight 500. The previous 26px review-word exception is removed.
-- Reading uses a dedicated 15px / 1.65 regular setting for the compact reference density; examples remain 16px / 1.6 and body remains 15px / 1.6. Other role sizes and paragraph spacing are unchanged.
-- Translations and vocabulary definitions use 14px / regular weight.
-- Labels and metadata use 12px / regular weight, within the brief's 11–12px range. Progress/counts retain tabular figures to avoid numeric jitter.
+- Page titles retain the existing responsive (24px / 28px) scale, weight (700) and compact heading line-height.
+- Section headings retain (18px / 20px) and their existing (600) hierarchy.
+- Terms and card titles use the established (16px) role, with existing component-specific emphasis retained.
+- Reading remains (15px / 1.65); examples remain (16px / 1.6); body remains (15px / 1.6).
+- Translations remain (14px / 1.6); labels, metadata and compact edit actions remain (12px).
+- Mobile text-entry fields retain (16px) to avoid focus zoom; count/progress numerals remain tabular.
 
-**The Confirmed Type Rule.** font_requirements.md determines the font families; retain current sizes, line heights, tracking, colors, layout and interactions. Existing role names remain compatibility mappings, not a second system. Mobile text-entry controls retain 16px to prevent iOS focus zoom. PDF export remains an independent print typography surface. Final Android and iPhone rendering requires real-device acceptance; desktop responsive testing is not proof of physical-device font delivery. The existing rewrite progress list has icons, not circular numbered steps; do not introduce new step containers to imitate the reference.
+**The Unchanged Type Rule.** Shape, layout and illustration may change; fonts, established text sizes, weights, tracking and readability must not be replaced to mimic a reference.
 
 ## Layout
 
-The shared shell centers task-sized containers with mobile gutters from the frontmatter. Gutters increase to (1.5rem) from (640px) and (2rem) from (1024px). The default collection shell is (56rem), the focus shell (48rem), and the reading shell (76rem), with observed page overrides: Home (52rem), History (68rem), and Reading (78rem). Do not assume one fixed width across tasks.
+Task-specific, centered containers remain in use. At the existing large-desktop condition (at least 1280px, hover and a fine primary pointer), generation uses its (56rem) shell and custom words, wordbook, history and review use their existing expanded desktop shells. Reading keeps its (72rem) shell and (2:1) article/vocabulary arrangement with a (24px) gap; the readable prose measure remains bounded. Narrow/touch layouts use the existing stacked flow.
 
-Home uses a centered compact heading, integrated topic composer and submit action, suggestion pills, and fully visible settings. The CEFR group stays four equal columns. Parameter rows wrap; on mobile their pill choices occupy the next row and align left. Below (640px), composer padding is (1rem), its minimum height is (14rem), and the submit action fills its width. Desktop composer padding is (1.25rem 1.5rem). Suggestions form a horizontally scrollable row on mobile.
+The new composition reserves space for characters above major surfaces. Characters are not placed in each row or paragraph. Desktop learning settings align a compact label column beside the choices; phones stack those groups and retain tight (44px) CEFR touch targets. Form fields, imports, toggles and parameter behavior are unchanged.
 
-History is a single-column card list with a (1rem) gap. Cards reduce padding from (1.5rem) to (1rem) on mobile. Headings, badges, and footer metadata wrap. The chart uses a (160px) pie and a text legend in a wrapping flex layout with (1.5rem 2rem) gaps.
+Desktop navigation stays at the top with icon/text actions and a restrained, slightly curved active underline. Phone and tablet browsers and installed shells keep the shared five-item bottom navigation, the brand header, software-keyboard hiding behavior and bottom safe-area space. Decorative header/footer sprigs stay within the viewport; footers contain overflow rather than allowing decoration to create horizontal scrolling.
 
-Navigation is sticky, with four grid columns and stacked icons/text below (1024px), then a horizontal arrangement. Installed-shell safe areas and software-keyboard behavior remain existing platform adaptations. Screenshots verify desktop and mobile browser layouts; they do not establish physical-device verification.
+Wordbook controls retain the current two-option collection menu (词汇 / 例句), search, add and sort on one row, compact lexical rows and in-flow expanded details. Random review keeps its independent dynamic lexical category filter and actual sampled group. Historical category, saved-material and deletion/undo semantics are product behavior, not new layout rules.
 
 ## Elevation & Depth
 
-Tonal backgrounds and subtle borders carry most separation. The Home composer explicitly removes its earlier shadow. A selected CEFR segment uses a small state shadow (`0 2px 6px rgb(32 38 35 / 9%)`); the generation action retains the incumbent extra-small utility shadow (`0 1px 2px 0 rgb(0 0 0 / 5%)`). Existing reading tabs use a separate small state shadow. The sticky header has a translucent canvas background and a small backdrop blur.
+Paper fill, selected surfaces and fine outlines carry the major surfaces. The shared skin removes ornamental shadows from the primary cards, navigation and dropdowns. Existing modal backdrops and visible focus outlines retain their functional roles; the header and bottom navigation use the solid existing canvas rather than glass decoration. No texture is introduced behind learning text.
 
-Focus uses a visible outline (2px) with an offset (3px); the composer also changes its border and adds a faint accent ring when a descendant has focus. Native select transitions are (160ms ease); vocabulary emphasis transitions are (150ms ease-in-out). This batch introduces no entrance animation.
+Interactive focus remains visible, with the existing theme outline and focus behavior. The new border SVGs and all decorative artwork have no pointer interaction and do not cover focus targets. Existing flip, selection and dialog transitions remain; loading motion follows real operation state and respects reduced motion.
 
 ## Shapes
 
-The implemented system has several radii rather than one universal rounding token: compact navigation and generation controls, native selects, History cards and CEFR segments, larger composer/settings surfaces, pill choices and badges, and circular stepper controls. The frontmatter records those observed dimensions; there are no root radius custom properties.
+The shared surface fallback uses `--hand-corner` (16px 14px 17px 13px / 14px 17px 13px 16px); compact controls use `--hand-control-corner` (11px 13px 10px 12px / 12px 10px 13px 11px). The older primitive radii remain compatibility tokens for untouched local roles, not a second new visual language.
 
-Other incumbent screens also use (2px), (6px), and (8px) radii. These remain observed local treatments. Do not normalize unrelated screens as part of consuming this document. Borders are generally thin (1px), with active navigation using a thicker bottom accent (2px).
+Major surfaces use the reusable `HandOutline`: its ResizeObserver measures the actual parent, the corner radius is capped at (16px), and the contour has only sub-pixel deviation from a regular edge. The stroke (1.15px) inherits an existing theme token. Short controls and long wordbook panels must not stretch one fixed aspect-ratio border into broken corners or bowed edges. `HandRule` supplies the quiet shared rule at the header/footer; the six-column vocabulary navigation retains its already approved dashed rules and marker highlight.
+
+**The Stable Bounds Rule.** Hand-drawn is a visual contour, not a change to the aligned layout box, text baseline, hit area or chart geometry.
 
 ## Components
 
-### Buttons
+### Shared artwork and Logo
 
-Generation is a compact forest green action with warm white text, a minimum (44px) touch height, an incumbent (4px) corner treatment, and a minimum width of (9.5rem). Its hover uses the vocabulary accent and disabled state uses half opacity. Continuation actions use pill geometry, paper-colored text, and the darker hover accent. General keyboard focus uses the shared outline; do not add lift animations to these static controls.
+`Mascot` selects one of sixteen poses from the single transparent `learning-companions.webp` atlas: cat welcome/reading/thinking/success/reminder/rest/peek, the shared-reading Logo, matching hamster poses and a leafy sprig. The two characters and one green book in the Logo are the same character family as the page companions. `Companion` places the art at a region edge, while `StudyEmptyState` pairs a small illustration with real HTML text. The atlas source and exact generation prompt are documented with the assets.
 
-### Composer / Inputs
+Artwork is decorative (`aria-hidden`, empty image alternative, non-draggable and pointer-inert) and has reserved dimensions. The Logo is eager; supporting illustrations use lazy image loading. The same asset is reused rather than making different page-specific cats or hamsters. Characters shrink, move or disappear on narrow screens and must never obstruct reading, controls or selection.
 
-The composer is a paper-colored bordered surface with a visible topic label, UI-font textarea, and separated footer action. Placeholder text uses supporting green-gray. Its focus-within border/ring complements the textarea's focus outline. Native selects use the stronger control border, (10px) corners, minimum (44px) height, and an inline chevron. Hover changes the border and surface; disabled selects use (0.55) opacity.
+### Buttons and choices
 
-### Chips / Parameter Choices
+Actions retain their existing semantic color assignments, state attributes and touch areas. The current full-width generation action is (64px) high; ordinary controls remain at least (44px). Small controls use gently unequal corners; selected parameter pills retain compact organic forms, forest fill and paper text. Selected random-count buttons retain the same fill/text on hover without a decorative lift.
 
-Suggestion pills are warm gray and bordered, with a darker warm-gray hover. Parameter pills use supporting text and subtle borders at rest; a pressed pill uses forest green fill and paper text. Their actual state is conveyed by `aria-pressed`, not color alone. History badges use warm gray, except the level badge, which uses forest green.
+### Inputs, search and dropdowns
 
-### Cards / Containers
+Inputs and textareas remain clear paper fields with a restrained theme border and gently uneven corners. Focus-within changes the shared outline's theme role while preserving the actual focus indicator. Search and menus retain current text sizes and keyboard behavior. The in-page combobox/listbox stays anchored (4px) below its trigger, and option scrolling must not move the page. Error and disabled states retain factual text and existing semantic colors.
 
-History cards use paper fill, a subtle border, and the card radius. A heading and accessible delete action lead into factual badges; dates and continuation actions share the footer. The optional Home continuation card uses the same paper/border vocabulary and a warm-gray hover. The settings panel uses the larger workspace radius and thin row dividers.
+### Cards and learning details
 
-### Navigation
+The common contour applies to generation, reading, random-review, custom-word, wordbook, history, task, example, definition, phrase and tree-map surfaces. The shared frame never creates a nested illustration behind the content. Reading and vocabulary cards use their existing paper roles; the continuation card remains forest green. Wordbook rows stay compact and expandable; collapsed-row swipe deletion and expanded-row gesture protection are unchanged.
 
-The incumbent header pairs Mine English's editorial wordmark with icon-and-label tabs. Active tabs use warm-gray fill, primary text, and a forest green bottom border. Inactive tabs use supporting text; unavailable current-reading navigation remains visibly disabled. Labels are (11px) in the stacked layout and (0.875rem) from (1024px). Preserve the existing site icon; this batch generated no new raster assets.
+The six detail columns remain 例句、派生、词根、词组、英释、用法辨析. Preserve the existing marker navigation, dashed rules, compact six-column mobile layout and the established narrow-container two-row fallback. Derivatives remain a true word-family tree; roots remain verified decomposition plus separately labeled memory support; English definitions remain English-only cards; examples remain grouped by sense; phrases retain individual audio/bookmarks; usage explanations remain concise Chinese with English expressions/examples. This visual system does not alter their data or generation rules.
 
-### CEFR Segments / Vocabulary Stepper
+### Empty, loading and feedback states
 
-The CEFR strip has a warm-gray outer surface, four equally sized buttons, and a paper-filled selected segment with green text and a state shadow. Segment height is at least (64px). The vocabulary stepper uses circular (44px) buttons and a bold tabular count; the actual implementation disables decrement at 1 and increment at 20, and disables controls while generating.
+Use compact empty states in dense vocabulary detail, with concise text that distinguishes ungenerated content, reliable-content absence and generation failure. Do not expand a knowledge gap into a large empty panel or invent word facts. Custom-word and other broad empty regions can use the larger shared character/text composition. Errors and retries remain text controls, not expressions implied only by a character.
 
-### Saved-Reading Level Chart
+`LoadingAnimation` is a presentation-only public component driven by an operation's real active flag. It waits (300ms) before mounting the animation and hides on the same render as completion or failure, without a minimum display time, fake percentages, new request or data mutation. The operation map is: generate/vocabulary → run (1.2s); reading/history/saved → read (2.8s); analysis/examples/usage → write (2.6s); search → search (2.6s); short waits → rest (2.8s). Each animation is a transparent, registered twelve-frame (4 × 3) sprite sheet; the sequence uses CSS discrete frame positions rather than showing the static contact sheet. Assets are requested when that delayed component mounts. Small inline loaders are the default, with one larger generation-dialog treatment. Reduced-motion uses a static first frame. Loading never disables unrelated page functions merely to display artwork.
 
-The inline SVG pie uses the named CEFR series colors and thin paper-colored slice separators. Its text legend lists level, saved count, and percentage with tabular numerals. The accessible chart label points to the textual values. Empty data produces explanatory text instead of a pie. This visualization describes saved readings; it does not indicate learning ability, completion, or mastery.
+### Charts and tasks
+
+The history chart uses the same outer paper contour and occasional edge companion. The donut segments, labels, actual totals and per-level calculations remain ordinary exact SVG geometry. The chart/list/task layout adapts to narrow viewports without skewing data marks. Review task actions retain the actual level count and existing entry points.
+
+### Dialogs and notices
+
+Style selection, word details, removal confirmation and existing notices share the theme border/corner treatment. Destructive and editing dialogs retain their modal focus, Escape/cancel behavior and scroll limits. Generation processing is an explicitly nonmodal corner dock (`dialog open`, `aria-modal="false"`), without a body-scroll or focus lock; on phones it sits above the bottom navigation. Its real status, topic summary, cancel control and existing notes remain, and Escape within the dock invokes the available cancel action. Navigation and unrelated page features remain usable during generation. Decorative assets do not capture input. The processing illustration uses the shared delayed loading component; real status/error text remains available independently.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- Do reuse the root CSS palette and existing UI/editorial font families.
-- Do preserve visible focus outlines, actual pressed states, and implemented disabled boundaries.
-- Do use wrapping content and the observed responsive spacing for compact screens.
-- Do pair chart colors with textual levels, counts, and percentages from actual saved data.
+- Do reuse the existing palette, type scale, real semantic states and actual chart values.
+- Do use one shared cat/hamster identity and the public illustration components.
+- Do measure major outlines against actual panel bounds and retain fixed-size corners.
+- Do keep learning content selectable, controls at least 44px high and keyboard focus visible.
+- Do use compact honest empty states and delay character loading until a real operation exceeds 300ms.
+- Do preserve mobile/tablet bottom navigation, safe areas and reduced-motion behavior.
 
 ### Don't:
 
-- Don't reintroduce the replaced olive palette or borrow the demo's colors.
-- Don't enlarge the confirmed compact type scale or style the topic placeholder as editorial text.
-- Don't interpret incumbent local radii or semantic status colors as permission to normalize unrelated screens.
-- Don't describe saved-reading distribution as completion, ability, or mastery.
-
-
-## Vocabulary details and custom words (2026-11-09)
-
-New vocabulary surfaces reuse the shared palette, Nunito / Noto Sans TC font stack, and confirmed type scale. Derivative headwords, root breakdowns and phrase titles use the 16px term role at weight 500; their Chinese meanings use the 14px translation role. Usage explanations use the 15px body role, with 12px part labels and metadata. Phrase cards use the existing warm-gray surface and 12px radius; editable controls retain 44px touch height and visible shared focus.
-
-The six vocabulary tabs are an explicitly approved exception to the main navigation treatment: preserve their irregular marker highlight and transparent surface. Per the latest 2026-11-09 instruction, add subtle hand-drawn dashed rules above and below the complete tab row, using border-selected; do not add a selected-tab underline or rectangular fill. Desktop appearance stays unchanged. Below 640px, use compact 12px labels in six equal columns with 44px touch height. If the actual detail container is 300px or narrower (including increased text size), use three columns in two rows so all six full labels remain visible without horizontal scrolling. Do not shorten labels or change tab switching, content, bookmarks or generation behavior.
-
-The independent custom-word page uses the composer surface (paper fill, subtle border, 16px corners, 20px/22px desktop padding and 16px mobile padding) for entry. Its submit action follows the compact 44px forest-green generation treatment with 4px corners; phone actions span the available width. Search follows the 44px native field role with a paper surface, control border and 10px corners. Saved terms and the empty state follow the paper / subtle-border / 12px card treatment; expanded details share the same surface without a nested card. Section spacing is 40px, group spacing is 24px; input text is 15px on desktop and 16px on mobile.
-
-
-### Vocabulary learning cards and diagrams (2026-11-09)
-
-Derivatives use one paper card with the headword above a vertical family tree. Dots and 1px connectors use accent-primary / border-selected. Nesting follows explicit direct-parent data only; legacy entries remain readable without invented links. The root map uses the same single-card treatment, a root/meaning heading, labeled real segments, separately labeled memory support and expandable same-root branches. Root segments use accent-primary, prefixes status-info, and suffixes text-ink; no reference-image yellow, orange or brown is introduced. Headwords remain the 16px term role and Chinese meanings the 14px translation role.
-
-Definitions use separate paper-filled cards with a subtle 1px border and 12px corners, 20px desktop / 16px mobile padding, a 44px speech control on the left, and concise English text in the 15px body role. No translation, POS label, title or note appears inside a definition card. Per the latest request, retain only a right-aligned pencil-and-label “编辑本栏” action outside the cards; remove regeneration and source/date metadata. The basic edit action uses a small pencil and “编辑”. Both use the 12px label role, theme secondary text, 14px icons, and retain a 44px touch height. Do not show cache-save notices.
-
-Examples group sentences by sense in one paper card per meaning. Each heading places an abbreviated POS (n., v., adj., adv., etc.) directly before the Chinese word meaning. The 16px English sentences, 14px translations, speech controls and individual bookmarks sit underneath without nested colored panels. Legacy collocation-plus-example records display the actual example sentence; unknown sense links are not guessed. Navigation remains unchanged, including its compact mobile reflow.
-
-
-### Desktop vocabulary widths (2026-11-10)
-
-At viewport widths of at least 1280px, with hover and a fine primary pointer, custom words and the wordbook use a centered 72rem maximum shell. Standalone vocabulary review and its history-scoped wrapper use the same maximum; vocabulary learning cards remain centered at a 56rem maximum within their existing review container. Existing page gutters, type, paper surfaces, six-tab marker navigation, and vertical spacing remain unchanged. Narrower screens and touch-primary tablets retain their incumbent widths and layout. The wordbook no longer exposes the local backup/restore panel, per the user's explicit removal request; existing browser data is retained.
-
-### Desktop generation, reading and history widths (2026-11-10)
-
-The same large-desktop media condition (at least 1280px, hover, fine primary pointer) gives the generation page a 56rem maximum and the history page a 72rem maximum. Reading uses a 72rem shell with a 2:1 grid: the original article and its click-to-reveal paragraph translations on the left, selected vocabulary on the right, with a 24px column gap. Header, audio player and status messages span both columns. Preserve the existing 70ch prose measure, paragraph behavior, colors, font sizes and controls; this is additional workspace, not longer reading lines. On narrow screens and touch-primary tablets, keep the incumbent stacked reading layout and all three page widths unchanged.
-
-
-### Confirmed generation-page reference (2026-11-10)
-
-Use the user's confirmed composition without importing its serif typography or palette. Remove the Language Studio identity strip, introductory slogan and paragraph, scene instruction, and collapsed parameter summary. Start with the real saved-reading continuation card when present, then inspiration and creation. Scene choices use horizontal icon/text rows, topic cards use a thin existing-theme border and trailing arrow, and learning parameters are expanded initially. Keep all existing text sizes, font families and color tokens; do not add reference-image English topic subtitles or sample content. The textarea has a light 1px studio-border outline and 10px corners per the follow-up annotation. Parameter groups have no internal separator rules; CEFR choices are 44px circles, and all controls retain accessible touch targets. The recipe title is shortened to 学习配方. Only the home page uses centered desktop text navigation with a quiet active underline; other page navigation is unchanged.
-
-
-### Phone and tablet navigation and compact level choices (2026-11-10)
-
-The latest user instruction replaces the previous installed-Android-only navigation rule. Phone and tablet browsers and installed shells use the shared five-item bottom navigation, with the existing brand header retained and its duplicate top navigation removed. Narrow viewports below 1024px, coarse primary pointers and recognized mobile/tablet devices use this layout; wider desktop browsers retain their existing top navigation. Resize and pointer changes update the layout without reloading the page. Reserve 5rem plus the bottom safe area at the outer shell so content and copyright can scroll clear of the fixed navigation. Keep the existing software-keyboard hiding behavior and position installation prompts above the bar.
-
-On widths below 1024px, CEFR choices use 44px targets with 6px gaps instead of widely distributed columns. Phone recipe padding reduces to 16px. Fit all six choices in one row when space permits (including 375px phones); containers narrower than 293px use two tightly packed rows of three. Preserve the existing 12px labels, font stack, colors and selected states.
-
-
-### Random review and reading vocabulary controls (2026-11-10)
-
-Use the confirmed reference composition for the practice hub: wordbook entrance, a compact random-review control surface, then one full flip card. Remove the redundant hub introduction and former learning title/count. Reuse existing typography, colors, card surfaces and six vocabulary tabs. The control surface provides 10/20/50/all presets, a bounded custom number, apply and reshuffle, plus the current position; all actions retain at least 44px height and wrap on phones. Sampling is local, without duplicates or new AI calls. Preserve selected IDs, order, current item and flip state across route changes/reloads, with separate history scopes. Reconcile deletions without resetting unrelated learning data. Desktop top navigation shares the same centered layout and quiet active underline on every route; mobile/tablet bottom navigation is retained.
-
-Homepage vocabulary count continues to govern initial generation only. Reading-page additions have no such ceiling; retain the requested generation count as metadata. Provide an explicit add/query entry. Left swipes (or mouse drags/keyboard) reveal a separate delete action instead of a permanent cross. Vertical scrolling and word/bookmark taps remain independent. Deleting removes the passage entry and matching wordbook item; independently saved materials remain, and unrelated progress is untouched. Remove the old selection/bookmark hint and, on the dedicated custom-word page, the introductory sentence, add-toggle heading and automatic-classification hint. Selected random-count buttons keep the same forest fill and paper text on hover, without hover transforms or decorative effects; keyboard focus stays visible.
-
-
-### Personal wordbook reference and review categories (2026-11-10)
-
-The personal wordbook uses the user's confirmed reference structure: title and total, a compact paper-green collection/review bar, bordered search, sort control and a single paper list with subtle row separators. Word text remains 16px and supporting metadata 12px, displayed on the same wrapping baseline. Expanded rows retain six-column details, editing, audio and individual material bookmarks. Existing example/phrase collections stay available through the collection selector. Remove the English subtitle and batch-management/checkbox controls. Collapsed rows reveal deletion only after an explicit left swipe, mouse drag or keyboard action, with undo retained. Expanded rows disable the gesture, hide and reset the delete action immediately, and ignore horizontal drags without toggling the details. Hidden delete controls use visibility and pointer-event gating so expanded-row margins never expose red backgrounds.
-
-The wordbook entrance describes the global collection of passage vocabulary and custom words, excluding explicitly removed entries. Reading a saved passage must not recreate a deleted wordbook item. Random review offers only the categories present in current data: word, phrase, idiom, collocation or phrasal verb, using existing Chinese labels. Prefer explicit saved/cached classification and retain legacy type compatibility. Sampling, counts and session state are separated by category while the full collection total stays factual. Category changes do not invoke AI or overwrite learning data. Use an in-page combobox/listbox anchored 4px below its trigger, aligned left; native OS popups must not be used for this selector. Keyboard navigation scrolls only the options panel and restores focus without scrolling the page. Desktop/tablet/phone typography and palette remain unchanged.
-
-The wordbook selector shares the anchored in-page menu. Its default shows lexical entries without an all-entries option; available lexical categories and independently saved examples/phrases are selectable, with an accessible clear-filter control returning to the default. Place the add-entry toggle and alphabet sort on one grid row, left and right respectively, on desktop and mobile. An expanded entry form spans the next full row without moving either control.
-
-The latest wordbook simplification supersedes lexical-category choices in the collection selector: offer only 词汇 and 例句, defaulting to 词汇. Vocabulary includes all lexical types and independently bookmarked phrases; examples show only bookmarked example materials. Keep the random-review category filter unchanged.
+- Don't import reference-image colors, new fonts, a new handwriting typeface or unrelated animal icons.
+- Don't fill every card with a character, place texture behind prose or let art create overflow/occlusion.
+- Don't distort chart marks, typography, hit areas or data to create a hand-drawn effect.
+- Don't add accounts, pet progression, currencies, fabricated statistics or other reference-only features.
+- Don't change storage keys, schemas, user edits, existing generation rules or API flows for a visual skin.
+- Don't present a static storyboard as an animation, show fabricated progress or keep a finished loader visible.

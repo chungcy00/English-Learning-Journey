@@ -1,0 +1,220 @@
+/* Mine English · shared light hand-drawn skin. Palette/type remain in index.css. */
+:root {
+  --hand-corner: 16px 14px 17px 13px / 14px 17px 13px 16px;
+  --hand-control-corner: 11px 13px 10px 12px / 12px 10px 13px 11px;
+
+}
+.learning-art { display:block; position:relative; width:104px; aspect-ratio:1; flex-shrink:0; overflow:hidden; pointer-events:none; user-select:none; }
+.learning-art > img { display:block; width:400%; height:400%; max-width:none; object-fit:fill; transform-origin:0 0; }
+.art-anchor { position:relative; }
+.learning-companion { position:absolute; z-index:2; width:124px; right:24px; top:-79px; }
+.hand-rule { position:absolute; left:0; bottom:-3px; width:100%; height:7px; overflow:visible; pointer-events:none; color:var(--accent-secondary); }
+.hand-rule path { fill:none; stroke:currentColor; stroke-width:1; vector-effect:non-scaling-stroke; }
+#root .app-header { border-bottom-color:transparent; backdrop-filter:none; background:var(--bg-primary); }
+#root .app-header .brand-companions { width:68px; height:68px; margin-block:-7px; }
+/* Brand cell remains square internally; outer brand crop trims only transparent padding. */
+
+#root .app-header > div { position:relative; z-index:1; }
+.header-sprig { position:absolute; right:8px; top:2px; width:72px; opacity:.8; }
+#root .app-header nav button { background:transparent; border-bottom-color:transparent; box-shadow:none; border-radius:var(--hand-control-corner); }
+#root .app-header nav button[aria-current="page"]::after { content:''; position:absolute; left:8px; right:8px; bottom:0; height:4px; border-bottom:2px solid var(--accent-primary); border-radius:40% 30% 45% 35%; transform:rotate(-.6deg); }
+#root .app-header nav button:enabled:not([aria-current="page"]):hover { background:var(--bg-alt); }
+#root .installed-bottom-nav { border-top-color:var(--border-selected); border-radius:48% 35% 0 0 / 2px 3px 0 0; box-shadow:none; background:var(--bg-primary); backdrop-filter:none; }
+#root .installed-bottom-nav button > span:first-child { border-radius:48% 42% 46% 40% / 42% 50% 40% 50%; }
+
+/* Primary surfaces share fixed-radius geometry and the existing theme stroke. */
+#root :where(.studio-continue,.studio-composer,.studio-recipe__panel,.studio-topics > button,.studio-generate,
+.reading-player,.reading-studio__body,.reading-vocabulary,.practice-entry,.random-review,.practice-vocabulary-card,
+.custom-composer-art,.custom-words-list > li,.study-empty:not(.study-empty--compact),.wordbook-final-list,
+.history-distribution-final,.history-card,.history-vocabulary-tasks,.history-vocabulary-detail,
+.lexicon-definition-card,.lexicon-sense-card,.lexicon-tree-card,.lexicon-phrase-card,
+.wordbook-collection-bar,.wordbook-search-capsule,.custom-words-search,.review-category-options,
+.app-dialog,.studio-style-sheet,.reading-more__menu,.reading-lookup-panel,.recovery-notice) {
+  position:relative; border:1px solid var(--border-selected); border-radius:var(--hand-corner); box-shadow:none;
+}
+#root .studio-continue { --hand-line:var(--surface-selected); overflow:visible; margin-top:42px; padding:24px 32px; }
+#root .studio-continue > .hand-outline { inset:3px; width:calc(100% - 6px); height:calc(100% - 6px); }
+#root .studio-continue > .learning-companion { top:-79px; right:20px; }
+.continue-sprig { position:absolute; left:-28px; bottom:-16px; width:68px; }
+#root .studio-home { padding-top:34px; }
+#root .studio-inspiration { margin-top:40px; }
+#root .studio-scenes { position:relative; margin-top:28px; }
+#root .inspiration-companion { width:92px; top:-59px; right:17%; }
+#root .studio-scenes button { border:1px solid var(--border-subtle); border-radius:var(--hand-control-corner); }
+#root .studio-scenes button[aria-pressed="true"] { outline:1px solid var(--accent-secondary); outline-offset:3px; }
+#root .studio-topics { gap:10px; margin-top:16px; }
+#root .studio-topics > button { --hand-line:var(--accent-subtle); }
+#root .studio-topics > button > span:first-of-type { border-radius:var(--hand-control-corner); }
+#root .studio-creation { margin-top:32px; }
+.composer-sprig { position:absolute; right:5px; top:-48px; width:64px; }
+#root :where(.studio-input-modes button,.studio-choices button,.random-review button,.lexicon-primary,.lexicon-actions button,.history-task-start,.history-task-start-all,.history-task-primary) { border-radius:var(--hand-control-corner); }
+#root .studio-input-modes button { border-radius:48% 43% 47% 42% / 45% 50% 43% 48%; }
+#root .studio-recipe__panel { padding:8px 24px; }
+#root .studio-recipe__group { grid-template-columns:92px minmax(0,1fr); align-items:center; gap:12px; padding:16px 0; }
+#root .studio-recipe__group + .studio-recipe__group, #root .studio-recipe__inline { border-top:1px solid var(--border-subtle); }
+#root .studio-choices { justify-content:flex-start; }
+#root .studio-choices button { border-radius:48% 44% 46% 42% / 44% 50% 43% 50%; }
+#root .studio-recipe__inline { min-height:66px; padding:10px 0; }
+#root .studio-generate { margin-top:16px; }
+#root :where(input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),textarea,select,[role="combobox"]) { border-radius:var(--hand-control-corner); }
+#root :where(.studio-composer,.custom-composer-art,.wordbook-search-capsule,.custom-words-search):focus-within { --hand-line:var(--accent-primary); }
+#root .anchored-select > button[role="combobox"] { border-color:var(--border-selected); }
+#root .review-category-options { position:absolute; z-index:50; }
+#root .review-category-options button { border-radius:var(--hand-control-corner); }
+
+/* Reading: ornament stays outside the readable column. */
+#root .reading-studio > .reading-studio__body, #root .reading-studio > .reading-vocabulary { margin-top:48px; }
+#root .reading-studio__body { background:var(--reading-white); padding:24px; }
+#root .reading-vocabulary { background:var(--reading-white); padding:20px; align-self:start; }
+#root .reading-vocabulary__list { border:0; border-radius:0; padding:0; background:transparent; }
+#root .reading-companion { width:88px; top:-57px; left:12px; right:auto; }
+#root .reading-vocabulary__header { margin-top:0; }
+#root .reading-player { --hand-line:var(--accent-secondary); }
+#root .reading-player__track, #root .reading-player input[type="range"] { border-radius:42% 38% 45% 40% / 40% 50% 35% 45%; }
+#root .reading-vocabulary__bookmark { border-radius:var(--hand-control-corner); }
+
+/* Custom vocabulary and the complete wordbook retain their existing data views. */
+#root .custom-composer-art { margin-top:48px; padding:20px 22px; background:var(--surface-paper); }
+#root .custom-composer-art > .learning-companion { top:-79px; }
+#root .custom-composer-art .wordbook-custom-add { margin:0; padding:0; border:0; background:transparent; }
+#root .custom-words-page .study-empty { margin-top:16px; }
+#root .wordbook-final { margin-block:24px; padding-top:32px; padding-bottom:32px; border:1px solid var(--border-selected); border-radius:var(--hand-corner); }
+#root .wordbook-final-heading { min-height:88px; justify-content:start; align-content:center; padding-right:160px; }
+#root .wordbook-reading-companion { width:158px; top:-38px; right:16px; }
+.wordbook-heading-sprig { position:absolute; left:-24px; top:-26px; width:62px; opacity:.8; }
+#root .wordbook-final .wordbook-management { margin-top:24px; }
+#root .wordbook-collection-bar { border-radius:var(--hand-control-corner); }
+#root .wordbook-final .wordbook-final-list { padding-inline:16px; }
+#root .wordbook-final-list > .reading-swipe { background:var(--surface-paper); }
+#root .wordbook-final-list > .reading-swipe:first-child { border-radius:14px 14px 0 0; }
+#root .wordbook-final-list > .reading-swipe:last-child { border-radius:0 0 14px 14px; }
+#root .wordbook-final .wordbook-review, #root .lexicon-add-form > button { border-radius:var(--hand-control-corner); }
+
+/* One companion per major region, never per vocabulary item. */
+#root .practice-hub { padding-top:60px; }
+#root .practice-entry { overflow:visible; --hand-line:var(--status-warning); }
+#root .wordbook-entry-companion { left:20px; right:auto; width:96px; top:-62px; }
+#root .practice-review { margin-top:24px; }
+#root .random-review { padding:20px 24px; background:var(--bg-alt); }
+#root .review-page .review-flip-stage { margin-top:48px; }
+#root .review-companion { top:-64px; right:12%; width:96px; }
+#root .review-flip-front .practice-vocabulary-card { overflow:visible; }
+#root .practice-vocabulary-card { --hand-line:var(--accent-subtle); }
+#root .practice-vocabulary-card__label { border-radius:48% 42% 46% 40% / 42% 50% 40% 50%; }
+#root .study-empty { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; padding:24px; background:var(--surface-paper); text-align:center; }
+#root .study-empty > .learning-art { width:120px; }
+#root .study-empty--compact { flex-direction:row; justify-content:flex-start; gap:16px; padding:12px 0; background:transparent; }
+#root .study-empty--compact > .learning-art { width:76px; }
+#root .study-empty__copy { min-width:0; max-width:50ch; overflow-wrap:anywhere; color:var(--text-secondary); font-size:var(--type-body); }
+#root .study-empty .lexicon-empty { margin:0; padding:0; border:0; background:transparent; text-align:inherit; }
+#root .processing-companion { width:112px; margin:0 auto 12px; animation:companion-wait 2.4s ease-in-out infinite; }
+#root .study-empty--waiting > .learning-art { animation:companion-wait 2.4s ease-in-out infinite; }
+@keyframes companion-wait { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-3px); } }
+
+/* History surrounds exact SVG data marks with the same paper contour. */
+#root .history-page-heading { position:relative; padding-left:34px; }
+#root .history-page-heading > .learning-art { position:absolute; width:52px; left:-15px; top:-16px; }
+#root .history-distribution-final { margin-top:48px; }
+#root .chart-companion { top:-77px; right:36px; }
+#root .history-final .reading-distribution__body { display:flex; flex-direction:column; align-items:center; }
+#root .history-final .reading-distribution__details { width:100%; }
+#root .history-final .reading-distribution__ring { width:200px; }
+#root .history-final .reading-distribution__levels { grid-template-columns:repeat(2,minmax(0,1fr)); }
+#root .history-distribution-final .reading-distribution__switch { border-radius:var(--hand-control-corner); }
+#root .history-distribution-final .reading-distribution__switch::before { border-radius:var(--hand-control-corner); }
+#root .history-final .history-card { border-radius:var(--hand-corner); }
+#root .history-vocabulary-tasks { position:relative; margin-top:48px; padding:24px; background:var(--surface-paper); }
+#root .tasks-companion { top:-74px; right:24px; width:112px; }
+#root .history-task-list { gap:8px; }
+#root .history-task-card { border-radius:var(--hand-control-corner); }
+#root .history-review-all { background:var(--surface-selected); border-radius:var(--hand-control-corner); }
+#root .history-task-start-all, #root .history-task-primary { background:var(--accent-primary); color:var(--surface-paper); box-shadow:none; }
+#root .history-task-start { background:var(--surface-selected); color:var(--accent-primary); }
+#root .history-empty-companion { width:100px; margin-inline:auto; }
+#root .history-recent-words > span { background:var(--bg-alt); border-radius:var(--hand-control-corner); }
+#root .learning-footer { position:relative; overflow:hidden; border-top:0; background:var(--bg-primary); margin-top:40px; padding-top:28px; }
+#root .learning-footer .hand-rule { top:0; bottom:auto; left:7%; width:86%; }
+.footer-sprig { position:absolute; bottom:12px; width:108px; opacity:.75; }
+.footer-sprig--left { left:24px; transform:rotate(-25deg); }
+.footer-sprig--right { right:24px; transform:rotate(25deg); }
+#root .learning-footer > div { position:relative; z-index:1; }
+#root .app-dialog, #root .studio-style-sheet { --hand-line:var(--border-selected); }
+
+@media (min-width:1024px) {
+  #root .app-header > div { max-width:80rem; margin-inline:auto; }
+  #root .app-header nav { gap:12px; }
+}
+@media (max-width:1023px) {
+  .header-sprig { width:58px; right:12px; }
+  #root .studio-recipe__group { grid-template-columns:76px minmax(0,1fr); }
+  #root .studio-recipe__panel { padding-inline:16px; }
+  #root .studio-recipe__group:first-child { grid-template-columns:minmax(0,1fr); }
+  #root .reading-studio > .reading-studio__body, #root .reading-studio > .reading-vocabulary { margin-top:40px; }
+}
+@media (max-width:639px) {
+  #root .app-header .brand-companions { width:56px; height:56px; margin-block:-4px; }
+  #root .studio-home { padding-top:18px; }
+  #root .studio-continue { margin-top:30px; padding:20px; }
+  #root .studio-continue > .learning-companion { width:88px; top:-56px; right:12px; }
+  .continue-sprig { width:48px; left:-12px; bottom:-14px; }
+  #root .studio-inspiration { margin-top:28px; }
+  #root .inspiration-companion { width:68px; top:-44px; right:14%; }
+  #root .studio-recipe__group { grid-template-columns:minmax(0,1fr); gap:10px; }
+  #root .studio-recipe__group:first-child { grid-template-columns:minmax(0,1fr); }
+  #root .studio-recipe__group .studio-choices { gap:6px; }
+  #root .studio-recipe__group { padding-block:14px; }
+  #root .reading-studio__body { padding:20px 16px; }
+  #root .reading-vocabulary { padding:16px; }
+  #root .custom-composer-art { padding:16px; margin-top:34px; }
+  #root .custom-composer-art > .learning-companion { width:88px; top:-56px; right:6px; }
+  #root .wordbook-final { margin:12px; width:auto; padding:20px 16px; }
+  #root .wordbook-final-heading { min-height:72px; padding-right:92px; }
+  #root .wordbook-reading-companion { width:100px; top:-18px; right:-8px; }
+  .wordbook-heading-sprig { display:none; }
+  #root .wordbook-view-control { min-width:90px; }
+  #root .wordbook-collection-bar { gap:6px; padding:6px 8px; }
+  #root .wordbook-view-select > button[role="combobox"] { min-width:76px; }
+  #root .wordbook-final .wordbook-review { padding-inline:8px; }
+  #root .wordbook-add-tools { gap:8px; }
+  #root .wordbook-final .wordbook-final-list { padding-inline:10px; }
+  #root .wordbook-final .wordbook-final-entry.is-expanded { padding-inline:0; }
+  #root .practice-hub { padding-top:48px; }
+  #root .random-review { padding:16px; }
+  #root .review-companion { width:72px; top:-47px; right:16px; }
+  #root .study-empty { padding:20px 16px; }
+  #root .study-empty > .learning-art { width:96px; }
+  #root .study-empty--compact { padding:10px 0; gap:12px; }
+  #root .study-empty--compact > .learning-art { width:64px; }
+  #root .history-page-heading { padding-left:24px; }
+  #root .chart-companion { width:88px; top:-56px; right:16px; }
+  #root .history-vocabulary-tasks { padding:16px; }
+  #root .tasks-companion { width:88px; top:-58px; right:12px; }
+  .footer-sprig { width:58px; opacity:.5; bottom:0; }
+  #root .learning-footer > div { padding-inline:16px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  #root .learning-art, #root .learning-art > img { animation:none; }
+}
+
+/* Floating layers retain their existing viewport/trigger positioning. */
+#root .app-dialog, #root .studio-style-sheet { position:fixed; }
+#root .reading-more__menu { position:absolute; }
+
+/* Measured SVG contours follow real bounds; no stretched border mask or clipped corners. */
+#root .hand-outline { position:absolute; z-index:1; inset:0; display:block; width:100%; height:100%; max-width:none; min-width:0; margin:0; padding:0; pointer-events:none; overflow:visible; color:var(--hand-line,var(--border-selected)); }
+#root .hand-outline path { fill:none; stroke:currentColor; stroke-width:1.15; vector-effect:non-scaling-stroke; }
+#root :has(> svg.hand-outline) { border-color:transparent; }
+#root .wordbook-final-list:not(:has(.reading-swipe)) { display:none; }
+#root :where(.wordbook-message,.wordbook-error,.reading-inline-status,.wordbook-undo) { border-radius:var(--hand-control-corner); }
+
+#root .data-load-status { padding-block:0; }
+#root .data-load-status:not(:has(.loading-companions)) { display:none; }
+
+/* Generation feedback is non-modal: navigation and unrelated learning remain usable. */
+#root .processing-dialog[open] { display:grid; grid-template-columns:88px minmax(0,1fr); align-items:center; gap:8px 12px; z-index:45; inset:auto 16px 16px auto; margin:0; width:calc(100% - 32px); max-width:380px; max-height:calc(100dvh - 32px); padding:16px; text-align:left; }
+#root .processing-dialog > .loading-companions { grid-column:1; grid-row:1; }
+#root .processing-dialog .loading-companions__viewport { width:88px; }
+#root .processing-dialog > [role="status"] { grid-column:2; }
+#root .processing-dialog .processing-dialog__cancel { grid-column:2; justify-self:start; margin-top:4px; padding:8px 16px; }
+#root .processing-dialog .processing-dialog__note { grid-column:1 / -1; margin-top:8px; }
+#root .has-bottom-navigation .processing-dialog[open] { bottom:calc(5rem + env(safe-area-inset-bottom) + 12px); max-height:calc(100dvh - 6rem - env(safe-area-inset-bottom)); }

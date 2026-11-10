@@ -1,3 +1,4 @@
+import { HandOutline } from './LearningArt';
 import React from 'react';
 import { Plus, Volume2, X } from 'lucide-react';
 import type { LearningEntry, WordFormation, WordPart } from '../types';
@@ -15,7 +16,7 @@ export function DerivativeList({ entries, term = '', pronounce }: { entries: Lea
     {entry.note && <p className="lexicon-note">{entry.note}</p>}
     {children.length>0 && <ul className="lexicon-tree-list">{children.map(renderNode)}</ul>}
   </li>;
-  return <section className="lexicon-tree-card lexicon-families">
+  return <section className="lexicon-tree-card lexicon-families"><HandOutline/>
     <div className="lexicon-family-origin"><strong lang="en">{term || entries[0]?.family?.base}</strong></div>
     <ul className="lexicon-tree-list">{familyForest(entries).map(renderNode)}</ul>
   </section>;
@@ -23,7 +24,7 @@ export function DerivativeList({ entries, term = '', pronounce }: { entries: Lea
 export function RootAnalysis({ entry, term, pronounce }: { key?: string; entry: LearningEntry; term: string; pronounce: (text: string) => void }) {
   const m = entry.morphology;
   if (!m || !hasExactParts(m.parts,term)) return <section className="lexicon-root-legacy"><h4>{entry.text}</h4><p>{entry.meaningZh}</p>{entry.example&&<p lang="en">{entry.example}</p>}{entry.exampleTranslation&&<p className="lexicon-muted">{entry.exampleTranslation}</p>}{entry.note&&<p className="lexicon-muted">{entry.note}</p>}</section>;
-  return <section className="lexicon-tree-card lexicon-root-map">
+  return <section className="lexicon-tree-card lexicon-root-map"><HandOutline/>
     <h4 className="lexicon-core-root"><span lang="en">{m.root}</span><span>{m.meaningZh}</span></h4>
     <div className="lexicon-root-analysis">
       <h5>真实构词分析</h5>

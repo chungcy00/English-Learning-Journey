@@ -1,3 +1,4 @@
+import { HandOutline, Companion } from './LearningArt';
 import React from 'react';
 import { RefreshCw, Volume2 } from 'lucide-react';
 import type { VocabularyItem } from '../types';
@@ -26,12 +27,12 @@ export function PracticeVocabularyCard({ vocab, meaning, exampleTranslation, rev
   revealed: boolean; disabled: boolean; onFlip: () => void; onPronounce: () => void; onDetailsBusyChange?: (busy: boolean) => void;
 }) {
   const header = (back: boolean) => <VocabularyHeader vocab={vocab} back={back} onPronounce={onPronounce} />;
-  const front = <div className="review-flashcard practice-vocabulary-card">
+  const front = <div className="review-flashcard practice-vocabulary-card art-anchor"><HandOutline/><Companion pose="hamster-peek" className="review-companion"/>
     {header(false)}
     <p className="practice-vocabulary-card__hint"><RefreshCw aria-hidden="true" size={15} />点击卡片翻面</p>
   </div>;
   return <ReviewFlipCard revealed={revealed} disabled={disabled} onFlip={onFlip} front={front}>
-    <div className="review-flashcard practice-vocabulary-card practice-vocabulary-card--back">
+    <div className="review-flashcard practice-vocabulary-card practice-vocabulary-card--back"><HandOutline/>
       <header className="practice-vocabulary-card__head review-lexicon-heading">
         <h3 className="practice-vocabulary-card__term">{vocab.term}</h3>
       </header>

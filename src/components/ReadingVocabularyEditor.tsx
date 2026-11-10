@@ -1,3 +1,4 @@
+import { LoadingAnimation } from './LoadingAnimation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReadingRecord, VocabularyItem } from '../types';
 import { containsEnglishExpression, normalizeEnglishTerm } from '../utils/englishSearch';
@@ -76,7 +77,7 @@ export const ReadingVocabularyEditor: React.FC<{
     </div>
     <form className="reading-add-expression" onSubmit={event=>{event.preventDefault();void lookup(term.trim());}}><label>添加文中表达<input aria-label="添加文中表达" value={term} maxLength={160} disabled={busy} onChange={event=>setTerm(event.target.value)}/></label><button type="submit" disabled={busy||!term.trim()}>查询</button></form>
     {catalogue.error && <p role="alert" className="reading-inline-status text-[var(--status-error)]">{catalogue.error} <button onClick={catalogue.retry} className="min-h-11 min-w-11 inline-flex items-center justify-center underline">重试</button></p>}
-    {busy && <p role="status" className="reading-inline-status text-[var(--accent-vocab)]">{candidate ? '正在保存…' : '正在查询…'}</p>}
+    <LoadingAnimation active={busy} operation={candidate ? 'wait' : 'search'} label={candidate ? '正在保存…' : '正在查询…'}/>
     {candidate && <div className="reading-vocabulary-editor__candidate p-3 border border-[var(--border-subtle)] rounded-sm space-y-2">
       <p><strong className="type-term">{candidate.term}</strong> · <span className="type-label italic">{candidate.partOfSpeech}</span></p>
       <p className="type-body">{candidate.meaningZh}</p>

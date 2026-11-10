@@ -1,6 +1,6 @@
+import { HandOutline } from './LearningArt';
+import { LoadingAnimation } from './LoadingAnimation';
 import React, { useEffect, useRef } from 'react';
-import { Sparkles } from 'lucide-react';
-import { useModalDialog } from '../hooks/useModalDialog';
 import { useMotionPresence } from '../hooks/useMotionPresence';
 
 interface ProcessingModalProps {
@@ -20,17 +20,10 @@ export function summarizeGenerationTopic(topic: string): string {
 
 export const ProcessingModal: React.FC<ProcessingModalProps> = ({ isOpen, status, topic = '', operation = 'generate', canCancel, onCancel }) => {
   const { present, closing } = useMotionPresence(isOpen, 200);
-  const ref = useModalDialog(present);
   const content = useRef({ status, topic, operation });
   const canceled = useRef(false);
   if (isOpen) content.current = { status, topic, operation };
   useEffect(() => { if (isOpen) canceled.current = false; }, [isOpen]);
-  useEffect(() => {
-    if (!present) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = previous; };
-  }, [present]);
   if (!present) return null;
 
   const saving = content.current.status === 'Saving';
@@ -44,11 +37,12 @@ export const ProcessingModal: React.FC<ProcessingModalProps> = ({ isOpen, status
   const description = saving ? '正在保存你的学习内容，请稍候。' : content.current.operation === 'rewrite' ? '正在调整短文内容，请稍候。' : summary ? `正在根据「${summary}」构思内容，请稍候。` : '正在根据你的学习要求构思内容，请稍候。';
 
   return (
-    <dialog ref={ref} data-closing={closing || undefined} inert={closing}
+    <dialog open data-closing={closing || undefined} inert={closing} aria-modal="false"
       aria-labelledby="processing-title" aria-describedby="processing-description processing-note"
       onCancel={event => { event.preventDefault(); cancel(); }}
-      className="app-dialog processing-dialog w-[calc(100%_-_2rem)]">
-      <div className="processing-dialog__icon" aria-hidden="true"><Sparkles size={34} strokeWidth={1.8} /></div>
+      onKeyDown={event => { if (event.key === 'Escape') { event.preventDefault(); cancel(); } }}
+      className="app-dialog processing-dialog w-[calc(100%_-_2rem)]"><HandOutline/>
+      <LoadingAnimation active={isOpen && !closing} operation={saving ? 'wait' : 'generate'} large/>
       <div role="status" aria-live="polite" aria-atomic="true">
         <h2 id="processing-title">{title}</h2>
         <p id="processing-description">{description}</p>

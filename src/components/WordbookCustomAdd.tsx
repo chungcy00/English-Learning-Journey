@@ -1,3 +1,4 @@
+import { LoadingAnimation } from './LoadingAnimation';
 import React, { useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import type { ReadingRecord, VocabularyItem } from '../types';
@@ -45,7 +46,8 @@ export function WordbookCustomAdd({ vocabulary, onSave, initiallyOpen = false }:
     {open && <div id="wordbook-custom-panel">
       <form onSubmit={prepare} className="lexicon-add-form"><label>英语词条<input value={query} disabled={busy} maxLength={160} placeholder="例如 considerate 或 break the ice" onChange={event => { setQuery(event.target.value); setPreview(null); setDuplicate(null); setError(''); }}/></label><button className="lexicon-primary" type="submit" disabled={busy || !query.trim()}>检查并预览</button></form>
       {duplicate && <div className="lexicon-confirm"><p>“{duplicate.term}”已存在，不会创建重复词条。</p><button type="button" onClick={() => { setPreview(duplicate); setDuplicate(null); }}>打开原词条</button><button type="button" onClick={() => { setPreview(duplicate); setDuplicate(null); setMessage('在原词条中编辑或补充资料，复习进度保持。'); }}>合并／补充资料</button><button type="button" onClick={() => setDuplicate(null)}>取消</button></div>}
-      {preview && <div className="lexicon-add-preview"><h3>{preview.term}</h3><VocabularyDetailsPanel key={preview.id} vocab={preview}/><div className="lexicon-actions"><button type="button" className="lexicon-primary" disabled={busy} onClick={() => void save()}>{busy ? '保存中…' : '保存到单词本'}</button><button type="button" disabled={busy} onClick={() => setPreview(null)}>取消预览</button></div><p className="lexicon-muted">可以先保存基本词条，以后再补充资料。</p></div>}
+      {preview && <div className="lexicon-add-preview"><h3>{preview.term}</h3><VocabularyDetailsPanel key={preview.id} vocab={preview} loadingOperation="analysis"/><div className="lexicon-actions"><button type="button" className="lexicon-primary" disabled={busy} onClick={() => void save()}>{busy ? '保存中…' : '保存到单词本'}</button><button type="button" disabled={busy} onClick={() => setPreview(null)}>取消预览</button></div><p className="lexicon-muted">可以先保存基本词条，以后再补充资料。</p></div>}
+      <LoadingAnimation active={busy} operation="wait" label="正在保存词条…"/>
     </div>}{error && <p role="alert" className="wordbook-error">{error}</p>}{message && <p role="status" className="wordbook-message">{message}</p>}
   </section>;
 }

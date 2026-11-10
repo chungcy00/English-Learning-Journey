@@ -1,3 +1,4 @@
+import { LoadingAnimation } from './components/LoadingAnimation';
 import {migrateReviewedUsage,migrateExistingUsage} from './services/usageMigration';
 import { CustomWordsView } from './views/CustomWordsView';
 import { vocabularyKey } from './utils/vocabularyDetails';
@@ -176,8 +177,10 @@ export default function App() {
     }
   }, []);
 
+  const [dataLoads, setDataLoads] = useState(0);
   // Load initial data
   const loadData = useCallback(async () => {
+    setDataLoads(count => count + 1);
     try {
       await initDefaultData();
       await migrateReviewedUsage();
@@ -198,7 +201,7 @@ export default function App() {
     } catch (err) {
       console.error('Error loading database data:', err);
       setStorageError('本机学习数据读取失败。请检查浏览器存储权限后重试，不要清除网站数据。');
-    }
+    } finally { setDataLoads(count => Math.max(0, count - 1)); }
   }, [currentReading]);
 
   useEffect(() => {
@@ -406,6 +409,7 @@ export default function App() {
 
       {/* Main Content Router */}
       <main className="min-w-0 flex-1">
+        <div className="page-shell data-load-status"><LoadingAnimation active={dataLoads > 0 && !isGenerating} operation={activeTab === 'history' ? 'history' : activeTab === 'practice' || activeTab === 'wordbook' ? 'saved' : 'reading'} label="正在读取学习内容…"/></div>
         {storageError && <div className="max-w-3xl mx-auto px-4 pt-4"><RecoveryNotice message={storageError} onRetry={() => void loadData()} /></div>}
         {usageMigrationError && <div className="max-w-3xl mx-auto px-4 pt-4"><RecoveryNotice message={`旧 AI 用法说明更新：${usageMigrationError}`} onRetry={()=>void migrateExistingUsage(true).then(report=>setUsageMigrationError(report.error||''))}/></div>}
         {errorMessage && (
