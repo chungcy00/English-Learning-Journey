@@ -28,7 +28,7 @@
 #root :where(.studio-continue,.studio-composer,.studio-recipe__panel,.studio-topics > button,.studio-generate,
 .reading-player,.reading-studio__body,.reading-vocabulary,.practice-entry,.random-review,.practice-vocabulary-card,
 .custom-composer-art,.custom-words-list > li,.study-empty:not(.study-empty--compact),.wordbook-final-list,
-.history-distribution-final,.history-card,.history-vocabulary-tasks,.history-vocabulary-detail,
+.history-distribution-final,.history-card,.history-task-panel,.history-vocabulary-detail,
 .lexicon-definition-card,.lexicon-sense-card,.lexicon-tree-card,.lexicon-phrase-card,
 .wordbook-collection-bar,.wordbook-search-capsule,.custom-words-search,.review-category-options,
 .app-dialog,.studio-style-sheet,.reading-more__menu,.reading-lookup-panel,.recovery-notice) {
@@ -125,8 +125,9 @@
 #root .history-distribution-final .reading-distribution__switch { border-radius:var(--hand-control-corner); }
 #root .history-distribution-final .reading-distribution__switch::before { border-radius:var(--hand-control-corner); }
 #root .history-final .history-card { border-radius:var(--hand-corner); }
-#root .history-vocabulary-tasks { position:relative; margin-top:48px; padding:24px; background:var(--surface-paper); }
-#root .tasks-companion { top:22px; right:8%; width:164px; }
+#root .history-vocabulary-tasks { position:relative; margin-top:48px; }
+#root .history-task-panel { position:relative; padding:24px; background:var(--surface-paper); }
+#root .tasks-companion { top:4px; right:8%; width:164px; }
 #root .history-task-list { gap:8px; }
 #root .history-task-card { border-radius:var(--hand-control-corner); }
 #root .history-review-all { background:var(--surface-selected); border-radius:var(--hand-control-corner); }
@@ -189,8 +190,8 @@
   #root .study-empty--compact > .learning-art { width:64px; }
   #root .history-page-heading { padding-left:24px; }
   #root .chart-companion { width:90px; top:12px; right:32px; }
-  #root .history-vocabulary-tasks { padding:16px; }
-  #root .tasks-companion { width:136px; top:14px; right:12px; }
+  #root .history-task-panel { padding:16px; }
+  #root .tasks-companion { width:136px; top:4px; right:12px; }
   .footer-sprig { width:58px; opacity:.5; bottom:0; }
   #root .learning-footer > div { padding-inline:16px; }
 }
@@ -245,4 +246,10 @@
 
 @media (max-width:359px) {
   #root .history-records-companion { width:136px; left:calc(var(--history-title-width,112px) * 1.45 - 32px); }
+}
+
+/* Preserve the existing detail view spacing when no external task heading is shown. */
+#root .history-vocabulary-tasks--detail .tasks-companion { top:22px; }
+@media (max-width:639px) {
+  #root .history-vocabulary-tasks--detail .tasks-companion { top:14px; }
 }

@@ -29,7 +29,9 @@ export function HistoryVocabularyTasks({vocabulary, selectedLevel, onSelectLevel
   const selected = vocabularyTask(vocabulary, selectedLevel);
   const all = vocabularyTask(vocabulary, null);
   const label = selectedLevel ? vocabularyLevelLabel(selectedLevel) : '';
-  return <section className="history-vocabulary-tasks" aria-label="词汇复习任务"><HandOutline/><Companion pose="hamster-review-tasks" className="tasks-companion"/>
+  return <section className={`history-vocabulary-tasks${selectedLevel ? ' history-vocabulary-tasks--detail' : ''}`} aria-label="词汇复习任务">
+    {!selectedLevel && <h2 className="history-task-title">词汇复习任务</h2>}
+    <div className="history-task-panel"><HandOutline/><Companion pose="hamster-review-tasks" className="tasks-companion"/>
     <AnimatePresence mode="wait" initial={false}><motion.div key={selectedLevel || 'all'} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:reduced?0:.18}}>
       {selectedLevel ? <div className="history-vocabulary-detail" style={cefrStyle(selectedLevel)}>
         <header><span className="history-task-icon"><Target size={24} aria-hidden="true"/></span><div><h2 tabIndex={-1} ref={node => { if (node && focusDetail.current) { focusDetail.current = false; node.focus({ preventScroll: true }); } }}>{selectedLevel==='未知'?'未标注等级词汇复习':`${label} ${cefrVisuals[selectedLevel].name}词汇复习`}</h2><p>已收录 {selected.total} 词</p></div></header>
@@ -37,7 +39,6 @@ export function HistoryVocabularyTasks({vocabulary, selectedLevel, onSelectLevel
         <div className="history-recent-words">{selected.recent.map(word=><span key={word.id}>{word.term}</span>)}</div>
         <ReviewAll task={selected} onReview={onReview} className="history-task-primary" />
       </div> : <>
-        <h2 className="history-task-title">词汇复习任务</h2>
         <div className="history-review-all"><Layers size={23} aria-hidden="true"/><div><h3>全部词汇综合复习</h3><p>{all.total} 词收录</p></div><ReviewAll task={all} onReview={onReview} className="history-task-start-all" /></div>
         <div className="history-specialized-heading"><h3>分级专项复习</h3><span>按 CEFR 等级</span></div>
         <div className="history-task-list">{READING_LEVELS.map(level=>vocabularyTask(vocabulary,level)).filter(task=>task.total>0).map(task=><article className="history-task-card" key={task.level} style={cefrStyle(task.level!)}>
@@ -47,5 +48,6 @@ export function HistoryVocabularyTasks({vocabulary, selectedLevel, onSelectLevel
         {!all.total&&<p className="history-empty" role="status">暂无已收录词汇，可在阅读页或生词本添加。</p>}
       </>}
     </motion.div></AnimatePresence>
+    </div>
   </section>;
 }

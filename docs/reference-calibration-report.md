@@ -103,3 +103,7 @@
 ![最终统计猫猫局部](screenshots/reference-calibration/history-cat-1440.png)
 
 ![最终历史仓鼠手机局部](screenshots/reference-calibration/history-heading-375.png)
+
+## 最新任务标题边界
+
+按用户后续要求，将「词汇复习任务」标题移到框外，只有内容面板保留边框；仓鼠提高至内容卡片上沿，书本约压入 8px。分级详情和复习入口不变。[最新检查与截图](task-heading-adjustment.md)。
