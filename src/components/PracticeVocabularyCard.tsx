@@ -32,7 +32,7 @@ export function PracticeVocabularyCard({ vocab, meaning, exampleTranslation, rev
     <p className="practice-vocabulary-card__hint"><RefreshCw aria-hidden="true" size={15} />点击卡片翻面</p>
   </div>;
   return <ReviewFlipCard revealed={revealed} disabled={disabled} onFlip={onFlip} front={front}>
-    <div className="review-flashcard practice-vocabulary-card practice-vocabulary-card--back"><HandOutline/>
+    <div className="review-flashcard practice-vocabulary-card practice-vocabulary-card--back"><HandOutline/><Companion pose="hamster-peek-flashcard" className="review-companion"/>
       <header className="practice-vocabulary-card__head review-lexicon-heading">
         <h3 className="practice-vocabulary-card__term">{vocab.term}</h3>
       </header>

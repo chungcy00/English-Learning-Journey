@@ -8,7 +8,7 @@ import { DefinitionCards } from './DefinitionCards';
 import { partOfSpeechAbbreviation } from '../utils/wordFormation';
 import { Pencil, Plus, Volume2, X } from 'lucide-react';
 import { DETAIL_SECTIONS, type DetailSection, type LearningEntry, type VocabularyDetails, type VocabularyItem } from '../types';
-import { legacyDetails, sectionLabels, materialKey, categoryLabels, inflectionLabel, vocabularyKey } from '../utils/vocabularyDetails';
+import { legacyDetails, sectionLabels, materialKey, categoryLabels, inflectionLabel, orderedInflections, vocabularyKey } from '../utils/vocabularyDetails';
 import { readVocabularyDetails, saveVocabularyDetails, generateVocabularyDetails, toggleMaterial } from '../services/vocabularyDetails';
 import { db } from '../db/dexie';
 import { speakEnglishTerm } from '../utils/speech';
@@ -93,7 +93,7 @@ export function VocabularyDetailsPanel({ vocab, onBeforePronunciation, onInterac
       <p className="lexicon-kind">{category ? `${categoryLabels[category]} · ${category === 'phrasal-verb' ? 'phrasal verb' : category}` : details.generated ? `${categoryLabels[details.type] || '词条'} · ${details.type}` : '多词表达 · 生成时自动细分类型'}</p>
       <div className="lexicon-pronunciations">{([['en-GB', '英', details.phoneticUK], ['en-US', '美', details.phoneticUS]] as const).map(([lang, label, ipa]) => <button key={lang} type="button" onClick={() => pronounce(vocab.term, lang)} aria-label={`${label}式发音：${vocab.term}`}><Volume2 size={17} aria-hidden="true"/>{label}{ipa && <span>{ipa}</span>}</button>)}<button type="button" className="lexicon-edit" aria-label="编辑基本资料" disabled={!ready || busy || !!editing} onClick={() => startEdit('basic')}><Pencil size={14} aria-hidden="true"/>编辑</button></div>
       {!!details.senses.length ? details.senses.map(sense => <div key={sense.id} className="lexicon-sense"><p className="lexicon-sense-meaning"><span className="lexicon-pos">{partOfSpeechAbbreviation(sense.partOfSpeech)}</span>{sense.meaningZh || sense.text}</p>{sense.example && <><p lang="en">{sense.example}</p>{sense.exampleTranslation && <p className="lexicon-muted">{sense.exampleTranslation}</p>}</>}</div>) : <p className="lexicon-muted">尚未填写释义，可手动编辑或生成详细资料。</p>}
-      {(details.category || details.type) === 'word' && !!details.inflections.length && <dl className="lexicon-inflections">{details.inflections.map((form, i) => <div key={i}><dt>{inflectionLabel(form.label)}</dt><dd>{form.value}</dd></div>)}</dl>}
+      {(details.category || details.type) === 'word' && !!details.inflections.length && <dl className="lexicon-inflections">{orderedInflections(details.inflections).map((form, i) => <div key={i}><dt>{inflectionLabel(form.label)}</dt><dd>{form.value}</dd></div>)}</dl>}
     </div>
     <div className="lexicon-tabs" role="tablist" aria-label="词汇资料栏目">{DETAIL_SECTIONS.map((key, index) => <button type="button" key={key} id={`lexicon-tab-${vocab.id}-${key}`} role="tab" aria-selected={tab === key} tabIndex={tab === key ? 0 : -1} aria-controls={`lexicon-content-${vocab.id}`} disabled={!!editing} onClick={() => { setTab(key); setMessage(''); }} onKeyDown={event => {
       if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const next = event.key === 'Home' ? 0 : event.key === 'End' ? 5 : (index + (event.key === 'ArrowRight' ? 1 : 5)) % 6; setTab(DETAIL_SECTIONS[next]); const row = event.currentTarget.parentElement;

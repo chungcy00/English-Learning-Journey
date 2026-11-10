@@ -22,7 +22,10 @@
 #root .app-header nav button[aria-current="page"]::after { content:''; position:absolute; left:8px; right:8px; bottom:0; height:4px; border-bottom:2px solid var(--accent-primary); border-radius:40% 30% 45% 35%; transform:rotate(-.6deg); }
 #root .app-header nav button:enabled:not([aria-current="page"]):hover { background:var(--bg-alt); }
 #root .installed-bottom-nav { border-top-color:var(--border-selected); border-radius:48% 35% 0 0 / 2px 3px 0 0; box-shadow:none; background:var(--bg-primary); backdrop-filter:none; }
-#root .installed-bottom-nav button > span:first-child { border-radius:48% 42% 46% 40% / 42% 50% 40% 50%; }
+#root .installed-bottom-nav .bottom-nav-icon { border-radius:0; background:transparent; }
+#root .installed-bottom-nav .bottom-nav-icon::before { inset:-1px -3px; }
+#root .installed-bottom-nav button[aria-current="page"] .bottom-nav-icon::before { opacity:.5; }
+#root .installed-bottom-nav button:nth-child(even) .bottom-nav-icon::before { transform:rotate(2deg); }
 
 /* Primary surfaces share fixed-radius geometry and the existing theme stroke. */
 #root :where(.studio-continue,.studio-composer,.studio-recipe__panel,.studio-topics > button,.studio-generate,
@@ -98,6 +101,7 @@
 #root .wordbook-entry-companion { left:-16px; right:auto; width:240px; top:8px; }
 #root .practice-review { margin-top:24px; }
 #root .random-review { padding:20px 24px; background:var(--bg-alt); }
+#root .random-review__status { justify-content:flex-end; }
 #root .review-page .review-flip-stage { margin-top:48px; }
 #root .review-companion { top:8px; right:10%; width:208px; }
 #root .review-flip-front .practice-vocabulary-card { overflow:visible; }
@@ -105,7 +109,7 @@
 #root .practice-vocabulary-card__label { border-radius:48% 42% 46% 40% / 42% 50% 40% 50%; }
 #root .study-empty { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; padding:24px; background:var(--surface-paper); text-align:center; }
 #root .study-empty > .learning-art { width:120px; }
-#root .study-empty--compact { flex-direction:row; justify-content:flex-start; gap:16px; padding:12px 0; background:transparent; }
+#root .study-empty--compact { flex-direction:column; justify-content:center; gap:16px; padding:12px 0; background:transparent; }
 #root .study-empty--compact > .learning-art { width:76px; }
 #root .study-empty__copy { min-width:0; max-width:50ch; overflow-wrap:anywhere; color:var(--text-secondary); font-size:var(--type-body); }
 #root .study-empty .lexicon-empty { margin:0; padding:0; border:0; background:transparent; text-align:inherit; }
@@ -116,7 +120,7 @@
 /* History surrounds exact SVG data marks with the same paper contour. */
 #root .history-page-heading { position:relative; padding-left:34px; }
 #root .history-page-heading > .learning-art { position:absolute; width:52px; left:-15px; top:-16px; }
-#root .history-distribution-final { margin-top:48px; }
+#root .history-distribution-final { margin-top:32px; }
 #root .chart-companion { top:20px; right:40px; width:clamp(112px,17%,180px); }
 #root .history-final .reading-distribution__body { display:flex; flex-direction:column; align-items:center; }
 #root .history-final .reading-distribution__details { width:100%; }
@@ -189,7 +193,7 @@
   #root .study-empty--compact { padding:10px 0; gap:12px; }
   #root .study-empty--compact > .learning-art { width:64px; }
   #root .history-page-heading { padding-left:24px; }
-  #root .chart-companion { width:90px; top:12px; right:32px; }
+  #root .chart-companion { width:98px; top:12px; right:32px; }
   #root .history-task-panel { padding:16px; }
   #root .tasks-companion { width:136px; top:4px; right:12px; }
   .footer-sprig { width:58px; opacity:.5; bottom:0; }
@@ -228,6 +232,12 @@
 #root .wordbook-mascot-footer > .learning-art { position:absolute; right:0; bottom:-40px; width:144px; }
 #root .history-records .history-list-heading { margin-bottom:8px; }
 #root .history-records-companion { position:absolute; width:160px; left:calc(var(--history-title-width,112px) * 1.45 - 38px); right:auto; top:7px; }
+@media (max-width:1023px) {
+  #root .history-records-companion { width:136px; left:calc(var(--history-title-width,112px) * 1.45 - 32px); }
+}
+@media (min-width:640px) and (max-width:1023px) {
+  #root .chart-companion { width:calc(clamp(112px,17%,180px) + 8px); }
+}
 @media (max-width:639px) {
   #root .expression-select { flex:0 0 auto; width:100%; }
   #root .reading-companion { width:112px; left:16px; }
@@ -245,7 +255,8 @@
 #root .reading-companion[data-pose="hamster-peek-reading"] > img { clip-path:inset(0 16% 0 0); }
 
 @media (max-width:359px) {
-  #root .history-records-companion { width:136px; left:calc(var(--history-title-width,112px) * 1.45 - 32px); }
+  #root .history-distribution-final { margin-top:40px; }
+  #root .history-records-companion { width:120px; left:calc(var(--history-title-width,112px) * 1.45 - 28px); }
 }
 
 /* Preserve the existing detail view spacing when no external task heading is shown. */
@@ -253,3 +264,20 @@
 @media (max-width:639px) {
   #root .history-vocabulary-tasks--detail .tasks-companion { top:14px; }
 }
+
+/* Phone review controls retain 44px targets in four compact rows. */
+@media (max-width:639px) {
+  #root .random-review__controls { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px; }
+  #root .random-review__controls > :is(h1,h2) { grid-column:1; flex-basis:auto; }
+  #root .random-review__category { grid-column:2; justify-self:end; }
+  #root .random-review__category > button { min-height:44px; padding:8px; }
+  #root .random-review__presets { grid-column:1 / -1; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; }
+  #root .random-review__presets > button { min-width:0; padding:8px 4px; }
+  #root .random-review__custom { grid-column:1; display:grid; grid-template-columns:repeat(4,44px); gap:2px; flex-basis:auto; }
+  #root .random-review__custom > span { display:none; }
+  #root .random-review__custom :is(button,input) { box-sizing:border-box; width:44px; min-width:44px; min-height:44px; padding:4px; }
+  #root .random-review__reshuffle { grid-column:2; min-width:64px; min-height:44px; padding:4px; gap:4px; margin:0; }
+  #root .random-review__status { justify-content:center; margin-top:8px; padding-top:8px; }
+}
+
+#root .lexicon-add-preview > .lexicon-muted { font-size:var(--type-meta); font-style:italic; }

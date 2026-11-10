@@ -294,6 +294,17 @@ The continuation-card sprig points up-left (`scaleX(-1)`); the top-right header 
 
 The history vocabulary-task panel uses `hamster-review-tasks.png` (user original `抱书复习的小仓鼠.png`), retaining the upper-left three strokes. Register the supplied paw line at 80.2% of the image height; the book extends slightly below the paws, matching the reference overlap at the panel upper-right. Keep the illustration clear of the preceding statistics panel.
 
-User-refined history placement: the statistics cat is about 15% smaller (`clamp(112px,17%,180px)`, mobile 90px) and 16px farther left (right inset 40px, mobile 32px). Keep its existing paw line. The history-title book hamster is 6px lower than the initial calibrated position; do not undo these explicit refinements.
+User-refined history placement: the statistics cat is about 15% smaller (`clamp(112px,17%,180px)`, phone 98px; tablet adds 8px to the responsive clamp) and 16px farther left (right inset 40px, mobile 32px). Keep its existing paw line. The history-title book hamster is 6px lower than the initial calibrated position; do not undo these explicit refinements.
 
 The history vocabulary-task heading sits outside the outline, matching the history-articles section. `.history-vocabulary-tasks` is an unframed semantic section; only `.history-task-panel` carries paper, padding and `HandOutline`. The overview hamster is anchored to that inner panel with a 4px top offset, so its book overlaps the border by roughly 8px. Selected-level detail keeps its existing internal heading and prior companion spacing. Do not reintroduce a border around the overview section heading.
+
+
+### Compact review and detail states (2026-11-10)
+
+Below 640px, random review uses four compact rows: heading/category; four quantity presets; custom quantity/reshuffle; pagination. Keep original type and palette. Every button/input retains a 44px touch height; hide only the redundant standalone “词” unit on phones. Desktop/tablet review controls retain their layout. Remove the review-mode explanatory sentence and wordbook-entry description.
+
+All compact learning empty states stack the official hamster above centered copy. Do not replace the supplied image, add knowledge or change failure/not-applicable distinctions. Preview-save advice uses `--type-meta` in italic. Inflections have a stable presentation order: noun plural/singular, verb singular, past, past participle, present participle/gerund, comparative/superlative, base/infinitive; custom labels follow, in their saved order. Sort a copy, never stored user data.
+
+Bottom navigation reuses the six-tab organic brush behind the selected **icon**, never the label. Keep labels and badges intact. Statistics remove the header explanatory copy, filter instruction and page total subtitle; real totals remain in the chart. History statistics move up to a 32px margin (40px below 360px to clear the title). The book hamster uses 136px below 1024px, 120px below 360px, with its existing book-base anchor unchanged.
+
+App installation icons derive from the official cat/hamster book PNG, preserving aspect ratio and the original theme background. Use explicit 192/512px ordinary icons, a safe-area 512px maskable icon, 180px Apple icon and 32px favicon. Preserve manifest URL, app identity and launch URLs. The OS controls installed splash/icon updates; do not introduce a duplicate in-page splash.

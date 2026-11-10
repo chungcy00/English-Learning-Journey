@@ -11,7 +11,7 @@ import { ReviewView } from '../views/ReviewView';
 
 test('hub presents the all-vocabulary entrance and review without rewrite practice', () => {
  const html=renderToStaticMarkup(React.createElement(PracticeHubView,{vocabularyCount:5,onOpenWordbook(){},children:React.createElement('div',null,'Actual review')}));
- assert.match(html,/已收藏 5 个词条/); assert.match(html,/我的单词本/); assert.doesNotMatch(html,/句子改写|practice-entry--rewrite/);
+ assert.doesNotMatch(html,/practice-entry-description/); assert.match(html,/我的单词本/); assert.doesNotMatch(html,/句子改写|practice-entry--rewrite/);
  assert.ok(html.indexOf('我的单词本')<html.indexOf('Actual review'));
 });
 
@@ -52,7 +52,7 @@ test('rewrite workspace keeps real evaluated progress and renders one keyed ques
 
 test('empty wordbook remains accessible without a passage', () => {
  const html=renderToStaticMarkup(React.createElement(PracticeHubView,{vocabularyCount:0,onOpenWordbook(){},children:null}));
- assert.match(html,/已收藏 0 个词条/); assert.doesNotMatch(html,/句子改写|disabled/);
+ assert.match(html,/我的单词本/); assert.doesNotMatch(html,/句子改写|disabled/);
 });
 
 test('embedded review has bounded one-item pagination and no empty pager', () => {

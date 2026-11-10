@@ -51,7 +51,8 @@ test('navigation keeps its original flat containers, local active indicator and 
   assert.match(installedContainer, /border-t /);
   assert.doesNotMatch(installedContainer, /rounded|outline|ring-|(?:^|\s)border(?:\s|$)/);
   assert.match(installed, /safe-area-inset-bottom/);
-  assert.match(installed, /<span class="relative flex h-7[^>]+bg-\[var\(--surface-selected\)\]/);
+  assert.match(installed, /bottom-nav-icon lexicon-tab-label/);
+  assert.doesNotMatch(installed, /bg-\[var\(--surface-selected\)\]/);
   const currentInstalledButton = installed.match(/<button[^>]+aria-current="page"[^>]*>/)![0];
   assert.doesNotMatch(currentInstalledButton, /bg-\[var\(--surface-selected\)\]/);
   assert.match(browser, /<header[^>]+border-b /);

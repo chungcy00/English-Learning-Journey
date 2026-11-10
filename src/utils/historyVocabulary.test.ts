@@ -22,7 +22,7 @@ test('level browsing snapshots all IDs regardless of old statuses or due dates',
 
 test('vocabulary chart counts persisted vocabulary instead of unsaved passage selections; unknown has a normal selectable card',()=>{
  const html=renderToStaticMarkup(React.createElement(ReadingLevelPieChart,{readings:[{cefrLevel:'C1',selectedVocabulary:[{cefrLevel:'C2'}]}],vocabulary:words,dimension:'vocabulary',selectedLevel:'未知'}));
- assert.match(html,/本机已收录的 4 个可复习词条/);assert.match(html,/>未标注<\/span><strong>1 词<\/strong><small>25%/);
+ assert.doesNotMatch(html,/基于本机已收录/);assert.match(html,/>未标注<\/span><strong>1 词<\/strong><small>25%/);
  assert.match(html,/筛选 未标注：1 词，25%/);assert.match(html,/未标注 未标注：1 词，25%/);assert.match(html,/C2 精通：0 词，0%/);
 });
 test('default tasks omit zero levels and word previews; detailed task shows only its own recent words',()=>{

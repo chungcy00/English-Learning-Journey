@@ -60,7 +60,7 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({ readings
     requestAnimationFrame(() => manager.current?.focus({ preventScroll: true }));
   };
   return <div className="page-shell history-page history-final">
-    <header className="history-page-heading"><Mascot pose="sprig"/><h1 className="type-page font-ui font-semibold">阅读历史记录</h1><p className="history-total">共保存了 {readings.length} 篇学习短文</p></header>
+    <header className="history-page-heading"><Mascot pose="sprig"/><h1 className="type-page font-ui font-semibold">阅读历史记录</h1></header>
     <ReadingLevelPieChart readings={readings} dimension={dimension} selectedLevel={activeLevel} vocabulary={vocabulary}
       onDimensionChange={value => { setDimension(value); setSelectedLevel(null); }}
       onLevelSelect={value => setSelectedLevel(current => current === value ? null : value)} />

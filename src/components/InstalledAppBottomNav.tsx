@@ -48,9 +48,7 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
                     : 'text-[var(--text-secondary)] active:bg-[var(--bg-alt)]/70'
               }`}
             >
-              <span className={`relative flex h-7 min-w-11 items-center justify-center rounded-full ${
-                isActive ? 'bg-[var(--surface-selected)]' : ''
-              }`}>
+              <span className="bottom-nav-icon lexicon-tab-label relative flex h-7 min-w-11 items-center justify-center">
                 <Icon aria-hidden="true" className={`h-5 w-5 ${isActive ? 'stroke-[2.4]' : ''}`} />
                 {tab.badge !== undefined && tab.badge > 0 ? (
                   <span aria-hidden="true" className="absolute -right-1 -top-1 min-w-4 rounded-full bg-[var(--accent-warm)] px-1 text-[length:var(--type-meta)] leading-[1.4] font-semibold leading-4 text-[var(--text-primary)]">
@@ -58,7 +56,7 @@ export const InstalledAppBottomNav: React.FC<InstalledAppBottomNavProps> = ({
                   </span>
                 ) : null}
               </span>
-              <span className={`text-[length:var(--type-meta)] leading-[1.4] leading-4 ${isActive ? 'font-semibold' : 'font-medium'}`}>
+              <span className={`bottom-nav-label text-[length:var(--type-meta)] leading-[1.4] leading-4 ${isActive ? 'font-semibold' : 'font-medium'}`}>
                 {tab.id === 'practice' ? '复习' : tab.label}
               </span>
             </button>

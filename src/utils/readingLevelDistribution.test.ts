@@ -48,7 +48,7 @@ test('vocabulary uses actual word levels, not passage levels; filters keep origi
 
 test('chart exposes six filter buttons and vocabulary dimension with truthful totals', () => {
   const html = renderToStaticMarkup(React.createElement(ReadingLevelPieChart, { readings: [{ cefrLevel: 'B1', selectedVocabulary: [{ cefrLevel: 'C2' }] }], dimension: 'vocabulary', selectedLevel: 'C2' }));
-  assert.match(html, /1 篇情境短文及 1 条精选词汇/);
+  assert.doesNotMatch(html, /基于已生成|基于本机已收录/);
   assert.match(html, />C2<\/span><strong>1 词<\/strong><small>100%/);
   assert.doesNotMatch(html, /当前筛选：C2/);
   assert.match(html, /图例 C2：1 词，100%/);

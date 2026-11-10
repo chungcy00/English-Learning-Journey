@@ -19,14 +19,12 @@ export function ReadingLevelPieChart({ readings, dimension: controlledDimension,
   const distribution = readingLevelDistribution(source);
   const active = distribution.find(item => item.level === selectedLevel && item.count > 0);
   const unknown = distribution.find(item => item.level === '未知')!;
-  const totalWords = distributionSource(readings, 'vocabulary').length;
   const unit = dimension === 'readings' ? '篇' : '词';
   const levelLabel = (level: string) => level === '未知' ? '未标注' : level;
   let offset = 0;
   return <section className="reading-distribution history-distribution-final" aria-labelledby="reading-distribution-title"><HandOutline/><Companion pose="cat-peek-history" className="chart-companion"/>
     <header className="reading-distribution__header">
       <div className="reading-distribution__title"><ChartPie size={23} aria-hidden="true" /><h2 id="reading-distribution-title">{dimension === 'readings' ? '短文难度等级分布' : '词汇难度等级分布'}（CEFR）</h2></div>
-      <p>{dimension === 'vocabulary' && vocabulary ? `基于本机已收录的 ${vocabulary.length} 个可复习词条` : `基于已生成的 ${readings.length} 篇情境短文及 ${totalWords} 条精选词汇`}</p>
       <div className="reading-distribution__switch" role="group" aria-label="统计维度" data-dimension={dimension}>
         {(['readings', 'vocabulary'] as const).map(value => <button key={value} type="button" aria-pressed={dimension === value} onClick={() => { setLocalDimension(value); if (value !== dimension) onDimensionChange?.(value); }}>
           {value === 'readings' ? <BookOpen size={17} aria-hidden="true" /> : <ChartNoAxesColumn size={17} aria-hidden="true" />}{value === 'readings' ? '按短文篇数' : '按词汇难度'}
@@ -58,7 +56,6 @@ export function ReadingLevelPieChart({ readings, dimension: controlledDimension,
       </div>
       <div className="history-chart-legend" role="group" aria-label="等级图例">{distribution.filter(item => item.count > 0).map(item => <button type="button" key={item.level} disabled={item.level === '未知' && dimension !== 'vocabulary'} aria-pressed={active?.level === item.level} aria-label={`图例 ${levelLabel(item.level)}：${item.count} ${unit}，${percent(item.percentage)}`} style={cefrStyle(item.level)} onClick={() => onLevelSelect?.(item.level)}><span className="reading-distribution__dot" aria-hidden="true"/>{levelLabel(item.level)}</button>)}</div>
       <div className="reading-distribution__details">
-        <p className="reading-distribution__hint">{dimension === 'readings' ? '点击圆环、等级卡片或图例，可筛选对应的历史短文。' : '点击圆环、等级卡片或图例，查看分级词汇复习。'}</p>
         <div className="reading-distribution__levels" role="group" aria-label={dimension === 'readings' ? '按 CEFR 等级筛选历史短文' : '选择词汇复习等级'}>
           {distribution.filter(item => dimension === 'vocabulary' || item.level !== '未知').map(item => <button type="button" key={item.level} disabled={!item.count} style={cefrStyle(item.level)} aria-label={`${levelLabel(item.level)} ${cefrVisuals[item.level].name}：${item.count} ${unit}，${percent(item.percentage)}`} aria-pressed={active?.level === item.level} onClick={() => onLevelSelect?.(item.level)}>
             <span className="reading-distribution__dot" aria-hidden="true" />

@@ -73,7 +73,7 @@ export const AppInstallPrompt: React.FC = () => {
       className="app-install-prompt fixed z-50 left-4 right-4 bottom-4 sm:left-auto sm:right-6 sm:w-[25rem] bg-[var(--surface-paper)] border border-[var(--accent-primary)]/40 rounded-sm shadow-xl p-4 font-ui"
     >
       <div className="flex items-start gap-3">
-        <img src="/site-icon.png" alt="" className="w-12 h-12 object-contain flex-shrink-0" />
+        <img src="/icons/mine-english-logo-192.png" alt="" className="w-12 h-12 object-contain flex-shrink-0" />
         <div className="min-w-0 flex-1">
           <p className="text-[length:var(--type-body)] leading-[1.6] font-semibold text-[var(--text-primary)]">添加 Mine English 到主屏幕</p>
           <p className="text-[length:var(--type-body)] leading-[1.6] text-[var(--text-secondary)] mt-1 leading-relaxed">

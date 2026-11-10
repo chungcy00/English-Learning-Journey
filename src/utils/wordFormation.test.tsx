@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DerivativeList, RootAnalysis, HighlightedWord } from '../components/WordFormation';
-import { inflectionLabel, legacyDetails, basicVocabulary, mergeGeneratedDetails } from './vocabularyDetails';
+import { inflectionLabel, orderedInflections, legacyDetails, basicVocabulary, mergeGeneratedDetails } from './vocabularyDetails';
 import { DefinitionCards } from '../components/DefinitionCards';
 import { familyForest, partOfSpeechAbbreviation } from './wordFormation';
 import type { LearningEntry } from '../types';
@@ -50,4 +50,11 @@ test('English definition cards show only ordered English text and left-side spee
 });
 test('POS labels are abbreviated locally without changing stored parts of speech',()=>{
  for(const [input,expected] of Object.entries({adjective:'adj.',noun:'n.',adverb:'adv.',pronoun:'pron.','noun / verb':'n. / v.','intransitive verb':'vi.','形容词':'adj.','custom label':'custom label'}))assert.equal(partOfSpeechAbbreviation(input),expected);
+});
+
+test('inflections use a fixed noun-first display order without mutating legacy or manual data',()=>{
+ const forms=[{label:'present_participle',value:'conflicting'},{label:'custom note',value:'kept'},{label:'past',value:'conflicted'},{label:'third-person singular',value:'conflicts'},{label:'plural',value:'conflicts'},{label:'participle',value:'conflicted'}];
+ const before=structuredClone(forms);
+ assert.deepEqual(orderedInflections(forms).map(form=>inflectionLabel(form.label)),['名词复数','动词单数','过去式','过去分词','现在分词','custom note']);
+ assert.deepEqual(forms,before);
 });

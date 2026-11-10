@@ -11,6 +11,12 @@ const inflectionLabels: Record<string, string> = {
 export function inflectionLabel(label: string) {
   return inflectionLabels[label.toLowerCase().replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim()] || label;
 }
+const inflectionOrder = ['名词复数', '单数', '动词单数', '过去式', '过去分词', '现在分词', '动名词', '比较级', '最高级', '原形', '不定式'];
+/** Sort a copy for display; saved forms and user-defined labels remain untouched. */
+export function orderedInflections<T extends { label: string }>(forms: readonly T[]): T[] {
+  const rank = (label: string) => { const index = inflectionOrder.indexOf(inflectionLabel(label)); return index < 0 ? inflectionOrder.length : index; };
+  return [...forms].sort((a, b) => rank(a.label) - rank(b.label));
+}
 export const cleanTerm = (term: string) => term.replace(/’/g, "'").replace(/\s+/g, ' ').trim();
 // Preserve case-sensitive names and abbreviations rather than merging US/us or Polish/polish.
 export const vocabularyKey = (term: string, type: VocabularyItem['type']) => `${type === 'word' ? 'word' : 'phrase'}:${cleanTerm(term)}`;
