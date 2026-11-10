@@ -9,7 +9,7 @@ import { basicVocabulary } from './vocabularyDetails';
 test('browser and installed navigation expose an independent wordbook destination with exactly one selected tab',()=>{
  for(const component of [Navbar,InstalledAppBottomNav]){
   const html=renderToStaticMarkup(React.createElement(component,{activeTab:'words',setActiveTab:()=>{},reviewCount:5,hasCurrentReading:false}));
-  const label=component===Navbar?'自定义词汇':'单词';
+  const label=component===Navbar?'自定义词汇':'词库';
   assert.ok(html.includes(`aria-label="${label}" aria-current="page"`));
   assert.equal(html.split('aria-current="page"').length-1,1);
   assert.match(html,/grid-cols-5/);

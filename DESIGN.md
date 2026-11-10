@@ -321,4 +321,4 @@ Reading cards omit the old operation-instructions paragraph and the internal top
 
 Selected donut segments translate five SVG units outward along the angular midpoint, using the same clockwise twelve-o’clock origin as the arc path. Transition only the transform for 240ms with `--ease-arrive`, retain existing opacity/color behavior, and respect reduced motion. Center level/count/percentage, segments, legend and level cards share the existing selection state. Clicking another level restores the old segment and raises the new one; clicking the active level clears it. Omit the separate current-filter/clear-filter strip. Leave 6px extra space above the statistics-dimension switch. Preserve the chart geometry, dimensions, source counts, responsive layout and all other controls.
 
-Desktop top navigation calls the custom-words destination “自定义词汇”. Keep the existing compact “单词” bottom-navigation label and the same destination key.
+Desktop top navigation calls the custom-words destination “自定义词汇”. Mobile/tablet bottom navigation calls the same destination “词库”; keep the existing icon, brush highlight and destination key.
