@@ -135,6 +135,14 @@
       "rgbaSha256": "3197fd0d244a0434727b09e0d7b43f25d65a91a44185cae2fa7d58417954cac4",
       "source": "codex-mascot-assets 2/hamster-peeking-reading-page.png",
       "pixelChanges": false
+    },
+    {
+      "file": "hamster-history-book.png",
+      "width": 1536,
+      "height": 1024,
+      "rgbaSha256": "c1fde989b1ae811dc39fc1ff7b585a678a7d68aaa8730260ff058b95461e9914",
+      "source": "手绘捧书小仓鼠.png",
+      "pixelChanges": false
     }
   ],
   "note": "Original independent transparent PNGs; only provenance metadata added. Existing loading animations unchanged."

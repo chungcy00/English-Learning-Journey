@@ -55,7 +55,7 @@ export const ReadingHistoryView: React.FC<ReadingHistoryViewProps> = ({ readings
       {activeLevel && <p className="history-list-description">已筛选的历史短文</p>}
       <div className="history-list" aria-label="历史短文列表">
         <AnimatePresence initial={false}>
-          {visibleReadings.map((item, index) => <motion.article layout="position" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0, margin: 0, paddingBlock: 0 }} transition={transition} key={item.id} className={`history-entry history-card${managing ? ' is-managing' : ''}`}><HandOutline/>{index === 0 && !activeLevel && <Companion pose="hamster-reading" className="history-records-companion"/>}
+          {visibleReadings.map((item, index) => <motion.article layout="position" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, height: 0, margin: 0, paddingBlock: 0 }} transition={transition} key={item.id} className={`history-entry history-card${managing ? ' is-managing' : ''}`}><HandOutline/>{index === 0 && !activeLevel && <Companion pose="hamster-history-book" className="history-records-companion"/>}
             {!managing && <button className="history-card-open" type="button" aria-label={`阅读：${item.title}`} onClick={() => onSelectReading(item)} />}
             <div className="history-entry__heading"><h3>{item.title}</h3><span className="history-read-arrow" aria-hidden="true"><ChevronRight size={20}/></span></div>
             <div className="history-card-metadata" aria-hidden={managing} inert={managing}><div><div className="history-badges"><HistoryLevelBadge level={item.cefrLevel || '未知'}/><span>{types[item.readingType] || '未知文体'}</span><span>{lengths[item.length] || '未知篇幅'}</span></div></div></div>

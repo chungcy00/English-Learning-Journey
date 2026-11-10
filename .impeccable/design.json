@@ -471,7 +471,7 @@
     },
     "officialMascotAssets": {
       "directory": "public/illustrations/mascots",
-      "count": 17,
+      "count": 18,
       "format": "PNG",
       "pixels": "unchanged",
       "fit": "contain",

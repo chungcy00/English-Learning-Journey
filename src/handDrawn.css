@@ -226,14 +226,14 @@
 #root .wordbook-mascot-footer { display:flex; justify-content:flex-end; min-height:100px; margin-top:8px; pointer-events:none; }
 #root .wordbook-mascot-footer > .learning-art { width:116px; }
 #root .history-records .history-list-heading { margin-bottom:8px; }
-#root .history-records-companion { position:absolute; width:96px; left:clamp(120px,16%,180px); right:auto; top:1px; }
+#root .history-records-companion { position:absolute; width:144px; left:clamp(102px,calc(16% - 18px),162px); right:auto; top:1px; }
 @media (max-width:639px) {
   #root .expression-select { flex:0 0 auto; width:100%; }
   #root .reading-companion { width:112px; }
   #root .reading-companion[data-pose="hamster-peek-reading"] { width:88px; }
   #root .wordbook-mascot-footer { min-height:80px; }
   #root .wordbook-mascot-footer > .learning-art { width:88px; }
-  #root .history-records-companion { width:88px; left:120px; top:1px; }
+  #root .history-records-companion { width:132px; left:104px; top:1px; }
   #root .wordbook-entry-companion { width:160px; left:-16px; }
 }
 
