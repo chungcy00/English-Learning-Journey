@@ -74,10 +74,11 @@ test('default chart totals do not select a dominant level, including a tie', () 
 
 test('selected level dims other actual slices and uses the shared CEFR color', () => {
   const html = renderToStaticMarkup(React.createElement(ReadingLevelPieChart, { readings: [{cefrLevel:'A2'},{cefrLevel:'B2'}], selectedLevel:'B2' }));
-  assert.match(html, /fill="#E6C394" style="opacity:0.2"/);
-  assert.match(html, /fill="#B69CAF" style="opacity:1"/);
+  assert.match(html, /fill="#E6C394" style="opacity:0.2;transform:translate\(0px, 0px\)"/);
+  assert.match(html, /fill="#B69CAF" style="opacity:1;transform:translate\([^"]+\)"/);
   assert.match(html, /--cefr-background:#F4EBF2/);
   assert.match(html, />B2<\/span><strong>1 篇<\/strong><small>50%/);
+  assert.doesNotMatch(html, /history-cefr-filter|当前筛选：/);
 });
 
 test('stale deleted level returns to the total and unknown data is counted honestly', () => {

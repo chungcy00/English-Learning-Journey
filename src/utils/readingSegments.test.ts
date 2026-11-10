@@ -44,6 +44,9 @@ test('reading keeps one player and whole-paragraph toggles without rewrite or fu
  const html=renderToStaticMarkup(React.createElement(ReadingView,{reading,knownVocabulary:[],wordbookVocabIds:new Set(),onToggleWordbook(){},onUpdateVocabulary:async()=>{},onOpenHistory(){}}));
  assert.ok(html.includes('A real article')); assert.equal((html.match(/aria-label="英文朗读播放器"/g)||[]).length,1);
  assert.match(html,/查看段落翻译：Dr. Maya paid/); assert.match(html,/本篇精选词汇/);
+ assert.match(html,/aria-label="展开本段中文译文" aria-expanded="false"/);
+ assert.match(html,/class="lexicon-tab-label">译文<\/span>/);
+ assert.doesNotMatch(html,/点击段落查看中文翻译 · 重点词汇可单独打开/);
  assert.doesNotMatch(html,/查看句子翻译|全文翻译|开始句子改写练习/);
 });
 

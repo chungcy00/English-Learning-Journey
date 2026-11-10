@@ -610,9 +610,13 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     const translated = cachedParagraphTranslation(reading, text, index, paragraphSources.length);
     const expanded = expandedSentence === key;
     const toggle = () => { if (!window.getSelection()?.toString()) setExpandedSentence(expanded ? null : key); };
+    const translationId = `reading-translation-${reading.id}-${key}`;
     return <div className={`reading-paragraph${expanded ? ' is-expanded' : ''}`}>
-      <div className="reading-paragraph__original" role="button" tabIndex={0} aria-label={`查看段落翻译：${text.slice(0, 40)}`} aria-expanded={expanded} onClick={toggle} onKeyDown={event => { if (event.target === event.currentTarget && ['Enter',' '].includes(event.key)) { event.preventDefault(); toggle(); } }}>{renderTextWithHighlights(text)}</div>
-      {expanded && <div className="reading-paragraph__translation"><p>{translated || '这篇旧短文尚无本段译文，可点击下方按钮一次补充所有段落。'}</p><button type="button" aria-label="收起段落翻译" onClick={() => setExpandedSentence(null)}><X size={16}/></button></div>}
+      <div className="reading-paragraph__source">
+        <div className="reading-paragraph__original" role="button" tabIndex={0} aria-label={`查看段落翻译：${text.slice(0, 40)}`} aria-expanded={expanded} onClick={toggle} onKeyDown={event => { if (event.target === event.currentTarget && ['Enter',' '].includes(event.key)) { event.preventDefault(); toggle(); } }}>{renderTextWithHighlights(text)}</div>
+        <button type="button" className="reading-paragraph__marker" aria-label={expanded ? '收起本段中文译文' : '展开本段中文译文'} aria-expanded={expanded} aria-controls={expanded ? translationId : undefined} onClick={event => { event.stopPropagation(); toggle(); }}><span className="lexicon-tab-label">译文</span></button>
+      </div>
+      {expanded && <div id={translationId} className="reading-paragraph__translation"><p>{translated || '这篇旧短文尚无本段译文，可点击下方按钮一次补充所有段落。'}</p><button type="button" aria-label="收起段落翻译" onClick={() => setExpandedSentence(null)}><X size={16}/></button></div>}
     </div>;
   };
 
@@ -711,7 +715,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       {speechError && <p role="alert" className="reading-inline-status">{speechError}</p>}
       {speechNotice && <p role="status" className="reading-inline-status">{speechNotice}</p>}
       <section className="reading-studio__body art-anchor"><HandOutline/><Companion pose="cat-peek-reading" className="reading-companion"/>
-        <p className="reading-paragraph-hint">点击段落查看中文翻译 · 重点词汇可单独打开</p>
         <article id="reading-body-panel" className="reading-prose">
           {isDetectedDialogue && formatMode === 'dialogue' ? renderDialogueContent() : renderParagraphContent()}
         </article>

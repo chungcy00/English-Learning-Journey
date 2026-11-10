@@ -301,3 +301,18 @@
 @media (min-width:360px) and (max-width:639px) {
   #root .review-pagination { padding-left:12px; }
 }
+
+/* Per-paragraph translation brushes replace prose instructions without a full gutter. */
+#root .reading-paragraph__source { display:flow-root; }
+#root .reading-paragraph__source > .reading-paragraph__original { display:inline; }
+#root .reading-paragraph__marker { float:right; position:relative; z-index:1; display:grid; place-items:center; width:40px; min-height:32px; margin:0 0 0 8px; padding:0; color:var(--accent-primary); background:transparent; font-family:var(--font-app); font-size:var(--type-label); font-weight:600; }
+
+#root .reading-paragraph__original:hover { background:transparent; }
+#root .reading-paragraph__original:focus:not(:focus-visible), #root .reading-paragraph__marker:focus:not(:focus-visible) { outline:none; box-shadow:none; }
+
+@media (hover:hover) and (pointer:fine) {
+  #root .reading-paragraph__source:hover { background:var(--surface-selected); border-radius:var(--hand-control-corner); }
+}
+
+#root .reading-paragraph__marker .lexicon-tab-label::before { opacity:.5; }
+#root .reading-paragraph__marker:hover .lexicon-tab-label::before { opacity:.7; }

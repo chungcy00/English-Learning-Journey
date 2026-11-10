@@ -12,3 +12,9 @@ export function donutSegmentPath(startPercent: number, percentage: number, outer
   const end = startPercent + percentage;
   return `M ${point(startPercent, outer)} A ${outer} ${outer} 0 0 1 ${point(middle, outer)} A ${outer} ${outer} 0 0 1 ${point(end, outer)} L ${point(end, inner)} A ${inner} ${inner} 0 0 0 ${point(middle, inner)} A ${inner} ${inner} 0 0 0 ${point(startPercent, inner)} Z`;
 }
+
+/** Same clockwise, twelve-o’clock origin as the segment path. */
+export function donutSegmentOffset(startPercent: number, percentage: number, distance = 5) {
+  const angle = ((startPercent + percentage / 2) / 100 * 2 - .5) * Math.PI;
+  return { x: Math.cos(angle) * distance, y: Math.sin(angle) * distance };
+}

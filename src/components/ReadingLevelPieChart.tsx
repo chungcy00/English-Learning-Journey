@@ -2,7 +2,7 @@ import { HandOutline, Companion } from './LearningArt';
 import React, { useState } from 'react';
 import { BookOpen, ChartNoAxesColumn, ChartPie } from 'lucide-react';
 import { distributionSource, readingLevelDistribution, type DistributionDimension, type DistributionReading } from '../utils/readingLevelDistribution';
-import { donutSegmentPath } from '../utils/donutInteraction';
+import { donutSegmentPath, donutSegmentOffset } from '../utils/donutInteraction';
 import { cefrVisuals, cefrStyle, formatDistributionPercent as percent } from '../utils/cefrVisuals';
 
 export function ReadingLevelPieChart({ readings, dimension: controlledDimension, selectedLevel = null, onDimensionChange, onLevelSelect, vocabulary }: {
@@ -37,9 +37,11 @@ export function ReadingLevelPieChart({ readings, dimension: controlledDimension,
           <circle cx="120" cy="120" r="94" fill="none" stroke="var(--surface-disabled)" strokeWidth="40" />
           {distribution.filter(item => item.count > 0).map(item => {
             const start = offset; offset += item.percentage;
+            const lift = donutSegmentOffset(start, item.percentage);
+            const selected = active?.level === item.level;
             const interactive = item.level !== '未知' || dimension === 'vocabulary';
             return <path key={item.level} className="reading-distribution__segment" d={donutSegmentPath(start, item.percentage, 114, 74)} fill={cefrVisuals[item.level].color}
-              style={{ opacity: active && item.level !== active.level ? .2 : 1 }}
+              style={{ opacity: active && !selected ? .2 : 1, transform: selected ? `translate(${lift.x}px, ${lift.y}px)` : 'translate(0px, 0px)' }}
               stroke="var(--surface-paper)" strokeWidth={1}
               role={interactive ? 'button' : undefined} tabIndex={interactive ? 0 : undefined}
               aria-label={interactive ? `筛选 ${levelLabel(item.level)}：${item.count} ${unit}，${percent(item.percentage)}` : undefined}
@@ -64,7 +66,6 @@ export function ReadingLevelPieChart({ readings, dimension: controlledDimension,
           </button>)}
         </div>
         {dimension === 'readings' && unknown.count > 0 && <p className="reading-distribution__unknown">未标注等级：{unknown.count} {unit}（{percent(unknown.percentage)}），已计入总数。</p>}
-        {active && dimension === 'readings' && <div className="history-cefr-filter" role="status" style={cefrStyle(active.level)}><span><i className="reading-distribution__dot" aria-hidden="true"/>当前筛选：{active.level}（{active.count} {unit}）</span><button type="button" onClick={() => onLevelSelect?.(active.level)}>清除筛选</button></div>}
         {!source.length && <p className="reading-distribution__unknown">{dimension === 'readings' ? '保存短文后显示等级分布。' : '暂无已收录词汇等级数据。'}</p>}
       </div>
     </div>
