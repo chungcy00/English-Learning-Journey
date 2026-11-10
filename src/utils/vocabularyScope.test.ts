@@ -34,7 +34,7 @@ test('wordbook shows all saved degrees, distinguishes passage addition from coll
 
 test('review count includes vocabulary from every degree', () => {
   const html = renderToStaticMarkup(React.createElement(ReviewView, { allVocabularies: entries, onRate: noop, onRefresh: noop, }));
-  assert.match(html, /全部 2 词/);
+  assert.match(html, /role="status"[^>]*>1 \/ 2</);
   assert.doesNotMatch(html, /当前模式：|单词本共/);
   assert.doesNotMatch(html, /Word 1|Reveal Details/);
 });
