@@ -22,7 +22,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const tabs = [
     { id: 'home' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '生成' : '生成短文', icon: Sprout },
     { id: 'reading' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '阅读' : '当前阅读', icon: BookOpen, disabled: !hasCurrentReading },
-    { id: 'words' as NavTab, label: '单词', icon: BookA },
+    { id: 'words' as NavTab, label: '自定义词汇', icon: BookA },
     { id: 'practice' as NavTab, label: '词汇与复习', icon: Bookmark, badge: reviewCount },
     { id: 'history' as NavTab, label: (activeTab === 'home' || activeTab === 'reading') ? '历史' : '历史记录', icon: History },
   ];
@@ -65,7 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 <Icon aria-hidden="true" className="w-4 h-4 shrink-0" />
-                <span className="text-center leading-[1.4] break-words"><span className="sm:hidden">{tab.id === 'home' ? '生成' : tab.id === 'reading' ? '阅读' : tab.id === 'practice' ? '复习' : tab.id === 'history' ? '历史' : tab.label}</span><span className="hidden sm:inline">{tab.label}</span></span>
+                <span className="text-center leading-[1.4] break-words"><span className="sm:hidden">{tab.id === 'home' ? '生成' : tab.id === 'reading' ? '阅读' : tab.id === 'practice' ? '复习' : tab.id === 'history' ? '历史' : tab.id === 'words' ? '单词' : tab.label}</span><span className="hidden sm:inline">{tab.label}</span></span>
                 {tab.badge !== undefined && tab.badge > 0 && (
                   <span aria-hidden="true" className="absolute top-0 right-0 lg:static lg:ml-1 px-1.5 text-[length:var(--type-meta)] leading-[1.4] rounded-full bg-[var(--accent-warm)] text-[var(--text-primary)] font-semibold">
                     {tab.badge}

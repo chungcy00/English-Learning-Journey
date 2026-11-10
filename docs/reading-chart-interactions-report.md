@@ -10,11 +10,12 @@
 - 中心等级、数量、百分比以及等级卡片和图例沿用同一个选择状态；取消选择恢复总计。
 - 统计维度切换栏下移 6px，增加与标题间距。
 - 删除「当前筛选／清除筛选」提示条；再次点击已选扇区、卡片或图例仍可取消筛选。
+- 桌面顶部导航「单词」改为「自定义词汇」，目的页面和 tab key 不变；底部导航保留紧凑标签。
 - 未修改颜色、字体、数据结构、存储、AI 调用或翻译缓存逻辑。
 
 ## 修改文件
 
-`src/views/ReadingView.tsx`、`src/components/ReadingLevelPieChart.tsx`、`src/utils/donutInteraction.ts`、`src/index.css`、`src/handDrawn.css`、`DESIGN.md`，及对应的 readingSegments、readingLevelDistribution、donutInteraction 现有测试。
+`src/views/ReadingView.tsx`、`src/components/ReadingLevelPieChart.tsx`、`src/utils/donutInteraction.ts`、`src/index.css`、`src/handDrawn.css`、`src/components/Navbar.tsx`、`DESIGN.md`，及对应的 readingSegments、readingLevelDistribution、donutInteraction 现有测试。
 
 ## 验证
 
