@@ -36,7 +36,7 @@
 }
 #root .studio-continue { --hand-line:var(--surface-selected); overflow:visible; margin-top:42px; padding:24px 32px; }
 #root .studio-continue > .hand-outline { inset:3px; width:calc(100% - 6px); height:calc(100% - 6px); }
-#root .studio-continue > .learning-companion { top:8px; right:12px; width:144px; }
+#root .studio-continue > .learning-companion { top:20px; right:12px; width:160px; }
 .continue-sprig { position:absolute; left:-28px; bottom:-16px; width:68px; transform:scaleX(-1); }
 #root .studio-home { padding-top:34px; }
 #root .studio-inspiration { margin-top:40px; }
@@ -77,12 +77,12 @@
 
 /* Custom vocabulary and the complete wordbook retain their existing data views. */
 #root .custom-composer-art { margin-top:48px; padding:20px 22px; background:var(--surface-paper); }
-#root .custom-composer-art > .learning-companion { top:8px; }
+#root .custom-composer-art > .learning-companion { top:16px; }
 #root .custom-composer-art .wordbook-custom-add { margin:0; padding:0; border:0; background:transparent; }
 #root .custom-words-page .study-empty { margin-top:16px; }
 #root .wordbook-final { margin-block:24px; padding-top:32px; padding-bottom:32px; border:1px solid var(--border-selected); border-radius:var(--hand-corner); }
 #root .wordbook-final-heading { min-height:88px; justify-content:start; align-content:center; padding-right:160px; }
-#root .wordbook-reading-companion { width:196px; top:-70px; right:8px; transform:none; }
+#root .wordbook-reading-companion { width:176px; top:-76px; right:8px; transform:none; }
 .wordbook-heading-sprig { position:absolute; left:-36px; top:0; width:40px; opacity:.8; }
 #root .wordbook-final .wordbook-management { margin-top:24px; }
 #root .wordbook-collection-bar { border-radius:var(--hand-control-corner); }
@@ -117,7 +117,7 @@
 #root .history-page-heading { position:relative; padding-left:34px; }
 #root .history-page-heading > .learning-art { position:absolute; width:52px; left:-15px; top:-16px; }
 #root .history-distribution-final { margin-top:48px; }
-#root .chart-companion { top:8px; right:24px; width:clamp(130px,20%,212px); }
+#root .chart-companion { top:20px; right:24px; width:clamp(130px,20%,212px); }
 #root .history-final .reading-distribution__body { display:flex; flex-direction:column; align-items:center; }
 #root .history-final .reading-distribution__details { width:100%; }
 #root .history-final .reading-distribution__ring { width:200px; }
@@ -126,7 +126,7 @@
 #root .history-distribution-final .reading-distribution__switch::before { border-radius:var(--hand-control-corner); }
 #root .history-final .history-card { border-radius:var(--hand-corner); }
 #root .history-vocabulary-tasks { position:relative; margin-top:48px; padding:24px; background:var(--surface-paper); }
-#root .tasks-companion { top:32px; right:24px; width:140px; }
+#root .tasks-companion { top:22px; right:8%; width:164px; }
 #root .history-task-list { gap:8px; }
 #root .history-task-card { border-radius:var(--hand-control-corner); }
 #root .history-review-all { background:var(--surface-selected); border-radius:var(--hand-control-corner); }
@@ -157,7 +157,7 @@
   #root .app-header .brand-companions { width:64px; height:auto; margin-block:-8px; }
   #root .studio-home { padding-top:18px; }
   #root .studio-continue { margin-top:30px; padding:20px; }
-  #root .studio-continue > .learning-companion { width:104px; top:8px; right:12px; }
+  #root .studio-continue > .learning-companion { width:104px; top:14px; right:12px; }
   .continue-sprig { width:48px; left:-12px; bottom:-14px; }
   #root .studio-inspiration { margin-top:28px; }
   #root .inspiration-companion { width:88px; top:8px; right:14%; }
@@ -168,7 +168,7 @@
   #root .reading-studio__body { padding:20px 16px; }
   #root .reading-vocabulary { padding:16px; }
   #root .custom-composer-art { padding:16px; margin-top:34px; }
-  #root .custom-composer-art > .learning-companion { width:104px; top:8px; right:6px; }
+  #root .custom-composer-art > .learning-companion { width:104px; top:12px; right:6px; }
   #root .wordbook-final { margin:12px; width:auto; padding:20px 16px; }
   #root .wordbook-final-heading { min-height:72px; padding-right:92px; }
   #root .wordbook-reading-companion { width:100px; top:-18px; right:-8px; }
@@ -188,9 +188,9 @@
   #root .study-empty--compact { padding:10px 0; gap:12px; }
   #root .study-empty--compact > .learning-art { width:64px; }
   #root .history-page-heading { padding-left:24px; }
-  #root .chart-companion { width:104px; top:8px; right:16px; }
+  #root .chart-companion { width:104px; top:12px; right:16px; }
   #root .history-vocabulary-tasks { padding:16px; }
-  #root .tasks-companion { width:112px; top:24px; right:12px; }
+  #root .tasks-companion { width:136px; top:14px; right:12px; }
   .footer-sprig { width:58px; opacity:.5; bottom:0; }
   #root .learning-footer > div { padding-inline:16px; }
 }

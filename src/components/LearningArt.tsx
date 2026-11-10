@@ -8,6 +8,7 @@ export const mascotPoses = {
   'hamster-peek-reading': { file: 'hamster-peeking-reading-page.png', width: 723, height: 609, perch: '-74.1%' },
   'cat-peek-history': { file: 'cat-peeking-history-page.png', width: 704, height: 674, perch: '-72.6%' },
   'hamster-history-book': { file: 'hamster-history-book.png', width: 1536, height: 1024, perch: '-87.3%' },
+  'hamster-review-tasks': { file: 'hamster-review-tasks.png', width: 1536, height: 1024, perch: '-80.2%' },
   together: { file: 'cat-hamster-book-logo.png', width: 708, height: 724, perch: '-75.7%' },
   'cat-peek': { file: 'cat-peeking.png', width: 651, height: 639, perch: '-70.9%' },
   'cat-peek-alt': { file: 'cat-peeking-alt.png', width: 724, height: 685, perch: '-74.6%' },

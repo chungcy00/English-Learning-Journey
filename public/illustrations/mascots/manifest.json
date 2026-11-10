@@ -143,6 +143,14 @@
       "rgbaSha256": "c1fde989b1ae811dc39fc1ff7b585a678a7d68aaa8730260ff058b95461e9914",
       "source": "手绘捧书小仓鼠.png",
       "pixelChanges": false
+    },
+    {
+      "file": "hamster-review-tasks.png",
+      "width": 1536,
+      "height": 1024,
+      "rgbaSha256": "54d3531dc0a06e9868bc8145d33f22ed7b375f9e9d1cf9219a0ebb9ade63ed37",
+      "source": "抱书复习的小仓鼠.png",
+      "pixelChanges": false
     }
   ],
   "note": "Original independent transparent PNGs; only provenance metadata added. Existing loading animations unchanged."

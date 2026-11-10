@@ -18,7 +18,7 @@
 | 个人生词本 | 看书猫猫增大并提高，书本仍在标题区；标题叶子避让文字；A–Z 仓鼠落在外框右下缘 |
 | 历史统计 | 闭眼小猫按面板宽度缩放，爪子仍压住右上边线 |
 | 历史短文 | 使用最新捧书仓鼠；横向随标题宽度定位，纵向以第一张卡片上沿为准 |
-| 词汇复习任务 | 仓鼠调整大小与偏移，使书本位于上沿内侧且不碰上方统计区域 |
+| 词汇复习任务 | 使用最新「抱书复习的小仓鼠.png」，左上短线保留；按书本/爪子底边定位右上沿，不碰上方统计区域 |
 | 词汇六栏 | 不改导航与内容；复核空状态与角色显示 |
 | 页脚 | 复核两侧叶子朝向；手机和平板底部导航模式继续隐藏版权页脚 |
 
@@ -79,3 +79,17 @@
 ![custom-empty-375](screenshots/reference-calibration/custom-empty-375.png)
 
 ![detail-375](screenshots/reference-calibration/detail-375.png)
+
+## 最终逐图复核与任务仓鼠
+
+- 本次再次对照九张用户示意图：品牌、首页/手机首页、阅读、个人生词本、自定义词条、复习卡、六栏空状态、历史文章统计、历史词汇复习任务。
+- 首页猫猫的爪子压入边线、统计闭眼猫猫的前爪、以及生词本看书猫的上下位置均重新校准；没有改变角色比例或镜像角色。输入模式中的叶子在两种模式保持一致。
+- 最新 `抱书复习的小仓鼠.png` 原文件直接复制为 `public/illustrations/mascots/hamster-review-tasks.png`，1536×1024，登记为第 19 个正式资源。只在 `HistoryVocabularyTasks` 使用，保留左上三条原图手绘短线。
+- 任务仓鼠按原图手部基准线 821/1024 定位，书本低于爪子基准线少许，形成卡片上沿前后的覆盖关系；桌面/平板宽 164px，手机宽 136px，不扩大模块或移动功能。
+- 1440 / 820 / 375 / 320px 实测：角色最上部与上方统计卡片至少间隔 2.4px；书本压入任务面板约 26px（桌面/平板）或 17.5px（手机）。没有遮挡模块标题、复习入口或图表。
+- 最终 TypeScript、生产构建及 277 项现有测试全部通过。所有 19 张资源 RGBA 校验一致，新图文件与用户原图逐字节相同。
+- 本轮涉及 `src/components/HistoryVocabularyTasks.tsx`、`src/components/LearningArt.tsx`、`src/handDrawn.css`、资源 PNG/manifest、`DESIGN.md`、`.impeccable/design.json` 与本报告/截图。接口、存储、学习规则和其他页面功能不变。
+
+![任务仓鼠桌面局部](screenshots/reference-calibration/tasks-crop-1440.png)
+
+![任务仓鼠手机局部](screenshots/reference-calibration/tasks-crop-375.png)

@@ -29,7 +29,7 @@ export function HistoryVocabularyTasks({vocabulary, selectedLevel, onSelectLevel
   const selected = vocabularyTask(vocabulary, selectedLevel);
   const all = vocabularyTask(vocabulary, null);
   const label = selectedLevel ? vocabularyLevelLabel(selectedLevel) : '';
-  return <section className="history-vocabulary-tasks" aria-label="词汇复习任务"><HandOutline/><Companion pose="hamster-reading-alt" className="tasks-companion"/>
+  return <section className="history-vocabulary-tasks" aria-label="词汇复习任务"><HandOutline/><Companion pose="hamster-review-tasks" className="tasks-companion"/>
     <AnimatePresence mode="wait" initial={false}><motion.div key={selectedLevel || 'all'} initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:reduced?0:.18}}>
       {selectedLevel ? <div className="history-vocabulary-detail" style={cefrStyle(selectedLevel)}>
         <header><span className="history-task-icon"><Target size={24} aria-hidden="true"/></span><div><h2 tabIndex={-1} ref={node => { if (node && focusDetail.current) { focusDetail.current = false; node.focus({ preventScroll: true }); } }}>{selectedLevel==='未知'?'未标注等级词汇复习':`${label} ${cefrVisuals[selectedLevel].name}词汇复习`}</h2><p>已收录 {selected.total} 词</p></div></header>
