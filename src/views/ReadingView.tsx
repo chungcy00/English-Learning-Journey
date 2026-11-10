@@ -710,7 +710,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       </section>
       {speechError && <p role="alert" className="reading-inline-status">{speechError}</p>}
       {speechNotice && <p role="status" className="reading-inline-status">{speechNotice}</p>}
-      <section className="reading-studio__body art-anchor"><HandOutline/><Companion className="reading-companion"/>
+      <section className="reading-studio__body art-anchor"><HandOutline/><Companion pose="cat-peek-alt" className="reading-companion"/>
         <p className="reading-paragraph-hint">点击段落查看中文翻译 · 重点词汇可单独打开</p>
         <article id="reading-body-panel" className="reading-prose">
           {isDetectedDialogue && formatMode === 'dialogue' ? renderDialogueContent() : renderParagraphContent()}

@@ -116,6 +116,7 @@ export const WordbookView: React.FC<WordbookViewProps> = ({ vocabularyList, scop
     </section>
     }
     {contentView==='words'&&<SavedMaterialsView type="phrase" search={search} hideWhenEmpty/>}
+    {contentView==='words'&&!!filtered.length&&<div className="wordbook-mascot-footer" aria-hidden="true"><Mascot pose="hamster-az"/></div>}
     {removed&&<div className="wordbook-undo" role="status"><span>已移出生词本：{removed.term}</span><button type="button" disabled={undoBusy||!onRestoreVocab} onClick={()=>void undoRemoval()}>{undoBusy?'正在恢复…':'撤销'}</button>{undoError&&<p role="alert">{undoError}</p>}</div>}
   </div>;
 };

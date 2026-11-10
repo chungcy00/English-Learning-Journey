@@ -1,24 +1,37 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 
-/** One shared atlas keeps every instance of the two learning companions consistent. */
+/** Official independent PNGs, copied without pixel or alpha changes. */
 export const mascotPoses = {
-  'cat-welcome': 0, 'cat-reading': 1, 'cat-thinking': 2, 'cat-success': 3,
-  'cat-reminder': 4, 'cat-rest': 5, 'cat-peek': 6, together: 7,
-  'hamster-welcome': 8, 'hamster-reading': 9, 'hamster-thinking': 10, 'hamster-success': 11,
-  'hamster-reminder': 12, 'hamster-rest': 13, 'hamster-peek': 14, sprig: 15,
+  together: { file: 'cat-hamster-book-logo.png', width: 708, height: 724, perch: '-75.7%' },
+  'cat-peek': { file: 'cat-peeking.png', width: 651, height: 639, perch: '-70.9%' },
+  'cat-peek-alt': { file: 'cat-peeking-alt.png', width: 724, height: 685, perch: '-74.6%' },
+  'hamster-peek': { file: 'hamster-peeking.png', width: 723, height: 696, perch: '-74.6%' },
+  'cat-reading': { file: 'cat-reading.png', width: 724, height: 659, perch: '-86.8%' },
+  'hamster-reading': { file: 'hamster-reading.png', width: 709, height: 631, perch: '-89.1%' },
+  'hamster-reading-alt': { file: 'hamster-reading-alt.png', width: 723, height: 715, perch: '-79.7%' },
+  'hamster-az': { file: 'hamster-az.png', width: 695, height: 674, perch: '-89.6%' },
+  'cat-thinking': { file: 'cat-thinking.png', width: 724, height: 717, perch: '-79.1%' },
+  'cat-rest': { file: 'cat-sleeping.png', width: 709, height: 691, perch: '-73.1%' },
+  'cat-success': { file: 'cat-celebrating.png', width: 723, height: 724, perch: '-79.4%' },
+  'hamster-reminder': { file: 'hamster-reminder.png', width: 701, height: 715, perch: '-79.1%' },
 } as const;
+type MascotPose = keyof typeof mascotPoses | 'sprig';
 export function Mascot({ pose = 'together', className = '', eager = false }: {
-  pose?: keyof typeof mascotPoses; className?: string; eager?: boolean;
+  pose?: MascotPose; className?: string; eager?: boolean;
 }) {
-  const cell = mascotPoses[pose];
-  return <span className={`learning-art ${className}`} aria-hidden="true" data-pose={pose}>
-    <img src="/illustrations/learning-companions.webp" alt="" width={1254} height={1254}
-      loading={eager ? 'eager' : 'lazy'} decoding="async" draggable={false}
-      style={{ transform: `translate(${-25 * (cell % 4)}%, ${-25 * Math.floor(cell / 4)}%)` }}/>
+  const [failedSource, setFailedSource] = useState<string | null>(null);
+  // Keep the existing foliage unchanged. No character uses the legacy atlas.
+  const art = pose === 'sprig' ? null : mascotPoses[pose];
+  const src = art ? `/illustrations/mascots/${art.file}` : '/illustrations/learning-companions.webp';
+  return <span className={`learning-art ${art ? 'learning-art--character' : 'learning-art--sprig'} ${className}`} aria-hidden="true" data-pose={pose} data-asset={art?.file}
+    style={{ '--art-aspect': art ? `${art.width} / ${art.height}` : '1', '--mascot-perch': art?.perch, visibility: failedSource === src ? 'hidden' : undefined } as React.CSSProperties}>
+    <img src={src} alt="" width={art?.width || 1254} height={art?.height || 1254}
+      loading={eager ? 'eager' : 'lazy'} decoding="async" draggable={false} onError={() => setFailedSource(src)}
+      style={art ? undefined : { transform: 'translate(-75%, -75%)' }}/>
   </span>;
 }
 export function Companion({ pose = 'cat-peek', className = '' }: {
-  pose?: keyof typeof mascotPoses; className?: string;
+  pose?: MascotPose; className?: string;
 }) {
   return <Mascot pose={pose} className={`learning-companion ${className}`}/>;
 }
@@ -27,7 +40,7 @@ export function HandRule({ className = '' }: { className?: string }) {
   return <svg className={`hand-rule ${className}`} viewBox="0 0 1000 8" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M1 4 C75 1 115 7 190 4 S300 2 375 4 S465 7 545 4 S675 1 745 4 S885 7 999 3"/></svg>;
 }
 export function StudyEmptyState({ children, compact = false, pose = 'hamster-reading', busy = false }: {
-  children: React.ReactNode; compact?: boolean; pose?: keyof typeof mascotPoses; busy?: boolean;
+  children: React.ReactNode; compact?: boolean; pose?: MascotPose; busy?: boolean;
 }) {
   return <div className={`study-empty ${compact ? 'study-empty--compact' : ''} ${busy ? 'study-empty--waiting' : ''}`}>
     {!compact&&<HandOutline/>}{!busy&&<Mascot pose={pose}/>}<div className="study-empty__copy">{children}</div>

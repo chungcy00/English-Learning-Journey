@@ -1,0 +1,101 @@
+{
+  "assets": [
+    {
+      "file": "cat-celebrating.png",
+      "width": 723,
+      "height": 724,
+      "rgbaSha256": "ca4bc3b9f0b1a26238c04446552b9b15b6c7ecd459abe1517e124118bf347ef7",
+      "source": "codex-mascot-assets/cat-celebrating.png",
+      "pixelChanges": false
+    },
+    {
+      "file": "cat-hamster-book-logo.png",
+      "width": 708,
+      "height": 724,
+      "rgbaSha256": "fc3d4da34c357826a8c2e08603d8651ac8df6f91438cd2c4fb9af963dbca184b",
+      "source": "codex-mascot-assets/cat-hamster-book-logo.png",
+      "pixelChanges": false
+    },
+    {
+      "file": "cat-peeking-alt.png",
+      "width": 724,
+      "height": 685,
+      "rgbaSha256": "9c95d777c95fafd77363a9ce6c9baae8db1321625f7112a146e22e22d3529a47",
+      "source": "codex-mascot-assets/cat-peeking-alt.png",
+      "pixelChanges": false
+    },
+    {
+      "file": "cat-peeking.png",
+      "width": 651,
+      "height": 639,
+      "rgbaSha256": "a190432df4d62c2bae13f3eb13957b8d2b955556db8c677d4baf9ee9037e2f71",
+      "source": "codex-mascot-assets/cat-peeking.png",
+      "pixelChanges": false
+    },
+    {
+      "file": "cat-reading.png",
+      "width": 724,
+      "height": 659,
+      "rgbaSha256": "2bbea21a7a623eda5a81df8e736b490555ebbc9c5437310b69f4ce7d226bf66b",
+      "source": "codex-mascot-assets/cat-reading.png",
+      "pixelChanges": false
+    },
+    {
+      "file": "cat-sleeping.png",
+      "width": 709,
+      "height": 691,
+      "rgbaSha256": "07006e063ca8b02726ca4001246752e8b2f7c50a37c95b76786b3ca6db1c1dfc",
+      "source": "codex-mascot-assets/cat-sleeping.png",
+      "pixelChanges": false
+    },
+    {
+      "file": "cat-thinking.png",
+      "width": 724,
+      "height": 717,
+      "rgbaSha256": "c816b870475842bb8772f894a6cefd3133da610c4c30e927c7b7b152b9ef0c44",
+      "source": "codex-mascot-assets/cat-thinking.png",
+      "pixelChanges": false
+    },
+    {
+      "file": "hamster-az.png",
+      "width": 695,
+      "height": 674,
+      "rgbaSha256": "ad0b183fa3d90e9afa0feb1066b4d86e9a0d76379b9449ac8695f03257c4473d",
+      "source": "codex-mascot-assets/hamster-az.png",
+      "pixelChanges": false
+    },
+    {
+      "file": "hamster-peeking.png",
+      "width": 723,
+      "height": 696,
+      "rgbaSha256": "2ce6e1d7f65480744a64bea66addceeebe242be80f673537382b377130c0ff62",
+      "source": "codex-mascot-assets/hamster-peeking.png",
+      "pixelChanges": false
+    },
+    {
+      "file": "hamster-reading-alt.png",
+      "width": 723,
+      "height": 715,
+      "rgbaSha256": "0e0963959649cb137fd1f65dc26d33f442e888abc3cc1598e475088eb2ed6efc",
+      "source": "codex-mascot-assets/hamster-reading-alt.png",
+      "pixelChanges": false
+    },
+    {
+      "file": "hamster-reading.png",
+      "width": 709,
+      "height": 631,
+      "rgbaSha256": "157ff3d29fc2a576015d17a6807859c31b5bb3a9a4ad29e45cba7942f7da65ac",
+      "source": "codex-mascot-assets/hamster-reading.png",
+      "pixelChanges": false
+    },
+    {
+      "file": "hamster-reminder.png",
+      "width": 701,
+      "height": 715,
+      "rgbaSha256": "b5d7944600e7732562ce9a072b20982b704b2db02119f6a93dbe5f261ced7037",
+      "source": "codex-mascot-assets/hamster-reminder.png",
+      "pixelChanges": false
+    }
+  ],
+  "note": "Original independent transparent PNGs; only provenance metadata added. Existing loading animations unchanged."
+}

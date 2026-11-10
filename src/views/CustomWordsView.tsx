@@ -26,7 +26,7 @@ export function CustomWordsView({ vocabulary, onSave, onRequestRemove }: {
         <button type="button" className="custom-word-open" aria-expanded={expanded===word.id} aria-controls={`custom-word-${word.id}`} onClick={()=>setExpanded(expanded===word.id?null:word.id)}><span><strong>{word.term}</strong><small>{wordbookMeta(word)}</small></span><ChevronDown size={18} aria-hidden="true" className={expanded===word.id?'rotate-180':''}/></button>
         {expanded===word.id&&<div id={`custom-word-${word.id}`} role="region" aria-label={`${word.term} 的自定义学习资料`}><WordbookEntryDetails vocab={word} reading={null} onRemove={async item=>onRequestRemove(item)}/></div>}
       </li>)}</ul>
-      {!visible.length&&<StudyEmptyState pose={query.trim()?'hamster-thinking':'hamster-reading'}><p>{query.trim()?'没有匹配的自定义词条。':'还没有自定义词条，在上方添加第一个。'}</p></StudyEmptyState>}
+      {!visible.length&&<StudyEmptyState pose={query.trim()?'cat-thinking':'hamster-reading'}><p>{query.trim()?'没有匹配的自定义词条。':'还没有自定义词条，在上方添加第一个。'}</p></StudyEmptyState>}
     </section>
   </div>;
 }

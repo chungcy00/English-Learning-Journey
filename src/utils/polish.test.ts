@@ -13,7 +13,9 @@ test('learning cards use page scrolling without a height cap or rating overlay',
 
 test('expression menu scroll follows keyboard navigation, not pointer movement', () => {
   const view = readFileSync(new URL('../components/ExpressionSelect.tsx', import.meta.url), 'utf8');
-  assert.match(view, /open && keyboardNavigation.current/);
+  assert.match(view, /if \(!open \|\| !keyboardNavigation.current\) return/);
+  assert.match(view, /menu.scrollTop =/);
+  assert.doesNotMatch(view, /scrollIntoView/);
   assert.match(view, /keyboardNavigation.current = true/);
   assert.match(view, /onPointerMove=\{\(\) => \{ keyboardNavigation.current = false/);
 });

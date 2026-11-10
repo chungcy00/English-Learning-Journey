@@ -22,14 +22,18 @@ export function ExpressionSelect({ options, value, disabled, loading, onOpen, on
     return () => document.removeEventListener('pointerdown', close);
   }, []);
   useEffect(() => {
-    if (open && keyboardNavigation.current) document.getElementById(`${id}-${active}`)?.scrollIntoView({ block: 'nearest' });
+    if (!open || !keyboardNavigation.current) return;
+    const menu = document.getElementById(`${id}-list`), item = document.getElementById(`${id}-${active}`);
+    if (!menu || !item) return;
+    if (item.offsetTop < menu.scrollTop) menu.scrollTop = item.offsetTop;
+    else if (item.offsetTop + item.offsetHeight > menu.scrollTop + menu.clientHeight) menu.scrollTop = item.offsetTop + item.offsetHeight - menu.clientHeight;
   }, [open, active, id]);
-  const choose = (term: string) => { setOpen(false); trigger.current?.focus(); onChange(term); };
+  const choose = (term: string) => { setOpen(false); trigger.current?.focus({ preventScroll: true }); onChange(term); };
   const label = (option: ExpressionOption) => <>
     <span className="text-[length:var(--type-term)] leading-[1.4] font-editorial">{option.term}</span> <span className="type-label italic text-[var(--text-secondary)]">{option.type}</span>
     {option.selected && <span aria-label="已选"> ☑️</span>}
   </>;
-  return <div ref={root} className="relative min-w-0 flex-1 basis-64" onBlur={event => {
+  return <div ref={root} className="expression-select relative min-w-0 flex-1 basis-64" onBlur={event => {
     if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false);
   }}>
     <span id={`${id}-label`} className="block mb-1.5 text-[var(--text-primary)]">选择文中的单词、短语或习语</span>

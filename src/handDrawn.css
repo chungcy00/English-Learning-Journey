@@ -4,15 +4,17 @@
   --hand-control-corner: 11px 13px 10px 12px / 12px 10px 13px 11px;
 
 }
-.learning-art { display:block; position:relative; width:104px; aspect-ratio:1; flex-shrink:0; overflow:hidden; pointer-events:none; user-select:none; }
-.learning-art > img { display:block; width:400%; height:400%; max-width:none; object-fit:fill; transform-origin:0 0; }
+.learning-art { display:block; position:relative; width:104px; aspect-ratio:var(--art-aspect,1); flex-shrink:0; overflow:visible; pointer-events:none; user-select:none; }
+.learning-art > img { display:block; width:100%; height:auto; max-width:100%; object-fit:contain; }
+.learning-art--sprig { aspect-ratio:1; overflow:hidden; }
+.learning-art--sprig > img { width:400%; height:400%; max-width:none; object-fit:fill; transform-origin:0 0; }
 .art-anchor { position:relative; }
-.learning-companion { position:absolute; z-index:2; width:124px; right:24px; top:-79px; }
+.learning-companion { position:absolute; z-index:2; width:132px; right:24px; top:8px; transform:translateY(var(--mascot-perch,-75%)); }
 .hand-rule { position:absolute; left:0; bottom:-3px; width:100%; height:7px; overflow:visible; pointer-events:none; color:var(--accent-secondary); }
 .hand-rule path { fill:none; stroke:currentColor; stroke-width:1; vector-effect:non-scaling-stroke; }
 #root .app-header { border-bottom-color:transparent; backdrop-filter:none; background:var(--bg-primary); }
-#root .app-header .brand-companions { width:68px; height:68px; margin-block:-7px; }
-/* Brand cell remains square internally; outer brand crop trims only transparent padding. */
+#root .app-header .brand-companions { width:78px; height:auto; margin-block:-12px; }
+/* Independent images keep their full native ratio and transparent margins. */
 
 #root .app-header > div { position:relative; z-index:1; }
 .header-sprig { position:absolute; right:8px; top:2px; width:72px; opacity:.8; }
@@ -34,12 +36,12 @@
 }
 #root .studio-continue { --hand-line:var(--surface-selected); overflow:visible; margin-top:42px; padding:24px 32px; }
 #root .studio-continue > .hand-outline { inset:3px; width:calc(100% - 6px); height:calc(100% - 6px); }
-#root .studio-continue > .learning-companion { top:-79px; right:20px; }
+#root .studio-continue > .learning-companion { top:8px; right:20px; width:144px; }
 .continue-sprig { position:absolute; left:-28px; bottom:-16px; width:68px; }
 #root .studio-home { padding-top:34px; }
 #root .studio-inspiration { margin-top:40px; }
 #root .studio-scenes { position:relative; margin-top:28px; }
-#root .inspiration-companion { width:92px; top:-59px; right:17%; }
+#root .inspiration-companion { width:116px; top:8px; right:17%; }
 #root .studio-scenes button { border:1px solid var(--border-subtle); border-radius:var(--hand-control-corner); }
 #root .studio-scenes button[aria-pressed="true"] { outline:1px solid var(--accent-secondary); outline-offset:3px; }
 #root .studio-topics { gap:10px; margin-top:16px; }
@@ -67,7 +69,7 @@
 #root .reading-studio__body { background:var(--reading-white); padding:24px; }
 #root .reading-vocabulary { background:var(--reading-white); padding:20px; align-self:start; }
 #root .reading-vocabulary__list { border:0; border-radius:0; padding:0; background:transparent; }
-#root .reading-companion { width:88px; top:-57px; left:12px; right:auto; }
+#root .reading-companion { width:132px; top:8px; left:12px; right:auto; }
 #root .reading-vocabulary__header { margin-top:0; }
 #root .reading-player { --hand-line:var(--accent-secondary); }
 #root .reading-player__track, #root .reading-player input[type="range"] { border-radius:42% 38% 45% 40% / 40% 50% 35% 45%; }
@@ -75,12 +77,12 @@
 
 /* Custom vocabulary and the complete wordbook retain their existing data views. */
 #root .custom-composer-art { margin-top:48px; padding:20px 22px; background:var(--surface-paper); }
-#root .custom-composer-art > .learning-companion { top:-79px; }
+#root .custom-composer-art > .learning-companion { top:8px; }
 #root .custom-composer-art .wordbook-custom-add { margin:0; padding:0; border:0; background:transparent; }
 #root .custom-words-page .study-empty { margin-top:16px; }
 #root .wordbook-final { margin-block:24px; padding-top:32px; padding-bottom:32px; border:1px solid var(--border-selected); border-radius:var(--hand-corner); }
 #root .wordbook-final-heading { min-height:88px; justify-content:start; align-content:center; padding-right:160px; }
-#root .wordbook-reading-companion { width:158px; top:-38px; right:16px; }
+#root .wordbook-reading-companion { width:158px; top:-38px; right:16px; transform:none; }
 .wordbook-heading-sprig { position:absolute; left:-24px; top:-26px; width:62px; opacity:.8; }
 #root .wordbook-final .wordbook-management { margin-top:24px; }
 #root .wordbook-collection-bar { border-radius:var(--hand-control-corner); }
@@ -93,11 +95,11 @@
 /* One companion per major region, never per vocabulary item. */
 #root .practice-hub { padding-top:60px; }
 #root .practice-entry { overflow:visible; --hand-line:var(--status-warning); }
-#root .wordbook-entry-companion { left:20px; right:auto; width:96px; top:-62px; }
+#root .wordbook-entry-companion { left:20px; right:auto; width:120px; top:8px; }
 #root .practice-review { margin-top:24px; }
 #root .random-review { padding:20px 24px; background:var(--bg-alt); }
 #root .review-page .review-flip-stage { margin-top:48px; }
-#root .review-companion { top:-64px; right:12%; width:96px; }
+#root .review-companion { top:8px; right:12%; width:112px; }
 #root .review-flip-front .practice-vocabulary-card { overflow:visible; }
 #root .practice-vocabulary-card { --hand-line:var(--accent-subtle); }
 #root .practice-vocabulary-card__label { border-radius:48% 42% 46% 40% / 42% 50% 40% 50%; }
@@ -115,7 +117,7 @@
 #root .history-page-heading { position:relative; padding-left:34px; }
 #root .history-page-heading > .learning-art { position:absolute; width:52px; left:-15px; top:-16px; }
 #root .history-distribution-final { margin-top:48px; }
-#root .chart-companion { top:-77px; right:36px; }
+#root .chart-companion { top:8px; right:36px; width:136px; }
 #root .history-final .reading-distribution__body { display:flex; flex-direction:column; align-items:center; }
 #root .history-final .reading-distribution__details { width:100%; }
 #root .history-final .reading-distribution__ring { width:200px; }
@@ -124,7 +126,7 @@
 #root .history-distribution-final .reading-distribution__switch::before { border-radius:var(--hand-control-corner); }
 #root .history-final .history-card { border-radius:var(--hand-corner); }
 #root .history-vocabulary-tasks { position:relative; margin-top:48px; padding:24px; background:var(--surface-paper); }
-#root .tasks-companion { top:-74px; right:24px; width:112px; }
+#root .tasks-companion { top:8px; right:24px; width:112px; }
 #root .history-task-list { gap:8px; }
 #root .history-task-card { border-radius:var(--hand-control-corner); }
 #root .history-review-all { background:var(--surface-selected); border-radius:var(--hand-control-corner); }
@@ -152,13 +154,13 @@
   #root .reading-studio > .reading-studio__body, #root .reading-studio > .reading-vocabulary { margin-top:40px; }
 }
 @media (max-width:639px) {
-  #root .app-header .brand-companions { width:56px; height:56px; margin-block:-4px; }
+  #root .app-header .brand-companions { width:64px; height:auto; margin-block:-8px; }
   #root .studio-home { padding-top:18px; }
   #root .studio-continue { margin-top:30px; padding:20px; }
-  #root .studio-continue > .learning-companion { width:88px; top:-56px; right:12px; }
+  #root .studio-continue > .learning-companion { width:104px; top:8px; right:12px; }
   .continue-sprig { width:48px; left:-12px; bottom:-14px; }
   #root .studio-inspiration { margin-top:28px; }
-  #root .inspiration-companion { width:68px; top:-44px; right:14%; }
+  #root .inspiration-companion { width:88px; top:8px; right:14%; }
   #root .studio-recipe__group { grid-template-columns:minmax(0,1fr); gap:10px; }
   #root .studio-recipe__group:first-child { grid-template-columns:minmax(0,1fr); }
   #root .studio-recipe__group .studio-choices { gap:6px; }
@@ -166,7 +168,7 @@
   #root .reading-studio__body { padding:20px 16px; }
   #root .reading-vocabulary { padding:16px; }
   #root .custom-composer-art { padding:16px; margin-top:34px; }
-  #root .custom-composer-art > .learning-companion { width:88px; top:-56px; right:6px; }
+  #root .custom-composer-art > .learning-companion { width:104px; top:8px; right:6px; }
   #root .wordbook-final { margin:12px; width:auto; padding:20px 16px; }
   #root .wordbook-final-heading { min-height:72px; padding-right:92px; }
   #root .wordbook-reading-companion { width:100px; top:-18px; right:-8px; }
@@ -180,15 +182,15 @@
   #root .wordbook-final .wordbook-final-entry.is-expanded { padding-inline:0; }
   #root .practice-hub { padding-top:48px; }
   #root .random-review { padding:16px; }
-  #root .review-companion { width:72px; top:-47px; right:16px; }
+  #root .review-companion { width:88px; top:8px; right:16px; }
   #root .study-empty { padding:20px 16px; }
   #root .study-empty > .learning-art { width:96px; }
   #root .study-empty--compact { padding:10px 0; gap:12px; }
   #root .study-empty--compact > .learning-art { width:64px; }
   #root .history-page-heading { padding-left:24px; }
-  #root .chart-companion { width:88px; top:-56px; right:16px; }
+  #root .chart-companion { width:104px; top:8px; right:16px; }
   #root .history-vocabulary-tasks { padding:16px; }
-  #root .tasks-companion { width:88px; top:-58px; right:12px; }
+  #root .tasks-companion { width:96px; top:8px; right:12px; }
   .footer-sprig { width:58px; opacity:.5; bottom:0; }
   #root .learning-footer > div { padding-inline:16px; }
 }
@@ -218,3 +220,18 @@
 #root .processing-dialog .processing-dialog__cancel { grid-column:2; justify-self:start; margin-top:4px; padding:8px 16px; }
 #root .processing-dialog .processing-dialog__note { grid-column:1 / -1; margin-top:8px; }
 #root .has-bottom-navigation .processing-dialog[open] { bottom:calc(5rem + env(safe-area-inset-bottom) + 12px); max-height:calc(100dvh - 6rem - env(safe-area-inset-bottom)); }
+
+/* Official illustration placement: no crop, mirrored accents or CSS-drawn characters. */
+#root .reading-companion[data-pose="hamster-peek"] { width:104px; }
+#root .wordbook-mascot-footer { display:flex; justify-content:flex-end; min-height:100px; margin-top:8px; pointer-events:none; }
+#root .wordbook-mascot-footer > .learning-art { width:116px; }
+#root .history-list-heading { position:relative; }
+#root .history-records-companion { position:absolute; width:100px; right:100px; top:-54px; }
+@media (max-width:639px) {
+  #root .expression-select { flex:0 0 auto; width:100%; }
+  #root .reading-companion { width:112px; }
+  #root .reading-companion[data-pose="hamster-peek"] { width:88px; }
+  #root .wordbook-mascot-footer { min-height:80px; }
+  #root .wordbook-mascot-footer > .learning-art { width:88px; }
+  #root .history-records-companion { width:80px; right:72px; top:-44px; }
+}
