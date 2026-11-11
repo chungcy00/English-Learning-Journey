@@ -15,10 +15,12 @@ function FamilyDetails({ entry, pronounce }: { entry: LearningEntry; pronounce: 
   const note = practicalFormationText(entry.note);
   return <>
     <div className="lexicon-derivative-heading">
-      <strong><HighlightedWord word={entry.text} parts={entry.family?.parts}/></strong>
+      <div>
+        <strong><HighlightedWord word={entry.text} parts={entry.family?.parts}/></strong>
+        <p className="lexicon-family-meaning"><span className="lexicon-pos">{partOfSpeechAbbreviation(entry.partOfSpeech)}</span>{entry.meaningZh}</p>
+      </div>
       <button type="button" aria-label={`朗读：${entry.text}`} onClick={() => pronounce(entry.text)}><Volume2 size={18}/></button>
     </div>
-    <p className="lexicon-family-meaning"><span className="lexicon-pos">{partOfSpeechAbbreviation(entry.partOfSpeech)}</span>{entry.meaningZh}</p>
     {relation && <p className="lexicon-family-relation">{relation}</p>}
     {note && <p className="lexicon-note">{note}</p>}
     {entry.example && <p lang="en">{entry.example}</p>}

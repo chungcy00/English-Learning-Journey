@@ -1945,11 +1945,12 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 .lexicon-formation-editor { display: grid; gap: 1rem; }
 .lexicon-formation-editor-row { display: flex; flex-wrap: wrap; align-items: end; gap: .5rem; }
 .lexicon-formation-editor-row label { flex: 1 1 8rem; min-width: 0; }
-.lexicon-phrase-list { display: grid; gap: .625rem; list-style: none; padding: 0; margin-block: .75rem; }
-.lexicon-phrase-card { background: var(--bg-alt); border-radius: 12px; padding: .875rem .875rem; overflow-wrap: anywhere; }
+.lexicon-phrase-list { display: grid; gap: .875rem; list-style: none; padding: 0; margin-block: .75rem 1rem; }
+.lexicon-phrase-card, .lexicon-family-detail { padding: 1rem 1.25rem; }
+.lexicon-phrase-card { background: var(--bg-alt); border-radius: 12px; overflow-wrap: anywhere; }
 .lexicon-phrase-card .lexicon-phrase-text { font-size: var(--type-term); font-weight: 500; line-height: 1.4; color: var(--accent-primary); }
 .lexicon-phrase-card .lexicon-phrase-meaning { font-size: var(--type-translation); color: var(--text-secondary); margin-top: .125rem; }
-.lexicon-phrase-card .lexicon-example { margin-top: .25rem; padding: 0; align-items: center; }
+.lexicon-phrase-card .lexicon-example { margin-top: .5rem; padding: 0; align-items: center; }
 .lexicon-phrase-card .lexicon-note { margin-top: .25rem; }
 .lexicon-usage-point { margin-block: 1.5rem 2rem; overflow-wrap: anywhere; }
 .lexicon-usage-point > h4 { font-size: var(--type-body); font-weight: 600; color: var(--accent-primary); margin-bottom: .625rem; }
@@ -2049,6 +2050,7 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 .lexicon-definition-card > p { flex: 1; min-width: 0; font-size: var(--type-body); line-height: 1.6; overflow-wrap: anywhere; }
 .lexicon-sense-meaning { font-size: var(--type-translation); }
 @media (max-width: 639px) {
+  .lexicon-phrase-card, .lexicon-family-detail { padding-inline: 1rem; }
   .lexicon-definition-card { padding: 1rem; }
   .lexicon-tree-card .lexicon-tree-list { padding-left: .75rem; }
   .lexicon-tree-card .lexicon-tree-node { padding-left: .5rem; }
@@ -2226,7 +2228,7 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
   border-radius: 20px 19px 21px 18px;
   background: var(--surface-paper);
   color: var(--text-ink);
-  font-size: clamp(var(--type-term), 5vw, var(--type-section));
+  font-size: var(--type-term);
   font-weight: 500;
   text-align: center;
   overflow-wrap: anywhere;
@@ -2345,20 +2347,17 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 .lexicon-family-detail {
   position: relative;
   margin-top: clamp(1.75rem, 5vw, 2.75rem);
-  padding: clamp(1rem, 3vw, 1.5rem);
   border: 1px solid var(--border-selected);
   border-radius: 20px 19px 21px 18px;
   background: var(--bg-alt);
 }
 .lexicon-family-detail .lexicon-family-meaning {
-  margin-top: .625rem;
+  margin-top: .125rem;
 }
 .lexicon-family-detail .lexicon-family-relation {
-  margin-top: .625rem;
+  margin-top: .5rem;
 }
-.lexicon-family-detail .lexicon-derivative-heading strong {
-  font-size: var(--type-section);
-}
+.lexicon-family-detail .lexicon-note { margin-top: .25rem; }
 .lexicon-family-detail .lexicon-derivative-heading,
 .lexicon-family-fallback .lexicon-derivative-heading {
   justify-content: space-between;
