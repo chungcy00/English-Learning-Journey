@@ -12,7 +12,7 @@ type Relation = '共同词根' | '词族关联';
 
 function addsFamilyInformation(entry: LearningEntry, relation: string) {
   const text = relation.trim();
-  const glosses = entry.meaningZh.split(/[；;、，,]/).map(gloss => gloss.trim()).filter(Boolean);
+  const glosses = (entry.meaningZh ?? '').split(/[；;、，,]/).map(gloss => gloss.trim()).filter(Boolean);
   if (glosses.includes(text.replace(/[。.]$/, ''))) return false;
   const rest = text.toLowerCase().startsWith(entry.text.toLowerCase()) ? text.slice(entry.text.length).trim() : text;
   const definition = rest.match(/^是表示[「“『](.+?)[」”』]的(名词|形容词|动词|副词)[。.]?$/);
@@ -74,7 +74,6 @@ function FamilyDiagram({ base, entries, nodes, relation, pronounce }: {
 export function DerivativeList({ entries, term = '', inflections = [], pronounce }: {
   entries: LearningEntry[]; term?: string; inflections?: string[]; pronounce: (text: string) => void;
 }) {
-  if (!entries.length) return null;
   const normalizedTerm = term.trim().toLowerCase();
   const hasRootless = entries.some(entry => entry.text.trim().toLowerCase() === 'rootless');
   const hasIncapacity = entries.some(entry => entry.text.trim().toLowerCase() === 'incapacity');
@@ -121,6 +120,17 @@ export function DerivativeList({ entries, term = '', inflections = [], pronounce
   return <section className="lexicon-tree-card lexicon-families">
     <FamilyDiagram base={base} entries={diagramEntries} nodes={familyForest(diagramEntries)} relation="词族关联" pronounce={pronounce}/>
   </section>;
+}
+export function RootAnalysisList({ entries, term, pronounce }: {
+  entries: LearningEntry[]; term: string; pronounce: (text: string) => void;
+}) {
+  const analyses = entries.flatMap(entry => {
+    const analysis = RootAnalysis({ entry, term, pronounce });
+    return analysis ? [<React.Fragment key={entry.id}>{analysis}</React.Fragment>] : [];
+  });
+  return analyses.length ? <>{analyses}</> : <StudyEmptyState compact pose="hamster-reading">
+    <p className="lexicon-empty">暂无可靠且适用的构词拆解。</p>
+  </StudyEmptyState>;
 }
 export function RootAnalysis({ entry, term, pronounce }: { key?: string; entry: LearningEntry; term: string; pronounce: (text: string) => void }) {
   const m = entry.morphology;
