@@ -73,7 +73,10 @@ test('diagram uses explicit family evidence and omits unknown and cyclic entries
  assert.equal(derivativeDiagramBase(entries,'help',['helpfulness']),undefined);
  for (const bad of [[make('helpful','unknown')],[make('helpful','helpfulness'),make('helpfulness','helpful')]]) {
   assert.equal(derivativeDiagramBase(bad,'help',[]),undefined);
-  assert.equal(renderToStaticMarkup(<DerivativeList entries={bad} term="help" pronounce={()=>{}}/>),'');
+  const empty = renderToStaticMarkup(<DerivativeList entries={bad} term="help" pronounce={()=>{}}/>);
+  assert.match(empty, /hamster-reading/);
+  assert.match(empty, /暂无常见且可靠的派生词。/);
+  assert.doesNotMatch(empty, /lexicon-family-node|未核实/);
  }
 });
 
@@ -140,4 +143,14 @@ test('cached capacity words form a tree without claiming direct derivation from 
   assert.match(html, /data-direct="false"/);
   if (entries.length === 2) assert.match(html, /incapacity<\/span><\/button><ul class="lexicon-family-branches"><li[^>]*data-direct="true"/);
  }
+});
+
+test('a family card suppresses a repeated gloss and keeps a construction explanation', () => {
+ const hesitation = { id:'hesitation', text:'hesitation', meaningZh:'犹豫；迟疑', partOfSpeech:'noun' };
+ assert.doesNotMatch(renderToStaticMarkup(<DerivativeList entries={[hesitation]} term="hesitate" pronounce={()=>{}}/>), /lexicon-family-relation/);
+ const vastly: LearningEntry = { id:'vastly', text:'vastly', meaningZh:'巨大地，极大地', partOfSpeech:'adverb', family:{
+  base:'vast', parent:'vast', relation:'vast + -ly → vastly，形容词加 -ly 变为副词。',
+  parts:[{kind:'root',text:'vast',meaningZh:'巨大'},{kind:'suffix',text:'ly',meaningZh:'构成副词'}],
+ }};
+ assert.match(renderToStaticMarkup(<DerivativeList entries={[vastly]} term="vast" pronounce={()=>{}}/>), /形容词加 -ly 变为副词/);
 });

@@ -1,4 +1,4 @@
-import { HandOutline } from './LearningArt';
+import { HandOutline, StudyEmptyState } from './LearningArt';
 import React, { useState } from 'react';
 import { Plus, Volume2, X } from 'lucide-react';
 import type { LearningEntry, WordFormation, WordPart } from '../types';
@@ -9,6 +9,16 @@ export function HighlightedWord({word,parts}:{word:string;parts?:WordPart[]}) {
   return <span lang="en">{hasExactParts(parts,word) ? parts.map((part,index)=><span key={index} className={`lexicon-word-part--${part.kind}`}>{part.text}</span>) : word}</span>;
 }
 type Relation = '共同词根' | '词族关联';
+
+function addsFamilyInformation(entry: LearningEntry, relation: string) {
+  const text = relation.trim();
+  const glosses = entry.meaningZh.split(/[；;、，,]/).map(gloss => gloss.trim()).filter(Boolean);
+  if (glosses.includes(text.replace(/[。.]$/, ''))) return false;
+  const rest = text.toLowerCase().startsWith(entry.text.toLowerCase()) ? text.slice(entry.text.length).trim() : text;
+  const definition = rest.match(/^是表示[「“『](.+?)[」”』]的(名词|形容词|动词|副词)[。.]?$/);
+  return !definition || !glosses.includes(definition[1])
+    || partOfSpeechAbbreviation(definition[2]) !== partOfSpeechAbbreviation(entry.partOfSpeech);
+}
 
 function FamilyDetails({ entry, pronounce }: { entry: LearningEntry; pronounce: (text: string) => void }) {
   const relation = practicalFormationText(entry.family?.relation);
@@ -21,7 +31,7 @@ function FamilyDetails({ entry, pronounce }: { entry: LearningEntry; pronounce: 
       </div>
       <button type="button" aria-label={`朗读：${entry.text}`} onClick={() => pronounce(entry.text)}><Volume2 size={18}/></button>
     </div>
-    {relation && <p className="lexicon-family-relation">{relation}</p>}
+    {relation && addsFamilyInformation(entry, relation) && <p className="lexicon-family-relation">{relation}</p>}
     {note && <p className="lexicon-note">{note}</p>}
     {entry.example && <p lang="en">{entry.example}</p>}
     {entry.exampleTranslation && <p className="lexicon-muted">{entry.exampleTranslation}</p>}
@@ -104,7 +114,9 @@ export function DerivativeList({ entries, term = '', inflections = [], pronounce
     }
   }
   const diagramEntries = candidates.filter(entry => connected.has(entry.text.trim().toLowerCase()));
-  if (!base || !diagramEntries.length) return null;
+  if (!base || !diagramEntries.length) return <StudyEmptyState compact pose="hamster-reading">
+    <p className="lexicon-empty">暂无常见且可靠的派生词。</p>
+  </StudyEmptyState>;
 
   return <section className="lexicon-tree-card lexicon-families">
     <FamilyDiagram base={base} entries={diagramEntries} nodes={familyForest(diagramEntries)} relation="词族关联" pronounce={pronounce}/>
