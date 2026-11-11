@@ -1,6 +1,6 @@
 import { DETAIL_SECTIONS, type DetailSection, type LearningEntry, type VocabularyDetails, type VocabularyItem, type VocabularyCategory } from '../types.js';
 
-export const sectionLabels: Record<DetailSection, string> = { examples: '例句', derivatives: '派生', roots: '词根', phrases: '词组', definitions: '英释', usage: '用法解析' };
+export const sectionLabels: Record<DetailSection, string> = { examples: '例句', derivatives: '派生', roots: '词根', phrases: '词组', definitions: '英文释义', usage: '用法解析' };
 export const categoryLabels: Record<VocabularyCategory, string> = { word: '单词', phrase: '短语', idiom: '习语', collocation: '搭配', 'phrasal-verb': '短语动词' };
 const inflectionLabels: Record<string, string> = {
   '复数': '名词复数', '名词复数': '名词复数', '三单': '动词单数', '第三人称单数': '动词单数', '动词单数': '动词单数',

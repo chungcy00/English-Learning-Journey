@@ -52,7 +52,7 @@ test('reading keeps one player and whole-paragraph toggles without rewrite or fu
 
 test('word details share six tabs and a persistent bookmark footer', () => {
  const html=renderToStaticMarkup(React.createElement(WordDetailModal,{vocab,isOpen:true,readingContext:true,onClose(){},onToggleWordbook(){},isInWordbook:true}));
- for(const text of ['例句','派生','词根','词组','英释','用法解析',vocab.example,'取消完整词条收藏']) assert.ok(html.includes(text));
+ for(const text of ['例句','派生','词根','词组','英文释义','用法解析',vocab.example,'取消完整词条收藏']) assert.ok(html.includes(text));
  assert.match(html,/lexicon-dialog-footer/); assert.match(html,/<dialog/);
 });
 

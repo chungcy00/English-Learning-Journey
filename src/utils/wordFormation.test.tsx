@@ -116,3 +116,16 @@ test('root summary with extra glosses is merged into the breakdown instead of re
  assert.doesNotMatch(html, /lexicon-core-root/);
  assert.match(html, /<dd>巨大的、空旷的<\/dd>/);
 });
+
+test('one supported derivative still forms a tree when another old entry has no construction data', () => {
+ const entries = [
+  { id: 'legacy', text: 'hopefulness', meaningZh: '满怀希望' },
+  { id: 'supported', text: 'hopeful', meaningZh: '有希望的', family: { base: 'hope', parent: 'hope', relation: '加 -ful', parts: [
+   { kind: 'root' as const, text: 'hope', meaningZh: '希望' },
+   { kind: 'suffix' as const, text: 'ful', meaningZh: '充满' },
+  ] } },
+ ];
+ const html = renderToStaticMarkup(<DerivativeList entries={entries} term="hope" pronounce={()=>{}}/>);
+ assert.equal((html.match(/class="lexicon-family-branch"/g) ?? []).length, 1);
+ assert.match(html, /lexicon-family-fallback.*hopefulness/);
+});

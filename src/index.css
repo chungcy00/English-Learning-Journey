@@ -1902,6 +1902,9 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 .review-page .practice-vocabulary-card--back { min-height: 0; padding-bottom: calc(1.25rem + env(safe-area-inset-bottom)); }
 .review-page .review-lexicon-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-bottom: .75rem; }
 .review-page .review-lexicon-heading .practice-vocabulary-card__term { font-size: var(--type-section); font-weight: 700; line-height: 1.4; text-align: left; }
+@media (max-width: 639px) {
+  .review-page .review-lexicon-heading .practice-vocabulary-card__term { font-size: 1.25rem; }
+}
 .review-page .practice-vocabulary-card__body { overflow: visible; overscroll-behavior: auto; touch-action: auto; padding-top: .75rem; }
 @media (max-width: 359px) {
   .review-page .practice-vocabulary-card { padding: 1rem; }
@@ -1980,7 +1983,7 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 
 /* Compact phone tabs retain the desktop marker and all six complete labels. */
 @media (max-width: 639px) {
-  .lexicon-tabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; overflow: visible; padding-inline: 4px; }
+  .lexicon-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) repeat(2, minmax(0, 1.5fr)); gap: 0; overflow: visible; padding-inline: 4px; }
   .lexicon-tabs button { min-width: 0; min-height: 44px; padding-inline: 0; font-size: var(--type-label); line-height: 1.4; }
   /* Narrow cards and enlarged text reflow instead of clipping or shrinking type. */
   @container (max-width: 18.75rem) {

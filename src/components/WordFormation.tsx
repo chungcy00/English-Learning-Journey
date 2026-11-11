@@ -80,8 +80,10 @@ export function DerivativeList({ entries, term = '', inflections = [], pronounce
       relation,
     }] as const] : [];
   }));
-  const base = verified.values().next().value?.base ?? derivativeDiagramBase(entries, term, inflections);
+  const base = verified.values().next().value?.base ?? derivativeDiagramBase(entries, term, inflections) ?? term.trim();
+  const excluded = new Set([term, base, ...inflections].map(word => word.trim().toLowerCase()));
   const supported = entries.filter(entry => {
+    if (excluded.has(entry.text.trim().toLowerCase())) return false;
     if (verified.has(entry.id)) return true;
     const parent = entry.family?.parent || base;
     return parent && hasTransparentDerivation(parent, entry.text, entry.family?.parts);
