@@ -63,7 +63,7 @@ test('inflections use a fixed noun-first display order without mutating legacy o
  assert.deepEqual(forms,before);
 });
 
-test('diagram uses explicit family evidence and groups unknown and cyclic entries without asserting a direct link', () => {
+test('diagram uses explicit family evidence and omits unknown and cyclic entries', () => {
  const make = (text:string,parent?:string):LearningEntry => ({id:text,text,meaningZh:'释义',family:{base:'help',relation:'已有关系',parent,parts:helpParts(text)}});
  const entries = [make('helpful','help'),make('helpfulness','helpful'),make('helpless')];
  assert.equal(derivativeDiagramBase(entries,'help',[]),'help');
@@ -73,9 +73,7 @@ test('diagram uses explicit family evidence and groups unknown and cyclic entrie
  assert.equal(derivativeDiagramBase(entries,'help',['helpfulness']),undefined);
  for (const bad of [[make('helpful','unknown')],[make('helpful','helpfulness'),make('helpfulness','helpful')]]) {
   assert.equal(derivativeDiagramBase(bad,'help',[]),undefined);
-  const grouped = renderToStaticMarkup(<DerivativeList entries={bad} term="help" pronounce={()=>{}}/>);
-  assert.match(grouped, /本栏收录/);
-  assert.doesNotMatch(grouped, /data-direct="true"/);
+  assert.equal(renderToStaticMarkup(<DerivativeList entries={bad} term="help" pronounce={()=>{}}/>),'');
  }
 });
 
@@ -128,8 +126,8 @@ test('one supported derivative still forms a tree when another old entry has no 
   ] } },
  ];
  const html = renderToStaticMarkup(<DerivativeList entries={entries} term="hope" pronounce={()=>{}}/>);
- assert.equal((html.match(/class="lexicon-family-branch"/g) ?? []).length, 2);
- assert.match(html, /本栏收录.*hopefulness/);
+ assert.equal((html.match(/class="lexicon-family-branch"/g) ?? []).length, 1);
+ assert.doesNotMatch(html, /本栏收录|hopefulness/);
 });
 
 test('cached capacity words form a tree without claiming direct derivation from capacity', () => {

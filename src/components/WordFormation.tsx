@@ -8,7 +8,7 @@ const partLabels = { prefix: '前缀', root: '词根', suffix: '后缀' };
 export function HighlightedWord({word,parts}:{word:string;parts?:WordPart[]}) {
   return <span lang="en">{hasExactParts(parts,word) ? parts.map((part,index)=><span key={index} className={`lexicon-word-part--${part.kind}`}>{part.text}</span>) : word}</span>;
 }
-type Relation = '共同词根' | '词族关联' | '本栏收录';
+type Relation = '共同词根' | '词族关联';
 
 function FamilyDetails({ entry, pronounce }: { entry: LearningEntry; pronounce: (text: string) => void }) {
   const relation = practicalFormationText(entry.family?.relation);
@@ -50,7 +50,7 @@ function FamilyDiagram({ base, entries, nodes, relation, pronounce }: {
   return <div className="lexicon-family-diagram">
     <div className="lexicon-family-viewport">
       <div className="lexicon-family-tree">
-        <div className="lexicon-family-base" lang={relation === '本栏收录' ? undefined : 'en'}><HandOutline/>{base}</div>
+        <div className="lexicon-family-base" lang="en"><HandOutline/>{base}</div>
         {renderBranches(nodes, base)}
       </div>
     </div>
@@ -104,13 +104,10 @@ export function DerivativeList({ entries, term = '', inflections = [], pronounce
     }
   }
   const diagramEntries = candidates.filter(entry => connected.has(entry.text.trim().toLowerCase()));
-  const diagramIds = new Set(diagramEntries.map(entry => entry.id));
-  const unverified = entries.filter(entry => !diagramIds.has(entry.id))
-    .map(entry => ({ ...entry, family: undefined }));
+  if (!base || !diagramEntries.length) return null;
 
   return <section className="lexicon-tree-card lexicon-families">
-    {base && diagramEntries.length > 0 && <FamilyDiagram base={base} entries={diagramEntries} nodes={familyForest(diagramEntries)} relation="词族关联" pronounce={pronounce}/>}
-    {unverified.length > 0 && <FamilyDiagram base="本栏收录" entries={unverified} nodes={familyForest(unverified)} relation="本栏收录" pronounce={pronounce}/>}
+    <FamilyDiagram base={base} entries={diagramEntries} nodes={familyForest(diagramEntries)} relation="词族关联" pronounce={pronounce}/>
   </section>;
 }
 export function RootAnalysis({ entry, term, pronounce }: { key?: string; entry: LearningEntry; term: string; pronounce: (text: string) => void }) {

@@ -2398,4 +2398,3 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
   padding-block: .625rem;
 }
 .lexicon-editor-optional[open] > :not(summary) { margin-block: .25rem .625rem; }
-.lexicon-families > .lexicon-family-diagram + .lexicon-family-diagram { margin-block-start: 1rem; }
