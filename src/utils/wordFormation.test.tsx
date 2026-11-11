@@ -95,3 +95,24 @@ test('historical-only related words and explanations are hidden', () => {
    parts:morphology.parts.map(part => ({...part, meaningZh:'拉丁语构词'}))};
  assert.equal(renderToStaticMarkup(<RootAnalysis entry={{...entry,morphology:historicalOnly}} term="hesitate" pronounce={()=>{}}/>),'');
 });
+
+test('cached rooted derivatives use the root tree even with a single entry and no family metadata', () => {
+ const rootless = { id: 'rootless', text: 'rootless', meaningZh: '无根的' };
+ const rootlessly = { id: 'rootlessly', text: 'rootlessly', meaningZh: '漂泊不定地' };
+ for (const entries of [[rootless], [rootlessly], [rootlessly, rootless]]) {
+  const html = renderToStaticMarkup(<DerivativeList entries={entries} term="rooted" pronounce={()=>{}}/>);
+  assert.doesNotMatch(html, /lexicon-family-fallback/);
+  assert.match(html, /lexicon-family-base[^>]* lang="en"[^>]*>.*root<\/div>/);
+  assert.equal((html.match(/class="lexicon-family-branch"/g) ?? []).length, entries.length);
+  if (entries.length === 2) assert.match(html, /rootless<\/span><\/button><ul class="lexicon-family-branches"/);
+ }
+});
+
+test('root summary with extra glosses is merged into the breakdown instead of repeated above it', () => {
+ const morphology = { ...entry.morphology!, root: 'vast', meaningZh: '巨大的，空旷的', related: [],
+  parts: [{kind: 'root' as const, text: 'vast', meaningZh: '巨大的'}, {kind: 'suffix' as const, text: 'ness', meaningZh: '表示性质'}],
+ };
+ const html = renderToStaticMarkup(<RootAnalysis entry={{...entry,morphology}} term="vastness" pronounce={()=>{}}/>);
+ assert.doesNotMatch(html, /lexicon-core-root/);
+ assert.match(html, /<dd>巨大的、空旷的<\/dd>/);
+});

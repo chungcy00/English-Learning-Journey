@@ -1948,6 +1948,11 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 .lexicon-phrase-list { display: grid; gap: .875rem; list-style: none; padding: 0; margin-block: .75rem 1rem; }
 .lexicon-phrase-card, .lexicon-family-detail { padding: 1rem 1.25rem; }
 .lexicon-phrase-card { background: var(--bg-alt); border-radius: 12px; overflow-wrap: anywhere; }
+.lexicon-phrase-card .lexicon-entry-heading { align-items: flex-start; }
+.lexicon-phrase-card .lexicon-entry-actions {
+  /* Center the 44px controls on the first 22.4px line of the title. */
+  margin-block: calc((1.4 * var(--type-term) - 44px) / 2);
+}
 .lexicon-phrase-card .lexicon-phrase-text { font-size: var(--type-term); font-weight: 500; line-height: 1.4; color: var(--accent-primary); }
 .lexicon-phrase-card .lexicon-phrase-meaning { font-size: var(--type-translation); color: var(--text-secondary); margin-top: .125rem; }
 .lexicon-phrase-card .lexicon-example { margin-top: .5rem; padding: 0; align-items: center; }

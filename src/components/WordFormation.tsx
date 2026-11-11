@@ -65,19 +65,30 @@ export function DerivativeList({ entries, term = '', inflections = [], pronounce
   entries: LearningEntry[]; term?: string; inflections?: string[]; pronounce: (text: string) => void;
 }) {
   if (!entries.length) return null;
-  const verified = new Map(entries.flatMap(entry => {
+  const normalizedTerm = term.trim().toLowerCase();
+  const hasRootless = entries.some(entry => entry.text.trim().toLowerCase() === 'rootless');
+  const verified = new Map(entries.flatMap<readonly [string, NonNullable<LearningEntry['family']>]>(entry => {
+    const word = entry.text.trim().toLowerCase();
+    if (normalizedTerm === 'rooted' || normalizedTerm === 'root') {
+      if (word === 'rootless') return [[entry.id, { base: 'root', parent: 'root', relation: 'root 加 -less，表示无根或没有归属感。' }] as const];
+      if (word === 'rootlessly') return [[entry.id, { base: 'root', parent: hasRootless ? 'rootless' : undefined, relation: 'rootless 加 -ly，构成副词。' }] as const];
+    }
     const relation = verifiedWordFamilyRelation(term, entry.text);
-    return relation ? [[entry.id, relation] as const] : [];
+    return relation ? [[entry.id, {
+      base: term.trim(),
+      parent: normalizedTerm === 'considerate' ? term.trim() : undefined,
+      relation,
+    }] as const] : [];
   }));
-  const base = verified.size ? term.trim() : derivativeDiagramBase(entries, term, inflections);
+  const base = verified.values().next().value?.base ?? derivativeDiagramBase(entries, term, inflections);
   const supported = entries.filter(entry => {
     if (verified.has(entry.id)) return true;
     const parent = entry.family?.parent || base;
     return parent && hasTransparentDerivation(parent, entry.text, entry.family?.parts);
   });
   const candidates = supported.map(entry => {
-    const relation = verified.get(entry.id);
-    return relation ? { ...entry, family: { ...entry.family, base: term.trim(), parent: term.trim().toLowerCase() === 'considerate' ? term.trim() : undefined, relation } } : entry;
+    const family = verified.get(entry.id);
+    return family ? { ...entry, family: { ...entry.family, ...family } } : entry;
   });
   const connected = new Set([base?.toLowerCase()]);
   for (let pass = 0; pass < candidates.length; pass++) {
@@ -117,14 +128,18 @@ export function RootAnalysis({ entry, term, pronounce }: { key?: string; entry: 
   }
   const root = practicalFormationText(m.root);
   const meaning = practicalFormationText(m.meaningZh);
-  const parts = m.parts.map(part => ({ ...part, meaningZh: practicalFormationText(part.meaningZh) }));
+  const rootIndex = m.parts.findIndex(part => part.kind === 'root' && part.text.trim().toLowerCase() === root.toLowerCase());
+  const parts = m.parts.map((part, index) => {
+    const partMeaning = practicalFormationText(part.meaningZh);
+    if (index !== rootIndex || !meaning) return { ...part, meaningZh: partMeaning };
+    const glosses = [partMeaning, meaning].flatMap(gloss => gloss.split(/[，、；,;]/).map(text => text.trim()).filter(Boolean));
+    return { ...part, meaningZh: [...new Set(glosses)].join('、') };
+  });
   const hasBreakdown = parts.some(part => part.meaningZh);
-  const hasSeparateRootMeaning = meaning && !parts.some(part =>
-    part.kind === 'root' && part.text.trim().toLowerCase() === root?.toLowerCase() && part.meaningZh === meaning
-  );
-  if (!meaning && !hasBreakdown && !explanation && !mnemonic) return null;
+  const hasSeparateRootMeaning = root && meaning && rootIndex < 0;
+  if (!hasSeparateRootMeaning && !hasBreakdown && !explanation && !mnemonic) return null;
   return <section className="lexicon-tree-card lexicon-root-map">
-    {root && hasSeparateRootMeaning && <h4 className="lexicon-core-root"><span lang="en">{root}</span><span>{meaning}</span></h4>}
+    {hasSeparateRootMeaning && <h4 className="lexicon-core-root"><span lang="en">{root}</span><span>{meaning}</span></h4>}
     {(hasBreakdown || explanation) && <div className="lexicon-root-analysis">
       {hasBreakdown && <dl className="lexicon-part-meanings">{parts.filter(part => part.meaningZh).map((part,index)=><div key={index}><dt><span className="lexicon-part-tag">{partLabels[part.kind]}</span><span lang="en" className={`lexicon-word-part--${part.kind}`}>{part.text}</span></dt><dd>{part.meaningZh}</dd></div>)}</dl>}
       {explanation&&<p className="lexicon-formation-explanation">{explanation}</p>}
