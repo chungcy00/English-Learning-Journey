@@ -19,7 +19,7 @@ test('revealed review uses six learning tabs with independent bookmarks without 
       onRate: async () => {}, onRefresh: () => {}, }));
     assert.equal((html.match(/role="tab"/g) || []).length,6);
     assert.match(html, /词汇六栏学习资料/);
-    assert.match(html, /用法辨析/);
+    assert.match(html, /用法解析/);
     assert.doesNotMatch(html, /review-rating-bar|评价记忆程度|>Again<|>Hard<|>Good<|>Easy</);
     assert.match(html, /aria-label="播放 catch up 的发音"/);
     assert.doesNotMatch(html, /一次生成六栏资料|lexicon-generate/);

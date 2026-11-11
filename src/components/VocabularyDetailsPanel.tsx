@@ -7,11 +7,43 @@ import { ExampleSenseCards } from './ExampleSenseCards';
 import { DefinitionCards } from './DefinitionCards';
 import { partOfSpeechAbbreviation } from '../utils/wordFormation';
 import { Pencil, Plus, Volume2, X } from 'lucide-react';
-import { DETAIL_SECTIONS, type DetailSection, type LearningEntry, type VocabularyDetails, type VocabularyItem } from '../types';
+import { DETAIL_SECTIONS, USAGE_HEADINGS, type DetailSection, type LearningEntry, type VocabularyDetails, type VocabularyItem } from '../types';
 import { legacyDetails, sectionLabels, materialKey, categoryLabels, inflectionLabel, orderedInflections, vocabularyKey } from '../utils/vocabularyDetails';
 import { readVocabularyDetails, saveVocabularyDetails, generateVocabularyDetails, toggleMaterial } from '../services/vocabularyDetails';
 import { db } from '../db/dexie';
 import { speakEnglishTerm } from '../utils/speech';
+
+type EditorSection = DetailSection | 'basic';
+type EditField = [keyof LearningEntry, label: string, placeholder: string, multiline?: boolean];
+
+const chinese: EditField = ['meaningZh', '中文释义', '例如：体贴的；考虑周到的'];
+const posField: EditField = ['partOfSpeech', '词性（选填）', '例如 adj. 或形容词'];
+const example: EditField = ['example', '英文例句（选填）', '例如 That was considerate of you.', true];
+const translation: EditField = ['exampleTranslation', '例句译文（选填）', '例如：你想得真周到。', true];
+const note: EditField = ['note', '补充说明（选填）', '需要时补充简短说明', true];
+const editorLabels: Record<EditorSection, string> = {
+  basic: '释义', examples: '例句', roots: '构词分析', derivatives: '派生词',
+  phrases: '词组', definitions: '英文释义', usage: '用法要点',
+};
+
+function editorFields(section: EditorSection, entry: LearningEntry): { main: EditField[]; extra?: EditField[] } {
+  switch (section) {
+    case 'basic': return { main: [posField, chinese], extra: [example, translation, ...(!entry.meaningZh && entry.text ? [['text', '原有释义', '可填写中文释义'] as EditField] : [])] };
+    case 'examples': return entry.example ? {
+      main: [['example', '英文例句', '输入一个完整句子', true], translation],
+      extra: [['text', '原有英文短语', '输入例句中的表达'], ['meaningZh', '原有中文词义', '例如：根深蒂固的'], note],
+    } : {
+      main: [['text', '英文例句', '输入一个完整句子', true], ['meaningZh', '例句译文（选填）', '输入整句的中文翻译', true]], extra: [note],
+    };
+    case 'roots': return { main: [] };
+    case 'derivatives': return { main: [['text', '英文派生词', '例如 considerately'], posField, chinese], extra: [note, example, translation].filter(([key]) => Boolean(entry[key])) };
+    case 'phrases': return { main: [['text', '完整英文词组', '例如 considerate of others'], ['meaningZh', '词组的中文意思', '例如：为他人着想']], extra: [example, translation, note] };
+    case 'definitions': return { main: [['text', '英文定义', '用简短、自然的英文解释一个词义', true]] };
+    case 'usage': return { main: [['meaningZh', '中文用法说明', '说明什么时候用、怎么用，或为什么这样用', true]], extra: [
+      ...(!entry.usageKind || entry.usageKind === 'register' || entry.usageKind === 'natural' ? [['text', '原有说明', '可将原说明整理到上方的中文用法说明' , true] as EditField] : []), example, translation, note,
+    ] };
+  }
+}
 
 export function VocabularyDetailsPanel({ vocab, onBeforePronunciation, onInteractionStateChange, loadingOperation = 'vocabulary' }: { key?: string; loadingOperation?: 'vocabulary' | 'analysis'; vocab: VocabularyItem; onBeforePronunciation?: () => void; onInteractionStateChange?: (busy: boolean) => void }) {
   const [details, setDetails] = useState<VocabularyDetails>(() => legacyDetails(vocab));
@@ -46,9 +78,9 @@ export function VocabularyDetailsPanel({ vocab, onBeforePronunciation, onInterac
     try { await work(); } catch (error) { if (id === run.current) setError(error instanceof Error ? error.message : '操作失败，原资料已保留，请重试。'); }
     finally { lock.current = false; if (id === run.current) setBusy(false); }
   };
-  const generate = () => void perform(async () => {
+  const generate = (section?: DetailSection) => void perform(async () => {
     const id = run.current;
-    const value = await generateVocabularyDetails(vocab);
+    const value = await generateVocabularyDetails(vocab, section);
     if (id === run.current) setDetails(value);
   });
   const startEdit = (section: DetailSection | 'basic') => { const copy = structuredClone(details); copy.inflections = copy.inflections.map(form => ({ ...form, label: inflectionLabel(form.label) })); setDraft(copy); setEditing(section); setError(''); setMessage(''); };
@@ -56,8 +88,20 @@ export function VocabularyDetailsPanel({ vocab, onBeforePronunciation, onInterac
     if (!draft || !editing) return;
     const now = Date.now();
     const latest = await readVocabularyDetails(vocab);
+    const editedEntries = editing === 'basic' ? [] : draft.sections[editing].map(item => {
+      if (editing === 'usage' && item.usageKind && Object.hasOwn(usageLabels, item.usageKind)) {
+        return { ...item, text: item.text.trim() || usageLabels[item.usageKind] };
+      }
+      if (editing === 'roots' && item.morphology) {
+        const root = item.morphology.root.trim() || item.morphology.parts.find(part => part.kind === 'root')?.text.trim();
+        return { ...item, text: item.text.trim() || root || '', meaningZh: item.meaningZh.trim() || item.morphology.meaningZh };
+      }
+      if (editing === 'examples' && !item.text.trim() && item.example?.trim()) return { ...item, text: item.example };
+
+      return item;
+    }).filter(item => item.text.trim());
     const next: VocabularyDetails = { ...latest, ...(editing === 'basic' ? { phoneticUK: draft.phoneticUK.trim(), phoneticUS: draft.phoneticUS.trim(), senses: draft.senses.filter(item => item.text.trim() || item.meaningZh.trim()), inflections: (details.category || details.type) === 'word' ? draft.inflections.filter(item => item.label.trim() && item.value.trim()) : [] } : {}),
-      sections: { ...latest.sections, ...(editing !== 'basic' ? { [editing]: draft.sections[editing].map(item => editing === 'roots' && item.morphology?.root ? { ...item, text: item.text.trim() || item.morphology.root, meaningZh: item.meaningZh.trim() || item.morphology.meaningZh } : item).filter(item => item.text.trim()) } : {}) },
+      sections: { ...latest.sections, ...(editing !== 'basic' ? { [editing]: editedEntries } : {}) },
       provenance: { ...latest.provenance, [editing]: { source: 'user' as const, updatedAt: now } }, updatedAt: now };
     await saveVocabularyDetails(next); setDetails(next); setDraft(null); setEditing(null); setMessage('修改已保存。');
   });
@@ -70,24 +114,40 @@ export function VocabularyDetailsPanel({ vocab, onBeforePronunciation, onInterac
     const next = list.map((item, i) => i === index ? { ...item, [field]: value } : item);
     setDraft(editing === 'basic' ? { ...draft, senses: next } : { ...draft, sections: { ...draft.sections, [editing]: next } });
   };
-  const editorEntries = (entries: LearningEntry[]) => entries.map((entry, index) => <fieldset key={entry.id} className="lexicon-editor-entry"><legend>第 {index + 1} 项</legend>
-    {(editing === 'basic' ? [['text', '义项简述'], ['meaningZh', '中文含义'], ['partOfSpeech', '词性'], ['example', '英文例句'], ['exampleTranslation', '例句翻译']] : editing === 'examples' ? [['text','英文例句（旧格式可保留短语）'],['meaningZh',entry.example ? '词义／译文（旧格式）' : '例句中文译文'],['senseMeaningZh','本组词义（可细分已有义项）'],['partOfSpeech','词性（可留空，沿用对应词义）'],...(entry.example ? [['example','旧格式英文例句'],['exampleTranslation','旧格式例句译文']] : []),['note','补充说明']] : editing === 'definitions' ? [['text', '英文定义']] : editing === 'usage' ? [['text', '分析标题'], ['meaningZh', '中文解释（简明说明怎么用）'], ['example', '英文例句（按需）'], ['exampleTranslation', '例句中文翻译'], ['note', '简短中文补充（可留空）']] : editing === 'phrases' ? [['text', '完整英文词组'], ['meaningZh', '中文意思'], ['example', '英文例句（按需）'], ['exampleTranslation', '例句翻译'], ['note', '补充说明']] : [['text', tab === 'examples' ? '英文例句' : tab === 'definitions' ? '英文定义' : '内容'], ['meaningZh', '中文含义／翻译'], ['partOfSpeech', '词性'], ['category', '类别'], ['example', '补充例句'], ['exampleTranslation', '补充例句翻译'], ['note', '用法说明']]).map(([field, label]) => <label key={field}>{label}<textarea rows={field === 'text' ? 2 : 1} maxLength={3000} value={typeof entry[field as keyof LearningEntry] === 'string' ? entry[field as keyof LearningEntry] as string : ''} onChange={event => patchEntry(index, field as keyof LearningEntry, event.target.value)} /></label>)}
-    {editing === 'examples' && <label>对应词义<select value={entry.senseId || ''} onChange={event=>patchEntry(index,'senseId',event.target.value)}><option value="">未关联词义</option>{draft?.senses.map(sense=><option key={sense.id} value={sense.id}>{partOfSpeechAbbreviation(sense.partOfSpeech)} {sense.meaningZh || sense.text}</option>)}</select></label>}
-    {editing === 'usage' && <><label>分析方向<select value={entry.usageKind || ''} onChange={event => {
+  const editorEntries = (entries: LearningEntry[], section: EditorSection) => entries.map((entry, index) => {
+    const fields = editorFields(section, entry);
+    const renderField = ([field, label, placeholder, multiline]: EditField) => {
+      const value = entry[field];
+      const props = { placeholder, maxLength: 3000, value: typeof value === 'string' ? value : '',
+        onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => patchEntry(index, field, event.target.value) };
+      return <label key={field} className={multiline ? 'lexicon-editor-wide' : undefined}>{label}
+        {multiline ? <textarea rows={2} {...props}/> : <input {...props}/>}
+      </label>;
+    };
+    return <fieldset key={entry.id} className="lexicon-editor-entry"><legend>{editorLabels[section]} {index + 1}</legend>
+    {editing === 'examples' && <div className="lexicon-editor-fields">
+      <label>对应的中文词义<select value={entry.senseId || ''} onChange={event=>patchEntry(index,'senseId',event.target.value)}><option value="">不关联已有词义</option>{draft?.senses.map(sense=><option key={sense.id} value={sense.id}>{partOfSpeechAbbreviation(sense.partOfSpeech)} {sense.meaningZh || sense.text}</option>)}</select></label>
+      {renderField(['senseMeaningZh','单独填写本组词义（选填）','例如：根深蒂固的'])}
+      {renderField(posField)}
+    </div>}
+    {editing === 'usage' && <><label>用法类别<select value={entry.usageKind && Object.hasOwn(USAGE_HEADINGS, entry.usageKind) ? entry.usageKind : ''} onChange={event => {
       if (!draft) return;
       const kind = event.target.value as LearningEntry['usageKind'];
-      setDraft({ ...draft, sections: { ...draft.sections, usage: draft.sections.usage.map((v,i) => i === index ? { ...v, usageKind: kind || undefined, contrast: kind === 'error' ? v.contrast : undefined } : v) } });
-    }}><option value="">未分类</option>{Object.entries(usageLabels).map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-      {entry.usageKind === 'error' && <>{(['incorrect','correct'] as const).map(key => <label key={key}>{key === 'incorrect' ? '误用表达（确有错误时填写）' : '正确表达'}<textarea value={entry.contrast?.[key] || ''} onChange={event => patchEntry(index, 'contrast', { incorrect: entry.contrast?.incorrect || '', correct: entry.contrast?.correct || '', [key]: event.target.value })}/></label>)}</>}
+      setDraft({ ...draft, sections: { ...draft.sections, usage: draft.sections.usage.map((v,i) => i === index ? { ...v, usageKind: kind || undefined, contrast: v.contrast } : v) } });
+    }}><option value="" disabled hidden>请选择用法类别</option>{Object.entries(USAGE_HEADINGS).map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+      {entry.usageKind === 'error' && <>{(['incorrect','correct'] as const).map(key => <label key={key}>{key === 'incorrect' ? '错误写法' : '正确写法'}<textarea value={entry.contrast?.[key] || ''} onChange={event => patchEntry(index, 'contrast', { incorrect: entry.contrast?.incorrect || '', correct: entry.contrast?.correct || '', [key]: event.target.value })}/></label>)}</>}
     </>}
+    {!!fields.main.length && <div className="lexicon-editor-fields">{fields.main.map(renderField)}</div>}
+    {!!fields.extra?.length && <details className="lexicon-editor-optional"><summary>补充资料（选填）</summary><div className="lexicon-editor-fields">{fields.extra.map(renderField)}</div></details>}
     {editing === 'derivatives' && <DerivativeFamilyEditor entry={entry} onChange={family => patchEntry(index, 'family', family)}/>}
     {editing === 'roots' && <WordFormationEditor entry={entry} onChange={next => patchEntry(index, 'morphology', next.morphology)}/>}
     <button type="button" className="lexicon-link" onClick={() => {
       if (!draft || !editing) return;
       const next = entries.filter((_, i) => i !== index);
       setDraft(editing === 'basic' ? { ...draft, senses: next } : { ...draft, sections: { ...draft.sections, [editing]: next } });
-    }}>删除此项</button>
-  </fieldset>);
+    }}>移除这条{editorLabels[section]}</button>
+  </fieldset>;
+  });
   return <div className="lexicon-panel" aria-busy={busy}>
     <div className="lexicon-basic">
       <p className="lexicon-kind">{category ? `${categoryLabels[category]} · ${category === 'phrasal-verb' ? 'phrasal verb' : category}` : details.generated ? `${categoryLabels[details.type] || '词条'} · ${details.type}` : '多词表达 · 生成时自动细分类型'}</p>
@@ -102,19 +162,18 @@ export function VocabularyDetailsPanel({ vocab, onBeforePronunciation, onInterac
         if (row && target) { const bounds = row.getBoundingClientRect(); const button = target.getBoundingClientRect(); row.scrollLeft += button.left < bounds.left ? button.left - bounds.left : button.right > bounds.right ? button.right - bounds.right : 0; } }
     }}><span className="lexicon-tab-label">{sectionLabels[key]}</span></button>)}</div>
     {!editing && <div id={`lexicon-content-${vocab.id}`} role="tabpanel" tabIndex={0} aria-labelledby={`lexicon-tab-${vocab.id}-${tab}`} className="lexicon-content">
-      <div className="lexicon-section-tools"><button type="button" className="lexicon-edit" disabled={!ready || busy} onClick={() => startEdit(tab)}><Pencil size={14} aria-hidden="true"/>编辑本栏</button></div>
+      <div className="lexicon-section-tools"><button type="button" className="lexicon-edit" disabled={!ready || busy} onClick={() => startEdit(tab)}><Pencil size={14} aria-hidden="true"/>编辑本栏</button>{tab === 'usage' && details.provenance.usage?.source !== 'user' && <button type="button" disabled={!ready || busy} onClick={() => generate('usage')}>{items.length || details.generatedSections?.includes('usage') ? '重新生成用法解析' : '生成用法解析'}</button>}</div>
       {(tab === 'roots' || tab === 'derivatives') && items.some(entry => tab === 'roots' ? !entry.morphology : !entry.family) && <p className="lexicon-muted" role="status">{tab === 'roots' ? '当前资料尚未包含构词拆解，可手动补充。' : '当前资料尚未包含词族关系，可手动补充。'}</p>}
-      {tab === 'usage' && items.some(entry => !entry.usageKind) && <p className="lexicon-muted" role="status">当前为旧版用法资料，可手动编辑更新。</p>}
-      {items.length ? tab === 'definitions' ? <DefinitionCards entries={items} pronounce={pronounce}/> : tab === 'phrases' ? <PhraseList entries={items} busy={busy} isSaved={text => savedKeys.has(materialKey('phrase', text))} pronounce={pronounce} onToggle={entry => void perform(async () => { await toggleMaterial(vocab, 'phrases', entry); })}/> : tab === 'usage' ? <UsageList entries={items} pronounce={pronounce} manual={details.provenance.usage?.source!=='ai'}/> : tab === 'derivatives' ? <DerivativeList entries={items} term={vocab.term} pronounce={pronounce}/> : tab === 'roots' ? items.map(entry => <RootAnalysis key={entry.id} entry={entry} term={vocab.term} pronounce={pronounce}/>) : <ExampleSenseCards entries={items} senses={details.senses} defaultPos={vocab.partOfSpeech} busy={busy} isSaved={text=>savedKeys.has(materialKey('example',text))} pronounce={pronounce} onToggle={entry=>void perform(async()=>{await toggleMaterial(vocab,'examples',entry);})}/> : <StudyEmptyState compact pose={busy ? 'cat-thinking' : 'hamster-reading'} busy={busy}><p className="lexicon-empty">{busy ? '正在准备本栏资料…' : error ? '本栏资料未能生成，已有内容已保留。' : details.generatedSections?.includes(tab) ? tab === 'derivatives' ? '暂无常见且可靠的派生词。' : tab === 'roots' ? '暂无可靠且适用的构词拆解。' : '暂无可靠或适用的内容，可手动补充。' : '本栏尚未生成，可先使用已有资料或手动填写。'}</p></StudyEmptyState>}
+      {tab === 'usage' && (items.length > 0 || (!busy && !error)) ? <UsageList entries={items} pronounce={pronounce} manual={details.provenance.usage?.source === 'user'}/> : items.length ? tab === 'definitions' ? <DefinitionCards entries={items} pronounce={pronounce}/> : tab === 'phrases' ? <PhraseList entries={items} busy={busy} isSaved={text => savedKeys.has(materialKey('phrase', text))} pronounce={pronounce} onToggle={entry => void perform(async () => { await toggleMaterial(vocab, 'phrases', entry); })}/> : tab === 'derivatives' ? <DerivativeList entries={items} term={vocab.term} inflections={details.inflections.map(form => form.value)} pronounce={pronounce}/> : tab === 'roots' ? items.map(entry => <RootAnalysis key={entry.id} entry={entry} term={vocab.term} pronounce={pronounce}/>) : <ExampleSenseCards entries={items} senses={details.senses} defaultPos={vocab.partOfSpeech} busy={busy} isSaved={text=>savedKeys.has(materialKey('example',text))} pronounce={pronounce} onToggle={entry=>void perform(async()=>{await toggleMaterial(vocab,'examples',entry);})}/> : <StudyEmptyState compact pose={busy ? 'cat-thinking' : 'hamster-reading'} busy={busy}><p className="lexicon-empty">{busy ? '正在准备本栏资料…' : error ? '本栏资料未能生成，已有内容已保留。' : details.generatedSections?.includes(tab) ? tab === 'derivatives' ? '暂无常见且可靠的派生词。' : tab === 'roots' ? '暂无可靠且适用的构词拆解。' : '暂无可靠或适用的内容，可手动补充。' : '本栏尚未生成，可先使用已有资料或手动填写。'}</p></StudyEmptyState>}
     </div>}
     {editing && draft && <form className="lexicon-editor" onSubmit={event => { event.preventDefault(); save(); }}><h3>编辑{editing === 'basic' ? '基本资料' : sectionLabels[editing]}</h3>
-      {editing === 'basic' && <><label>英式音标<input value={draft.phoneticUK} onChange={event => setDraft({ ...draft, phoneticUK: event.target.value })}/></label><label>美式音标<input value={draft.phoneticUS} onChange={event => setDraft({ ...draft, phoneticUS: event.target.value })}/></label></>}
-      {editorEntries(editing === 'basic' ? draft.senses : draft.sections[editing])}
+      {editing === 'basic' && <div className="lexicon-editor-fields"><label>英式音标（选填）<input placeholder="例如 /kənˈsɪd.ər.ət/" value={draft.phoneticUK} onChange={event => setDraft({ ...draft, phoneticUK: event.target.value })}/></label><label>美式音标（选填）<input placeholder="例如 /kənˈsɪd.ɚ.ət/" value={draft.phoneticUS} onChange={event => setDraft({ ...draft, phoneticUS: event.target.value })}/></label></div>}
+      {editorEntries(editing === 'basic' ? draft.senses : draft.sections[editing], editing)}
       <button type="button" className="lexicon-link" onClick={() => {
-        const entry: LearningEntry = { id: crypto.randomUUID(), text: '', meaningZh: '' };
+        const entry: LearningEntry = { id: crypto.randomUUID(), text: '', meaningZh: '', ...(editing === 'usage' ? { usageKind: 'scenario' } : {}) };
         setDraft(editing === 'basic' ? { ...draft, senses: [...draft.senses, entry] } : { ...draft, sections: { ...draft.sections, [editing]: [...draft.sections[editing], entry] } });
-      }}><Plus size={16}/>添加{editing === 'basic' ? '义项' : '一项'}</button>
-      {editing === 'basic' && (details.category || details.type) === 'word' && <fieldset><legend>适用的词形变化</legend>{draft.inflections.map((form, index) => <div className="lexicon-form-row" key={index}><label>变化名称<input value={form.label} onChange={event => setDraft({ ...draft, inflections: draft.inflections.map((v, i) => i === index ? { ...v, label: event.target.value } : v) })}/></label><label>词形<input value={form.value} onChange={event => setDraft({ ...draft, inflections: draft.inflections.map((v, i) => i === index ? { ...v, value: event.target.value } : v) })}/></label><button type="button" aria-label="删除词形" onClick={() => setDraft({ ...draft, inflections: draft.inflections.filter((_, i) => i !== index) })}><X size={16}/></button></div>)}<button type="button" onClick={() => setDraft({ ...draft, inflections: [...draft.inflections, { label: '', value: '' }] })}>添加词形</button></fieldset>}
+      }}><Plus size={16}/>添加{editorLabels[editing]}</button>
+      {editing === 'basic' && (details.category || details.type) === 'word' && <fieldset><legend>适用的词形变化</legend>{draft.inflections.map((form, index) => <div className="lexicon-form-row" key={index}><label>词形类型<input placeholder="例如 名词复数" value={form.label} onChange={event => setDraft({ ...draft, inflections: draft.inflections.map((v, i) => i === index ? { ...v, label: event.target.value } : v) })}/></label><label>变化后的英文<input placeholder="例如 conflicts" value={form.value} onChange={event => setDraft({ ...draft, inflections: draft.inflections.map((v, i) => i === index ? { ...v, value: event.target.value } : v) })}/></label><button type="button" aria-label="删除词形" onClick={() => setDraft({ ...draft, inflections: draft.inflections.filter((_, i) => i !== index) })}><X size={16}/></button></div>)}<button type="button" onClick={() => setDraft({ ...draft, inflections: [...draft.inflections, { label: '', value: '' }] })}>添加词形</button></fieldset>}
       <div className="lexicon-actions"><button type="submit" className="lexicon-primary" disabled={busy}>保存修改</button><button type="button" disabled={busy} onClick={() => { setDraft(null); setEditing(null); }}>取消</button></div>
     </form>}
     <LoadingAnimation active={busy} operation={details.generated ? 'wait' : loadingOperation} label="正在处理，请稍候…"/>{error && <div role="alert" className="wordbook-error"><p>{error}</p>{!details.generated && <button type="button" disabled={busy || !ready || !!editing} onClick={() => generate()}>重试生成资料</button>}</div>}{message && <p role="status" className="lexicon-muted">{message}</p>}

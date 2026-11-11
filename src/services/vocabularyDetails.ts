@@ -1,11 +1,9 @@
-import {migrateReviewedUsage} from './usageMigration';
 import { db } from '../db/dexie';
 import type { DetailSection, VocabularyDetails, VocabularyItem, SavedMaterial, LearningEntry } from '../types';
-import { legacyDetails, mergeGeneratedDetails, vocabularyKey, materialKey } from '../utils/vocabularyDetails';
+import { hasSavedUsage, legacyDetails, mergeGeneratedDetails, vocabularyKey, materialKey } from '../utils/vocabularyDetails';
 
 export const notifyVocabularyChange = () => window.dispatchEvent(new Event('vocabulary-data-changed'));
 export async function readVocabularyDetails(vocab: VocabularyItem) {
-  await migrateReviewedUsage();
   return db.transaction('rw', db.vocabularyDetails, async () => {
     const key = vocabularyKey(vocab.term, vocab.type);
     const existing = await db.vocabularyDetails.get(key);
@@ -36,8 +34,13 @@ export async function generateVocabularyDetails(vocab: VocabularyItem, section?:
   const operation = (async () => {
     const existing = await readVocabularyDetails(vocab);
     if (!section && existing.generated) return existing;
+    const usageReference = section === 'usage' ? {
+      examples: existing.sections.examples.slice(0, 10).map(entry => entry.text),
+      phrases: existing.sections.phrases.slice(0, 10).map(entry => entry.text),
+      definitions: existing.sections.definitions.slice(0, 6).map(entry => entry.text),
+    } : undefined;
     const response = await fetch('/api/vocabulary/explain', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ term: vocab.term, entryType: vocab.type, currentInflections: existing.inflections, currentSenses: existing.senses.map(({ id, text, meaningZh, partOfSpeech }) => ({ id, text, meaningZh, partOfSpeech: partOfSpeech || '' })), ...(section ? { section } : {}) }), signal: AbortSignal.timeout(60_000) });
+      body: JSON.stringify({ term: vocab.term, entryType: vocab.type, currentInflections: existing.inflections, currentSenses: existing.senses.map(({ id, text, meaningZh, partOfSpeech }) => ({ id, text, meaningZh, partOfSpeech: partOfSpeech || '' })), ...(section ? { section, usageReference } : hasSavedUsage(existing) ? { preserveUsage: true } : {}) }), signal: AbortSignal.timeout(60_000) });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || '资料生成失败，请稍后重试。');
     const latest = await readVocabularyDetails(vocab);

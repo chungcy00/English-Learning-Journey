@@ -1,6 +1,6 @@
 import { DETAIL_SECTIONS, type DetailSection, type LearningEntry, type VocabularyDetails, type VocabularyItem, type VocabularyCategory } from '../types.js';
 
-export const sectionLabels: Record<DetailSection, string> = { examples: '例句', derivatives: '派生', roots: '词根', phrases: '词组', definitions: '英释', usage: '用法辨析' };
+export const sectionLabels: Record<DetailSection, string> = { examples: '例句', derivatives: '派生', roots: '词根', phrases: '词组', definitions: '英释', usage: '用法解析' };
 export const categoryLabels: Record<VocabularyCategory, string> = { word: '单词', phrase: '短语', idiom: '习语', collocation: '搭配', 'phrasal-verb': '短语动词' };
 const inflectionLabels: Record<string, string> = {
   '复数': '名词复数', '名词复数': '名词复数', '三单': '动词单数', '第三人称单数': '动词单数', '动词单数': '动词单数',
@@ -32,10 +32,17 @@ export function legacyDetails(vocab: VocabularyItem): VocabularyDetails {
     senses: vocab.meaningZh ? [{ ...entry(vocab.meaningZh, vocab.meaningZh), partOfSpeech: vocab.partOfSpeech }] : [], inflections: [],
     sections: { examples: vocab.example ? [entry(vocab.example, vocab.translations?.['zh-CN']?.exampleTranslation || '')] : [], derivatives: [], roots: [], phrases: (vocab.collocations || []).map(text => entry(text)), definitions: vocab.definitionEn ? [entry(vocab.definitionEn)] : [], usage: [] }, generated: false, provenance: {}, updatedAt: vocab.updatedAt };
 }
+export function hasSavedUsage(details: VocabularyDetails) {
+  return details.sections.usage.length > 0 || !!details.generatedSections?.includes('usage') || details.provenance.usage?.source === 'user';
+}
 export function mergeGeneratedDetails(current: VocabularyDetails, incoming: VocabularyDetails, section?: DetailSection, replaceEdited = false): VocabularyDetails {
   const next = { ...current, type: incoming.type, category: incoming.category || incoming.type, sections: { ...current.sections }, provenance: { ...current.provenance }, generatedSections: [...(current.generatedSections || [])], updatedAt: Date.now() };
   for (const key of section ? [section] : DETAIL_SECTIONS) {
     if (current.provenance[key]?.source === 'user' && !replaceEdited) continue;
+    if (!section && key === 'usage' && hasSavedUsage(current)) {
+      if (!next.generatedSections.includes(key)) next.generatedSections.push(key);
+      continue;
+    }
     const retainedBasic = !!section || (current.provenance.basic?.source === 'user' && !replaceEdited);
     next.sections[key] = incoming.sections[key].map(entry => {
       if (!retainedBasic || !entry.senseId) return entry;

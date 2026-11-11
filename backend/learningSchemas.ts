@@ -1,5 +1,5 @@
 import { Type } from '@google/genai';
-import { DETAIL_SECTIONS, VOCABULARY_CATEGORIES, type VocabularyDetails, type LearningEntry, type DetailSection } from '../src/types.js';
+import { DETAIL_SECTIONS, USAGE_HEADINGS, VOCABULARY_CATEGORIES, type VocabularyDetails, type LearningEntry, type DetailSection } from '../src/types.js';
 import { isChineseUsageExplanation } from '../src/utils/usageLanguage.js';
 import { hasExactParts } from '../src/utils/wordFormation.js';
 import { inflectionLabel, vocabularyKey } from '../src/utils/vocabularyDetails.js';
@@ -25,13 +25,13 @@ const exampleEntries = { type: Type.ARRAY, items: { type: Type.OBJECT, propertie
 // in the description; validateDetails still enforces English-only definitions.
 const definitionEntries = { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { text: { ...string, description: 'A short, clear English-only learner definition of one main sense. No Chinese, translation, IPA, POS labels or heading.' }, meaningZh: { ...string, description: 'Return the empty string. Definitions contain English only; do not add a Chinese translation.' }, senseId: string }, required: ['text','meaningZh'] } };
 const phraseEntries = { type: Type.ARRAY, description: 'Practical learner-dictionary expressions. Usually 4–8 distinct common expressions if available, at most 10; preserve articles and prepositions. Never pad obscure combinations.', items: { type: Type.OBJECT, properties: { text: { ...string, description: '完整自然的常见英文表达，保留必要冠词、介词和句型结构。' }, meaningZh: chinese, category: string, example: string, exampleTranslation: string, note: string }, required: ['text', 'meaningZh'] } };
-const usageEntries = { type: Type.ARRAY, description: '面向英语非母语学习者的实用中文说明。每点解释怎么用、何时用或与哪个词易混，用日常词语写一至三句；不讲词源、历史来源、抽象理论或无关学术知识。', items: { type: Type.OBJECT, properties: {
-  text: { ...chinese, description: '简短中文标题，可包含所讨论的英文单词或搭配；不写英文解释句。' },
+const usageKinds = Object.keys(USAGE_HEADINGS);
+const usageEntries = { type: Type.ARRAY, maxItems: 4, description: '按实际学习价值选填场景、搭配限制、易混近义词或真实常见错误。无需覆盖全部方向，可返回空数组。每点用简明中文解释，避免重复其他栏目或同一知识点。', items: { type: Type.OBJECT, properties: {
   meaningZh: { ...chinese, description: '用简明简体中文讲清怎么用、何时用、和哪个词有何区别，一至三句；英文只用于单词、搭配或句型，完整英文例句放 example。不要讲历史、词源、抽象理论或用术语堆砌。讲介词时不臆造抽象/具体选择规则。' },
   example: { ...string, description: 'A short natural English sentence illustrating the explanation, if useful.' }, exampleTranslation: optionalChinese, note: { ...optionalChinese, description: '可选简短中文补充，最多一两句，不重复正文。不写英文长解释、词源、历史背景或学术性分析；没有必要则留空。英文术语嵌入中文句子即可。' },
-  usageKind: { type: Type.STRING, enum: ['scenario','grammar','comparison','error','register','natural'] },
-  contrast: { type: Type.OBJECT, description: 'Omit unless there is a genuine grammatical/lexical error. Never mark a valid register alternative as incorrect.', properties: { incorrect: string, correct: string }, required: ['incorrect','correct'] },
-}, required: ['text','meaningZh','usageKind'] } };
+  usageKind: { type: Type.STRING, enum: usageKinds },
+  contrast: { type: Type.OBJECT, description: 'Required for error entries; include both the genuine error and its correction. Omit for other categories. Never mark a valid register alternative as incorrect.', properties: { incorrect: string, correct: string }, required: ['incorrect','correct'] },
+}, required: ['meaningZh','usageKind'] } };
 export function isPronunciationOnlyUsage(entry: Pick<LearningEntry, 'text' | 'meaningZh'>) {
   return /发音|读音|音标|重音|音节|pronunciation|\bipa\b|word stress|stress (?:change|pattern|shift)|stress.*syllable/i.test(entry.text);
 }
@@ -58,15 +58,20 @@ export function validateDetails(data: any, term: string, type: VocabularyDetails
   if (data?.isValidTerm !== true || data.term !== term || !Array.isArray(data.senses) || !data.senses.length) throw new VocabularyDetailsError('未找到可靠的词条资料，请检查拼写，或先手动保存。');
   const normalize = (items: any[], prefix: string) => {
     if (!Array.isArray(items) || items.length > 16) throw new VocabularyDetailsError('词条资料结构不完整，请重试。');
-    return items.map((item, i) => {
-      if (!item || typeof item.text !== 'string' || !item.text.trim() || typeof item.meaningZh !== 'string') throw new VocabularyDetailsError('词条资料结构不完整，请重试。');
-      const entry: LearningEntry = { ...Object.fromEntries(['text','meaningZh','partOfSpeech','example','exampleTranslation','note','category','senseId'].map(k => [k, typeof item[k] === 'string' ? item[k].slice(0, 3000) : ''])), text: item.text, meaningZh: item.meaningZh, id: crypto.randomUUID() };
+    if (requireStructured && prefix === 'usage' && items.length > usageEntries.maxItems) {
+      throw new VocabularyDetailsError('用法解析最多包含四个要点，请重试。');
+    }
+    const generatedUsage = requireStructured && prefix === 'usage';
+    const nonEmpty = generatedUsage ? items.filter(item => typeof item?.meaningZh !== 'string' || item.meaningZh.trim()) : items;
+    return nonEmpty.map(item => {
+      if (!item || (!generatedUsage && (typeof item.text !== 'string' || !item.text.trim())) || typeof item.meaningZh !== 'string') throw new VocabularyDetailsError('词条资料结构不完整，请重试。');
+      const entry: LearningEntry = { ...Object.fromEntries(['text','meaningZh','partOfSpeech','example','exampleTranslation','note','category','senseId'].map(k => [k, typeof item[k] === 'string' ? item[k].slice(0, 3000) : ''])), text: typeof item.text === 'string' ? item.text : '', meaningZh: item.meaningZh, id: crypto.randomUUID() };
       const shortText = (value: unknown) => typeof value === 'string' && value.trim().length > 0 && value.length <= 3000;
       const hasChinese = (value: unknown) => typeof value === 'string' && /[\u3400-\u9fff]/.test(value);
       if (requireStructured && (prefix === 'phrases' || prefix === 'usage') && !hasChinese(item.meaningZh)) throw new VocabularyDetailsError('请提供简体中文解释，已有资料已保留。');
       if (prefix === 'usage' && requireStructured) {
         for (const field of ['meaningZh','note','exampleTranslation']) {
-          if ((field === 'meaningZh' || item[field]) && !isChineseUsageExplanation(item[field] || '')) throw new VocabularyDetailsError('用法辨析正文和补充说明需要简明中文，英文例句请单独填写。');
+          if ((field === 'meaningZh' || item[field]) && !isChineseUsageExplanation(item[field] || '')) throw new VocabularyDetailsError('用法解析正文和补充说明需要简明中文，英文例句请单独填写。');
         }
       }
       if (prefix === 'examples' && item.senseMeaningZh) {
@@ -107,7 +112,7 @@ export function validateDetails(data: any, term: string, type: VocabularyDetails
           })).values()] as NonNullable<LearningEntry['morphology']>['related'] };
       }
       if (prefix === 'usage' && (item.usageKind !== undefined || requireStructured)) {
-        if (!['scenario','grammar','comparison','error','register','natural'].includes(item.usageKind)) throw new VocabularyDetailsError('用法辨析类型不受支持，请重试。');
+        if (!usageKinds.includes(item.usageKind) && (requireStructured || !['register', 'natural'].includes(item.usageKind))) throw new VocabularyDetailsError('用法解析类型不受支持，请重试。');
         entry.usageKind = item.usageKind;
       }
       if (prefix === 'usage' && item.contrast != null && !(item.contrast.incorrect === '' && item.contrast.correct === '')) {
@@ -148,7 +153,28 @@ export function validateDetails(data: any, term: string, type: VocabularyDetails
   const phraseKeys = new Set<string>();
   sections.phrases = sections.phrases.filter(entry => { const key = entry.text.trim().replace(/\s+/g, ' '); if (phraseKeys.has(key)) return false; phraseKeys.add(key); return true; });
   // A model may incorrectly label a pronunciation note as grammar. Do not present it as usage.
-  sections.usage = sections.usage.filter(entry => !isPronunciationOnlyUsage(entry));
+  sections.usage = sections.usage.filter(entry => !isPronunciationOnlyUsage(entry) && (!requireStructured || !isPronunciationOnlyUsage({ ...entry, text: entry.meaningZh })));
+  if (requireStructured) {
+    const explanations = new Set<string>();
+    const kinds = new Set<LearningEntry['usageKind']>();
+    sections.usage = sections.usage.filter(entry => {
+      if (entry.usageKind === 'error' && !entry.contrast) return false;
+      const explanation = entry.meaningZh.trim();
+      // A collocation list with no explanation belongs in the phrases section.
+      if (/^(?:常见|常用)?(?:固定)?搭配(?:动词)?(?:包括|有|如下|为)[^。！？!?]+[。！？!?]?$/.test(explanation)) return false;
+      if (/^(?:这|它)(?:是)?[^。！？!?]{0,30}(?:短语|搭配|表达)[，,、 ]*(?:意思是|意为|表示)[^。！？!?]+[。！？!?]?$/.test(explanation)) return false;
+      if (term.toLowerCase() === 'hesitate') {
+        const guidance = [explanation, entry.note].filter(Boolean).join(' ');
+        // A glossary entry must not define hesitation as a completed outcome.
+        if (/(?<!不)(?<!并非)(?:表示|意味着|指)[^。；;！？!?，,]{0,24}(?:因(?:为)?犹豫而(?:未|没|没有|不)做|(?:最终|最后)没有做)/.test(guidance)) return false;
+      }
+      const key = explanation.replace(/\s+/g, ' ').toLowerCase();
+      if (explanations.has(key) || kinds.has(entry.usageKind)) return false;
+      explanations.add(key);
+      kinds.add(entry.usageKind);
+      return true;
+    }).map(entry => ({ ...entry, text: USAGE_HEADINGS[entry.usageKind as keyof typeof USAGE_HEADINGS] }));
+  }
   const category = VOCABULARY_CATEGORIES.includes(data.category) ? data.category : data.type === 'idiom' ? 'idiom' : type;
   const resolvedType = type === 'word' ? 'word' : category === 'idiom' ? 'idiom' : 'phrase';
   return { key: vocabularyKey(term, type), term, type: resolvedType, category, phoneticUK: data.phoneticUK, phoneticUS: data.phoneticUS, senses, inflections: category === 'word' ? data.inflections.map((form: any) => ({ label: inflectionLabel(form.label), value: form.value })) : [], sections, generated: true, generatedSections: [...DETAIL_SECTIONS], provenance: {}, updatedAt: Date.now() };

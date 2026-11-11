@@ -13,7 +13,7 @@ test('revealed review uses the shared six-section panel without memory ratings',
   }));
   assert.equal((html.match(/<h3 class="practice-vocabulary-card__term">considerate<\/h3>/g) ?? []).length, 2);
   assert.equal((html.match(/role="tab"/g) || []).length, 6);
-  for (const text of ['例句','派生','词根','词组','英释','用法辨析','编辑基本资料','点击卡片翻面',vocab.example]) assert.ok(html.includes(text));
+  for (const text of ['例句','派生','词根','词组','英释','用法解析','编辑基本资料','点击卡片翻面',vocab.example]) assert.ok(html.includes(text));
   assert.doesNotMatch(html, /class="practice-vocabulary-card__body" data-flip-ignore/);
   assert.doesNotMatch(html, /practice-vocabulary-card__footer|review-rating-bar|>Good<|>Again</);
   assert.doesNotMatch(html, /practice-vocabulary-card__collocations|<details/);

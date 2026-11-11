@@ -10,7 +10,7 @@ const vocab = { id: 'reference', term: 'undivided attention', type: 'phrase', pa
 
 test('inline word details use the same six-section learning panel without a native dialog', () => {
  const html=renderToStaticMarkup(React.createElement(WordDetailModal,{vocab,isOpen:true,inline:true,isInWordbook:true,onClose(){},onToggleWordbook(){}}));
- assert.doesNotMatch(html,/<dialog/); assert.match(html,/word-detail-inline/); assert.match(html,/用法辨析/); assert.ok(html.includes(vocab.example));
+ assert.doesNotMatch(html,/<dialog/); assert.match(html,/word-detail-inline/); assert.match(html,/用法解析/); assert.ok(html.includes(vocab.example));
 });
 
 test('word details show one initial example tab and six keyboard tabs', () => {

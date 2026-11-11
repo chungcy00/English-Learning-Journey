@@ -5,18 +5,22 @@ import assert from 'node:assert/strict';
 import { DerivativeList, RootAnalysis, HighlightedWord } from '../components/WordFormation';
 import { inflectionLabel, orderedInflections, legacyDetails, basicVocabulary, mergeGeneratedDetails } from './vocabularyDetails';
 import { DefinitionCards } from '../components/DefinitionCards';
-import { familyForest, partOfSpeechAbbreviation } from './wordFormation';
+import { derivativeDiagramBase, familyForest, partOfSpeechAbbreviation } from './wordFormation';
 import type { LearningEntry } from '../types';
-const entry: LearningEntry={id:'root',text:'help',meaningZh:'帮助',morphology:{root:'help',meaningZh:'帮助',parts:[{kind:'root',text:'help',meaningZh:'帮助'},{kind:'suffix',text:'ful',meaningZh:'具有……性质的'}],explanation:'构成有帮助的含义。',mnemonic:'记住一个乐于帮助的人。',related:[{word:'helpless',partOfSpeech:'adjective',meaningZh:'无助的'}]}};
+const helpParts = (word: string): NonNullable<LearningEntry['family']>['parts'] => [
+ {kind:'root',text:'help',meaningZh:'帮助'},
+ ...({ helpful:['ful'], helpless:['less'], helpfulness:['ful','ness'] }[word] || []).map(text => ({kind:'suffix' as const,text,meaningZh:text})),
+];
+const entry: LearningEntry={id:'root',text:'help',meaningZh:'帮助',morphology:{root:'help',meaningZh:'帮助',parts:[{kind:'root',text:'help',meaningZh:'帮助'},{kind:'suffix',text:'ful',meaningZh:'具有……性质的'}],explanation:'构成有帮助的含义。',mnemonic:'记住一个乐于帮助的人。',related:[{word:'helpless',partOfSpeech:'adjective',meaningZh:'无助的',parts:helpParts('helpless')}]}};
 test('root rendering separates true formation from memory and exposes labels, color hooks and same-root speech',()=>{
  const html=renderToStaticMarkup(<RootAnalysis entry={entry} term="helpful" pronounce={()=>{}}/>);
- for(const text of ['真实构词分析','辅助记忆联想','词根','后缀','同根词','lexicon-word-part--root','朗读：helpless'])assert.ok(html.includes(text));
+ for(const text of ['辅助记忆联想','词根','后缀','同根词','lexicon-word-part--root','朗读：helpless'])assert.ok(html.includes(text));
  assert.ok(renderToStaticMarkup(<RootAnalysis entry={{id:'old',text:'旧资料',meaningZh:'原有内容'}} term="helpful" pronounce={()=>{}}/>).includes('原有内容'));
 });
 test('derivatives are grouped by lexical base and render separate word, POS, meaning and pronunciation',()=>{
  const family={base:'help',relation:'派生关系'};
- const html=renderToStaticMarkup(<DerivativeList entries={[{id:'1',text:'helpful',partOfSpeech:'adjective',meaningZh:'有帮助的',family},{id:'2',text:'helpless',partOfSpeech:'adjective',meaningZh:'无助的',family}]} pronounce={()=>{}}/>);
- assert.equal(html.split('class="lexicon-tree-card lexicon-families"').length-1,1);for(const text of ['有帮助的','无助的','adj.','朗读：helpful','派生关系'])assert.ok(html.includes(text));
+ const html=renderToStaticMarkup(<DerivativeList entries={[{id:'1',text:'helpful',partOfSpeech:'adjective',meaningZh:'有帮助的',family:{...family,parts:helpParts('helpful')}},{id:'2',text:'helpless',partOfSpeech:'adjective',meaningZh:'无助的',family:{...family,parts:helpParts('helpless')}}]} pronounce={()=>{}}/>);
+ assert.equal(html.split('class="lexicon-tree-card lexicon-families"').length-1,1);for(const text of ['有帮助的','词族关联','adj.','朗读：helpful','派生关系'])assert.ok(html.includes(text));
 });
 test('Chinese labels translate legacy API aliases without changing saved word forms or custom labels',()=>{
  for(const [input,expected] of Object.entries({plural:'名词复数','third-person singular':'动词单数','复数':'名词复数','三单':'动词单数','第三人称单数':'动词单数','名词复数':'名词复数','动词单数':'动词单数',past:'过去式',participle:'过去分词','present_participle':'现在分词',comparative:'比较级',superlative:'最高级','自定义':'自定义'}))assert.equal(inflectionLabel(input),expected);
@@ -57,4 +61,37 @@ test('inflections use a fixed noun-first display order without mutating legacy o
  const before=structuredClone(forms);
  assert.deepEqual(orderedInflections(forms).map(form=>inflectionLabel(form.label)),['名词复数','动词单数','过去式','过去分词','现在分词','custom note']);
  assert.deepEqual(forms,before);
+});
+
+test('diagram uses explicit family evidence and falls back for unknown, cyclic or inflected links', () => {
+ const make = (text:string,parent?:string):LearningEntry => ({id:text,text,meaningZh:'释义',family:{base:'help',relation:'已有关系',parent,parts:helpParts(text)}});
+ const entries = [make('helpful','help'),make('helpfulness','helpful'),make('helpless')];
+ assert.equal(derivativeDiagramBase(entries,'help',[]),'help');
+ const html = renderToStaticMarkup(<DerivativeList entries={entries} term="help" pronounce={()=>{}}/>);
+ assert.equal((html.match(/data-direct="true"/g) || []).length,2);
+ assert.equal((html.match(/data-direct="false"/g) || []).length,1);
+ assert.equal(derivativeDiagramBase(entries,'help',['helpfulness']),undefined);
+ for (const bad of [[make('helpful','unknown')],[make('helpful','helpfulness'),make('helpfulness','helpful')]]) {
+  assert.equal(derivativeDiagramBase(bad,'help',[]),undefined);
+  assert.match(renderToStaticMarkup(<DerivativeList entries={bad} term="help" pronounce={()=>{}}/>),/lexicon-family-fallback/);
+ }
+});
+
+test('historical-only related words and explanations are hidden', () => {
+ const morphology = { ...entry.morphology!, root:'hesit', parts:[{kind:'root' as const,text:'hesit',meaningZh:'犹豫'},{kind:'suffix' as const,text:'ate',meaningZh:'动词后缀'}],
+  explanation:'表示做事前有所犹豫。这个词源于拉丁语。',
+  related:['adhere','inherent','inherit'].map(word => ({word,partOfSpeech:'verb',meaningZh:'示例',relation:'未经核实的旧说明'})),
+ };
+ const html = renderToStaticMarkup(<RootAnalysis entry={{...entry,morphology}} term="hesitate" pronounce={()=>{}}/>);
+ assert.match(html,/做事前有所犹豫/);
+ assert.doesNotMatch(html,/adhere|inherent|inherit|历史同源词|拉丁语|lexicon-family-diagram/);
+ const historicalExplanation = {...morphology, explanation:'这个词源于拉丁语。'};
+ const restored = renderToStaticMarkup(<RootAnalysis entry={{...entry,morphology:historicalExplanation}} term="hesitate" pronounce={()=>{}}/>);
+ assert.match(restored,/lexicon-part-meanings/);
+ assert.doesNotMatch(restored,/真实构词分析/);
+ assert.match(restored,/辅助记忆联想/);
+ assert.doesNotMatch(restored,/拉丁语|历史同源词/);
+ const historicalOnly = {...historicalExplanation, meaningZh:'拉丁语词根', mnemonic:'',
+   parts:morphology.parts.map(part => ({...part, meaningZh:'拉丁语构词'}))};
+ assert.equal(renderToStaticMarkup(<RootAnalysis entry={{...entry,morphology:historicalOnly}} term="hesitate" pronounce={()=>{}}/>),'');
 });

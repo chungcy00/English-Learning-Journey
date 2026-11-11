@@ -32,7 +32,7 @@
 .reading-player,.reading-studio__body,.reading-vocabulary,.practice-entry,.random-review,.practice-vocabulary-card,
 .custom-composer-art,.custom-words-list > li,.study-empty:not(.study-empty--compact),.wordbook-final-list,
 .history-distribution-final,.history-card,.history-task-panel,.history-vocabulary-detail,
-.lexicon-definition-card,.lexicon-sense-card,.lexicon-tree-card,.lexicon-phrase-card,
+.lexicon-definition-card,.lexicon-sense-card,.lexicon-phrase-card,
 .wordbook-collection-bar,.wordbook-search-capsule,.custom-words-search,.review-category-options,
 .app-dialog,.studio-style-sheet,.reading-more__menu,.reading-lookup-panel,.recovery-notice) {
   position:relative; border:1px solid var(--border-selected); border-radius:var(--hand-corner); box-shadow:none;

@@ -15,7 +15,13 @@ export type RewriteRating = 'Excellent' | 'Very Good' | 'Good' | 'Needs Improvem
 export const VOCABULARY_CATEGORIES = ['word', 'phrase', 'idiom', 'collocation', 'phrasal-verb'] as const;
 export type VocabularyCategory = typeof VOCABULARY_CATEGORIES[number];
 
-export const DETAIL_SECTIONS = ['examples', 'derivatives', 'roots', 'phrases', 'definitions', 'usage'] as const;
+export const DETAIL_SECTIONS = ['examples', 'roots', 'derivatives', 'phrases', 'definitions', 'usage'] as const;
+export const USAGE_HEADINGS = {
+  scenario: '常见使用场景',
+  grammar: '常见搭配限制',
+  comparison: '容易混淆的近义词',
+  error: '常见错误',
+} as const;
 export type DetailSection = typeof DETAIL_SECTIONS[number];
 export interface WordPart { kind: 'prefix' | 'root' | 'suffix'; text: string; meaningZh: string }
 export interface WordFormation {
@@ -38,7 +44,7 @@ export interface LearningEntry {
   senseId?: string;
   senseMeaningZh?: string;
   usageChineseVersion?: 1;
-  usageKind?: 'scenario' | 'grammar' | 'comparison' | 'error' | 'register' | 'natural';
+  usageKind?: keyof typeof USAGE_HEADINGS | 'register' | 'natural';
   contrast?: { incorrect: string; correct: string };
   family?: { base: string; relation: string; parent?: string; parts?: WordPart[] };
   morphology?: WordFormation;
