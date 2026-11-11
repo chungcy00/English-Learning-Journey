@@ -67,11 +67,16 @@ export function DerivativeList({ entries, term = '', inflections = [], pronounce
   if (!entries.length) return null;
   const normalizedTerm = term.trim().toLowerCase();
   const hasRootless = entries.some(entry => entry.text.trim().toLowerCase() === 'rootless');
+  const hasIncapacity = entries.some(entry => entry.text.trim().toLowerCase() === 'incapacity');
   const verified = new Map(entries.flatMap<readonly [string, NonNullable<LearningEntry['family']>]>(entry => {
     const word = entry.text.trim().toLowerCase();
     if (normalizedTerm === 'rooted' || normalizedTerm === 'root') {
       if (word === 'rootless') return [[entry.id, { base: 'root', parent: 'root', relation: 'root 加 -less，表示无根或没有归属感。' }] as const];
       if (word === 'rootlessly') return [[entry.id, { base: 'root', parent: hasRootless ? 'rootless' : undefined, relation: 'rootless 加 -ly，构成副词。' }] as const];
+    }
+    if (normalizedTerm === 'capacity') {
+      if (word === 'incapacity') return [[entry.id, { base: 'capacity', parent: undefined, relation: '与 capacity 属于同一词族，表示缺乏能力。' }] as const];
+      if (word === 'incapacitate') return [[entry.id, { base: 'capacity', parent: hasIncapacity ? 'incapacity' : undefined, relation: '由 incapacity 构成的动词，表示使人失去行动或做事的能力。' }] as const];
     }
     const relation = verifiedWordFamilyRelation(term, entry.text);
     return relation ? [[entry.id, {

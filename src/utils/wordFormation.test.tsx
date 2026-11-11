@@ -129,3 +129,15 @@ test('one supported derivative still forms a tree when another old entry has no 
  assert.equal((html.match(/class="lexicon-family-branch"/g) ?? []).length, 1);
  assert.match(html, /lexicon-family-fallback.*hopefulness/);
 });
+
+test('cached capacity words form a tree without claiming direct derivation from capacity', () => {
+ const incapacity = { id: 'incapacity', text: 'incapacity', meaningZh: '无能力' };
+ const incapacitate = { id: 'incapacitate', text: 'incapacitate', meaningZh: '使失去能力' };
+ for (const entries of [[incapacity], [incapacitate], [incapacity, incapacitate]]) {
+  const html = renderToStaticMarkup(<DerivativeList entries={entries} term="capacity" pronounce={()=>{}}/>);
+  assert.doesNotMatch(html, /lexicon-family-fallback/);
+  assert.equal((html.match(/class="lexicon-family-branch"/g) ?? []).length, entries.length);
+  assert.match(html, /data-direct="false"/);
+  if (entries.length === 2) assert.match(html, /incapacity<\/span><\/button><ul class="lexicon-family-branches"><li[^>]*data-direct="true"/);
+ }
+});
