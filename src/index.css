@@ -2366,15 +2366,8 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
   margin-top: .5rem;
 }
 .lexicon-family-detail .lexicon-note { margin-top: .25rem; }
-.lexicon-family-detail .lexicon-derivative-heading,
-.lexicon-family-fallback .lexicon-derivative-heading {
+.lexicon-family-detail .lexicon-derivative-heading {
   justify-content: space-between;
-}
-.lexicon-family-fallback {
-  display: grid;
-  gap: .75rem;
-  list-style: none;
-  padding: 0;
 }
 
 /* The same editor is shared by review cards, the wordbook and custom words. */
@@ -2405,4 +2398,4 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
   padding-block: .625rem;
 }
 .lexicon-editor-optional[open] > :not(summary) { margin-block: .25rem .625rem; }
-.lexicon-families > .lexicon-family-fallback { margin-block-start: 1rem; }
+.lexicon-families > .lexicon-family-diagram + .lexicon-family-diagram { margin-block-start: 1rem; }
