@@ -2474,3 +2474,23 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 .usage-comparison .usage-examples { gap: 12px; }
 .usage-comparison .usage-example { padding: 12px; }
 .usage-semantic-explanation { margin: 0; }
+
+/* Quiet section dividers and quotation-style heading accents in usage analysis. */
+.lexicon-usage-list > .lexicon-usage-point + .lexicon-usage-point {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 24px;
+}
+.lexicon-usage-list > .lexicon-usage-point > h4 {
+  position: relative;
+  padding-inline-start: 12px;
+}
+.lexicon-usage-list > .lexicon-usage-point > h4::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  top: .15em;
+  bottom: .1em;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--surface-selected);
+}
