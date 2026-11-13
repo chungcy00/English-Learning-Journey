@@ -2500,11 +2500,15 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
   list-style: none;
 }
 .usage-grammar-rule > summary::-webkit-details-marker, .usage-grammar-editor > summary::-webkit-details-marker { display: none; }
-.usage-disclosure-chevron {
+.usage-disclosure-triangle {
   flex: 0 0 auto;
+  width: 0;
+  height: 0;
+  border-block: 5px solid transparent;
+  border-left: 7px solid currentColor;
   transition: transform 160ms ease-out;
 }
-.usage-grammar-rule[open] > summary .usage-disclosure-chevron, .usage-grammar-editor[open] > summary .usage-disclosure-chevron { transform: rotate(90deg); }
+.usage-grammar-rule[open] > summary .usage-disclosure-triangle, .usage-grammar-editor[open] > summary .usage-disclosure-triangle { transform: rotate(90deg); }
 .usage-grammar-rule > summary:focus-visible, .usage-grammar-editor > summary:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 3px; border-radius: 2px; }
 .usage-grammar-rule__content, .usage-grammar-editor__content { display: grid; gap: 12px; min-width: 0; }
 .usage-grammar-rule__content > p { margin: 0; }

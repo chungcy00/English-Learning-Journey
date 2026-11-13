@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowDown, ArrowUp, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { USAGE_HEADINGS, type LearningEntry, type StructuredUsage, type UsageExample, type UsageKind } from '../types';
 import { compatibilityHasContent, emptyUsage, emptyUsageCategory, structuredUsage, usageEntry, usageKinds } from '../utils/structuredUsage';
 
@@ -58,7 +58,7 @@ function CategoryFields({ usage, onChange }: { usage: StructuredUsage; onChange:
       const patch = (change: Partial<typeof value>) => onChange({ ...usage, grammar: { ...value, ...change } });
       return <>
         <details className="usage-grammar-editor" open>
-          <summary><span>{value.name.trim() || '搭配规则'}</span><ChevronRight className="usage-disclosure-chevron" size={18} aria-hidden="true"/></summary>
+          <summary><span>{value.name.trim() || '搭配规则'}</span><span className="usage-disclosure-triangle" aria-hidden="true"/></summary>
           <div className="usage-grammar-editor__content">
             <Field label="搭配规则名称" value={value.name} onChange={name => patch({ name })}/>
             <Field label="中文规则说明" value={value.explanation} multiline onChange={explanation => patch({ explanation })}/>

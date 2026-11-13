@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, Volume2 } from 'lucide-react';
+import { Volume2 } from 'lucide-react';
 import { HandOutline } from './LearningArt';
 import { USAGE_HEADINGS, type LearningEntry, type StructuredUsage, type UsageExample } from '../types';
 import { compatibilityHasContent, structuredUsage, usageKinds, usageHasContent } from '../utils/structuredUsage';
@@ -27,7 +27,7 @@ function Point({ usage, pronounce }: { usage: StructuredUsage; pronounce: (text:
       const point = usage.grammar;
       return point && <>
         <details className="usage-grammar-rule" open>
-          <summary><h5>{point.name.trim() || '搭配规则'}</h5><ChevronRight className="usage-disclosure-chevron" size={18} aria-hidden="true"/></summary>
+          <summary><h5>{point.name.trim() || '搭配规则'}</h5><span className="usage-disclosure-triangle" aria-hidden="true"/></summary>
           <div className="usage-grammar-rule__content">
             {point.explanation.trim() && <p>{point.explanation}</p>}
             {point.correct.trim() && <p className="usage-rule-example" lang="en">{point.correct}</p>}

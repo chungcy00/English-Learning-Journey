@@ -61,11 +61,11 @@ test('grammar accepts an omitted correct construction and keeps optional fields 
  const html=renderToStaticMarkup(<UsageList entries={[entry,usageEntry('g2',{...usage,grammar:{...usage.grammar!,name:'interfere with',correct:'',examples:[]}})]} pronounce={()=>{}}/>);
  assert.equal((html.match(/class="usage-point usage-point--grammar"/g)||[]).length,2);
  assert.equal((html.match(/class="usage-grammar-rule" open=""/g)||[]).length,2);
- assert.equal((html.match(/class="[^"]*usage-disclosure-chevron/g)||[]).length,2);
+ assert.equal((html.match(/class="usage-disclosure-triangle"/g)||[]).length,2);
  assert.equal((html.match(/朗读例句：/g)||[]).length,2);
  assert.doesNotMatch(html,/正确搭配/);assert.match(html,/更多说明/);assert.match(html,/常见错误或限制/);
  assert.match(editor,/class="usage-grammar-editor" open=""/);assert.match(editor,/搭配规则名称/);
- assert.match(editor,/class="[^"]*usage-disclosure-chevron/);
+ assert.match(editor,/class="usage-disclosure-triangle"/);
 });
 test('grammar display keeps correct construction as unlabelled auxiliary text and hides it when empty',()=>{
  const usage=emptyUsage('grammar');usage.grammar={name:'interfere in',explanation:'表示主动干涉他人的事务。',correct:'interfere in someone’s affairs',restriction:'',note:'',examples:[{id:'a',english:'Do not interfere in their affairs.',chinese:'不要干涉他们的事务。'}]};
