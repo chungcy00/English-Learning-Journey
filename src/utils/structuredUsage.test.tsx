@@ -31,6 +31,15 @@ test('unknown categories and partial or unattributed historical examples remain 
   assert.match(html,/历史说明/); assert.match(html,/完整旧说明/);
   assert.doesNotMatch(html,/语体差异（旧版）|自然表达（旧版）/);
 });
+test('old scenario tips are removed while scenario meaning and paired examples remain',()=>{
+ const usage=emptyUsage('scenario');usage.scenario={name:'接触危险物质',explanation:'说明某人因工作而接触危险物质。',tip:'用于表达“使接触”的情境',examples:[{id:'a',english:'The workers were exposed to harmful chemicals.',chinese:'工人们接触到了有害化学物质。'}]};
+ const entry=usageEntry('scene',usage);const converted=structuredUsage(entry);
+ assert.equal(converted.scenario?.tip,'');assert.equal(converted.scenario?.explanation,usage.scenario.explanation);assert.equal(converted.scenario?.examples[0].english,usage.scenario.examples[0].english);
+ const editor=renderToStaticMarkup(<UsageEditor entries={[entry]} onChange={()=>{}}/>);
+ const html=renderToStaticMarkup(<UsageList entries={[entry]} pronounce={()=>{}}/>);
+ assert.doesNotMatch(editor,/使用提示/);assert.doesNotMatch(html,/用于表达“使接触”的情境/);
+ assert.match(html,/工人们接触到了有害化学物质/);
+});
 test('new paired examples validate together and inactive categories survive serialization', () => {
   const usage=emptyUsage('scenario');
   usage.scenario={name:'团队讨论',explanation:'用于描述参加讨论。',tip:'',examples:[{id:'a',english:'Join the discussion.',chinese:''}]};

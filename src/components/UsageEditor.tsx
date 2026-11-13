@@ -51,7 +51,6 @@ function CategoryFields({ usage, onChange }: { usage: StructuredUsage; onChange:
         <Field label="场景名称" value={value.name} onChange={name => patch({ name })}/>
         <Field label="中文用法说明" value={value.explanation} multiline onChange={explanation => patch({ explanation })}/>
         <UsageExamplesEditor examples={value.examples} onChange={examples => patch({ examples })}/>
-        <Field label="使用提示" value={value.tip} multiline optional onChange={tip => patch({ tip })}/>
       </>;
     }
     case 'grammar': {

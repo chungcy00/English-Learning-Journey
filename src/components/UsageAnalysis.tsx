@@ -20,7 +20,7 @@ function Point({ usage, pronounce }: { usage: StructuredUsage; pronounce: (text:
       return point && <>
         {point.name.trim() && <h5>{point.name}</h5>}
         {point.explanation.trim() && <p>{point.explanation}</p>}
-        <Examples examples={point.examples} pronounce={pronounce}/><Note>{point.tip}</Note>
+        <Examples examples={point.examples} pronounce={pronounce}/>
       </>;
     }
     case 'grammar': {

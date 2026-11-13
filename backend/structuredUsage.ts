@@ -16,7 +16,7 @@ export const structuredUsageSchema = { type: Type.ARRAY,
   description: '有价值才生成，数量不固定，同类可多项。每项只填写 kind 对应的结构，不填其他类别，也不输出旧版 text/meaningZh/example 格式。',
   items: object({
     kind: { type: Type.STRING, enum: usageKinds },
-    scenario: object({ name: string, explanation: chinese, examples, tip: chinese }, ['name', 'explanation', 'examples']),
+    scenario: object({ name: string, explanation: chinese, examples }, ['name', 'explanation', 'examples']),
     grammar: object({ name: string, explanation: chinese, correct: string, restriction: chinese, examples, note: chinese }, ['name', 'explanation', 'examples']),
     comparison: object({ context: chinese, difference: chinese, note: chinese,
       expressions: { type: Type.ARRAY, items: object({ expression: string, explanation: { ...chinese, description: '一段简洁的中文语义说明，同时解释基本意思和与其他表达的关键区别。' }, examples }, ['expression', 'explanation', 'examples']) },
@@ -46,7 +46,7 @@ export function parseGeneratedUsage(item: any, term = '') {
   if (!value || typeof value !== 'object') throw new Error('用法解析缺少对应类别的结构。');
   const usage: StructuredUsage = { version: 2, kind };
   switch (kind) {
-    case 'scenario': usage.scenario = { name: field(value.name), explanation: field(value.explanation, false, true), examples: examplePairs(value.examples), tip: field(value.tip, true, true) }; break;
+    case 'scenario': usage.scenario = { name: field(value.name), explanation: field(value.explanation, false, true), examples: examplePairs(value.examples), tip: '' }; break;
     case 'grammar': usage.grammar = { name: field(value.name), explanation: field(value.explanation, false, true), correct: field(value.correct, true), restriction: field(value.restriction, true, true), examples: examplePairs(value.examples), note: field(value.note, true, true) }; break;
     case 'comparison':
       if (!Array.isArray(value.expressions) || value.expressions.length < 2 || value.expressions.length > 8) throw new Error('近义词辨析需要至少两个有真实区别的对比表达。');

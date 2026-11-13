@@ -31,6 +31,7 @@ function normalizeUsage(usage: StructuredUsage): StructuredUsage {
     return { id: item.id, expression: item.expression, explanation: descriptions.map((value, index) =>
       index < descriptions.length - 1 && !/[。！？.!?]$/.test(value) ? `${value}。` : value).join(''), examples: item.examples };
   });
+  if (usage.scenario) usage.scenario.tip = '';
   // The learner explicitly requested removal of comparison compatibility remnants.
   if (usage.kind === 'comparison') delete usage.compatibility;
   // Grammar entries now use the dedicated rule fields; legacy generic leftovers are discarded.
@@ -45,7 +46,7 @@ export function structuredUsage(entry: LearningEntry): StructuredUsage {
     ? [{ id: `${entry.id}-example`, english: entry.example, chinese: entry.exampleTranslation }] : [];
   const result: StructuredUsage = { version: 2, kind };
   const explanation = text(entry.meaningZh);
-  if (kind === 'scenario') result.scenario = { name: '', explanation, examples, tip: text(entry.note) };
+  if (kind === 'scenario') result.scenario = { name: '', explanation, examples, tip: '' };
   if (kind === 'grammar') result.grammar = { name: '', explanation, correct: '', restriction: '', examples, note: text(entry.note) };
   if (kind === 'comparison') result.comparison = { context: '', difference: explanation, expressions: [], note: text(entry.note) };
   if (kind === 'error') result.error = { name: '', severity: 'incorrect', incorrect: text(entry.contrast?.incorrect), correct: text(entry.contrast?.correct), reason: explanation, examples, note: text(entry.note) };
