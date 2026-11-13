@@ -19,7 +19,7 @@ export async function saveVocabularyDetails(details: VocabularyDetails) {
     const words = await db.vocabulary.toArray();
     for (const word of words.filter(word => vocabularyKey(word.term, word.type) === details.key)) {
       // Update learning content only; leave review scheduling and identity intact.
-      await db.vocabulary.update(word.id, { details, type: details.type, category: details.category, phonetic: details.phoneticUK || details.phoneticUS,
+      await db.vocabulary.update(word.id, { details, cefrLevel: word.cefrLevel || details.cefrLevel, type: details.type, category: details.category, phonetic: details.phoneticUK || details.phoneticUS,
         meaningZh: details.senses.map(sense => sense.meaningZh || sense.text).join('；'), partOfSpeech: [...new Set(details.senses.map(sense => sense.partOfSpeech).filter(Boolean))].join(' / '),
         definitionEn: details.sections.definitions.map(item => item.text).join('\n'), example: details.sections.examples[0]?.text || word.example,
         collocations: details.sections.phrases.map(item => item.text), translations: { ...word.translations, 'zh-CN': { meaning: details.senses.map(sense => sense.meaningZh || sense.text).join('；'), exampleTranslation: details.sections.examples[0]?.meaningZh || '' } }, updatedAt: details.updatedAt });

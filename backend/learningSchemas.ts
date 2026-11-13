@@ -37,10 +37,11 @@ export function isPronunciationOnlyUsage(entry: Pick<LearningEntry, 'text' | 'me
 }
 export const detailsSchema = { type: Type.OBJECT, properties: {
   isValidTerm: { type: Type.BOOLEAN }, term: string,
+  cefrLevel: { type: Type.STRING, enum: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'unknown'], description: 'Assess the vocabulary meaning itself, not the passage level. Use unknown only when it cannot be reliably assessed.' },
   type: { type: Type.STRING, enum: ['word', 'phrase', 'idiom'] }, category: { type: Type.STRING, enum: [...VOCABULARY_CATEGORIES] }, phoneticUK: string, phoneticUS: string,
   senses: entries, inflections: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { label: string, value: string }, required: ['label', 'value'] } },
   sections: { type: Type.OBJECT, properties: Object.fromEntries(DETAIL_SECTIONS.map(key => [key, key === 'derivatives' ? derivativeEntries : key === 'roots' ? rootEntries : key === 'phrases' ? phraseEntries : key === 'usage' ? usageEntries : key === 'definitions' ? definitionEntries : key === 'examples' ? exampleEntries : entries])), required: [...DETAIL_SECTIONS] },
-}, required: ['isValidTerm', 'term', 'type', 'category', 'phoneticUK', 'phoneticUS', 'senses', 'inflections', 'sections'] };
+}, required: ['isValidTerm', 'term', 'cefrLevel', 'type', 'category', 'phoneticUK', 'phoneticUS', 'senses', 'inflections', 'sections'] };
 // Refreshes request only the selected column. Unexpected columns are discarded
 // before validation so they cannot fail a refresh or replace unrelated cache.
 export function detailsSchemaForSection(section?: DetailSection) {
@@ -177,5 +178,5 @@ export function validateDetails(data: any, term: string, type: VocabularyDetails
   }
   const category = VOCABULARY_CATEGORIES.includes(data.category) ? data.category : data.type === 'idiom' ? 'idiom' : type;
   const resolvedType = type === 'word' ? 'word' : category === 'idiom' ? 'idiom' : 'phrase';
-  return { key: vocabularyKey(term, type), term, type: resolvedType, category, phoneticUK: data.phoneticUK, phoneticUS: data.phoneticUS, senses, inflections: category === 'word' ? data.inflections.map((form: any) => ({ label: inflectionLabel(form.label), value: form.value })) : [], sections, generated: true, generatedSections: [...DETAIL_SECTIONS], provenance: {}, updatedAt: Date.now() };
+  return { key: vocabularyKey(term, type), term, cefrLevel: ['A1','A2','B1','B2','C1','C2'].includes(data.cefrLevel) ? data.cefrLevel : undefined, type: resolvedType, category, phoneticUK: data.phoneticUK, phoneticUS: data.phoneticUS, senses, inflections: category === 'word' ? data.inflections.map((form: any) => ({ label: inflectionLabel(form.label), value: form.value })) : [], sections, generated: true, generatedSections: [...DETAIL_SECTIONS], provenance: {}, updatedAt: Date.now() };
 }

@@ -6,7 +6,7 @@ export function localApiProxy(env: Record<string, string | undefined>, fetcher: 
   if (!source || env.NODE_ENV === 'production') return null;
   const upstream = new URL(source);
   if (upstream.protocol !== 'https:' || upstream.username || upstream.password || upstream.pathname !== '/' || upstream.search || upstream.hash) throw new Error('LOCAL_AI_API_ORIGIN must be an HTTPS origin without credentials or a path.');
-  const routes = new Set(['/api/reading/generate', '/api/reading/translate', '/api/vocabulary/explain']);
+  const routes = new Set(['/api/reading/generate', '/api/reading/translate', '/api/vocabulary/explain', '/api/vocabulary/levels']);
   return async (req, res, next) => {
     if (!(req.method === 'POST' && routes.has(req.path)) && !(req.method === 'GET' && req.path === '/api/health')) return next();
     try {

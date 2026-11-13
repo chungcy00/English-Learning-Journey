@@ -50,6 +50,7 @@ export interface LearningEntry {
   morphology?: WordFormation;
 }
 export interface VocabularyDetails {
+  cefrLevel?: CEFRLevel;
   key: string;
   term: string;
   type: 'word' | 'phrase' | 'idiom';
@@ -85,6 +86,7 @@ export interface VocabularyItem {
   term: string;
   type: 'word' | 'phrase' | 'idiom';
   cefrLevel?: CEFRLevel | 'A1' | 'C2';
+  cefrAssessedAt?: number;
   category?: VocabularyCategory;
   origin?: 'manual' | 'reading';
   savedManually?: boolean;

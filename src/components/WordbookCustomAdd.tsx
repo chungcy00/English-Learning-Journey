@@ -35,7 +35,7 @@ export function WordbookCustomAdd({ vocabulary, onSave, initiallyOpen = false }:
     lock.current = true; setBusy(true); setError('');
     try {
       const details = await readVocabularyDetails(preview);
-      await onSave({ ...preview, details, type: details.type, category: details.category, phonetic: details.phoneticUK || details.phoneticUS,
+      await onSave({ ...preview, cefrLevel: preview.cefrLevel || details.cefrLevel, details, type: details.type, category: details.category, phonetic: details.phoneticUK || details.phoneticUS,
         meaningZh: details.senses.map(item => item.meaningZh || item.text).join('；'), partOfSpeech: details.senses.map(item => item.partOfSpeech).filter(Boolean).join(' / '),
         example: details.sections.examples[0]?.text || '', definitionEn: details.sections.definitions.map(item => item.text).join('\n'), collocations: details.sections.phrases.map(item => item.text), savedManually: true, updatedAt: Date.now() });
       setMessage(`已保存“${vocabularyHeadword(preview.term, preview.partOfSpeech)}”，可在全部词条中查看。`); setPreview(null); setQuery(''); setDuplicate(null);

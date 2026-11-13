@@ -1,3 +1,4 @@
+import { ensureVocabularyLevels, isVocabularyLevel } from './services/vocabularyLevels';
 import { LoadingAnimation } from './components/LoadingAnimation';
 import { CustomWordsView } from './views/CustomWordsView';
 import { vocabularyKey } from './utils/vocabularyDetails';
@@ -208,6 +209,12 @@ export default function App() {
     window.addEventListener('vocabulary-data-changed', refresh);
     return () => window.removeEventListener('vocabulary-data-changed', refresh);
   }, []);
+
+  useEffect(() => {
+    if (vocabularies.some(word => !isVocabularyLevel(word.cefrLevel))) {
+      void ensureVocabularyLevels().catch(error => console.warn('Vocabulary level assessment pending', error));
+    }
+  }, [vocabularies]);
 
   // Set of vocab terms currently in wordbook for O(1) lookup
   const wordbookVocabIds = new Set(

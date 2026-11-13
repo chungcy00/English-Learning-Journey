@@ -1,4 +1,4 @@
-import { vocabularyHeadword } from './vocabularyCase';
+import { vocabularyHeadword } from './vocabularyCase.js';
 import { DETAIL_SECTIONS, type DetailSection, type LearningEntry, type VocabularyDetails, type VocabularyItem, type VocabularyCategory } from '../types.js';
 
 export const sectionLabels: Record<DetailSection, string> = { examples: '例句', derivatives: '派生', roots: '词根', phrases: '词组', definitions: '英文释义', usage: '用法解析' };
@@ -29,7 +29,7 @@ export function basicVocabulary(term: string, type: VocabularyItem['type'] = ter
 export function legacyDetails(vocab: VocabularyItem): VocabularyDetails {
   if (vocab.details) return vocab.details;
   const entry = (text: string, meaningZh = ''): LearningEntry => ({ id: crypto.randomUUID(), text, meaningZh });
-  return { key: vocabularyKey(vocab.term, vocab.type), term: vocab.term, type: vocab.type, category: vocab.category || (vocab.type === 'word' || vocab.type === 'idiom' ? vocab.type : undefined), phoneticUK: vocab.phonetic || '', phoneticUS: '',
+  return { key: vocabularyKey(vocab.term, vocab.type), term: vocab.term, type: vocab.type, cefrLevel: vocab.cefrLevel, category: vocab.category || (vocab.type === 'word' || vocab.type === 'idiom' ? vocab.type : undefined), phoneticUK: vocab.phonetic || '', phoneticUS: '',
     senses: vocab.meaningZh ? [{ ...entry(vocab.meaningZh, vocab.meaningZh), partOfSpeech: vocab.partOfSpeech }] : [], inflections: [],
     sections: { examples: vocab.example ? [entry(vocab.example, vocab.translations?.['zh-CN']?.exampleTranslation || '')] : [], derivatives: [], roots: [], phrases: (vocab.collocations || []).map(text => entry(text)), definitions: vocab.definitionEn ? [entry(vocab.definitionEn)] : [], usage: [] }, generated: false, provenance: {}, updatedAt: vocab.updatedAt };
 }
@@ -37,7 +37,7 @@ export function hasSavedUsage(details: VocabularyDetails) {
   return details.sections.usage.length > 0 || !!details.generatedSections?.includes('usage') || details.provenance.usage?.source === 'user';
 }
 export function mergeGeneratedDetails(current: VocabularyDetails, incoming: VocabularyDetails, section?: DetailSection, replaceEdited = false): VocabularyDetails {
-  const next = { ...current, type: incoming.type, category: incoming.category || incoming.type, sections: { ...current.sections }, provenance: { ...current.provenance }, generatedSections: [...(current.generatedSections || [])], updatedAt: Date.now() };
+  const next = { ...current, cefrLevel: current.cefrLevel || incoming.cefrLevel, type: incoming.type, category: incoming.category || incoming.type, sections: { ...current.sections }, provenance: { ...current.provenance }, generatedSections: [...(current.generatedSections || [])], updatedAt: Date.now() };
   for (const key of section ? [section] : DETAIL_SECTIONS) {
     if (current.provenance[key]?.source === 'user' && !replaceEdited) continue;
     if (!section && key === 'usage' && hasSavedUsage(current)) {
