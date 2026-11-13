@@ -1,3 +1,4 @@
+import { vocabularyHeadword } from '../utils/vocabularyCase';
 import { LoadingAnimation } from '../components/LoadingAnimation';
 import { HandOutline, Companion } from '../components/LearningArt';
 import { vocabularyKey } from '../utils/vocabularyDetails';
@@ -144,7 +145,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const translationRunRef = useRef(0);
   const translationControllerRef = useRef<AbortController | null>(null);
   const translationPriorityRef = useRef(false);
-  const vocabularySignature = reading.selectedVocabulary.map(vocab => `${vocab.id}:${vocab.term}`).join('|');
+  const vocabularySignature = reading.selectedVocabulary.map(vocab => `${vocab.id}:${vocabularyHeadword(vocab.term, vocab.partOfSpeech)}`).join('|');
 
   // Parse dialogue turns
   const dialogueTurns = parseDialogueTurns(reading.content);
@@ -749,7 +750,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             const localizedMeaning = getLocalizedVocabMeaning(vocab, currentTranslation);
 
             return (
-              <SwipeToRemove key={vocab.id} label={vocab.term} disabled={!!removingTerm || !onRemoveVocabulary} onRemove={async()=>{if(removingTerm||!onRemoveVocabulary)return;setRemovingTerm(vocab.id);setBookmarkError('');try{await onRemoveVocabulary(vocab);}catch{setBookmarkError('移除失败，已有资料已保留，请重试。');}finally{setRemovingTerm(null);}}}>
+              <SwipeToRemove key={vocab.id} label={vocabularyHeadword(vocab.term, vocab.partOfSpeech)} disabled={!!removingTerm || !onRemoveVocabulary} onRemove={async()=>{if(removingTerm||!onRemoveVocabulary)return;setRemovingTerm(vocab.id);setBookmarkError('');try{await onRemoveVocabulary(vocab);}catch{setBookmarkError('移除失败，已有资料已保留，请重试。');}finally{setRemovingTerm(null);}}}>
               <div
                 onClick={() => {
                   setSelectedVocab(vocab);
@@ -757,8 +758,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 }}
                 className="reading-vocabulary__row group cursor-pointer transition-colors"
               >
-                <button type="button" aria-haspopup="dialog" aria-label={`查看 ${vocab.term} 的词汇释义`} onClick={(e) => { e.stopPropagation(); setSelectedVocab(vocab); setIsDetailOpen(true); }} className="reading-vocabulary__term type-term font-editorial font-semibold text-[var(--accent-vocab)] group-hover:text-[var(--text-primary)] transition-colors text-left">
-                  {vocab.term}
+                <button type="button" aria-haspopup="dialog" aria-label={`查看 ${vocabularyHeadword(vocab.term, vocab.partOfSpeech)} 的词汇释义`} onClick={(e) => { e.stopPropagation(); setSelectedVocab(vocab); setIsDetailOpen(true); }} className="reading-vocabulary__term type-term font-editorial font-semibold text-[var(--accent-vocab)] group-hover:text-[var(--text-primary)] transition-colors text-left">
+                  {vocabularyHeadword(vocab.term, vocab.partOfSpeech)}
                 </button>
                 <div className="reading-vocabulary__meta type-meta font-ui text-[var(--text-muted)]">
                   {vocab.phonetic && <span>{vocab.phonetic}</span>}
@@ -770,7 +771,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   aria-pressed={inWordbook}
                   onClick={(e) => { e.stopPropagation(); void toggleBookmark(vocab); }}
                   title={inWordbook ? '移出生词本' : getI18nText('addToWordbook')}
-                  aria-label={`${inWordbook ? '移出生词本' : '加入生词本'}：${vocab.term}`}
+                  aria-label={`${inWordbook ? '移出生词本' : '加入生词本'}：${vocabularyHeadword(vocab.term, vocab.partOfSpeech)}`}
                   className={`reading-vocabulary__bookmark ${inWordbook ? 'is-saved' : ''}`}
                 >
                   <Bookmark className="w-4 h-4" />

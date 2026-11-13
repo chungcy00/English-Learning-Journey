@@ -1,3 +1,4 @@
+import { vocabularyHeadword } from '../utils/vocabularyCase';
 import { HandOutline, StudyEmptyState } from './LearningArt';
 import React, { useState } from 'react';
 import { Plus, Volume2, X } from 'lucide-react';
@@ -5,8 +6,10 @@ import type { LearningEntry, WordFormation, WordPart } from '../types';
 import { derivativeDiagramBase, familyForest, hasExactParts, hasMatchingRoot, hasTransparentDerivation, practicalFormationText, partOfSpeechAbbreviation, verifiedWordFamilyRelation, type FamilyNode } from '../utils/wordFormation';
 
 const partLabels = { prefix: '前缀', root: '词根', suffix: '后缀' };
-export function HighlightedWord({word,parts}:{word:string;parts?:WordPart[]}) {
-  return <span lang="en">{hasExactParts(parts,word) ? parts.map((part,index)=><span key={index} className={`lexicon-word-part--${part.kind}`}>{part.text}</span>) : word}</span>;
+export function HighlightedWord({word,parts,partOfSpeech}:{word:string;parts?:WordPart[];partOfSpeech?:string}) {
+  const spelling = vocabularyHeadword(word, partOfSpeech);
+  let offset = 0;
+  return <span lang="en">{hasExactParts(parts,word) ? parts.map((part,index)=>{ const text = spelling.slice(offset, offset + part.text.length); offset += part.text.length; return <span key={index} className={`lexicon-word-part--${part.kind}`}>{text}</span>; }) : spelling}</span>;
 }
 type Relation = '共同词根' | '词族关联';
 
@@ -26,7 +29,7 @@ function FamilyDetails({ entry, pronounce }: { entry: LearningEntry; pronounce: 
   return <>
     <div className="lexicon-derivative-heading">
       <div>
-        <strong><HighlightedWord word={entry.text} parts={entry.family?.parts}/></strong>
+        <strong><HighlightedWord word={entry.text} parts={entry.family?.parts} partOfSpeech={entry.partOfSpeech}/></strong>
         <p className="lexicon-family-meaning"><span className="lexicon-pos">{partOfSpeechAbbreviation(entry.partOfSpeech)}</span>{entry.meaningZh}</p>
       </div>
       <button type="button" aria-label={`朗读：${entry.text}`} onClick={() => pronounce(entry.text)}><Volume2 size={18}/></button>
@@ -51,7 +54,7 @@ function FamilyDiagram({ base, entries, nodes, relation, pronounce }: {
         <button type="button" className="lexicon-family-node" aria-pressed={selected.id === entry.id} aria-description={label}
           onClick={() => setSelectedId(entry.id)}>
           <HandOutline/>
-          <HighlightedWord word={entry.text} parts={entry.family?.parts}/>
+          <HighlightedWord word={entry.text} parts={entry.family?.parts} partOfSpeech={entry.partOfSpeech}/>
         </button>
         {children.length > 0 && renderBranches(children, entry.text)}
       </li>;
@@ -60,7 +63,7 @@ function FamilyDiagram({ base, entries, nodes, relation, pronounce }: {
   return <div className="lexicon-family-diagram">
     <div className="lexicon-family-viewport">
       <div className="lexicon-family-tree">
-        <div className="lexicon-family-base" lang="en"><HandOutline/>{base}</div>
+        <div className="lexicon-family-base" lang="en"><HandOutline/>{vocabularyHeadword(base)}</div>
         {renderBranches(nodes, base)}
       </div>
     </div>

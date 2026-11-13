@@ -9,7 +9,6 @@ import { vocabularyKey } from './utils/vocabularyDetails';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { createHistoryReviewRequest, historyReviewWords, vocabularyForLevel, vocabularyLevelLabel, type HistoryReviewRequest, type HistoryVocabularyLevel } from './utils/historyVocabulary';
-import { vocabularyWithReadingSources } from './utils/readingVocabularyOwnership';
 import { toggleWordDetailBookmark } from './utils/wordDetailBookmark';
 import { Navbar, NavTab } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -97,7 +96,7 @@ export default function App() {
     if (!previous) return;
     const [latest, latestReadings] = await Promise.all([getAllVocabularies(), getAllReadings()]);
     if (historyReviewRef.current?.run !== previous.run) return;
-    const request = createHistoryReviewRequest(vocabularyWithReadingSources(latest, latestReadings), previous.level) || { ...previous, ids: [] };
+    const request = createHistoryReviewRequest(latest, previous.level) || { ...previous, ids: [] };
     setVocabularies(latest);
     setReadings(latestReadings);
     setHistoryReview({ ...request, run: Math.max(Date.now(), previous.run + 1) });
@@ -115,7 +114,7 @@ export default function App() {
   };
   const removedDetailVocabulary = useRef(new Map<string, VocabularyItem>());
   useEffect(() => { removedDetailVocabulary.current.clear(); }, [currentReading?.id]);
-  const historyVocabulary = useMemo(() => vocabularyWithReadingSources(vocabularies, readings), [vocabularies, readings]);
+  const historyVocabulary = vocabularies;
   const wordbookVocabulary = useMemo(() => historyWordbookLevel === undefined ? vocabularies : vocabularyForLevel(historyVocabulary, historyWordbookLevel), [vocabularies, historyVocabulary, historyWordbookLevel]);
   const scopedHistoryReview = useMemo(() => historyReview ? historyReviewWords(historyVocabulary, historyReview) : [], [historyVocabulary, historyReview]);
   const [removalTarget, setRemovalTarget] = useState<VocabularyItem | null>(null);

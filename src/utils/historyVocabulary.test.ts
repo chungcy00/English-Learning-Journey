@@ -58,3 +58,17 @@ test('history retains all vocabulary and removes every status category and maste
  const html=renderToStaticMarkup(React.createElement(HistoryVocabularyTasks,{vocabulary:nine,selectedLevel:'B1',onSelectLevel(){},onReview(){},onOpenWordbook(){}}));
  assert.match(html,/复习全部B1词汇（9词）/);assert.doesNotMatch(html,/新词|未学习|学习中|困难|已掌握|掌握进度|progressbar|分类复习/);
 });
+
+test('custom words without passages count toward the chart and level review', async () => {
+ const custom = [{...words[0],id:'manual-a',origin:'manual',cefrLevel:'A2'}, {...words[0],id:'manual-unknown',origin:'manual',cefrLevel:undefined}] as VocabularyItem[];
+ const html = renderToStaticMarkup(React.createElement(ReadingLevelPieChart,{readings:[],vocabulary:custom,dimension:'vocabulary'}));
+ assert.match(html,/>2 词<\/strong>/);
+ assert.match(html,/筛选 A2：1 词，50%/);
+ assert.match(html,/筛选 未标注：1 词，50%/);
+ assert.deepEqual(createHistoryReviewRequest(custom,'A2')?.ids,['manual-a']);
+ assert.deepEqual(createHistoryReviewRequest(custom,'未知')?.ids,['manual-unknown']);
+ const {readFileSync}=await import('node:fs');
+ const app=readFileSync(new URL('../App.tsx',import.meta.url),'utf8');
+ assert.match(app,/const historyVocabulary = vocabularies;/);
+ assert.match(app,/createHistoryReviewRequest\(latest, previous.level\)/);
+});

@@ -1,3 +1,4 @@
+import { vocabularyHeadword } from '../utils/vocabularyCase';
 import React, { useState } from 'react';
 import { X, Bookmark } from 'lucide-react';
 import { getLocalizedExampleTranslation } from '../utils/i18n';
@@ -18,7 +19,7 @@ export const WordDetailModal: React.FC<WordDetailModalProps> = ({ vocab, isOpen,
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   if (!(inline || embedded ? isOpen : present) || !vocab) return null;
-  const content = <><header className="reading-word-dialog__header"><h2 id="word-detail-title">{vocab.term}</h2><button type="button" aria-label="关闭词汇详情" onClick={onClose}><X size={20}/></button></header>
+  const content = <><header className="reading-word-dialog__header"><h2 id="word-detail-title">{vocabularyHeadword(vocab.term, vocab.partOfSpeech)}</h2><button type="button" aria-label="关闭词汇详情" onClick={onClose}><X size={20}/></button></header>
     <div className="reading-word-dialog__body"><VocabularyDetailsPanel key={vocab.id} vocab={{ ...vocab, translations: { ...vocab.translations, 'zh-CN': { meaning: vocab.meaningZh, exampleTranslation: getLocalizedExampleTranslation(vocab, currentTranslation) } } }} onBeforePronunciation={onBeforePronunciation}/></div>
     <footer className="lexicon-dialog-footer"><button type="button" disabled={saving} aria-pressed={isInWordbook} onClick={async () => { if (saving) return; setSaving(true); setError(''); try { await onToggleWordbook(vocab); } catch { setError('收藏操作失败，请重试。'); } finally { setSaving(false); } }}><Bookmark size={18} fill={isInWordbook ? 'currentColor' : 'none'}/>{isInWordbook ? '取消完整词条收藏' : '收藏完整词条'}</button><p>独立收藏的例句和词组会单独保留。</p>{error && <p role="alert">{error}</p>}</footer></>;
   if (inline || embedded) return <div className="word-detail-inline">{content}</div>;

@@ -1,3 +1,4 @@
+import { vocabularyHeadword } from '../utils/vocabularyCase';
 import { HandOutline, Companion } from './LearningArt';
 import React from 'react';
 import { RefreshCw, Volume2 } from 'lucide-react';
@@ -11,10 +12,10 @@ function VocabularyHeader({ vocab, back, onPronounce }: {
   return <header className="practice-vocabulary-card__head">
     <div className="practice-vocabulary-card__header">
       <span className="practice-vocabulary-card__label">{back ? '释义' : vocab.type === 'word' ? '单词' : '短语'}</span>
-      <button type="button" aria-label={`播放 ${vocab.term} 的发音`} onClick={onPronounce}><Volume2 aria-hidden="true" size={21} /></button>
+      <button type="button" aria-label={`播放 ${vocabularyHeadword(vocab.term, vocab.partOfSpeech)} 的发音`} onClick={onPronounce}><Volume2 aria-hidden="true" size={21} /></button>
     </div>
     <div className="practice-vocabulary-card__content">
-      <h3 className="practice-vocabulary-card__term">{vocab.term}</h3>
+      <h3 className="practice-vocabulary-card__term">{vocabularyHeadword(vocab.term, vocab.partOfSpeech)}</h3>
       {vocab.phonetic && <p className="practice-vocabulary-card__phonetic">{vocab.phonetic}</p>}
       {vocab.partOfSpeech && <p className="practice-vocabulary-card__pos">{vocab.partOfSpeech}</p>}
     </div>
@@ -34,7 +35,7 @@ export function PracticeVocabularyCard({ vocab, meaning, exampleTranslation, rev
   return <ReviewFlipCard revealed={revealed} disabled={disabled} onFlip={onFlip} front={front}>
     <div className="review-flashcard practice-vocabulary-card practice-vocabulary-card--back"><HandOutline/><Companion pose="hamster-peek-flashcard" className="review-companion"/>
       <header className="practice-vocabulary-card__head review-lexicon-heading">
-        <h3 className="practice-vocabulary-card__term">{vocab.term}</h3>
+        <h3 className="practice-vocabulary-card__term">{vocabularyHeadword(vocab.term, vocab.partOfSpeech)}</h3>
       </header>
       <div key={`${vocab.id}-${revealed}`} className="practice-vocabulary-card__body" tabIndex={0} role="region" aria-label="词汇六栏学习资料">
         {revealed && <VocabularyDetailsPanel onInteractionStateChange={onDetailsBusyChange} key={vocab.id} vocab={{ ...vocab, meaningZh: meaning, translations: { ...vocab.translations, 'zh-CN': { meaning, exampleTranslation } } }} />}

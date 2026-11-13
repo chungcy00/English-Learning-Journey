@@ -1,3 +1,4 @@
+import { vocabularyHeadword } from '../utils/vocabularyCase';
 import { HandOutline, Companion } from './LearningArt';
 import React, { useRef } from 'react';
 import { ArrowRight, ChevronRight, Layers, Target } from 'lucide-react';
@@ -36,7 +37,7 @@ export function HistoryVocabularyTasks({vocabulary, selectedLevel, onSelectLevel
       {selectedLevel ? <div className="history-vocabulary-detail" style={cefrStyle(selectedLevel)}>
         <header><span className="history-task-icon"><Target size={24} aria-hidden="true"/></span><div><h2 tabIndex={-1} ref={node => { if (node && focusDetail.current) { focusDetail.current = false; node.focus({ preventScroll: true }); } }}>{selectedLevel==='未知'?'未标注等级词汇复习':`${label} ${cefrVisuals[selectedLevel].name}词汇复习`}</h2><p>已收录 {selected.total} 词</p></div></header>
         <div className="history-recent-heading"><h3>最近添加</h3><button type="button" aria-label={`查看全部${label}词汇`} onClick={()=>onOpenWordbook(selectedLevel)}>查看全部<ChevronRight size={18} aria-hidden="true"/></button></div>
-        <div className="history-recent-words">{selected.recent.map(word=><span key={word.id}>{word.term}</span>)}</div>
+        <div className="history-recent-words">{selected.recent.map(word=><span key={word.id}>{vocabularyHeadword(word.term, word.partOfSpeech)}</span>)}</div>
         <ReviewAll task={selected} onReview={onReview} className="history-task-primary" />
       </div> : <>
         <div className="history-review-all"><Layers size={23} aria-hidden="true"/><div><h3>全部词汇综合复习</h3><p>{all.total} 词收录</p></div><ReviewAll task={all} onReview={onReview} className="history-task-start-all" /></div>

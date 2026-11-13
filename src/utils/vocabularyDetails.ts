@@ -1,3 +1,4 @@
+import { vocabularyHeadword } from './vocabularyCase';
 import { DETAIL_SECTIONS, type DetailSection, type LearningEntry, type VocabularyDetails, type VocabularyItem, type VocabularyCategory } from '../types.js';
 
 export const sectionLabels: Record<DetailSection, string> = { examples: '例句', derivatives: '派生', roots: '词根', phrases: '词组', definitions: '英文释义', usage: '用法解析' };
@@ -23,7 +24,7 @@ export const vocabularyKey = (term: string, type: VocabularyItem['type']) => `${
 export const materialKey = (type: 'example' | 'phrase', text: string) => `${type}:${cleanTerm(text)}`;
 export function basicVocabulary(term: string, type: VocabularyItem['type'] = term.includes(' ') ? 'phrase' : 'word'): VocabularyItem {
   const now = Date.now();
-  return { id: `vocab_${crypto.randomUUID()}`, term: cleanTerm(term), type, phonetic: '', partOfSpeech: '', meaningZh: '', definitionEn: '', example: '', collocations: [], origin: 'manual', savedManually: true, status: 'New', createdAt: now, updatedAt: now, nextReviewDate: now, reviewCount: 0, currentInterval: 0 };
+  return { id: `vocab_${crypto.randomUUID()}`, term: vocabularyHeadword(term), type, phonetic: '', partOfSpeech: '', meaningZh: '', definitionEn: '', example: '', collocations: [], origin: 'manual', savedManually: true, status: 'New', createdAt: now, updatedAt: now, nextReviewDate: now, reviewCount: 0, currentInterval: 0 };
 }
 export function legacyDetails(vocab: VocabularyItem): VocabularyDetails {
   if (vocab.details) return vocab.details;
