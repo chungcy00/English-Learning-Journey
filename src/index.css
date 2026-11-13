@@ -2398,3 +2398,70 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
   padding-block: .625rem;
 }
 .lexicon-editor-optional[open] > :not(summary) { margin-block: .25rem .625rem; }
+
+/* Shared structured usage analysis across every vocabulary detail surface. */
+.usage-points, .usage-editor, .usage-editor-group, .usage-expression-editors {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.usage-point { display: grid; gap: 12px; min-width: 0; }
+.usage-point + .usage-point { padding-top: 8px; }
+.usage-point h5, .usage-expression-heading h6, .usage-compatibility h5 {
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--accent-primary);
+  overflow-wrap: anywhere;
+}
+.usage-point p, .usage-point dd, .usage-compatibility p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.usage-rule { display: grid; gap: 6px; }
+.usage-rule dt { color: var(--text-secondary); font-size: var(--type-label); }
+.usage-examples, .usage-comparisons { display: grid; gap: 16px; min-width: 0; }
+.usage-example { margin: 0; }
+.usage-example > div { min-width: 0; }
+.usage-example > div p + p { margin-top: 6px; }
+.usage-expression-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.usage-expression-heading h6 { min-width: 0; }
+.usage-expression-heading button { flex: 0 0 44px; min-height: 44px; }
+.usage-comparison {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  padding: 20px 24px;
+  border-radius: 16px 14px 17px 13px / 14px 17px 13px 16px;
+  background: var(--surface-disabled);
+  min-width: 0;
+}
+.usage-comparison > .hand-outline { pointer-events: none; }
+.usage-editor-group > h4 { color: var(--accent-primary); font-size: var(--type-body); font-weight: 600; }
+.usage-item-editor, .usage-expression-editor, .usage-example-editor {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px 14px 17px 13px / 14px 17px 13px 16px;
+}
+.usage-item-editor { background: var(--surface-paper); }
+.usage-item-editor legend, .usage-expression-editor legend, .usage-example-editor legend {
+  color: var(--accent-primary);
+  font-size: var(--type-label);
+  padding-inline: 6px;
+}
+.usage-order-actions { display: flex; justify-content: flex-end; gap: 4px; }
+.usage-order-actions button { display: grid; place-items: center; flex: 0 0 44px; min-height: 44px; }
+.usage-field { min-width: 0; }
+.usage-field input, .usage-field select, .usage-field textarea { min-height: 44px; max-width: 100%; }
+.usage-examples-editor, .usage-compatibility-editor { display: grid; gap: 12px; min-width: 0; }
+.usage-compatibility-editor[open] > summary { margin-bottom: 12px; }
+.usage-compatibility-editor > summary, .usage-compatibility summary { cursor: pointer; min-height: 44px; padding-block: 10px; color: var(--text-secondary); font-size: var(--type-label); }
+.usage-compatibility { display: grid; gap: 12px; min-width: 0; }
+.usage-compatibility pre { white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: var(--type-body); }
+.usage-add-actions { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.usage-add { display: inline-flex; align-items: center; gap: 6px; justify-self: start; min-height: 44px; }
+.usage-retained { font-size: var(--type-meta); }
+@media (max-width: 639px) {
+  .usage-comparison { padding: 16px; }
+  .usage-item-editor, .usage-expression-editor, .usage-example-editor { padding: 12px; }
+  .usage-points, .usage-editor, .usage-editor-group { gap: 20px; }
+}

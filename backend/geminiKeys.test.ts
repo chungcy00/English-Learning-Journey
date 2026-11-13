@@ -1,5 +1,5 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {once} from 'node:events';
-import {GeminiKeyPool,configuredGeminiKeys,GeminiProviderError} from './geminiKeys';import app from './app';import {DETAILS} from './testLearningFixtures';
+import {GeminiKeyPool,configuredGeminiKeys,GeminiProviderError} from './geminiKeys';import app from './app';import {STRUCTURED_DETAILS as DETAILS} from './testLearningFixtures';
 test('three server keys are deduplicated and rotated without Redis or user counters',()=>{
  assert.deepEqual(configuredGeminiKeys({GEMINI_API_KEY:'first',GEMINI_API_KEY_2:' second ',GEMINI_API_KEY_3:'first'}),['first','second']);
  assert.deepEqual(configuredGeminiKeys({GEMINI_API_KEY:'MY_GEMINI_API_KEY',GEMINI_API_KEY_2:'AQ.test-authorization-key'}),['AQ.test-authorization-key']);

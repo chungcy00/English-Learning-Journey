@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { once } from 'node:events';
 import app from './app';
 import { validateDetails } from './learningSchemas';
-import { DETAILS } from './testLearningFixtures';
+import { DETAILS, STRUCTURED_DETAILS } from './testLearningFixtures';
 
 test('new reading and paragraph translations share one provider call; vocabulary details share one call', async () => {
   const savedEnv = { ...process.env }; const realFetch = globalThis.fetch;
@@ -17,7 +17,7 @@ test('new reading and paragraph translations share one provider call; vocabulary
       assert.ok(request.generationConfig.responseSchema.required.includes('paragraphTranslations'));
       assert.ok(!request.generationConfig.responseSchema.properties.rewritePractice);
     }
-    const output = scenario === 'details' ? DETAILS : scenario === 'budget' ? { ...reading, paragraphTranslations: [] } : reading;
+    const output = scenario === 'details' ? STRUCTURED_DETAILS : scenario === 'budget' ? { ...reading, paragraphTranslations: [] } : reading;
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(output) }], role: 'model' }, finishReason: 'STOP' }] }), { headers: { 'Content-Type': 'application/json' } });
   }) as typeof fetch;
   const server = app.listen(0, '127.0.0.1'); await once(server, 'listening');

@@ -1,3 +1,4 @@
+import { upgradeUsageDetails } from '../utils/structuredUsage';
 import { db } from '../db/dexie';
 import type { DetailSection, VocabularyDetails, VocabularyItem, SavedMaterial, LearningEntry } from '../types';
 import { hasSavedUsage, legacyDetails, mergeGeneratedDetails, vocabularyKey, materialKey } from '../utils/vocabularyDetails';
@@ -7,14 +8,21 @@ export async function readVocabularyDetails(vocab: VocabularyItem) {
   return db.transaction('rw', db.vocabularyDetails, async () => {
     const key = vocabularyKey(vocab.term, vocab.type);
     const existing = await db.vocabularyDetails.get(key);
-    if (existing) return existing;
+    if (existing) return upgradeUsageDetails(existing);
     const baseline = legacyDetails(vocab);
     await db.vocabularyDetails.put(baseline);
     return baseline;
   });
 }
-export async function saveVocabularyDetails(details: VocabularyDetails) {
+export async function saveVocabularyDetails(value: VocabularyDetails, expectedUsage?: LearningEntry[]) {
+  const details = upgradeUsageDetails(value);
   await db.transaction('rw', db.vocabularyDetails, db.vocabulary, async () => {
+    if (expectedUsage) {
+      const stored = await db.vocabularyDetails.get(details.key);
+      if (stored && JSON.stringify(upgradeUsageDetails(stored).sections.usage) !== JSON.stringify(expectedUsage)) {
+        throw new Error('本栏已在其他窗口更新，已保留最新资料，请核对后再保存。');
+      }
+    }
     await db.vocabularyDetails.put(details);
     const words = await db.vocabulary.toArray();
     for (const word of words.filter(word => vocabularyKey(word.term, word.type) === details.key)) {
@@ -44,10 +52,13 @@ export async function generateVocabularyDetails(vocab: VocabularyItem, section?:
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || '资料生成失败，请稍后重试。');
     const latest = await readVocabularyDetails(vocab);
+    if (section === 'usage' && JSON.stringify(latest.sections.usage) !== JSON.stringify(existing.sections.usage)) {
+      throw new Error('生成期间本栏已被编辑，已保留最新修改，请核对后再重试。');
+    }
     // Re-read after the request so edits made in another view are retained.
     const merged = mergeGeneratedDetails(latest, data, section, replaceEdited);
-    await saveVocabularyDetails(merged);
-    return merged;
+    await saveVocabularyDetails(merged, section === 'usage' ? latest.sections.usage : undefined);
+    return upgradeUsageDetails(merged);
   })();
   pending.set(key, operation);
   try { return await operation; } finally { pending.delete(key); }

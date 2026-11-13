@@ -16,7 +16,7 @@ test('usage renders a Chinese explanation, optional correction pair and spoken e
  for(const text of ['常见搭配限制','helpful to someone','朗读例句：Your advice was helpful to me.','旧版说明保留'])assert.ok(html.includes(text));
  assert.ok(!html.includes('误用'));
  const errorHtml=renderToStaticMarkup(<UsageList entries={[{id:'err',text:'纠错',meaningZh:'使用正确结构。',usageKind:'error',contrast:{incorrect:'wrong example',correct:'correct example'}}]} pronounce={()=>{}}/>);
- assert.ok(errorHtml.includes('误用'));assert.ok(errorHtml.includes('正确表达'));
+ assert.ok(errorHtml.includes('错误表达'));assert.ok(errorHtml.includes('正确表达'));
 });
 test('refreshing expressions preserves other sections; manual usage is retained by default',()=>{
  const current=legacyDetails(basicVocabulary('helpful'));current.sections.usage=[{id:'u',text:'我的标题',meaningZh:'我的解释',usageKind:'grammar'}];current.provenance.usage={source:'user',updatedAt:1};
@@ -45,14 +45,13 @@ test('automatic completion preserves cached usage while explicit section generat
  assert.deepEqual(mergeGeneratedDetails(current,incoming,'usage').sections.usage,incoming.sections.usage);
 });
 
-test('usage headings follow category order and omit empty sections', () => {
+test('structured usage headings follow category order while historical titles are retained', () => {
  const entries: LearningEntry[] = [
    {id:'1',text:'模型标题',meaningZh:'解释近义词区别。',usageKind:'comparison'},
    {id:'2',text:'另一个模型标题',meaningZh:'说明实际使用场景。',usageKind:'scenario'},
-   {id:'3',text:'空标题',meaningZh:' ',usageKind:'grammar'},
  ];
  const html = renderToStaticMarkup(<UsageList entries={entries} pronounce={()=>{}}/>);
  assert.deepEqual(Array.from(html.matchAll(/<h4>([^<]+)<\/h4>/g), match=>match[1]), ['常见使用场景','容易混淆的近义词']);
- assert.doesNotMatch(html,/模型标题|空标题|常见错误/);
- assert.match(renderToStaticMarkup(<UsageList entries={[entries[2]]} pronounce={()=>{}}/>),/暂无补充用法解析/);
+ assert.match(html,/模型标题/);
+ assert.match(renderToStaticMarkup(<UsageList entries={[]} pronounce={()=>{}}/>),/暂无补充用法解析/);
 });

@@ -1,3 +1,4 @@
+import { upgradeUsageDetails } from './structuredUsage.js';
 import { vocabularyHeadword } from './vocabularyCase.js';
 import { DETAIL_SECTIONS, type DetailSection, type LearningEntry, type VocabularyDetails, type VocabularyItem, type VocabularyCategory } from '../types.js';
 
@@ -27,7 +28,7 @@ export function basicVocabulary(term: string, type: VocabularyItem['type'] = ter
   return { id: `vocab_${crypto.randomUUID()}`, term: vocabularyHeadword(term), type, phonetic: '', partOfSpeech: '', meaningZh: '', definitionEn: '', example: '', collocations: [], origin: 'manual', savedManually: true, status: 'New', createdAt: now, updatedAt: now, nextReviewDate: now, reviewCount: 0, currentInterval: 0 };
 }
 export function legacyDetails(vocab: VocabularyItem): VocabularyDetails {
-  if (vocab.details) return vocab.details;
+  if (vocab.details) return upgradeUsageDetails(vocab.details);
   const entry = (text: string, meaningZh = ''): LearningEntry => ({ id: crypto.randomUUID(), text, meaningZh });
   return { key: vocabularyKey(vocab.term, vocab.type), term: vocab.term, type: vocab.type, cefrLevel: vocab.cefrLevel, category: vocab.category || (vocab.type === 'word' || vocab.type === 'idiom' ? vocab.type : undefined), phoneticUK: vocab.phonetic || '', phoneticUS: '',
     senses: vocab.meaningZh ? [{ ...entry(vocab.meaningZh, vocab.meaningZh), partOfSpeech: vocab.partOfSpeech }] : [], inflections: [],

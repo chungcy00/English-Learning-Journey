@@ -13,7 +13,9 @@ test('Gemini full and section response schemas never contain rejected empty enum
 });
 import { DETAILS } from './testLearningFixtures';
 const morphology = { root: 'help', meaningZh: '帮助', parts: [{ kind:'root', text:'help', meaningZh:'帮助' }, { kind:'suffix', text:'ful', meaningZh:'具有……性质的' }], explanation:'help 加形容词后缀 -ful，表示有帮助的。', mnemonic:'想象一个乐于帮助别人的人。', related:[{word:'helpless',partOfSpeech:'adjective',meaningZh:'无助的'}] };
-function output() { return { ...structuredClone(DETAILS), term:'helpful', inflections:[{label:'comparative',value:'more helpful'}], sections:{...structuredClone(DETAILS.sections), roots:[{text:'help',meaningZh:'帮助',morphology:structuredClone(morphology)}], derivatives:[{text:'helpfulness',meaningZh:'乐于助人',partOfSpeech:'noun',family:{base:'help',relation:'helpful 加 -ness 构成名词'}}] } }; }
+const grammar = (explanation = '表示建议对某人有帮助，可用 helpful to someone。') => ({ kind: 'grammar', grammar: { name: 'helpful to someone', explanation, correct: 'helpful to someone', examples: [] } });
+const scenario = (name = '向他人提供建议') => ({ kind: 'scenario', scenario: { name, explanation: '帮助别人理解问题时可以这样介绍建议的作用。', examples: [] } });
+function output() { return { ...structuredClone(DETAILS), term:'helpful', inflections:[{label:'comparative',value:'more helpful'}], sections:{...structuredClone(DETAILS.sections), usage: [] as any[], roots:[{text:'help',meaningZh:'帮助',morphology:structuredClone(morphology)}], derivatives:[{text:'helpfulness',meaningZh:'乐于助人',partOfSpeech:'noun',family:{base:'help',relation:'helpful 加 -ness 构成名词'}}] } }; }
 test('morphology and derivational relationships survive schema validation; unrelated sections retain their content', () => {
   const input=output(); const result=validateDetails(input,'helpful','word');
   assert.deepEqual(result.sections.roots[0].morphology,morphology);
@@ -66,14 +68,18 @@ test('dictionary affix notation is normalized only if the resulting segments exa
  const result=validateDetails(input,'helpful','word',[],true);assert.equal(result.sections.roots[0].morphology?.parts[1].text,'ful');
  input.sections.roots[0].morphology.parts[0].text='invented-';assert.throws(()=>validateDetails(input,'helpful','word',[],true));
 });
-test('empty optional correction placeholders are omitted rather than rendered as false errors',()=>{
- const input:any=output();input.sections.usage=[{text:'场景说明',meaningZh:'按场景选择表达。',usageKind:'scenario',contrast:{incorrect:'',correct:''}}];
- assert.equal(validateDetails(input,'helpful','word',[],true).sections.usage[0].contrast,undefined);
+test('structured errors reject incomplete corrections while legacy placeholders remain readable',()=>{
+ const input:any=output();input.sections.usage=[{kind:'error',error:{name:'句型',severity:'incorrect',incorrect:'',correct:'helpful',reason:'需要完整句型。',examples:[]}}];
+ assert.throws(()=>validateDetails(input,'helpful','word',[],true));
+ input.sections.usage=[{text:'旧解释',meaningZh:'旧内容',usageKind:'error',contrast:{incorrect:'',correct:''}}];
+ assert.doesNotThrow(()=>validateDetails(input,'helpful','word'));
 });
-test('misclassified pronunciation notes cannot appear in usage, while genuine grammar explanations remain',()=>{
- const input:any=output();input.sections.usage=[{text:'词性重音差异',meaningZh:'名词和动词重音不同。',usageKind:'grammar'},{text:'与 conflict over 的区别',meaningZh:'conflict with 指与人或安排不一致，over 引出争议事项。',usageKind:'comparison',example:'They are in conflict over the budget.'}];
- const result=validateDetails(input,'helpful','word',[],true);assert.equal(result.sections.usage.length,1);assert.equal(result.sections.usage[0].usageKind,'comparison');
+
+test('structured usage rejects pronunciation headings and accepts genuine grammar',()=>{
+ const input:any=output();input.sections.usage=[grammar()];assert.equal(validateDetails(input,'helpful','word',[],true).sections.usage.length,1);
+ input.sections.usage[0].grammar.name='发音重音';assert.throws(()=>validateDetails(input,'helpful','word',[],true),/发音/);
 });
+
 test('new analyses require Chinese explanations and omit the original word and duplicate same-root entries',()=>{
  const input=output();input.sections.roots[0].morphology.related.push({word:'helpful',partOfSpeech:'adjective',meaningZh:'有帮助的'},{word:'helpless',partOfSpeech:'adjective',meaningZh:'无助的'});
  const result=validateDetails(input,'helpful','word',[],true);
@@ -87,10 +93,13 @@ test('section refresh excludes known cached inflections even if the new response
  const input:any=output();input.term='help';input.inflections=[];input.sections.roots=[];input.sections.derivatives=[{text:'helping',meaningZh:'帮助中',partOfSpeech:'participle',family:{base:'help',relation:'现在分词'}},{text:'helper',meaningZh:'帮手',partOfSpeech:'noun',family:{base:'help',relation:'help 加 -er，表示提供帮助的人'}}];
  assert.deepEqual(validateDetails(input,'help','word',[],true,[{label:'现在分词',value:'helping'}]).sections.derivatives.map(entry=>entry.text),['helper']);
 });
-test('an English legacy stress-change heading is excluded even when mislabeled as grammar',()=>{
- const input:any=output();input.sections.usage=[{text:'Note the stress change: noun vs verb.',meaningZh:'注意重音变化。',usageKind:'grammar'},{text:'动词与名词句型',meaningZh:'动词用 conflict with，名词结构用 be in conflict with。',usageKind:'grammar'}];
- assert.deepEqual(validateDetails(input,'helpful','word',[],true).sections.usage.map(entry=>entry.text),['常见搭配限制']);
+test('legacy stress-change headings remain readable while new grammar rejects them',()=>{
+ const input:any=output();input.sections.usage=[{text:'Note the stress change: noun vs verb.',meaningZh:'注意重音变化。',usageKind:'grammar'}];
+ assert.doesNotThrow(()=>validateDetails(input,'helpful','word'));
+ input.sections.usage=[grammar()];input.sections.usage[0].grammar.name='Note the word stress';
+ assert.throws(()=>validateDetails(input,'helpful','word',[],true),/发音/);
 });
+
 test('new phrase/usage meanings must be Chinese, and identical expressions are deduplicated without stripping articles',()=>{
  const input:any=output();input.sections.phrases=[{text:'a conflict of interest',meaningZh:'利益冲突'},{text:'a  conflict of interest',meaningZh:'利益冲突'}];
  assert.deepEqual(validateDetails(input,'helpful','word',[],true).sections.phrases.map(entry=>entry.text),['a conflict of interest']);
@@ -98,16 +107,17 @@ test('new phrase/usage meanings must be Chinese, and identical expressions are d
  const old:any=output();old.sections.usage=[{text:'legacy',meaningZh:'legacy prose'}];assert.doesNotThrow(()=>validateDetails(old,'helpful','word'));
 });
 
-test('new error entries require a complete, distinct correction pair',()=>{
- for(const contrast of [{}, {incorrect:'bad'}, {incorrect:'same',correct:'same'}, {incorrect:null,correct:''}]) {
-  const input:any=output(); input.sections.usage=[{text:'句型说明',meaningZh:'解释完整句法及真实使用场景。',usageKind:'error',contrast}];
-  assert.deepEqual(validateDetails(input,'helpful','word',[],true).sections.usage, []);
+test('new structured errors require a complete distinct correction pair',()=>{
+ for(const incorrect of ['', 'correct']) {
+  const input:any=output();input.sections.usage=[{kind:'error',error:{name:'句型说明',severity:'incorrect',incorrect,correct:'correct',reason:'解释使用原因。',examples:[]}}];
+  assert.throws(()=>validateDetails(input,'helpful','word',[],true));
  }
 });
+
 test('section refresh schema and validation isolate the selected column from unrelated generated content',()=>{
  const schema=detailsSchemaForSection('usage');assert.deepEqual(Object.keys(schema.properties.sections.properties),['usage']);
  assert.deepEqual(schema.properties.sections.required,['usage']);assert.equal(detailsSchemaForSection(),detailsSchema);
- const input:any=output();input.sections.usage=[{text:'句型说明',meaningZh:'实际语法用法',usageKind:'grammar'}];input.sections.roots=[{broken:true}];
+ const input:any=output();input.sections.usage=[grammar()];input.sections.roots=[{broken:true}];
  const result=validateDetails(isolateRequestedSection(input,'usage'),'helpful','word',[],true);
  assert.equal(result.sections.usage.length,1);assert.deepEqual(result.sections.roots,[]);assert.deepEqual(result.sections.derivatives,[]);
  delete input.sections.usage;assert.throws(()=>validateDetails(isolateRequestedSection(input,'usage'),'helpful','word',[],true));
@@ -136,49 +146,33 @@ test('examples retain precise word-meaning labels without changing the original 
  const result=validateDetails(input,'helpful','word',[],true);assert.equal(result.senses[0].meaningZh,'有帮助的；乐于助人的');assert.equal(result.sections.examples[0].senseMeaningZh,'有帮助的');assert.equal(result.sections.examples[0].senseId,result.senses[0].id);
 });
 
-test('new usage explanatory fields require Chinese even when the main explanation is already Chinese',()=>{
- const input:any=output();input.sections.usage=[{text:'近义词区别',meaningZh:'rooted 常用来说明观念或感受与什么有关。',usageKind:'comparison',note:'Rooted often implies origin or structural foundation, while ingrained suggests something deeply fixed.'}];
+test('new structured usage explanations and notes require Chinese',()=>{
+ const input:any=output();input.sections.usage=[grammar()];input.sections.usage[0].grammar.note='This is an English explanation with many unrelated words.';
  assert.throws(()=>validateDetails(input,'helpful','word',[],true),/简明中文/);
- assert.doesNotThrow(()=>validateDetails(input,'helpful','word'));
- input.sections.usage[0].note='ingrained 更强调习惯或观念长期形成、很难改变。';assert.doesNotThrow(()=>validateDetails(input,'helpful','word',[],true));
- input.sections.usage[0].exampleTranslation='This English paragraph belongs in the example field, not in the Chinese translation field.';assert.throws(()=>validateDetails(input,'helpful','word',[],true),/简明中文/);
+ input.sections.usage[0].grammar.note='需要注意具体语境。';assert.doesNotThrow(()=>validateDetails(input,'helpful','word',[],true));
+ input.sections.usage[0].grammar.examples=[{english:'It was helpful.',chinese:'This English paragraph is not a Chinese translation.'}];
+ assert.throws(()=>validateDetails(input,'helpful','word',[],true),/简明中文/);
 });
 
-test('new usage allows zero or one direction, deduplicates explanations, and retains legacy categories only for old data', () => {
- const input = output();
- const point = { text:'语境说明', meaningZh:'用于说明建议对某人有帮助。', usageKind:'scenario' };
- input.sections.usage = [];
- assert.deepEqual(validateDetails(input,'helpful','word',[],true).sections.usage, []);
- input.sections.usage = [point, {...point, text:'另一个标题'}, {
-   text:'搭配用法', meaningZh:'常用搭配包括 give advice（提供建议）以及 take advice（采纳建议）。', usageKind:'scenario',
- }];
- assert.equal(validateDetails(input,'helpful','word',[],true).sections.usage.length, 1);
- input.sections.usage = Array(5).fill(point);
- assert.throws(() => validateDetails(input,'helpful','word',[],true), /最多包含四个/);
- input.sections.usage = [{...point, usageKind:'register'}];
- assert.throws(() => validateDetails(input,'helpful','word',[],true), /类型不受支持/);
- assert.equal(validateDetails(input,'helpful','word').sections.usage[0].usageKind, 'register');
+test('structured usage supports empty output and multiple independent items in one category',()=>{
+ const input:any=output();assert.deepEqual(validateDetails(input,'helpful','word',[],true).sections.usage,[]);
+ input.sections.usage=Array.from({length:5},(_,i)=>scenario(`场景 ${i}`));
+ assert.equal(validateDetails(input,'helpful','word',[],true).sections.usage.length,5);
+ input.sections.usage=[{text:'旧说明',meaningZh:'旧资料',usageKind:'register'}];
+ assert.throws(()=>validateDetails(input,'helpful','word',[],true));
+ assert.equal(validateDetails(input,'helpful','word').sections.usage[0].usageKind,'register');
 });
 
-test('new usage does not teach hesitation as proof that the action never happened', () => {
- const input: any = {...output(), term:'hesitate'};
- input.sections.roots = [];
- input.sections.usage = [
-   {text:'Hesitate 后的动词形式', meaningZh:'Hesitate 后面通常接不定式 to do sth，表示“因犹豫而未做某事”。', usageKind:'grammar'},
-   {text:'习惯用法：without hesitation', meaningZh:'这是一个非常常用的固定短语，表示“毫不犹豫地”。', usageKind:'scenario'},
-   {text:'犹豫后仍可能行动', meaningZh:'hesitate to do 表示对做某事犹豫，并不意味着最终没有做。', usageKind:'grammar',
-     example:'She hesitated to ask, but eventually did.'},
- ];
- assert.deepEqual(validateDetails(input,'hesitate','word',[],true).sections.usage.map(entry => entry.text), ['常见搭配限制']);
- assert.equal(validateDetails(input,'hesitate','word').sections.usage.length, 3);
+test('new structured usage rejects false hesitation outcome claims',()=>{
+ const input:any={...output(),term:'hesitate'};input.sections.roots=[];
+ input.sections.usage=[grammar('Hesitate 后面通常接不定式，表示因犹豫而未做某事。')];
+ assert.throws(()=>validateDetails(input,'hesitate','word',[],true),/hesitate/);
+ input.sections.usage=[grammar('hesitate to do 表示对做某事犹豫，并不意味着最终没有做。')];
+ assert.equal(validateDetails(input,'hesitate','word',[],true).sections.usage.length,1);
 });
 
-test('usage generation accepts category and explanation without a model title', () => {
- const input = output();
- input.sections.usage = [
-   {usageKind:'scenario', meaningZh:''} as typeof input.sections.usage[number],
-   {usageKind:'grammar', meaningZh:'hesitate 后可接带 to 的不定式。'} as typeof input.sections.usage[number],
- ];
- const result = validateDetails(input,'helpful','word',[],true).sections.usage;
- assert.deepEqual(result.map(({usageKind,text}) => [usageKind,text]), [['grammar','常见搭配限制']]);
+test('usage generation accepts dedicated category fields and rejects old generic output',()=>{
+ const input:any=output();input.sections.usage=[grammar()];
+ assert.equal(validateDetails(input,'helpful','word',[],true).sections.usage[0].usage?.kind,'grammar');
+ input.sections.usage=[{usageKind:'grammar',meaningZh:'中文说明'}];assert.throws(()=>validateDetails(input,'helpful','word',[],true),/类别/);
 });

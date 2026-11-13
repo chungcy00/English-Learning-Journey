@@ -1,3 +1,4 @@
+import { upgradeUsageDetails } from '../utils/structuredUsage';
 import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import assert from 'node:assert/strict';
@@ -84,7 +85,7 @@ test('structured families, roots, usage and expression bookmarks survive editing
   detail.sections.phrases=[{id:'p',text:'be helpful to sb',meaningZh:'对某人有帮助'}];
   await saveVocabularyDetails(detail);await toggleMaterial(word,'phrases',detail.sections.phrases[0]);
   const saved=await exportMyData();await db.delete();await db.open();await importMyData(saved);
-  assert.deepEqual((await db.vocabularyDetails.get(detail.key))?.sections,detail.sections);
+  assert.deepEqual((await db.vocabularyDetails.get(detail.key))?.sections,upgradeUsageDetails(detail).sections);
   const restored=await db.vocabulary.get(word.id);assert.equal(restored?.reviewCount,9);assert.equal(restored?.nextReviewDate,87654);assert.equal(restored?.currentInterval,14);
   assert.equal((await db.savedMaterials.toArray())[0].text,'be helpful to sb');
   const realFetch=globalThis.fetch;globalThis.fetch=(async()=>new Response(JSON.stringify({...detail,sections:{...detail.sections,phrases:[{id:'p2',text:'helpful advice',meaningZh:'有用的建议'}]}}))) as typeof fetch;

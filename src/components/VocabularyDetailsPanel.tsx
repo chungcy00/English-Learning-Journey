@@ -1,13 +1,16 @@
 import { LoadingAnimation } from './LoadingAnimation';
 import { StudyEmptyState } from './LearningArt';
 import React, { useEffect, useRef, useState } from 'react';
-import { PhraseList, UsageList, usageLabels } from './PhraseUsage';
+import { PhraseList } from './PhraseUsage';
+import { UsageList } from './UsageAnalysis';
+import { UsageEditor } from './UsageEditor';
+import { structuredUsage, upgradeUsageDetails, usageEntry, usageValidationError } from '../utils/structuredUsage';
 import { DerivativeList, RootAnalysisList, WordFormationEditor, DerivativeFamilyEditor } from './WordFormation';
 import { ExampleSenseCards } from './ExampleSenseCards';
 import { DefinitionCards } from './DefinitionCards';
 import { partOfSpeechAbbreviation } from '../utils/wordFormation';
 import { Pencil, Plus, Volume2, X } from 'lucide-react';
-import { DETAIL_SECTIONS, USAGE_HEADINGS, type DetailSection, type LearningEntry, type VocabularyDetails, type VocabularyItem } from '../types';
+import { DETAIL_SECTIONS, type DetailSection, type LearningEntry, type VocabularyDetails, type VocabularyItem } from '../types';
 import { legacyDetails, sectionLabels, materialKey, categoryLabels, inflectionLabel, orderedInflections, vocabularyKey } from '../utils/vocabularyDetails';
 import { readVocabularyDetails, saveVocabularyDetails, generateVocabularyDetails, toggleMaterial } from '../services/vocabularyDetails';
 import { db } from '../db/dexie';
@@ -39,9 +42,7 @@ function editorFields(section: EditorSection, entry: LearningEntry): { main: Edi
     case 'derivatives': return { main: [['text', '英文派生词', '例如 considerately'], posField, chinese], extra: [note, example, translation].filter(([key]) => Boolean(entry[key])) };
     case 'phrases': return { main: [['text', '完整英文词组', '例如 considerate of others'], ['meaningZh', '词组的中文意思', '例如：为他人着想']], extra: [example, translation, note] };
     case 'definitions': return { main: [['text', '英文定义', '用简短、自然的英文解释一个词义', true]] };
-    case 'usage': return { main: [['meaningZh', '中文用法说明', '说明什么时候用、怎么用，或为什么这样用', true]], extra: [
-      ...(!entry.usageKind || entry.usageKind === 'register' || entry.usageKind === 'natural' ? [['text', '原有说明', '可将原说明整理到上方的中文用法说明' , true] as EditField] : []), example, translation, note,
-    ] };
+    case 'usage': return { main: [] };
   }
 }
 
@@ -54,6 +55,8 @@ export function VocabularyDetailsPanel({ vocab, onBeforePronunciation, onInterac
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [confirmUsageReplacement, setConfirmUsageReplacement] = useState(false);
+  const editBaseline = useRef('');
   const [savedKeys, setSavedKeys] = useState<Set<string>>(new Set());
   const lock = useRef(false);
   const run = useRef(0);
@@ -61,13 +64,13 @@ export function VocabularyDetailsPanel({ vocab, onBeforePronunciation, onInterac
   useEffect(() => () => onInteractionStateChange?.(false), [onInteractionStateChange]);
   useEffect(() => {
     const id = ++run.current;
-    setDetails(legacyDetails(vocab)); setDraft(null); setEditing(null); setError(''); setMessage(''); setReady(false); setTab('examples');
+    setConfirmUsageReplacement(false); setDetails(legacyDetails(vocab)); setDraft(null); setEditing(null); setError(''); setMessage(''); setReady(false); setTab('examples');
     readVocabularyDetails(vocab).then(value => { if (run.current === id) { setDetails(value); setReady(true); if (!value.generated) generate(); } }).catch(() => { if (run.current === id) setError('本地资料读取失败，请关闭后重试。'); });
     return () => { run.current++; };
   }, [vocab.id, vocab.term]);
   useEffect(() => {
     let active = true;
-    const refresh = () => { void db.vocabularyDetails.get(vocabularyKey(vocab.term,vocab.type)).then(value=>{if(active&&value)setDetails(value);}).catch(()=>{if(active)setError('本地用法资料更新读取失败，请稍后重试。');}); return void db.savedMaterials.toArray().then(items => { if (active) setSavedKeys(new Set(items.map(item => item.key))); }).catch(() => { if (active) setError('收藏读取失败，请稍后重试。'); }); };
+    const refresh = () => { void db.vocabularyDetails.get(vocabularyKey(vocab.term,vocab.type)).then(value=>{if(active&&value)setDetails(upgradeUsageDetails(value));}).catch(()=>{if(active)setError('本地用法资料更新读取失败，请稍后重试。');}); return void db.savedMaterials.toArray().then(items => { if (active) setSavedKeys(new Set(items.map(item => item.key))); }).catch(() => { if (active) setError('收藏读取失败，请稍后重试。'); }); };
     refresh(); window.addEventListener('vocabulary-data-changed', refresh);
     return () => { active = false; window.removeEventListener('vocabulary-data-changed', refresh); };
   }, [vocab.id,vocab.term]);
@@ -78,20 +81,28 @@ export function VocabularyDetailsPanel({ vocab, onBeforePronunciation, onInterac
     try { await work(); } catch (error) { if (id === run.current) setError(error instanceof Error ? error.message : '操作失败，原资料已保留，请重试。'); }
     finally { lock.current = false; if (id === run.current) setBusy(false); }
   };
-  const generate = (section?: DetailSection) => void perform(async () => {
+  const generate = (section?: DetailSection, replaceEdited = false) => void perform(async () => {
     const id = run.current;
-    const value = await generateVocabularyDetails(vocab, section);
+    const value = await generateVocabularyDetails(vocab, section, replaceEdited);
+    setConfirmUsageReplacement(false);
     if (id === run.current) setDetails(value);
   });
-  const startEdit = (section: DetailSection | 'basic') => { const copy = structuredClone(details); copy.inflections = copy.inflections.map(form => ({ ...form, label: inflectionLabel(form.label) })); setDraft(copy); setEditing(section); setError(''); setMessage(''); };
+  const startEdit = (section: DetailSection | 'basic') => { const copy = structuredClone(upgradeUsageDetails(details)); editBaseline.current = JSON.stringify(section === 'basic' ? copy.senses : copy.sections[section]); setConfirmUsageReplacement(false); copy.inflections = copy.inflections.map(form => ({ ...form, label: inflectionLabel(form.label) })); setDraft(copy); setEditing(section); setError(''); setMessage(''); };
   const save = () => void perform(async () => {
     if (!draft || !editing) return;
     const now = Date.now();
     const latest = await readVocabularyDetails(vocab);
-    const editedEntries = editing === 'basic' ? [] : draft.sections[editing].map(item => {
-      if (editing === 'usage' && item.usageKind && Object.hasOwn(usageLabels, item.usageKind)) {
-        return { ...item, text: item.text.trim() || usageLabels[item.usageKind] };
+    if (editing === 'usage' && JSON.stringify(latest.sections.usage) !== editBaseline.current) {
+      throw new Error('本栏资料已在其他窗口更新。当前填写内容已保留，请取消后重新打开，核对最新资料再编辑。');
+    }
+    if (editing === 'usage') {
+      for (const entry of draft.sections.usage) {
+        const problem = usageValidationError(structuredUsage(entry));
+        if (problem) throw new Error(problem);
       }
+    }
+    const editedEntries = editing === 'basic' ? [] : draft.sections[editing].map(item => {
+      if (editing === 'usage') return usageEntry(item.id, structuredUsage(item));
       if (editing === 'roots' && item.morphology) {
         const root = item.morphology.root.trim() || item.morphology.parts.find(part => part.kind === 'root')?.text.trim();
         return { ...item, text: item.text.trim() || root || '', meaningZh: item.meaningZh.trim() || item.morphology.meaningZh };
@@ -99,11 +110,11 @@ export function VocabularyDetailsPanel({ vocab, onBeforePronunciation, onInterac
       if (editing === 'examples' && !item.text.trim() && item.example?.trim()) return { ...item, text: item.example };
 
       return item;
-    }).filter(item => item.text.trim());
+    }).filter(item => editing === 'usage' || item.text.trim());
     const next: VocabularyDetails = { ...latest, ...(editing === 'basic' ? { phoneticUK: draft.phoneticUK.trim(), phoneticUS: draft.phoneticUS.trim(), senses: draft.senses.filter(item => item.text.trim() || item.meaningZh.trim()), inflections: (details.category || details.type) === 'word' ? draft.inflections.filter(item => item.label.trim() && item.value.trim()) : [] } : {}),
       sections: { ...latest.sections, ...(editing !== 'basic' ? { [editing]: editedEntries } : {}) },
       provenance: { ...latest.provenance, [editing]: { source: 'user' as const, updatedAt: now } }, updatedAt: now };
-    await saveVocabularyDetails(next); setDetails(next); setDraft(null); setEditing(null); setMessage('修改已保存。');
+    await saveVocabularyDetails(next, editing === 'usage' ? latest.sections.usage : undefined); setDetails(next); setDraft(null); setEditing(null); setMessage('修改已保存。');
   });
   const pronounce = (text: string, accent?: 'en-GB' | 'en-US') => { setError(''); onBeforePronunciation?.(); speakEnglishTerm(text, setError, accent); };
   const items = details.sections[tab];
@@ -130,13 +141,6 @@ export function VocabularyDetailsPanel({ vocab, onBeforePronunciation, onInterac
       {renderField(['senseMeaningZh','单独填写本组词义（选填）','例如：根深蒂固的'])}
       {renderField(posField)}
     </div>}
-    {editing === 'usage' && <><label>用法类别<select value={entry.usageKind && Object.hasOwn(USAGE_HEADINGS, entry.usageKind) ? entry.usageKind : ''} onChange={event => {
-      if (!draft) return;
-      const kind = event.target.value as LearningEntry['usageKind'];
-      setDraft({ ...draft, sections: { ...draft.sections, usage: draft.sections.usage.map((v,i) => i === index ? { ...v, usageKind: kind || undefined, contrast: v.contrast } : v) } });
-    }}><option value="" disabled hidden>请选择用法类别</option>{Object.entries(USAGE_HEADINGS).map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-      {entry.usageKind === 'error' && <>{(['incorrect','correct'] as const).map(key => <label key={key}>{key === 'incorrect' ? '错误写法' : '正确写法'}<textarea value={entry.contrast?.[key] || ''} onChange={event => patchEntry(index, 'contrast', { incorrect: entry.contrast?.incorrect || '', correct: entry.contrast?.correct || '', [key]: event.target.value })}/></label>)}</>}
-    </>}
     {!!fields.main.length && <div className="lexicon-editor-fields">{fields.main.map(renderField)}</div>}
     {!!fields.extra?.length && <details className="lexicon-editor-optional"><summary>补充资料（选填）</summary><div className="lexicon-editor-fields">{fields.extra.map(renderField)}</div></details>}
     {editing === 'derivatives' && <DerivativeFamilyEditor entry={entry} onChange={family => patchEntry(index, 'family', family)}/>}
@@ -165,20 +169,21 @@ export function VocabularyDetailsPanel({ vocab, onBeforePronunciation, onInterac
       {tab === 'usage' && (items.length > 0 || (!busy && !error)) ? <UsageList entries={items} pronounce={pronounce} manual={details.provenance.usage?.source === 'user'}/> : tab === 'derivatives' && (items.length > 0 || !busy) ? <DerivativeList entries={items} term={vocab.term} inflections={details.inflections.map(form => form.value)} pronounce={pronounce}/> : tab === 'roots' && (items.length > 0 || !busy) ? <RootAnalysisList entries={items} term={vocab.term} pronounce={pronounce}/> : items.length ? tab === 'definitions' ? <DefinitionCards entries={items} pronounce={pronounce}/> : tab === 'phrases' ? <PhraseList entries={items} busy={busy} isSaved={text => savedKeys.has(materialKey('phrase', text))} pronounce={pronounce} onToggle={entry => void perform(async () => { await toggleMaterial(vocab, 'phrases', entry); })}/> : <ExampleSenseCards entries={items} senses={details.senses} defaultPos={vocab.partOfSpeech} busy={busy} isSaved={text=>savedKeys.has(materialKey('example',text))} pronounce={pronounce} onToggle={entry=>void perform(async()=>{await toggleMaterial(vocab,'examples',entry);})}/> : <StudyEmptyState compact pose={busy ? 'cat-thinking' : 'hamster-reading'} busy={busy}><p className="lexicon-empty">{busy ? '正在准备本栏资料…' : error ? '本栏资料未能生成，已有内容已保留。' : details.generatedSections?.includes(tab) ? '暂无可靠或适用的内容，可手动补充。' : '本栏尚未生成，可先使用已有资料或手动填写。'}</p></StudyEmptyState>}
       <div className="lexicon-section-tools">
         <button type="button" className="lexicon-edit" disabled={!ready || busy} onClick={() => startEdit(tab)}><Pencil size={14} aria-hidden="true"/>编辑本栏</button>
-        {tab === 'usage' && details.provenance.usage?.source !== 'user' && (
-          <button type="button" disabled={!ready || busy} onClick={() => generate('usage')}>
+        {tab === 'usage' && (
+          <button type="button" disabled={!ready || busy} onClick={() => details.provenance.usage?.source === 'user' ? setConfirmUsageReplacement(true) : generate('usage')}>
             {items.length || details.generatedSections?.includes('usage') ? '重新生成' : '生成用法解析'}
           </button>
         )}
       </div>
+      {confirmUsageReplacement && <div className="lexicon-confirm" role="group" aria-label="确认重新生成用法解析"><p>重新生成会替换本栏的手动修改。</p><button type="button" disabled={busy} onClick={() => generate('usage', true)}>确认重新生成</button><button type="button" disabled={busy} onClick={() => setConfirmUsageReplacement(false)}>取消</button></div>}
     </div>}
     {editing && draft && <form className="lexicon-editor" onSubmit={event => { event.preventDefault(); save(); }}><h3>编辑{editing === 'basic' ? '基本资料' : sectionLabels[editing]}</h3>
       {editing === 'basic' && <div className="lexicon-editor-fields"><label>英式音标（选填）<input placeholder="例如 /kənˈsɪd.ər.ət/" value={draft.phoneticUK} onChange={event => setDraft({ ...draft, phoneticUK: event.target.value })}/></label><label>美式音标（选填）<input placeholder="例如 /kənˈsɪd.ɚ.ət/" value={draft.phoneticUS} onChange={event => setDraft({ ...draft, phoneticUS: event.target.value })}/></label></div>}
-      {editorEntries(editing === 'basic' ? draft.senses : draft.sections[editing], editing)}
-      <button type="button" className="lexicon-link" onClick={() => {
-        const entry: LearningEntry = { id: crypto.randomUUID(), text: '', meaningZh: '', ...(editing === 'usage' ? { usageKind: 'scenario' } : {}) };
+      {editing === 'usage' ? <UsageEditor entries={draft.sections.usage} onChange={usage => setDraft({ ...draft, sections: { ...draft.sections, usage } })}/> : editorEntries(editing === 'basic' ? draft.senses : draft.sections[editing], editing)}
+      {editing !== 'usage' && <button type="button" className="lexicon-link" onClick={() => {
+        const entry: LearningEntry = { id: crypto.randomUUID(), text: '', meaningZh: '' };
         setDraft(editing === 'basic' ? { ...draft, senses: [...draft.senses, entry] } : { ...draft, sections: { ...draft.sections, [editing]: [...draft.sections[editing], entry] } });
-      }}><Plus size={16}/>添加{editorLabels[editing]}</button>
+      }}><Plus size={16}/>添加{editorLabels[editing]}</button>}
       {editing === 'basic' && (details.category || details.type) === 'word' && <fieldset><legend>适用的词形变化</legend>{draft.inflections.map((form, index) => <div className="lexicon-form-row" key={index}><label>词形类型<input placeholder="例如 名词复数" value={form.label} onChange={event => setDraft({ ...draft, inflections: draft.inflections.map((v, i) => i === index ? { ...v, label: event.target.value } : v) })}/></label><label>变化后的英文<input placeholder="例如 conflicts" value={form.value} onChange={event => setDraft({ ...draft, inflections: draft.inflections.map((v, i) => i === index ? { ...v, value: event.target.value } : v) })}/></label><button type="button" aria-label="删除词形" onClick={() => setDraft({ ...draft, inflections: draft.inflections.filter((_, i) => i !== index) })}><X size={16}/></button></div>)}<button type="button" onClick={() => setDraft({ ...draft, inflections: [...draft.inflections, { label: '', value: '' }] })}>添加词形</button></fieldset>}
       <div className="lexicon-actions"><button type="submit" className="lexicon-primary" disabled={busy}>保存修改</button><button type="button" disabled={busy} onClick={() => { setDraft(null); setEditing(null); }}>取消</button></div>
     </form>}

@@ -32,7 +32,67 @@ export interface WordFormation {
   mnemonic: string;
   related: { word: string; partOfSpeech: string; meaningZh: string; relation?: string; parts?: WordPart[] }[];
 }
+export type UsageKind = keyof typeof USAGE_HEADINGS;
+export interface UsageExample {
+  id: string;
+  english: string;
+  chinese: string;
+}
+export interface UsageScenario {
+  name: string;
+  explanation: string;
+  examples: UsageExample[];
+  tip: string;
+}
+export interface UsageGrammar {
+  name: string;
+  explanation: string;
+  correct: string;
+  restriction: string;
+  examples: UsageExample[];
+  note: string;
+}
+export interface UsageExpression {
+  id: string;
+  expression: string;
+  meaning: string;
+  emphasis: string;
+  examples: UsageExample[];
+}
+export interface UsageComparison {
+  context: string;
+  difference: string;
+  expressions: UsageExpression[];
+  note: string;
+}
+export interface UsageError {
+  name: string;
+  severity: 'incorrect' | 'unnatural';
+  incorrect: string;
+  correct: string;
+  reason: string;
+  examples: UsageExample[];
+  note: string;
+}
+export interface UsageCompatibility {
+  title: string;
+  explanation: string;
+  note: string;
+  examples: UsageExample[];
+  extra: string;
+  original: Record<string, unknown>;
+}
+export interface StructuredUsage {
+  version: 2;
+  kind?: UsageKind;
+  scenario?: UsageScenario;
+  grammar?: UsageGrammar;
+  comparison?: UsageComparison;
+  error?: UsageError;
+  compatibility?: UsageCompatibility;
+}
 export interface LearningEntry {
+  usage?: StructuredUsage;
   id: string;
   text: string;
   meaningZh: string;
