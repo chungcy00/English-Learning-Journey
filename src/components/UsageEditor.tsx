@@ -60,10 +60,13 @@ function CategoryFields({ usage, onChange }: { usage: StructuredUsage; onChange:
       return <>
         <Field label="搭配规则名称" value={value.name} onChange={name => patch({ name })}/>
         <Field label="中文规则说明" value={value.explanation} multiline onChange={explanation => patch({ explanation })}/>
-        <Field label="正确搭配" value={value.correct} multiline onChange={correct => patch({ correct })}/>
-        <Field label="常见错误或限制" value={value.restriction} multiline optional onChange={restriction => patch({ restriction })}/>
+        <Field label="正确搭配" value={value.correct} multiline optional onChange={correct => patch({ correct })}/>
         <UsageExamplesEditor examples={value.examples} onChange={examples => patch({ examples })}/>
-        <Field label="补充说明" value={value.note} multiline optional onChange={note => patch({ note })}/>
+        <details className="usage-more-options">
+          <summary>更多选项</summary>
+          <Field label="常见错误或限制" value={value.restriction} multiline optional onChange={restriction => patch({ restriction })}/>
+          <Field label="补充说明" value={value.note} multiline optional onChange={note => patch({ note })}/>
+        </details>
       </>;
     }
     case 'comparison': {

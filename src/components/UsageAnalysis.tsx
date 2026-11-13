@@ -29,8 +29,12 @@ function Point({ usage, pronounce }: { usage: StructuredUsage; pronounce: (text:
         {point.name.trim() && <h5>{point.name}</h5>}
         {point.explanation.trim() && <p>{point.explanation}</p>}
         {point.correct.trim() && <dl className="usage-rule"><dt>正确搭配</dt><dd lang="en">{point.correct}</dd></dl>}
-        {point.restriction.trim() && <p>{point.restriction}</p>}
-        <Examples examples={point.examples} pronounce={pronounce}/><Note>{point.note}</Note>
+        <Examples examples={point.examples} pronounce={pronounce}/>
+        {(point.restriction.trim() || point.note.trim()) && <details className="usage-grammar-more">
+          <summary>更多说明</summary>
+          {point.restriction.trim() && <div><h6>常见错误或限制</h6><p>{point.restriction}</p></div>}
+          {point.note.trim() && <div><h6>补充说明</h6><p>{point.note}</p></div>}
+        </details>}
       </>;
     }
     case 'comparison': {
@@ -75,9 +79,9 @@ export function UsageList({ entries, pronounce }: { entries: LearningEntry[]; pr
   return <div className="lexicon-usage-list">
     {usageKinds.map(kind => {
       const group = points.filter(point => point.usage.kind === kind);
-      return group.length > 0 && <section key={kind} className="lexicon-usage-point">
+      return group.length > 0 && <section key={kind} className={`lexicon-usage-point lexicon-usage-point--${kind}`}>
         <h4>{USAGE_HEADINGS[kind]}</h4>
-        <div className="usage-points">{group.map(point => <article key={point.id} className="usage-point" data-usage-kind={kind}>
+        <div className={`usage-points usage-points--${kind}`}>{group.map(point => <article key={point.id} className={`usage-point usage-point--${kind}`} data-usage-kind={kind}>
           <Point usage={point.usage} pronounce={pronounce}/><Compatibility usage={point.usage} pronounce={pronounce}/>
         </article>)}</div>
       </section>;

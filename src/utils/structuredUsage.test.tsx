@@ -7,16 +7,14 @@ import { UsageEditor } from '../components/UsageEditor';
 import { emptyUsage, structuredUsage, upgradeUsageDetails, usageEntry, usageValidationError } from './structuredUsage';
 import type { LearningEntry } from '../types';
 
-test('historical usage is converted losslessly and conversion is idempotent', () => {
+test('legacy grammar retains mapped rule content and discards generic compatibility leftovers', () => {
   const entry = { id:'old', text:'in 与 with', meaningZh:'in 表示介入事务，with 表示妨碍过程。', usageKind:'grammar', example:'Do not interfere with the equipment.', exampleTranslation:'不要干扰设备。', note:'注意介词。', customField:{ keep:['all',1] } } as LearningEntry;
   const result = structuredUsage(entry);
-  assert.deepEqual(result.compatibility?.original, {});
+  assert.equal(result.compatibility, undefined);
   assert.equal(result.grammar?.explanation, entry.meaningZh);
   assert.equal(result.grammar?.examples[0].chinese, entry.exampleTranslation);
-  assert.equal(result.compatibility?.title, entry.text);
-  assert.equal(result.compatibility!.extra,'');
   assert.deepEqual(structuredUsage(usageEntry(entry.id,result)),result);
-  assert.equal(usageValidationError(result),undefined);
+  assert.match(usageValidationError(result)!,/搭配规则名称/);
   assert.equal(entry.text,'in 与 with');
 });
 test('unknown categories and partial or unattributed historical examples remain editable', () => {
@@ -42,6 +40,28 @@ test('new paired examples validate together and inactive categories survive seri
   usage.kind='grammar'; usage.grammar={name:'参与',explanation:'说明搭配规则。',correct:'take part in',restriction:'',note:'',examples:[]};
   const roundtrip=JSON.parse(JSON.stringify(usageEntry('a',usage)));
   assert.deepEqual(structuredUsage(roundtrip).scenario,usage.scenario);
+});
+test('grammar accepts an omitted correct construction and keeps optional fields collapsed in the editor',()=>{
+ const usage=emptyUsage('grammar');usage.grammar={name:'interfere in',explanation:'表示主动插手他人的事务。',correct:'',restriction:'通常涉及他人的事务。',note:'避免与 interfere with 混淆。',examples:[{id:'a',english:'I will not interfere in their decision.',chinese:'我不会干涉他们的决定。'},{id:'b',english:'She interfered in the discussion.',chinese:'她插手了这场讨论。'}]};
+ assert.equal(usageValidationError(usage),undefined);
+ const entry=usageEntry('g',usage);
+ const editor=renderToStaticMarkup(<UsageEditor entries={[entry]} onChange={()=>{}}/>);
+ assert.match(editor,/<details class="usage-more-options">/);assert.doesNotMatch(editor,/<details class="usage-more-options" open/);
+ assert.match(editor,/正确搭配（选填）/);assert.match(editor,/常见错误或限制（选填）/);
+ const html=renderToStaticMarkup(<UsageList entries={[entry,usageEntry('g2',{...usage,grammar:{...usage.grammar!,name:'interfere with',correct:'',examples:[]}})]} pronounce={()=>{}}/>);
+ assert.equal((html.match(/class="usage-point usage-point--grammar"/g)||[]).length,2);
+ assert.equal((html.match(/朗读例句：/g)||[]).length,2);
+ assert.doesNotMatch(html,/正确搭配/);assert.match(html,/更多说明/);assert.match(html,/常见错误或限制/);
+});
+test('grammar drops legacy generic leftovers while keeping fields mapped into the current rule',()=>{
+ const entry={id:'old-grammar',text:'旧版标题',meaningZh:'表示主动插手事务。',usageKind:'grammar',example:'I interfered in the matter.',exampleTranslation:'我插手了这件事。'} as LearningEntry;
+ const converted=structuredUsage(entry);
+ assert.equal(converted.compatibility,undefined);
+ assert.equal(converted.grammar?.explanation,entry.meaningZh);
+ assert.equal(converted.grammar?.examples[0].english,entry.example);
+ const normalized=usageEntry(entry.id,converted);
+ const editor=renderToStaticMarkup(<UsageEditor entries={[normalized]} onChange={()=>{}}/>);
+ assert.doesNotMatch(editor,/历史标题或表达|历史说明|旧版标题/);
 });
 test('structured display preserves multiple projects, comparisons, pairing and fixed category order',()=>{
   const scenario=emptyUsage(); scenario.scenario={name:'讨论',explanation:'用于团队讨论。',tip:'',examples:[{id:'1',english:'We discussed it.',chinese:'我们讨论了此事。'},{id:'2',english:'They joined us.',chinese:'他们加入了我们。'}]};
@@ -74,6 +94,6 @@ test('comparison merges old meaning and emphasis into one explanation and remove
 test('comparison normalization removes only exact repeated information and preserves manual explanations',()=>{
  const old={id:'c',text:'',meaningZh:'',usage:{version:2,kind:'comparison',comparison:{context:'事务',difference:'区别',note:'',expressions:[{id:'e',expression:'interfere',explanation:'干涉，强调主动插手。',meaning:'干涉',emphasis:'干涉，强调主动插手。',examples:[]}]}}} as unknown as LearningEntry;
  assert.equal(structuredUsage(old).comparison?.expressions[0].explanation,'干涉，强调主动插手。');
- const other=structuredUsage({...old,usage:{...old.usage!,kind:'grammar',grammar:{name:'规则',explanation:'说明。',correct:'frame',restriction:'',note:'',examples:[]},compatibility:{title:'保留其他类别',explanation:'原文',examples:[],note:'',extra:'',original:{}}}});
+ const other=structuredUsage({...old,usage:{...old.usage!,kind:'scenario',scenario:{name:'场景',explanation:'说明。',examples:[],tip:''},compatibility:{title:'保留其他类别',explanation:'原文',examples:[],note:'',extra:'',original:{}}}});
  assert.equal(other.compatibility?.title,'保留其他类别');
 });

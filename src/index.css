@@ -2475,6 +2475,47 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
 .usage-comparison .usage-example { padding: 12px; }
 .usage-semantic-explanation { margin: 0; }
 
+.usage-points--grammar { gap: 12px; }
+.lexicon-usage-point--grammar {
+  padding: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px 14px 17px 13px / 14px 17px 13px 16px;
+  background: var(--bg-primary);
+}
+.lexicon-usage-point--grammar > h4 { margin-top: 0; }
+.usage-point--grammar {
+  padding: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px 10px 13px 11px / 10px 13px 11px 12px;
+  background: var(--surface-paper);
+}
+.usage-point--grammar + .usage-point--grammar { padding-top: 16px; }
+.usage-point--grammar h5 { margin: 0; }
+.usage-point--grammar > p { margin: 0; }
+.usage-point--grammar .usage-rule { margin: 0; }
+.usage-point--grammar .usage-rule dt { font-size: var(--type-label); }
+.usage-point--grammar .usage-rule dd { color: var(--text-primary); }
+.usage-more-options, .usage-grammar-more { min-width: 0; }
+.usage-more-options > summary, .usage-grammar-more > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--text-secondary);
+  font-size: var(--type-label);
+  cursor: pointer;
+}
+.usage-more-options[open] > summary, .usage-grammar-more[open] > summary { margin-bottom: 12px; }
+.usage-more-options[open] { display: grid; gap: 12px; }
+.usage-grammar-more { border-top: 1px solid var(--divider); padding-top: 4px; }
+.usage-grammar-more > div + div { margin-top: 10px; }
+.usage-grammar-more h6 { color: var(--text-secondary); font-size: var(--type-label); font-weight: 600; margin-bottom: 4px; }
+.usage-grammar-more p { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 639px) {
+  .lexicon-usage-point--grammar { padding: 12px; }
+  .usage-point--grammar { padding: 14px; }
+  .usage-point--grammar + .usage-point--grammar { padding-top: 14px; }
+}
+
 /* Quiet section dividers and quotation-style heading accents in usage analysis. */
 .lexicon-usage-list > .lexicon-usage-point + .lexicon-usage-point {
   border-top: 1px solid var(--border-subtle);

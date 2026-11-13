@@ -16,7 +16,7 @@ export function emptyUsageCategory(kind: UsageKind) {
   }
 }
 
-/** Local conversion keeps learning prose and pairs, while obsolete archives are discarded. */
+/** Local conversion preserves mapped learning fields and drops obsolete archives. */
 function normalizeUsage(usage: StructuredUsage): StructuredUsage {
   if (usage.compatibility) {
     usage.compatibility.extra = '';
@@ -33,6 +33,8 @@ function normalizeUsage(usage: StructuredUsage): StructuredUsage {
   });
   // The learner explicitly requested removal of comparison compatibility remnants.
   if (usage.kind === 'comparison') delete usage.compatibility;
+  // Grammar entries now use the dedicated rule fields; legacy generic leftovers are discarded.
+  if (usage.kind === 'grammar') delete usage.compatibility;
   return usage;
 }
 
@@ -83,7 +85,7 @@ export function usageValidationError(usage: StructuredUsage, generated = false):
       if (!pairs(usage.scenario.examples)) return '请为每条例句同时填写英文和中文译文，或移除空例句。';
       break;
     case 'grammar':
-      if (!usage.grammar || (!historical && (!required(usage.grammar.name) || !required(usage.grammar.explanation) || !required(usage.grammar.correct)))) return '请填写搭配规则名称、中文规则说明和正确搭配。';
+      if (!usage.grammar || (!historical && (!required(usage.grammar.name) || !required(usage.grammar.explanation)))) return '请填写搭配规则名称和中文规则说明。';
       if (!pairs(usage.grammar.examples)) return '请为每条例句同时填写英文和中文译文，或移除空例句。';
       break;
     case 'comparison':
