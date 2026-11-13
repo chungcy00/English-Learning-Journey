@@ -33,8 +33,9 @@ test('unknown categories and partial or unattributed historical examples remain 
 });
 test('old scenario tips are removed while scenario meaning and paired examples remain',()=>{
  const usage=emptyUsage('scenario');usage.scenario={name:'接触危险物质',explanation:'说明某人因工作而接触危险物质。',tip:'用于表达“使接触”的情境',examples:[{id:'a',english:'The workers were exposed to harmful chemicals.',chinese:'工人们接触到了有害化学物质。'}]};
- const entry=usageEntry('scene',usage);const converted=structuredUsage(entry);
+ const entry=usageEntry('scene',usage);entry.text='用于表达“使接触”的情境';entry.usage={...usage,compatibility:{title:entry.text,explanation:'旧版通用说明',note:'',examples:[],extra:'',original:{}}};const converted=structuredUsage(entry);
  assert.equal(converted.scenario?.tip,'');assert.equal(converted.scenario?.explanation,usage.scenario.explanation);assert.equal(converted.scenario?.examples[0].english,usage.scenario.examples[0].english);
+ assert.equal(converted.compatibility,undefined);
  const editor=renderToStaticMarkup(<UsageEditor entries={[entry]} onChange={()=>{}}/>);
  const html=renderToStaticMarkup(<UsageList entries={[entry]} pronounce={()=>{}}/>);
  assert.doesNotMatch(editor,/使用提示/);assert.doesNotMatch(html,/用于表达“使接触”的情境/);
@@ -103,6 +104,6 @@ test('comparison merges old meaning and emphasis into one explanation and remove
 test('comparison normalization removes only exact repeated information and preserves manual explanations',()=>{
  const old={id:'c',text:'',meaningZh:'',usage:{version:2,kind:'comparison',comparison:{context:'事务',difference:'区别',note:'',expressions:[{id:'e',expression:'interfere',explanation:'干涉，强调主动插手。',meaning:'干涉',emphasis:'干涉，强调主动插手。',examples:[]}]}}} as unknown as LearningEntry;
  assert.equal(structuredUsage(old).comparison?.expressions[0].explanation,'干涉，强调主动插手。');
- const other=structuredUsage({...old,usage:{...old.usage!,kind:'scenario',scenario:{name:'场景',explanation:'说明。',examples:[],tip:''},compatibility:{title:'保留其他类别',explanation:'原文',examples:[],note:'',extra:'',original:{}}}});
+ const other=structuredUsage({...old,usage:{...old.usage!,kind:'error',error:{name:'语法限制',severity:'incorrect',incorrect:'wrong',correct:'right',reason:'原因。',examples:[],note:''},compatibility:{title:'保留其他类别',explanation:'原文',examples:[],note:'',extra:'',original:{}}}});
  assert.equal(other.compatibility?.title,'保留其他类别');
 });

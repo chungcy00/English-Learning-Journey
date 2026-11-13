@@ -45,13 +45,13 @@ test('automatic completion preserves cached usage while explicit section generat
  assert.deepEqual(mergeGeneratedDetails(current,incoming,'usage').sections.usage,incoming.sections.usage);
 });
 
-test('structured usage headings follow category order while historical titles are retained', () => {
+test('structured usage headings use fixed category titles and omit legacy model titles', () => {
  const entries: LearningEntry[] = [
    {id:'1',text:'模型标题',meaningZh:'解释近义词区别。',usageKind:'comparison'},
    {id:'2',text:'另一个模型标题',meaningZh:'说明实际使用场景。',usageKind:'scenario'},
  ];
  const html = renderToStaticMarkup(<UsageList entries={entries} pronounce={()=>{}}/>);
  assert.deepEqual(Array.from(html.matchAll(/<h4>([^<]+)<\/h4>/g), match=>match[1]), ['常见使用场景','容易混淆的近义词']);
- assert.match(html,/模型标题/);
+ assert.doesNotMatch(html,/模型标题|另一个模型标题/);
  assert.match(renderToStaticMarkup(<UsageList entries={[]} pronounce={()=>{}}/>),/暂无补充用法解析/);
 });
