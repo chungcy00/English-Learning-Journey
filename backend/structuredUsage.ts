@@ -19,7 +19,7 @@ export const structuredUsageSchema = { type: Type.ARRAY,
     scenario: object({ name: string, explanation: chinese, examples, tip: chinese }, ['name', 'explanation', 'examples']),
     grammar: object({ name: string, explanation: chinese, correct: string, restriction: chinese, examples, note: chinese }, ['name', 'explanation', 'correct', 'examples']),
     comparison: object({ context: chinese, difference: chinese, note: chinese,
-      expressions: { type: Type.ARRAY, items: object({ expression: string, meaning: chinese, emphasis: chinese, examples }, ['expression', 'meaning', 'emphasis', 'examples']) },
+      expressions: { type: Type.ARRAY, items: object({ expression: string, explanation: { ...chinese, description: '一段简洁的中文语义说明，同时解释基本意思和与其他表达的关键区别。' }, examples }, ['expression', 'explanation', 'examples']) },
     }, ['context', 'difference', 'expressions']),
     error: object({ name: string, severity: { type: Type.STRING, enum: ['incorrect', 'unnatural'] }, incorrect: string, correct: string, reason: chinese, examples, note: chinese }, ['name', 'severity', 'incorrect', 'correct', 'reason', 'examples']),
   }, ['kind']),
@@ -51,7 +51,7 @@ export function parseGeneratedUsage(item: any, term = '') {
     case 'comparison':
       if (!Array.isArray(value.expressions) || value.expressions.length < 2 || value.expressions.length > 8) throw new Error('近义词辨析需要至少两个有真实区别的对比表达。');
       usage.comparison = { context: field(value.context, false, true), difference: field(value.difference, false, true), note: field(value.note, true, true),
-        expressions: value.expressions.map((expression: any) => ({ id: crypto.randomUUID(), expression: field(expression.expression), meaning: field(expression.meaning, false, true), emphasis: field(expression.emphasis, false, true), examples: examplePairs(expression.examples) })),
+        expressions: value.expressions.map((expression: any) => ({ id: crypto.randomUUID(), expression: field(expression.expression), explanation: field(expression.explanation, false, true), examples: examplePairs(expression.examples) })),
       }; break;
     case 'error': usage.error = { name: field(value.name), severity: value.severity, incorrect: field(value.incorrect), correct: field(value.correct), reason: field(value.reason, false, true), examples: examplePairs(value.examples), note: field(value.note, true, true) }; break;
   }

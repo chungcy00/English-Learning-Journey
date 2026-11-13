@@ -16,9 +16,28 @@ export function emptyUsageCategory(kind: UsageKind) {
   }
 }
 
-/** Lossless, local conversion. Uncertain fields stay editable alongside the new fields. */
+/** Local conversion keeps learning prose and pairs, while obsolete archives are discarded. */
+function normalizeUsage(usage: StructuredUsage): StructuredUsage {
+  if (usage.compatibility) {
+    usage.compatibility.extra = '';
+    // Drop obsolete unknown-field archives after the learner requested cleanup.
+    usage.compatibility.original = {};
+  }
+  if (usage.comparison) usage.comparison.expressions = usage.comparison.expressions.map(item => {
+    const old = item as unknown as Record<string, unknown>;
+    const parts = [text(old.explanation), text(old.meaning), text(old.emphasis)].map(value => value.trim()).filter(Boolean);
+    // Only remove exact duplicates or text already fully contained in another field.
+    const descriptions = [...new Set(parts)].filter(value => !parts.some(other => other !== value && other.includes(value)));
+    return { id: item.id, expression: item.expression, explanation: descriptions.map((value, index) =>
+      index < descriptions.length - 1 && !/[。！？.!?]$/.test(value) ? `${value}。` : value).join(''), examples: item.examples };
+  });
+  // The learner explicitly requested removal of comparison compatibility remnants.
+  if (usage.kind === 'comparison') delete usage.compatibility;
+  return usage;
+}
+
 export function structuredUsage(entry: LearningEntry): StructuredUsage {
-  if (entry.usage?.version === 2) return structuredClone(entry.usage);
+  if (entry.usage?.version === 2) return normalizeUsage(structuredClone(entry.usage));
   const kind = isUsageKind(entry.usageKind) ? entry.usageKind : undefined;
   const examples: UsageExample[] = entry.example && entry.exampleTranslation
     ? [{ id: `${entry.id}-example`, english: entry.example, chinese: entry.exampleTranslation }] : [];
@@ -31,21 +50,15 @@ export function structuredUsage(entry: LearningEntry): StructuredUsage {
   const oldTitle = text(entry.text);
   const hasTitle = oldTitle.trim() && !Object.values(USAGE_HEADINGS).includes(oldTitle as typeof USAGE_HEADINGS[UsageKind]);
   const mappedExamples = kind && kind !== 'comparison' && examples.length > 0;
-  const extras = Object.fromEntries(Object.entries(entry).filter(([key]) => !['id','text','meaningZh','note','example','exampleTranslation','contrast','usageKind','usageChineseVersion'].includes(key)));
   const leftoverExamples = !mappedExamples && (entry.example || entry.exampleTranslation)
     ? [{ id: `${entry.id}-original-example`, english: text(entry.example), chinese: text(entry.exampleTranslation) }] : [];
-  // Retain the exact source including keys we do not understand. The editable
-  // compatibility fields show only material that could not be placed reliably.
   result.compatibility = {
     title: hasTitle ? oldTitle : '', explanation: kind ? '' : explanation,
     note: kind ? '' : text(entry.note), examples: leftoverExamples,
-    extra: Object.keys(extras).length ? JSON.stringify(extras, null, 2) : '',
-    original: structuredClone(entry) as unknown as Record<string, unknown>,
+    extra: '',
+    original: {},
   };
-  if (kind !== 'error' && entry.contrast) {
-    result.compatibility.extra = JSON.stringify({ ...extras, contrast: entry.contrast }, null, 2);
-  }
-  return result;
+  return normalizeUsage(result);
 }
 
 export function usageEntry(id: string, usage: StructuredUsage): LearningEntry {
@@ -75,7 +88,7 @@ export function usageValidationError(usage: StructuredUsage, generated = false):
       break;
     case 'comparison':
       if (!usage.comparison || (!historical && (!required(usage.comparison.context) || !required(usage.comparison.difference)))) return '请填写比较情境和核心区别。';
-      if ((!historical && usage.comparison.expressions.length < 2) || usage.comparison.expressions.some(item => !required(item.expression) || !required(item.meaning) || !required(item.emphasis))) return '请为对比表达填写单词或词组、中文意思和语义侧重点。';
+      if ((!historical && usage.comparison.expressions.length < 2) || usage.comparison.expressions.some(item => !required(item.expression) || !required(item.explanation))) return '请为对比表达填写单词或词组和中文语义说明。';
       if (usage.comparison.expressions.some(item => !pairs(item.examples))) return '请为每条对比例句同时填写英文和中文译文。';
       break;
     case 'error':

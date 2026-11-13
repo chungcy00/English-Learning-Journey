@@ -36,12 +36,11 @@ function Point({ usage, pronounce }: { usage: StructuredUsage; pronounce: (text:
     case 'comparison': {
       const point = usage.comparison;
       return point && <>
-        {point.context.trim() && <h5>{point.context}</h5>}
-        {point.difference.trim() && <p>{point.difference}</p>}
+        {point.context.trim() && <div className="usage-comparison-context"><p>{point.context}</p></div>}
+        {point.difference.trim() && <p className="usage-comparison-summary">{point.difference}</p>}
         <div className="usage-comparisons">{point.expressions.map(expression => <article key={expression.id} className="usage-comparison"><HandOutline/>
           {expression.expression.trim() && <div className="usage-expression-heading"><h6 lang="en">{expression.expression}</h6><button type="button" aria-label={`朗读：${expression.expression}`} onClick={() => pronounce(expression.expression)}><Volume2 size={18}/></button></div>}
-          {expression.meaning.trim() && <p>{expression.meaning}</p>}
-          {expression.emphasis.trim() && <p>{expression.emphasis}</p>}
+          {expression.explanation.trim() && <p className="usage-semantic-explanation">{expression.explanation}</p>}
           <Examples examples={expression.examples} pronounce={pronounce}/>
         </article>)}</div><Note>{point.note}</Note>
       </>;
@@ -68,7 +67,6 @@ function Compatibility({ usage, pronounce }: { usage: StructuredUsage; pronounce
     {content.title.trim() && <h5>{content.title}</h5>}
     {content.explanation.trim() && <p>{content.explanation}</p>}
     <Examples examples={content.examples} pronounce={pronounce}/><Note>{content.note}</Note>
-    {content.extra.trim() && <details><summary>其他历史资料</summary><pre>{content.extra}</pre></details>}
   </div>;
 }
 export function UsageList({ entries, pronounce }: { entries: LearningEntry[]; pronounce: (text: string) => void; manual?: boolean }) {

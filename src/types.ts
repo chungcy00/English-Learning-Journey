@@ -55,8 +55,7 @@ export interface UsageGrammar {
 export interface UsageExpression {
   id: string;
   expression: string;
-  meaning: string;
-  emphasis: string;
+  explanation: string;
   examples: UsageExample[];
 }
 export interface UsageComparison {

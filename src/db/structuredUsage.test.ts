@@ -18,7 +18,7 @@ test('old records are read in the new format without overwriting storage or call
  assert.deepEqual(await db.vocabularyDetails.get(details.key),details);
  await saveVocabularyDetails(converted);db.close();await db.open();
  const reopened=await readVocabularyDetails(word);
- assert.deepEqual(reopened.sections.usage[0].usage?.compatibility?.original,entry);
+ assert.deepEqual(reopened.sections.usage[0].usage?.compatibility?.original,{});
  assert.equal((await db.vocabulary.get(word.id))?.reviewCount,9);
  assert.equal((await db.vocabulary.get(word.id))?.nextReviewDate,888);
  assert.deepEqual((await db.vocabulary.get(word.id))?.details?.sections.usage,reopened.sections.usage);

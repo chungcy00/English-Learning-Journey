@@ -81,12 +81,11 @@ function CategoryFields({ usage, onChange }: { usage: StructuredUsage; onChange:
                 onMove={direction => patch({ expressions: move(value.expressions, index, direction) })}
                 onRemove={() => patch({ expressions: value.expressions.filter((_, i) => i !== index) })}/>
               <Field label="单词或词组" value={expression.expression} onChange={expression => patchExpression({ expression })}/>
-              <Field label="中文意思" value={expression.meaning} onChange={meaning => patchExpression({ meaning })}/>
-              <Field label="语义侧重点" value={expression.emphasis} multiline onChange={emphasis => patchExpression({ emphasis })}/>
+              <Field label="中文语义说明" value={expression.explanation} multiline onChange={explanation => patchExpression({ explanation })}/>
               <UsageExamplesEditor examples={expression.examples} onChange={examples => patchExpression({ examples })}/>
             </fieldset>;
           })}
-          <button type="button" className="lexicon-link usage-add" onClick={() => patch({ expressions: [...value.expressions, { id: crypto.randomUUID(), expression: '', meaning: '', emphasis: '', examples: [] }] })}><Plus size={16}/>添加对比表达</button>
+          <button type="button" className="lexicon-link usage-add" onClick={() => patch({ expressions: [...value.expressions, { id: crypto.randomUUID(), expression: '', explanation: '', examples: [] }] })}><Plus size={16}/>添加对比表达</button>
         </div>
         <Field label="补充说明" value={value.note} multiline optional onChange={note => patch({ note })}/>
       </>;
@@ -147,7 +146,6 @@ export function UsageEditor({ entries, onChange }: { entries: LearningEntry[]; o
               <Field label="历史说明" value={old.explanation} multiline onChange={explanation => update(entry.id, { ...usage, compatibility: { ...old, explanation } })}/>
               <Field label="历史补充说明" value={old.note} multiline optional onChange={note => update(entry.id, { ...usage, compatibility: { ...old, note } })}/>
               <UsageExamplesEditor examples={old.examples} onChange={examples => update(entry.id, { ...usage, compatibility: { ...old, examples } })}/>
-              {old.extra && <Field label="其他历史资料" value={old.extra} multiline onChange={extra => update(entry.id, { ...usage, compatibility: { ...old, extra } })}/>}
             </details>}
           </fieldset>;
         })}
