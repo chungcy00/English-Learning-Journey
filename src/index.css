@@ -2488,6 +2488,35 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
   padding-top: 16px;
 }
 .usage-point--grammar h5 { margin: 0; }
+.usage-grammar-rule, .usage-grammar-editor { min-width: 0; }
+.usage-grammar-rule > summary, .usage-grammar-editor > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  color: var(--accent-primary);
+  cursor: pointer;
+  list-style: none;
+}
+.usage-grammar-rule > summary::-webkit-details-marker, .usage-grammar-editor > summary::-webkit-details-marker { display: none; }
+.usage-disclosure-chevron {
+  flex: 0 0 auto;
+  transition: transform 160ms ease-out;
+}
+.usage-grammar-rule[open] > summary .usage-disclosure-chevron, .usage-grammar-editor[open] > summary .usage-disclosure-chevron { transform: rotate(90deg); }
+.usage-grammar-rule > summary:focus-visible, .usage-grammar-editor > summary:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 3px; border-radius: 2px; }
+.usage-grammar-rule__content, .usage-grammar-editor__content { display: grid; gap: 12px; min-width: 0; }
+.usage-grammar-rule__content > p { margin: 0; }
+.usage-grammar-rule__content { gap: 8px; }
+.usage-rule-example {
+  margin: 0;
+  color: color-mix(in srgb, var(--accent-primary) 82%, var(--surface-paper));
+  font-size: var(--type-translation);
+  font-style: italic;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
 .usage-point--grammar > p { margin: 0; }
 .usage-point--grammar .usage-rule { margin: 0; }
 .usage-point--grammar .usage-rule dt { font-size: var(--type-label); }

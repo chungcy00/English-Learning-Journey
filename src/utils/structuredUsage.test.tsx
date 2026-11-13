@@ -60,8 +60,22 @@ test('grammar accepts an omitted correct construction and keeps optional fields 
  assert.match(editor,/正确搭配（选填）/);assert.match(editor,/常见错误或限制（选填）/);
  const html=renderToStaticMarkup(<UsageList entries={[entry,usageEntry('g2',{...usage,grammar:{...usage.grammar!,name:'interfere with',correct:'',examples:[]}})]} pronounce={()=>{}}/>);
  assert.equal((html.match(/class="usage-point usage-point--grammar"/g)||[]).length,2);
+ assert.equal((html.match(/class="usage-grammar-rule" open=""/g)||[]).length,2);
+ assert.equal((html.match(/class="[^"]*usage-disclosure-chevron/g)||[]).length,2);
  assert.equal((html.match(/朗读例句：/g)||[]).length,2);
  assert.doesNotMatch(html,/正确搭配/);assert.match(html,/更多说明/);assert.match(html,/常见错误或限制/);
+ assert.match(editor,/class="usage-grammar-editor" open=""/);assert.match(editor,/搭配规则名称/);
+ assert.match(editor,/class="[^"]*usage-disclosure-chevron/);
+});
+test('grammar display keeps correct construction as unlabelled auxiliary text and hides it when empty',()=>{
+ const usage=emptyUsage('grammar');usage.grammar={name:'interfere in',explanation:'表示主动干涉他人的事务。',correct:'interfere in someone’s affairs',restriction:'',note:'',examples:[{id:'a',english:'Do not interfere in their affairs.',chinese:'不要干涉他们的事务。'}]};
+ const populated=renderToStaticMarkup(<UsageList entries={[usageEntry('g',usage)]} pronounce={()=>{}}/>);
+ assert.ok(populated.indexOf('表示主动干涉他人的事务。')<populated.indexOf('interfere in someone’s affairs'));
+ assert.ok(populated.indexOf('interfere in someone’s affairs')<populated.indexOf('Do not interfere in their affairs.'));
+ assert.doesNotMatch(populated,/正确搭配/);
+ const empty={...usage,grammar:{...usage.grammar,correct:''}};
+ const withoutCorrect=renderToStaticMarkup(<UsageList entries={[usageEntry('g-empty',empty)]} pronounce={()=>{}}/>);
+ assert.doesNotMatch(withoutCorrect,/usage-rule-example/);
 });
 test('grammar drops legacy generic leftovers while keeping fields mapped into the current rule',()=>{
  const entry={id:'old-grammar',text:'旧版标题',meaningZh:'表示主动插手事务。',usageKind:'grammar',example:'I interfered in the matter.',exampleTranslation:'我插手了这件事。'} as LearningEntry;

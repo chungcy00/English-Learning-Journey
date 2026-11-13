@@ -1,5 +1,5 @@
 import React from 'react';
-import { Volume2 } from 'lucide-react';
+import { ChevronRight, Volume2 } from 'lucide-react';
 import { HandOutline } from './LearningArt';
 import { USAGE_HEADINGS, type LearningEntry, type StructuredUsage, type UsageExample } from '../types';
 import { compatibilityHasContent, structuredUsage, usageKinds, usageHasContent } from '../utils/structuredUsage';
@@ -26,15 +26,19 @@ function Point({ usage, pronounce }: { usage: StructuredUsage; pronounce: (text:
     case 'grammar': {
       const point = usage.grammar;
       return point && <>
-        {point.name.trim() && <h5>{point.name}</h5>}
-        {point.explanation.trim() && <p>{point.explanation}</p>}
-        {point.correct.trim() && <dl className="usage-rule"><dt>正确搭配</dt><dd lang="en">{point.correct}</dd></dl>}
-        <Examples examples={point.examples} pronounce={pronounce}/>
-        {(point.restriction.trim() || point.note.trim()) && <details className="usage-grammar-more">
-          <summary>更多说明</summary>
-          {point.restriction.trim() && <div><h6>常见错误或限制</h6><p>{point.restriction}</p></div>}
-          {point.note.trim() && <div><h6>补充说明</h6><p>{point.note}</p></div>}
-        </details>}
+        <details className="usage-grammar-rule" open>
+          <summary><h5>{point.name.trim() || '搭配规则'}</h5><ChevronRight className="usage-disclosure-chevron" size={18} aria-hidden="true"/></summary>
+          <div className="usage-grammar-rule__content">
+            {point.explanation.trim() && <p>{point.explanation}</p>}
+            {point.correct.trim() && <p className="usage-rule-example" lang="en">{point.correct}</p>}
+            <Examples examples={point.examples} pronounce={pronounce}/>
+            {(point.restriction.trim() || point.note.trim()) && <details className="usage-grammar-more">
+              <summary>更多说明</summary>
+              {point.restriction.trim() && <div><h6>常见错误或限制</h6><p>{point.restriction}</p></div>}
+              {point.note.trim() && <div><h6>补充说明</h6><p>{point.note}</p></div>}
+            </details>}
+          </div>
+        </details>
       </>;
     }
     case 'comparison': {

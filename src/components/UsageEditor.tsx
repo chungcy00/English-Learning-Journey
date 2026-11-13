@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { USAGE_HEADINGS, type LearningEntry, type StructuredUsage, type UsageExample, type UsageKind } from '../types';
 import { compatibilityHasContent, emptyUsage, emptyUsageCategory, structuredUsage, usageEntry, usageKinds } from '../utils/structuredUsage';
 
@@ -57,14 +57,19 @@ function CategoryFields({ usage, onChange }: { usage: StructuredUsage; onChange:
       const value = usage.grammar!;
       const patch = (change: Partial<typeof value>) => onChange({ ...usage, grammar: { ...value, ...change } });
       return <>
-        <Field label="搭配规则名称" value={value.name} onChange={name => patch({ name })}/>
-        <Field label="中文规则说明" value={value.explanation} multiline onChange={explanation => patch({ explanation })}/>
-        <Field label="正确搭配" value={value.correct} multiline optional onChange={correct => patch({ correct })}/>
-        <UsageExamplesEditor examples={value.examples} onChange={examples => patch({ examples })}/>
-        <details className="usage-more-options">
-          <summary>更多选项</summary>
-          <Field label="常见错误或限制" value={value.restriction} multiline optional onChange={restriction => patch({ restriction })}/>
-          <Field label="补充说明" value={value.note} multiline optional onChange={note => patch({ note })}/>
+        <details className="usage-grammar-editor" open>
+          <summary><span>{value.name.trim() || '搭配规则'}</span><ChevronRight className="usage-disclosure-chevron" size={18} aria-hidden="true"/></summary>
+          <div className="usage-grammar-editor__content">
+            <Field label="搭配规则名称" value={value.name} onChange={name => patch({ name })}/>
+            <Field label="中文规则说明" value={value.explanation} multiline onChange={explanation => patch({ explanation })}/>
+            <Field label="正确搭配" value={value.correct} multiline optional onChange={correct => patch({ correct })}/>
+            <UsageExamplesEditor examples={value.examples} onChange={examples => patch({ examples })}/>
+            <details className="usage-more-options">
+              <summary>更多选项</summary>
+              <Field label="常见错误或限制" value={value.restriction} multiline optional onChange={restriction => patch({ restriction })}/>
+              <Field label="补充说明" value={value.note} multiline optional onChange={note => patch({ note })}/>
+            </details>
+          </div>
         </details>
       </>;
     }
