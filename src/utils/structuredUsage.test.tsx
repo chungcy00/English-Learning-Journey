@@ -51,7 +51,7 @@ test('new paired examples validate together and inactive categories survive seri
   const roundtrip=JSON.parse(JSON.stringify(usageEntry('a',usage)));
   assert.deepEqual(structuredUsage(roundtrip).scenario,usage.scenario);
 });
-test('grammar accepts an omitted correct construction and keeps optional fields collapsed in the editor',()=>{
+test('grammar category has one disclosure for all rules while optional rule fields stay collapsed in the editor',()=>{
  const usage=emptyUsage('grammar');usage.grammar={name:'interfere in',explanation:'表示主动插手他人的事务。',correct:'',restriction:'通常涉及他人的事务。',note:'避免与 interfere with 混淆。',examples:[{id:'a',english:'I will not interfere in their decision.',chinese:'我不会干涉他们的决定。'},{id:'b',english:'She interfered in the discussion.',chinese:'她插手了这场讨论。'}]};
  assert.equal(usageValidationError(usage),undefined);
  const entry=usageEntry('g',usage);
@@ -60,12 +60,13 @@ test('grammar accepts an omitted correct construction and keeps optional fields 
  assert.match(editor,/正确搭配（选填）/);assert.match(editor,/常见错误或限制（选填）/);
  const html=renderToStaticMarkup(<UsageList entries={[entry,usageEntry('g2',{...usage,grammar:{...usage.grammar!,name:'interfere with',correct:'',examples:[]}})]} pronounce={()=>{}}/>);
  assert.equal((html.match(/class="usage-point usage-point--grammar"/g)||[]).length,2);
- assert.equal((html.match(/class="usage-grammar-rule" open=""/g)||[]).length,2);
- assert.equal((html.match(/class="usage-disclosure-triangle"/g)||[]).length,2);
+ assert.equal((html.match(/class="usage-category-disclosure" open=""/g)||[]).length,1);
+ assert.equal((html.match(/class="usage-disclosure-triangle"/g)||[]).length,1);
+ assert.doesNotMatch(html,/搭配规则<\/h5><span class="usage-disclosure-triangle"/);
  assert.equal((html.match(/朗读例句：/g)||[]).length,2);
  assert.doesNotMatch(html,/正确搭配/);assert.match(html,/更多说明/);assert.match(html,/常见错误或限制/);
- assert.match(editor,/class="usage-grammar-editor" open=""/);assert.match(editor,/搭配规则名称/);
- assert.match(editor,/class="usage-disclosure-triangle"/);
+ assert.match(editor,/class="usage-category-disclosure-editor" open=""/);assert.match(editor,/搭配规则名称/);
+ assert.equal((editor.match(/class="usage-disclosure-triangle"/g)||[]).length,1);
 });
 test('grammar display keeps correct construction as unlabelled auxiliary text and hides it when empty',()=>{
  const usage=emptyUsage('grammar');usage.grammar={name:'interfere in',explanation:'表示主动干涉他人的事务。',correct:'interfere in someone’s affairs',restriction:'',note:'',examples:[{id:'a',english:'Do not interfere in their affairs.',chinese:'不要干涉他们的事务。'}]};
@@ -93,6 +94,7 @@ test('structured display preserves multiple projects, comparisons, pairing and f
   const html=renderToStaticMarkup(<UsageList entries={[usageEntry('c',comparison),usageEntry('s',scenario),usageEntry('s2',scenario)]} pronounce={()=>{}}/>);
   assert.ok(html.indexOf('常见使用场景')<html.indexOf('容易混淆的近义词'));
   assert.equal((html.match(/data-usage-kind="scenario"/g)||[]).length,2);
+  assert.equal((html.match(/class="usage-disclosure-triangle"/g)||[]).length,2);
   assert.match(html,/We discussed it\.<\/p><p[^>]*>我们讨论了此事。/);
   assert.match(html,/朗读：get involved in/);
   assert.match(html,/强调主动插手/);

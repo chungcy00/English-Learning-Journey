@@ -57,19 +57,14 @@ function CategoryFields({ usage, onChange }: { usage: StructuredUsage; onChange:
       const value = usage.grammar!;
       const patch = (change: Partial<typeof value>) => onChange({ ...usage, grammar: { ...value, ...change } });
       return <>
-        <details className="usage-grammar-editor" open>
-          <summary><span>{value.name.trim() || '搭配规则'}</span><span className="usage-disclosure-triangle" aria-hidden="true"/></summary>
-          <div className="usage-grammar-editor__content">
-            <Field label="搭配规则名称" value={value.name} onChange={name => patch({ name })}/>
-            <Field label="中文规则说明" value={value.explanation} multiline onChange={explanation => patch({ explanation })}/>
-            <Field label="正确搭配" value={value.correct} multiline optional onChange={correct => patch({ correct })}/>
-            <UsageExamplesEditor examples={value.examples} onChange={examples => patch({ examples })}/>
-            <details className="usage-more-options">
-              <summary>更多选项</summary>
-              <Field label="常见错误或限制" value={value.restriction} multiline optional onChange={restriction => patch({ restriction })}/>
-              <Field label="补充说明" value={value.note} multiline optional onChange={note => patch({ note })}/>
-            </details>
-          </div>
+        <Field label="搭配规则名称" value={value.name} onChange={name => patch({ name })}/>
+        <Field label="中文规则说明" value={value.explanation} multiline onChange={explanation => patch({ explanation })}/>
+        <Field label="正确搭配" value={value.correct} multiline optional onChange={correct => patch({ correct })}/>
+        <UsageExamplesEditor examples={value.examples} onChange={examples => patch({ examples })}/>
+        <details className="usage-more-options">
+          <summary>更多选项</summary>
+          <Field label="常见错误或限制" value={value.restriction} multiline optional onChange={restriction => patch({ restriction })}/>
+          <Field label="补充说明" value={value.note} multiline optional onChange={note => patch({ note })}/>
         </details>
       </>;
     }
@@ -122,40 +117,43 @@ export function UsageEditor({ entries, onChange }: { entries: LearningEntry[]; o
     {groups.map(kind => {
       const group = entries.filter(entry => structuredUsage(entry).kind === kind);
       if (!group.length) return null;
+      const items = group.map((entry, index) => {
+        const usage = structuredUsage(entry);
+        const old = usage.compatibility;
+        const label = `${kind ? USAGE_HEADINGS[kind] : '历史内容'} ${index + 1}`;
+        const inactive = usageKinds.filter(key => key !== usage.kind && usage[key]);
+        return <fieldset key={entry.id} className="usage-item-editor">
+          <legend>{label}</legend>
+          <OrderActions label={label} first={index === 0} last={index === group.length - 1}
+            onRemove={() => onChange(entries.filter(item => item.id !== entry.id))}
+            onMove={direction => {
+              const other = group[index + direction];
+              if (!other) return;
+              const next = [...entries];
+              const a = next.findIndex(item => item.id === entry.id), b = next.findIndex(item => item.id === other.id);
+              [next[a], next[b]] = [next[b], next[a]];
+              onChange(next);
+            }}/>
+          <label className="usage-field">用法类别<select value={usage.kind || ''} onChange={event => {
+            const next = event.target.value as UsageKind;
+            update(entry.id, { ...usage, kind: next, [next]: usage[next] || emptyUsageCategory(next) });
+          }}><option value="" disabled>请选择用法类别</option>{usageKinds.map(key => <option key={key} value={key}>{USAGE_HEADINGS[key]}</option>)}</select></label>
+          {inactive.length > 0 && <p className="lexicon-muted usage-retained" role="status">已保留{inactive.map(key => `「${USAGE_HEADINGS[key]}」`).join('、')}的填写内容，可切换回原类别继续编辑。</p>}
+          <CategoryFields usage={usage} onChange={next => update(entry.id, next)}/>
+          {old && compatibilityHasContent(usage) && <details className="usage-compatibility-editor" open={!usage.kind}>
+            <summary>保留的历史内容</summary>
+            <Field label="历史标题或表达" value={old.title} onChange={title => update(entry.id, { ...usage, compatibility: { ...old, title } })}/>
+            <Field label="历史说明" value={old.explanation} multiline onChange={explanation => update(entry.id, { ...usage, compatibility: { ...old, explanation } })}/>
+            <Field label="历史补充说明" value={old.note} multiline optional onChange={note => update(entry.id, { ...usage, compatibility: { ...old, note } })}/>
+            <UsageExamplesEditor examples={old.examples} onChange={examples => update(entry.id, { ...usage, compatibility: { ...old, examples } })}/>
+          </details>}
+        </fieldset>;
+      });
       return <section key={kind || 'compatibility'} className="usage-editor-group">
-        <h4>{kind ? USAGE_HEADINGS[kind] : '保留的历史内容'}</h4>
-        {group.map((entry, index) => {
-          const usage = structuredUsage(entry);
-          const old = usage.compatibility;
-          const label = `${kind ? USAGE_HEADINGS[kind] : '历史内容'} ${index + 1}`;
-          const inactive = usageKinds.filter(key => key !== usage.kind && usage[key]);
-          return <fieldset key={entry.id} className="usage-item-editor">
-            <legend>{label}</legend>
-            <OrderActions label={label} first={index === 0} last={index === group.length - 1}
-              onRemove={() => onChange(entries.filter(item => item.id !== entry.id))}
-              onMove={direction => {
-                const other = group[index + direction];
-                if (!other) return;
-                const next = [...entries];
-                const a = next.findIndex(item => item.id === entry.id), b = next.findIndex(item => item.id === other.id);
-                [next[a], next[b]] = [next[b], next[a]];
-                onChange(next);
-              }}/>
-            <label className="usage-field">用法类别<select value={usage.kind || ''} onChange={event => {
-              const next = event.target.value as UsageKind;
-              update(entry.id, { ...usage, kind: next, [next]: usage[next] || emptyUsageCategory(next) });
-            }}><option value="" disabled>请选择用法类别</option>{usageKinds.map(key => <option key={key} value={key}>{USAGE_HEADINGS[key]}</option>)}</select></label>
-            {inactive.length > 0 && <p className="lexicon-muted usage-retained" role="status">已保留{inactive.map(key => `「${USAGE_HEADINGS[key]}」`).join('、')}的填写内容，可切换回原类别继续编辑。</p>}
-            <CategoryFields usage={usage} onChange={next => update(entry.id, next)}/>
-            {old && compatibilityHasContent(usage) && <details className="usage-compatibility-editor" open={!usage.kind}>
-              <summary>保留的历史内容</summary>
-              <Field label="历史标题或表达" value={old.title} onChange={title => update(entry.id, { ...usage, compatibility: { ...old, title } })}/>
-              <Field label="历史说明" value={old.explanation} multiline onChange={explanation => update(entry.id, { ...usage, compatibility: { ...old, explanation } })}/>
-              <Field label="历史补充说明" value={old.note} multiline optional onChange={note => update(entry.id, { ...usage, compatibility: { ...old, note } })}/>
-              <UsageExamplesEditor examples={old.examples} onChange={examples => update(entry.id, { ...usage, compatibility: { ...old, examples } })}/>
-            </details>}
-          </fieldset>;
-        })}
+        {kind ? <details className="usage-category-disclosure-editor" open>
+          <summary><h4>{USAGE_HEADINGS[kind]}</h4><span className="usage-disclosure-triangle" aria-hidden="true"/></summary>
+          <div className="usage-category-disclosure-editor__content">{items}</div>
+        </details> : <><h4>{kind ? USAGE_HEADINGS[kind] : '保留的历史内容'}</h4>{items}</>}
       </section>;
     })}
     <div className="usage-add-actions">{usageKinds.map(kind => <button key={kind} type="button" className="lexicon-link usage-add"

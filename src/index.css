@@ -2488,18 +2488,23 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
   padding-top: 16px;
 }
 .usage-point--grammar h5 { margin: 0; }
-.usage-grammar-rule, .usage-grammar-editor { min-width: 0; }
-.usage-grammar-rule > summary, .usage-grammar-editor > summary {
-  display: flex;
+.usage-category-disclosure, .usage-category-disclosure-editor { min-width: 0; }
+.usage-category-disclosure > summary, .usage-category-disclosure-editor > summary {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   min-height: 44px;
   color: var(--accent-primary);
   cursor: pointer;
   list-style: none;
 }
-.usage-grammar-rule > summary::-webkit-details-marker, .usage-grammar-editor > summary::-webkit-details-marker { display: none; }
+.usage-category-disclosure > summary::-webkit-details-marker, .usage-category-disclosure-editor > summary::-webkit-details-marker { display: none; }
+.usage-category-disclosure > summary > h4, .usage-category-disclosure-editor > summary > h4 {
+  margin: 0;
+  color: var(--accent-primary);
+  font-size: var(--type-body);
+  font-weight: 600;
+}
 .usage-disclosure-triangle {
   flex: 0 0 auto;
   width: 0;
@@ -2508,11 +2513,10 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
   border-left: 7px solid currentColor;
   transition: transform 160ms ease-out;
 }
-.usage-grammar-rule[open] > summary .usage-disclosure-triangle, .usage-grammar-editor[open] > summary .usage-disclosure-triangle { transform: rotate(90deg); }
-.usage-grammar-rule > summary:focus-visible, .usage-grammar-editor > summary:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 3px; border-radius: 2px; }
-.usage-grammar-rule__content, .usage-grammar-editor__content { display: grid; gap: 12px; min-width: 0; }
-.usage-grammar-rule__content > p { margin: 0; }
-.usage-grammar-rule__content { gap: 8px; }
+.usage-category-disclosure[open] > summary .usage-disclosure-triangle, .usage-category-disclosure-editor[open] > summary .usage-disclosure-triangle { transform: rotate(90deg); }
+.usage-category-disclosure > summary:focus-visible, .usage-category-disclosure-editor > summary:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 3px; border-radius: 2px; }
+.usage-category-disclosure__content { margin-top: 8px; }
+.usage-category-disclosure-editor__content { display: grid; gap: 24px; min-width: 0; padding-top: 8px; }
 .usage-rule-example {
   margin: 0;
   color: color-mix(in srgb, var(--accent-primary) 82%, var(--surface-paper));
@@ -2549,11 +2553,13 @@ html .lexicon-dialog[open] { max-width: 640px; max-height: min(88dvh, 960px); bo
   border-top: 1px solid var(--border-subtle);
   padding-top: 24px;
 }
-.lexicon-usage-list > .lexicon-usage-point > h4 {
+.lexicon-usage-list > .lexicon-usage-point > h4,
+.lexicon-usage-list > .lexicon-usage-point > .usage-category-disclosure > summary > h4 {
   position: relative;
   padding-inline-start: 12px;
 }
-.lexicon-usage-list > .lexicon-usage-point > h4::before {
+.lexicon-usage-list > .lexicon-usage-point > h4::before,
+.lexicon-usage-list > .lexicon-usage-point > .usage-category-disclosure > summary > h4::before {
   content: '';
   position: absolute;
   inset-inline-start: 0;

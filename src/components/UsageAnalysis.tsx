@@ -26,19 +26,15 @@ function Point({ usage, pronounce }: { usage: StructuredUsage; pronounce: (text:
     case 'grammar': {
       const point = usage.grammar;
       return point && <>
-        <details className="usage-grammar-rule" open>
-          <summary><h5>{point.name.trim() || '搭配规则'}</h5><span className="usage-disclosure-triangle" aria-hidden="true"/></summary>
-          <div className="usage-grammar-rule__content">
-            {point.explanation.trim() && <p>{point.explanation}</p>}
-            {point.correct.trim() && <p className="usage-rule-example" lang="en">{point.correct}</p>}
-            <Examples examples={point.examples} pronounce={pronounce}/>
-            {(point.restriction.trim() || point.note.trim()) && <details className="usage-grammar-more">
-              <summary>更多说明</summary>
-              {point.restriction.trim() && <div><h6>常见错误或限制</h6><p>{point.restriction}</p></div>}
-              {point.note.trim() && <div><h6>补充说明</h6><p>{point.note}</p></div>}
-            </details>}
-          </div>
-        </details>
+        {point.name.trim() && <h5>{point.name}</h5>}
+        {point.explanation.trim() && <p>{point.explanation}</p>}
+        {point.correct.trim() && <p className="usage-rule-example" lang="en">{point.correct}</p>}
+        <Examples examples={point.examples} pronounce={pronounce}/>
+        {(point.restriction.trim() || point.note.trim()) && <details className="usage-grammar-more">
+          <summary>更多说明</summary>
+          {point.restriction.trim() && <div><h6>常见错误或限制</h6><p>{point.restriction}</p></div>}
+          {point.note.trim() && <div><h6>补充说明</h6><p>{point.note}</p></div>}
+        </details>}
       </>;
     }
     case 'comparison': {
@@ -83,11 +79,15 @@ export function UsageList({ entries, pronounce }: { entries: LearningEntry[]; pr
   return <div className="lexicon-usage-list">
     {usageKinds.map(kind => {
       const group = points.filter(point => point.usage.kind === kind);
+      if (!group.length) return null;
+      const content = <div className={`usage-points usage-points--${kind}`}>{group.map(point => <article key={point.id} className={`usage-point usage-point--${kind}`} data-usage-kind={kind}>
+        <Point usage={point.usage} pronounce={pronounce}/><Compatibility usage={point.usage} pronounce={pronounce}/>
+      </article>)}</div>;
       return group.length > 0 && <section key={kind} className={`lexicon-usage-point lexicon-usage-point--${kind}`}>
-        <h4>{USAGE_HEADINGS[kind]}</h4>
-        <div className={`usage-points usage-points--${kind}`}>{group.map(point => <article key={point.id} className={`usage-point usage-point--${kind}`} data-usage-kind={kind}>
-          <Point usage={point.usage} pronounce={pronounce}/><Compatibility usage={point.usage} pronounce={pronounce}/>
-        </article>)}</div>
+        <details className="usage-category-disclosure" open>
+          <summary><h4>{USAGE_HEADINGS[kind]}</h4><span className="usage-disclosure-triangle" aria-hidden="true"/></summary>
+          <div className="usage-category-disclosure__content">{content}</div>
+        </details>
       </section>;
     })}
     {points.filter(point => !point.usage.kind).map(point => <section key={point.id} className="lexicon-usage-point usage-retained-content"><h4>保留的历史内容</h4><Compatibility usage={point.usage} pronounce={pronounce}/></section>)}
