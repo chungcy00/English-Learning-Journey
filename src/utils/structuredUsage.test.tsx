@@ -14,23 +14,19 @@ test('legacy grammar retains mapped rule content and discards generic compatibil
   assert.equal(result.grammar?.explanation, entry.meaningZh);
   assert.equal(result.grammar?.examples[0].chinese, entry.exampleTranslation);
   assert.deepEqual(structuredUsage(usageEntry(entry.id,result)),result);
-  assert.match(usageValidationError(result)!,/搭配规则名称/);
+  assert.equal(usageValidationError(result),undefined);
   assert.equal(entry.text,'in 与 with');
 });
-test('unknown categories and partial or unattributed historical examples remain editable', () => {
+test('unknown and unattributed historical usage does not reappear in the new editor', () => {
   const raw = {id:'old',text:'自然表达',meaningZh:'完整旧说明',usageKind:'natural',example:'A full sentence.',note:'旧备注'} as LearningEntry;
   const converted=structuredUsage(raw);
   assert.equal(converted.kind,undefined);
-  assert.equal(converted.compatibility?.explanation,raw.meaningZh);
-  assert.equal(converted.compatibility?.examples[0].english,raw.example);
-  assert.equal(converted.compatibility?.examples[0].chinese,'');
+  assert.equal(converted.compatibility,undefined);
   const comparison=structuredUsage({...raw,usageKind:'comparison',exampleTranslation:'完整译文'});
   assert.deepEqual(comparison.comparison?.expressions,[]);
   assert.equal(comparison.compatibility,undefined);
   const html=renderToStaticMarkup(<UsageEditor entries={[usageEntry(raw.id,converted)]} onChange={()=>{}}/>);
-  assert.match(html,/未整理的历史资料/);
-  assert.match(html,/完整旧说明/);
-  assert.doesNotMatch(html,/历史说明/);
+  assert.doesNotMatch(html,/未整理的历史资料|完整旧说明|历史说明/);
   assert.doesNotMatch(html,/<details class="usage-history-editor" open/);
   assert.doesNotMatch(html,/语体差异（旧版）|自然表达（旧版）/);
 });
@@ -41,7 +37,7 @@ test('scenario tips remain available for editing alongside scenario meaning and 
  assert.equal(converted.compatibility,undefined);
  const editor=renderToStaticMarkup(<UsageEditor entries={[entry]} onChange={()=>{}}/>);
  const html=renderToStaticMarkup(<UsageList entries={[entry]} pronounce={()=>{}}/>);
- assert.doesNotMatch(editor,/使用提示/);assert.doesNotMatch(html,/用于表达“使接触”的情境/);
+ assert.doesNotMatch(editor,/使用提示/);assert.match(html,/用于表达“使接触”的情境/);
  assert.match(html,/工人们接触到了有害化学物质/);
 });
 test('usage editor starts compact, keeps empty categories form-free, and presents grouped actions',()=>{
@@ -134,5 +130,5 @@ test('comparison normalization removes only exact repeated information and prese
  const old={id:'c',text:'',meaningZh:'',usage:{version:2,kind:'comparison',comparison:{context:'事务',difference:'区别',note:'',expressions:[{id:'e',expression:'interfere',explanation:'干涉，强调主动插手。',meaning:'干涉',emphasis:'干涉，强调主动插手。',examples:[]}]}}} as unknown as LearningEntry;
  assert.equal(structuredUsage(old).comparison?.expressions[0].explanation,'干涉，强调主动插手。');
  const other=structuredUsage({...old,usage:{...old.usage!,kind:'error',error:{name:'语法限制',severity:'incorrect',incorrect:'wrong',correct:'right',reason:'原因。',examples:[],note:''},compatibility:{title:'保留其他类别',explanation:'原文',examples:[],note:'',extra:'',original:{}}}});
- assert.equal(other.compatibility?.title,'保留其他类别');
+  assert.equal(other.compatibility,undefined);
 });

@@ -1,44 +1,18 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, Plus } from 'lucide-react';
 import { HandOutline } from './LearningArt';
+import { EditorOrderActions, moveEditorItems, recordEditorUndo } from './EditorControls';
+import { AutoTextarea } from './AutoTextarea';
 import { USAGE_HEADINGS, type LearningEntry, type StructuredUsage, type UsageExample, type UsageKind } from '../types';
-import { compatibilityHasContent, emptyUsage, structuredUsage, usageEntry, usageKinds } from '../utils/structuredUsage';
+import { emptyUsage, structuredUsage, usageEntry, usageKinds } from '../utils/structuredUsage';
 
 type FieldProps = { label: string; value: string; onChange: (value: string) => void; multiline?: boolean; optional?: boolean; placeholder?: string };
 function Field({ label, value, onChange, multiline = false, optional = false, placeholder }: FieldProps) {
-  const area = useRef<HTMLTextAreaElement>(null);
-  useEffect(() => {
-    if (!area.current) return;
-    area.current.style.height = 'auto';
-    area.current.style.height = `${area.current.scrollHeight}px`;
-  }, [value, multiline]);
   return <label className={`usage-field${multiline ? ' usage-field--wide' : ''}`}>
     <span>{label}{optional ? '（选填）' : ''}</span>
-    {multiline ? <textarea ref={area} rows={1} value={value} placeholder={placeholder} maxLength={3000}
-      onChange={event => onChange(event.target.value)} onInput={event => {
-        event.currentTarget.style.height = 'auto';
-        event.currentTarget.style.height = `${event.currentTarget.scrollHeight}px`;
-      }}/>
+    {multiline ? <AutoTextarea value={value} placeholder={placeholder} maxLength={3000} onChange={onChange}/>
       : <input value={value} placeholder={placeholder} maxLength={3000} onChange={event => onChange(event.target.value)}/>}
   </label>;
-}
-
-function OrderActions({ label, first, last, onMove, onRemove }: {
-  label: string; first: boolean; last: boolean; onMove: (direction: number) => void; onRemove: () => void;
-}) {
-  return <div className="usage-order-actions">
-    <button type="button" aria-label={`上移${label}`} title="上移" disabled={first} onClick={() => onMove(-1)}><ArrowUp size={16}/></button>
-    <button type="button" aria-label={`下移${label}`} title="下移" disabled={last} onClick={() => onMove(1)}><ArrowDown size={16}/></button>
-    <button type="button" aria-label={`删除${label}`} title="删除" onClick={onRemove}><Trash2 size={16}/></button>
-  </div>;
-}
-
-function move<T>(items: T[], index: number, direction: number): T[] {
-  const target = index + direction;
-  if (target < 0 || target >= items.length) return items;
-  const next = [...items];
-  [next[index], next[target]] = [next[target], next[index]];
-  return next;
 }
 
 function summarize(text: string, max = 96) {
@@ -51,7 +25,7 @@ function usageTitle(usage: StructuredUsage) {
   if (usage.kind === 'grammar') return usage.grammar?.name.trim() || '未命名搭配规则';
   if (usage.kind === 'comparison') return usage.comparison?.context.trim() || '未命名比较情境';
   if (usage.kind === 'error') return usage.error?.name.trim() || '未命名常见错误';
-  return usage.compatibility?.title.trim() || '未整理的历史内容';
+  return '用法要点';
 }
 
 function usageSummary(usage: StructuredUsage) {
@@ -59,7 +33,7 @@ function usageSummary(usage: StructuredUsage) {
   if (usage.kind === 'grammar') return summarize(usage.grammar?.explanation || '');
   if (usage.kind === 'comparison') return summarize(usage.comparison?.difference || '');
   if (usage.kind === 'error') return summarize(usage.error?.reason || usage.error?.correct || '');
-  return summarize(usage.compatibility?.explanation || '');
+  return '';
 }
 
 function usageCounts(usage: StructuredUsage) {
@@ -71,34 +45,48 @@ function usageCounts(usage: StructuredUsage) {
   if (usage.kind === 'scenario') return `${usage.scenario?.examples.length || 0} 组例句`;
   if (usage.kind === 'grammar') return `${usage.grammar?.examples.length || 0} 组例句`;
   if (usage.kind === 'error') return `${usage.error?.examples.length || 0} 组修正例句`;
-  return `${usage.compatibility?.examples.length || 0} 组历史例句`;
+  return '暂无例句';
+}
+
+type FieldUpdate<T> = { [K in keyof T]?: T[K] | ((current: T[K]) => T[K]) };
+type ValueUpdate<T> = T | ((current: T) => T);
+function applyUpdates<T extends object>(value: T, change: FieldUpdate<T>): T {
+  const next = { ...value };
+  for (const key of Object.keys(change) as (keyof T)[]) {
+    const update = change[key];
+    (next as Record<keyof T, unknown>)[key] = typeof update === 'function' ? (update as (current: T[typeof key]) => T[typeof key])(value[key]) : update;
+  }
+  return next;
 }
 
 function ExampleListEditor({ examples, onChange, label }: {
-  examples: UsageExample[]; onChange: (examples: UsageExample[]) => void; label: string;
+  examples: UsageExample[]; onChange: (examples: ValueUpdate<UsageExample[]>) => void; label: string;
 }) {
   return <div className="usage-examples-editor">
     <div className="usage-subsection-heading"><h6>{label} <span>({examples.length})</span></h6>
-      <button type="button" className="lexicon-link usage-inline-add" onClick={() => onChange([...examples, { id: crypto.randomUUID(), english: '', chinese: '' }])}><Plus size={15}/>添加</button>
+      <button type="button" className="lexicon-link usage-inline-add" onClick={() => onChange(current => [...current, { id: crypto.randomUUID(), english: '', chinese: '' }])}><Plus size={15}/>添加</button>
     </div>
     {examples.map((example, index) => <div key={example.id} className="usage-example-editor">
       <div className="usage-example-editor__heading"><span>{label} {index + 1}</span>
-        <OrderActions label={`${label} ${index + 1}`} first={index === 0} last={index === examples.length - 1}
-          onMove={direction => onChange(move(examples, index, direction))}
-          onRemove={() => onChange(examples.filter((_, i) => i !== index))}/>
+        <EditorOrderActions className="usage-order-actions" label={`${label} ${index + 1}`} first={index === 0} last={index === examples.length - 1}
+          onMove={direction => onChange(current => moveEditorItems(current, index, direction))}
+          onRemove={() => {
+            onChange(current => current.filter(item => item.id !== example.id));
+            recordEditorUndo(() => onChange(current => current.some(item => item.id === example.id) ? current : [...current.slice(0, Math.min(index, current.length)), example, ...current.slice(Math.min(index, current.length))]));
+          }}/>
       </div>
-      <Field label={`英文${label} ${index + 1}`} value={example.english} multiline placeholder="英文原句" onChange={english => onChange(examples.map((item, i) => i === index ? { ...item, english } : item))}/>
-      <Field label={`中文译文 ${index + 1}`} value={example.chinese} multiline placeholder="对应的中文译文" onChange={chinese => onChange(examples.map((item, i) => i === index ? { ...item, chinese } : item))}/>
+      <Field label={`英文${label} ${index + 1}`} value={example.english} multiline placeholder="英文原句" onChange={english => onChange(current => current.map(item => item.id === example.id ? { ...item, english } : item))}/>
+      <Field label={`中文译文 ${index + 1}`} value={example.chinese} multiline placeholder="对应的中文译文" onChange={chinese => onChange(current => current.map(item => item.id === example.id ? { ...item, chinese } : item))}/>
     </div>)}
   </div>;
 }
 
 function ExpressionListEditor({ expressions, onChange, openIds, setOpenIds }: {
   expressions: NonNullable<StructuredUsage['comparison']>['expressions'];
-  onChange: (expressions: NonNullable<StructuredUsage['comparison']>['expressions']) => void;
+  onChange: (expressions: ValueUpdate<NonNullable<StructuredUsage['comparison']>['expressions']>) => void;
   openIds: Set<string>; setOpenIds: (update: (previous: Set<string>) => Set<string>) => void;
 }) {
-  const setExpression = (id: string, change: Partial<(typeof expressions)[number]>) => onChange(expressions.map(item => item.id === id ? { ...item, ...change } : item));
+  const setExpression = (id: string, change: FieldUpdate<(typeof expressions)[number]>) => onChange(current => current.map(item => item.id === id ? applyUpdates(item, change) : item));
   const changeOpen = (id: string) => setOpenIds(previous => {
     const next = new Set(previous);
     if (next.has(id)) next.delete(id); else next.add(id);
@@ -108,7 +96,7 @@ function ExpressionListEditor({ expressions, onChange, openIds, setOpenIds }: {
     <div className="usage-subsection-heading"><h6>对比表达 <span>({expressions.length})</span></h6>
       <button type="button" className="lexicon-link usage-inline-add" onClick={() => {
         const id = crypto.randomUUID();
-        onChange([...expressions, { id, expression: '', explanation: '', examples: [] }]);
+        onChange(current => [...current, { id, expression: '', explanation: '', examples: [] }]);
         setOpenIds(previous => new Set(previous).add(id));
       }}><Plus size={15}/>添加表达</button>
     </div>
@@ -121,14 +109,18 @@ function ExpressionListEditor({ expressions, onChange, openIds, setOpenIds }: {
               {expression.explanation.trim() && <span>{summarize(expression.explanation, 72)}</span>}
               <small>{expression.examples.length} 组例句</small>
             </span>
+            <ChevronDown className="usage-disclosure-chevron" size={18} aria-hidden="true"/>
           </button>
           <div className="usage-item-controls">
-            <OrderActions label={`对比表达 ${index + 1}`} first={index === 0} last={index === expressions.length - 1}
-              onMove={direction => onChange(move(expressions, index, direction))}
-              onRemove={() => onChange(expressions.filter((_, i) => i !== index))}/>
-            <button type="button" className="usage-item-disclosure" aria-label={`${open ? '收起' : '展开'}对比表达 ${index + 1}`} aria-expanded={open} onClick={() => changeOpen(expression.id)}>
-              <ChevronDown className="usage-disclosure-chevron" size={18} aria-hidden="true"/>
-            </button>
+            <EditorOrderActions className="usage-order-actions" label={`对比表达 ${index + 1}`} first={index === 0} last={index === expressions.length - 1}
+              onMove={direction => onChange(current => moveEditorItems(current, index, direction))}
+              onRemove={() => {
+                onChange(current => current.filter(item => item.id !== expression.id));
+                recordEditorUndo(() => {
+                  onChange(current => current.some(item => item.id === expression.id) ? current : [...current.slice(0, Math.min(index, current.length)), expression, ...current.slice(Math.min(index, current.length))]);
+                  setOpenIds(previous => new Set(previous).add(expression.id));
+                }, '对比表达已删除');
+              }}/>
           </div>
         </div>
         {open && <div className="usage-expression-editor__content">
@@ -142,13 +134,13 @@ function ExpressionListEditor({ expressions, onChange, openIds, setOpenIds }: {
 }
 
 function CategoryFields({ usage, onChange, openExpressionIds, setOpenExpressionIds }: {
-  usage: StructuredUsage; onChange: (usage: StructuredUsage) => void;
+  usage: StructuredUsage; onChange: (usage: ValueUpdate<StructuredUsage>) => void;
   openExpressionIds: Set<string>; setOpenExpressionIds: (update: (previous: Set<string>) => Set<string>) => void;
 }) {
   switch (usage.kind) {
     case 'scenario': {
       const value = usage.scenario!;
-      const patch = (change: Partial<typeof value>) => onChange({ ...usage, scenario: { ...value, ...change } });
+      const patch = (change: FieldUpdate<typeof value>) => onChange(current => ({ ...current, scenario: applyUpdates(current.scenario!, change) }));
       const tipFilled = !!value.tip.trim();
       return <>
         <Field label="场景名称" value={value.name} placeholder="例如：婉拒他人请求" onChange={name => patch({ name })}/>
@@ -162,7 +154,7 @@ function CategoryFields({ usage, onChange, openExpressionIds, setOpenExpressionI
     }
     case 'grammar': {
       const value = usage.grammar!;
-      const patch = (change: Partial<typeof value>) => onChange({ ...usage, grammar: { ...value, ...change } });
+      const patch = (change: FieldUpdate<typeof value>) => onChange(current => ({ ...current, grammar: applyUpdates(current.grammar!, change) }));
       const optionalFilled = !!(value.restriction.trim() || value.note.trim());
       return <>
         <Field label="搭配规则名称" value={value.name} placeholder="例如：interfere with" onChange={name => patch({ name })}/>
@@ -180,7 +172,7 @@ function CategoryFields({ usage, onChange, openExpressionIds, setOpenExpressionI
     }
     case 'comparison': {
       const value = usage.comparison!;
-      const patch = (change: Partial<typeof value>) => onChange({ ...usage, comparison: { ...value, ...change } });
+      const patch = (change: FieldUpdate<typeof value>) => onChange(current => ({ ...current, comparison: applyUpdates(current.comparison!, change) }));
       return <>
         <Field label="比较情境" value={value.context} multiline placeholder="说明比较发生的语境" onChange={context => patch({ context })}/>
         <Field label="核心区别" value={value.difference} multiline placeholder="简洁概括这些表达的关键区别" onChange={difference => patch({ difference })}/>
@@ -193,7 +185,7 @@ function CategoryFields({ usage, onChange, openExpressionIds, setOpenExpressionI
     }
     case 'error': {
       const value = usage.error!;
-      const patch = (change: Partial<typeof value>) => onChange({ ...usage, error: { ...value, ...change } });
+      const patch = (change: FieldUpdate<typeof value>) => onChange(current => ({ ...current, error: applyUpdates(current.error!, change) }));
       const optionalFilled = !!value.note.trim();
       return <>
         <Field label="错误类型" value={value.name} placeholder="例如：介词搭配" onChange={name => patch({ name })}/>
@@ -216,17 +208,19 @@ function CategoryFields({ usage, onChange, openExpressionIds, setOpenExpressionI
   }
 }
 
-export function UsageEditor({ entries, onChange }: { entries: LearningEntry[]; onChange: (entries: LearningEntry[]) => void }) {
+export function UsageEditor({ entries, onChange }: { entries: LearningEntry[]; onChange: (entries: ValueUpdate<LearningEntry[]>) => void }) {
   const [openCategories, setOpenCategories] = useState<Set<UsageKind>>(() => new Set());
   const [openItems, setOpenItems] = useState<Set<string>>(() => new Set());
   const [openExpressions, setOpenExpressions] = useState<Set<string>>(() => new Set());
-  const [openHistory, setOpenHistory] = useState(false);
-  const update = (id: string, usage: StructuredUsage) => onChange(entries.map(entry => entry.id === id ? usageEntry(id, usage) : entry));
+  const update = (id: string, usage: ValueUpdate<StructuredUsage>) => onChange(current => current.map(entry => {
+    if (entry.id !== id) return entry;
+    const currentUsage = structuredUsage(entry);
+    return usageEntry(id, typeof usage === 'function' ? usage(currentUsage) : usage);
+  }));
   const groups = new Map(usageKinds.map(kind => [kind, entries.filter(entry => structuredUsage(entry).kind === kind)]));
-  const history = entries.filter(entry => !structuredUsage(entry).kind && compatibilityHasContent(structuredUsage(entry)));
   const addItem = (kind: UsageKind) => {
     const id = crypto.randomUUID();
-    onChange([...entries, usageEntry(id, emptyUsage(kind))]);
+    onChange(current => [...current, usageEntry(id, emptyUsage(kind))]);
     setOpenCategories(previous => new Set(previous).add(kind));
     setOpenItems(previous => new Set(previous).add(id));
   };
@@ -240,66 +234,62 @@ export function UsageEditor({ entries, onChange }: { entries: LearningEntry[]; o
     if (next.has(id)) next.delete(id); else next.add(id);
     return next;
   });
-  const allExpanded = openCategories.size === usageKinds.length && entries.every(entry => openItems.has(entry.id)) && (!history.length || openHistory);
+  const allExpanded = openCategories.size === usageKinds.length && entries.every(entry => openItems.has(entry.id))
+    && entries.every(entry => structuredUsage(entry).comparison?.expressions.every(expression => openExpressions.has(expression.id)) ?? true);
   const expandAll = () => {
     setOpenCategories(new Set(usageKinds));
     setOpenItems(new Set(entries.map(entry => entry.id)));
     setOpenExpressions(new Set(entries.flatMap(entry => structuredUsage(entry).comparison?.expressions.map(expression => expression.id) || [])));
-    setOpenHistory(history.length > 0);
   };
   const collapseAll = () => {
     setOpenCategories(new Set());
     setOpenItems(new Set());
     setOpenExpressions(new Set());
-    setOpenHistory(false);
   };
   const renderItem = (entry: LearningEntry, index: number, group: LearningEntry[], kind: UsageKind | undefined) => {
     const usage = structuredUsage(entry);
     const title = usageTitle(usage);
     const summary = usageSummary(usage);
     const open = openItems.has(entry.id);
-    const old = usage.compatibility;
-    const label = `${kind ? USAGE_HEADINGS[kind] : '历史内容'} ${index + 1}`;
+    const label = `${kind ? USAGE_HEADINGS[kind] : '用法要点'} ${index + 1}`;
     return <article key={entry.id} className="usage-item-editor">
       <div className="usage-item-editor__heading">
         <button type="button" className="usage-item-toggle" aria-expanded={open} aria-label={`${open ? '收起' : '展开'}${label}`} onClick={() => toggleItem(entry.id)}>
           <span className="usage-item-copy"><strong>{title}</strong>{summary && <span>{summary}</span>}<small>{usageCounts(usage)}</small></span>
+          <ChevronDown className="usage-disclosure-chevron" size={18} aria-hidden="true"/>
         </button>
         <div className="usage-item-controls">
-          <OrderActions label={label} first={index === 0} last={index === group.length - 1}
-            onRemove={() => { onChange(entries.filter(item => item.id !== entry.id)); setOpenItems(previous => { const next = new Set(previous); next.delete(entry.id); return next; }); }}
+          <EditorOrderActions className="usage-order-actions" label={label} first={index === 0} last={index === group.length - 1}
+            onRemove={() => {
+              onChange(current => current.filter(item => item.id !== entry.id));
+              setOpenItems(previous => { const next = new Set(previous); next.delete(entry.id); return next; });
+              recordEditorUndo(() => {
+                onChange(current => current.some(item => item.id === entry.id) ? current : [...current.slice(0, Math.min(index, current.length)), entry, ...current.slice(Math.min(index, current.length))]);
+                setOpenItems(previous => new Set(previous).add(entry.id));
+              }, '用法要点已删除');
+            }}
             onMove={direction => {
               const other = group[index + direction];
               if (!other) return;
-              const next = [...entries];
-              const a = next.findIndex(item => item.id === entry.id), b = next.findIndex(item => item.id === other.id);
-              [next[a], next[b]] = [next[b], next[a]];
-              onChange(next);
+              onChange(current => {
+                const next = [...current];
+                const a = next.findIndex(item => item.id === entry.id), b = next.findIndex(item => item.id === other.id);
+                if (a >= 0 && b >= 0) [next[a], next[b]] = [next[b], next[a]];
+                return next;
+              });
             }}/>
-          <button type="button" className="usage-item-disclosure" aria-label={`${open ? '收起' : '展开'}${label}`} aria-expanded={open} onClick={() => toggleItem(entry.id)}>
-            <ChevronDown className="usage-disclosure-chevron" size={18} aria-hidden="true"/>
-          </button>
         </div>
       </div>
       {open && <div className="usage-item-editor__content">
         <CategoryFields usage={usage} onChange={next => update(entry.id, next)} openExpressionIds={openExpressions} setOpenExpressionIds={setOpenExpressions}/>
-        {old && compatibilityHasContent(usage) && <details className="usage-compatibility-editor">
-          <summary>未整理的历史资料 <span className="usage-filled-indicator">含历史内容</span></summary>
-          <div className="usage-optional-fields">
-            <Field label="历史标题或表达" value={old.title} onChange={title => update(entry.id, { ...usage, compatibility: { ...old, title } })}/>
-            <Field label="历史说明" value={old.explanation} multiline onChange={explanation => update(entry.id, { ...usage, compatibility: { ...old, explanation } })}/>
-            <Field label="历史补充说明" value={old.note} multiline optional onChange={note => update(entry.id, { ...usage, compatibility: { ...old, note } })}/>
-            <ExampleListEditor label="历史例句" examples={old.examples} onChange={examples => update(entry.id, { ...usage, compatibility: { ...old, examples } })}/>
-          </div>
-        </details>}
       </div>}
     </article>;
   };
   return <div className="usage-editor">
     <div className="usage-editor-toolbar">
       <span className="usage-editor-total">{entries.length} 个用法要点</span>
-      <div><button type="button" className="lexicon-link" disabled={allExpanded} onClick={expandAll}>全部展开</button>
-        <button type="button" className="lexicon-link" disabled={!openCategories.size && !openItems.size} onClick={collapseAll}>全部收起</button></div>
+      <div><button type="button" className="lexicon-link" disabled={allExpanded} onClick={expandAll}>展开所有内容</button>
+        <button type="button" className="lexicon-link" disabled={!openCategories.size && !openItems.size} onClick={collapseAll}>收起所有内容</button></div>
     </div>
     {usageKinds.map(kind => {
       const group = groups.get(kind) || [];
@@ -318,9 +308,5 @@ export function UsageEditor({ entries, onChange }: { entries: LearningEntry[]; o
         </div>}
       </section>;
     })}
-    {history.length > 0 && <details className="usage-history-editor" open={openHistory} onToggle={event => setOpenHistory(event.currentTarget.open)}>
-      <summary>未整理的历史资料 <span>{history.length}</span><ChevronDown className="usage-disclosure-chevron" size={18} aria-hidden="true"/></summary>
-      <div className="usage-editor-category-content">{history.map((entry, index) => renderItem(entry, index, history, undefined))}</div>
-    </details>}
   </div>;
 }

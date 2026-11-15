@@ -2,7 +2,7 @@ import React from 'react';
 import { Volume2 } from 'lucide-react';
 import { HandOutline } from './LearningArt';
 import { USAGE_HEADINGS, type LearningEntry, type StructuredUsage, type UsageExample } from '../types';
-import { compatibilityHasContent, structuredUsage, usageKinds, usageHasContent } from '../utils/structuredUsage';
+import { structuredUsage, usageKinds, usageHasContent } from '../utils/structuredUsage';
 
 function Examples({ examples, pronounce }: { examples: UsageExample[]; pronounce: (text: string) => void }) {
   return <div className="usage-examples">{examples.map(example => <div key={example.id} className="lexicon-example usage-example">
@@ -20,7 +20,7 @@ function Point({ usage, pronounce }: { usage: StructuredUsage; pronounce: (text:
       return point && <>
         {point.name.trim() && <h5>{point.name}</h5>}
         {point.explanation.trim() && <p>{point.explanation}</p>}
-        <Examples examples={point.examples} pronounce={pronounce}/>
+        <Examples examples={point.examples} pronounce={pronounce}/><Note>{point.tip}</Note>
       </>;
     }
     case 'grammar': {
@@ -30,7 +30,7 @@ function Point({ usage, pronounce }: { usage: StructuredUsage; pronounce: (text:
         {point.explanation.trim() && <p>{point.explanation}</p>}
         {point.correct.trim() && <p className="usage-rule-example" lang="en">{point.correct}</p>}
         <Examples examples={point.examples} pronounce={pronounce}/>
-        {(point.restriction.trim() || point.note.trim()) && <details className="usage-grammar-more">
+        {(point.restriction.trim() || point.note.trim()) && <details className="usage-grammar-more" open>
           <summary>更多说明</summary>
           {point.restriction.trim() && <div><h6>常见错误或限制</h6><p>{point.restriction}</p></div>}
           {point.note.trim() && <div><h6>补充说明</h6><p>{point.note}</p></div>}
@@ -64,15 +64,6 @@ function Point({ usage, pronounce }: { usage: StructuredUsage; pronounce: (text:
     default: return null;
   }
 }
-function Compatibility({ usage, pronounce }: { usage: StructuredUsage; pronounce: (text: string) => void }) {
-  const content = usage.compatibility;
-  if (!content || !compatibilityHasContent(usage)) return null;
-  return <div className="usage-compatibility">
-    {content.title.trim() && <h5>{content.title}</h5>}
-    {content.explanation.trim() && <p>{content.explanation}</p>}
-    <Examples examples={content.examples} pronounce={pronounce}/><Note>{content.note}</Note>
-  </div>;
-}
 export function UsageList({ entries, pronounce }: { entries: LearningEntry[]; pronounce: (text: string) => void; manual?: boolean }) {
   const points = entries.map(entry => ({ id: entry.id, usage: structuredUsage(entry) })).filter(point => usageHasContent(point.usage));
   if (!points.length) return <p className="lexicon-empty">暂无补充用法解析</p>;
@@ -81,7 +72,7 @@ export function UsageList({ entries, pronounce }: { entries: LearningEntry[]; pr
       const group = points.filter(point => point.usage.kind === kind);
       if (!group.length) return null;
       const content = <div className={`usage-points usage-points--${kind}`}>{group.map(point => <article key={point.id} className={`usage-point usage-point--${kind}`} data-usage-kind={kind}>
-        <Point usage={point.usage} pronounce={pronounce}/><Compatibility usage={point.usage} pronounce={pronounce}/>
+        <Point usage={point.usage} pronounce={pronounce}/>
       </article>)}</div>;
       return group.length > 0 && <section key={kind} className={`lexicon-usage-point lexicon-usage-point--${kind}`}>
         <details className="usage-category-disclosure" open>
@@ -90,6 +81,5 @@ export function UsageList({ entries, pronounce }: { entries: LearningEntry[]; pr
         </details>
       </section>;
     })}
-    {points.filter(point => !point.usage.kind).map(point => <section key={point.id} className="lexicon-usage-point usage-retained-content"><h4>保留的历史内容</h4><Compatibility usage={point.usage} pronounce={pronounce}/></section>)}
   </div>;
 }

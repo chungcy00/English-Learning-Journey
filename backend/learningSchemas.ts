@@ -13,11 +13,10 @@ const entries = { type: Type.ARRAY, items: { type: Type.OBJECT, properties: {
 const wordParts = { type: Type.ARRAY, description: '可选的真实构词分段；按原词表面拼写排列，可留空，不得根据相似字母编造。', items: { type: Type.OBJECT, properties: { kind: { type: Type.STRING, enum: ['prefix','root','suffix'] }, text: string, meaningZh: chinese }, required: ['kind','text','meaningZh'] } };
 const family = { type: Type.OBJECT, properties: { base: string, parent: { ...string, description: '有把握时给出直接派生自的英文词，可为原词或本词族其他词，不得填自身；不确定则省略。' }, parts: wordParts, relation: { ...chinese, description: '用简体中文解释真实派生步骤。例：helpful + -ly → helpfully，形容词加 -ly 变为副词；不能把 -fully 虚写成这里的单一后缀。' } }, required: ['base', 'relation'] };
 const morphology = { type: Type.OBJECT, properties: {
-  root: string, meaningZh: chinese,
   parts: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { kind: { type: Type.STRING, enum: ['prefix', 'root', 'suffix'] }, text: string, meaningZh: chinese }, required: ['kind', 'text', 'meaningZh'] } },
   explanation: { ...chinese, description: '用简体中文说明各部分如何组合成原词含义，拼写变化也需解释。不能只介绍词源或整段使用英文。' }, mnemonic: { ...optionalChinese, description: '简短自然的中文辅助记忆联想，不冒充真实词源；无合适联想可留空。' },
   related: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { word: string, partOfSpeech: string, meaningZh: chinese, relation: optionalChinese, parts: wordParts }, required: ['word', 'partOfSpeech', 'meaningZh'] } },
-}, required: ['root', 'meaningZh', 'parts', 'explanation', 'mnemonic', 'related'] };
+}, required: ['parts', 'explanation', 'mnemonic', 'related'] };
 const derivativeEntries = { ...entries, description: '只提供通用学习场景下常见、真实的派生词，不以偶见的否定分词或专门术语凑数。若只能想到罕见构词形式，返回空数组。', items: { ...entries.items, properties: { ...entries.items.properties, family }, required: ['text', 'meaningZh', 'partOfSpeech', 'family'] } };
 const rootEntries = { ...entries, items: { ...entries.items, properties: { ...entries.items.properties, morphology }, required: ['text', 'meaningZh', 'morphology'] } };
 const exampleEntries = { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { text: { ...string, description: 'A complete natural English example sentence, never a headword or collocation label.' }, meaningZh: { ...chinese, description: '这句例句的完整中文译文，不是单词词义。单词词义通过 senseId 关联 senses。' }, senseId: string, senseMeaningZh: { ...optionalChinese, description: '本例句对应的简体中文单词词义，不是句子译文。可细分已合并的多义释义，如扎根的与根深蒂固的；仍沿用同一原义项 senseId，不得添加无关新义。' }, note: string }, required: ['text','meaningZh','senseId'] } };
@@ -88,11 +87,11 @@ export function validateDetails(data: any, term: string, type: VocabularyDetails
           const plain = m.parts.map((part: any) => ({ ...part, text: part.text.replace(/^-+|-+$/g, '') }));
           if (m.parts.map((part: any) => part.text).join('').toLowerCase() !== term.toLowerCase() && plain.map((part: any) => part.text).join('').toLowerCase() === term.toLowerCase()) m.parts = plain;
         }
-        if (!m || !['root','meaningZh','explanation'].every(key => shortText(m[key])) || (requireStructured && (!hasChinese(m.explanation) || !hasChinese(m.meaningZh))) || typeof m.mnemonic !== 'string' || m.mnemonic.length > 3000 || (requireStructured && m.mnemonic.trim() && !hasChinese(m.mnemonic)) || !Array.isArray(m.parts) || !m.parts.length || m.parts.length > 8
+        if (!m || !shortText(m.explanation) || (requireStructured && !hasChinese(m.explanation)) || typeof m.mnemonic !== 'string' || m.mnemonic.length > 3000 || (requireStructured && m.mnemonic.trim() && !hasChinese(m.mnemonic)) || !Array.isArray(m.parts) || !m.parts.length || m.parts.length > 8
           || m.parts.some((part: any) => !['prefix','root','suffix'].includes(part?.kind) || !shortText(part.text) || !shortText(part.meaningZh))
           || !m.parts.some((part: any) => part.kind === 'root') || m.parts.map((part: any) => part.text).join('').toLowerCase() !== term.toLowerCase()
           || !Array.isArray(m.related) || m.related.length > 4 || m.related.some((word: any) => !['word','partOfSpeech','meaningZh'].every(key => shortText(word?.[key])))) throw new VocabularyDetailsError('构词拆解不完整或与原词不符，请重试。');
-        entry.morphology = { root: m.root, meaningZh: m.meaningZh, parts: m.parts.map(({kind,text,meaningZh}: any) => ({kind,text,meaningZh})), explanation: m.explanation, mnemonic: m.mnemonic,
+        entry.morphology = { parts: m.parts.map(({kind,text,meaningZh}: any) => ({kind,text,meaningZh})), explanation: m.explanation, mnemonic: m.mnemonic,
           related: [...new Map(m.related.filter((word: any) => word.word.trim().toLowerCase() !== term.toLowerCase()).map((related: any) => {
             const {word,partOfSpeech,meaningZh,relation,parts}=related;
             if (relation && (!shortText(relation) || (requireStructured && !hasChinese(relation)))) throw new VocabularyDetailsError('同根词构词说明需要中文，请重试。');

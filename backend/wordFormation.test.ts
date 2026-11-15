@@ -12,7 +12,7 @@ test('Gemini full and section response schemas never contain rejected empty enum
  for(const section of ['examples','derivatives','roots','phrases','definitions','usage'] as const)inspect(detailsSchemaForSection(section));
 });
 import { DETAILS } from './testLearningFixtures';
-const morphology = { root: 'help', meaningZh: '帮助', parts: [{ kind:'root', text:'help', meaningZh:'帮助' }, { kind:'suffix', text:'ful', meaningZh:'具有……性质的' }], explanation:'help 加形容词后缀 -ful，表示有帮助的。', mnemonic:'想象一个乐于帮助别人的人。', related:[{word:'helpless',partOfSpeech:'adjective',meaningZh:'无助的'}] };
+const morphology = { parts: [{ kind:'root', text:'help', meaningZh:'帮助' }, { kind:'suffix', text:'ful', meaningZh:'具有……性质的' }], explanation:'help 加形容词后缀 -ful，表示有帮助的。', mnemonic:'想象一个乐于帮助别人的人。', related:[{word:'helpless',partOfSpeech:'adjective',meaningZh:'无助的'}] };
 const grammar = (explanation = '表示建议对某人有帮助，可用 helpful to someone。') => ({ kind: 'grammar', grammar: { name: 'helpful to someone', explanation, correct: 'helpful to someone', examples: [] } });
 const scenario = (name = '向他人提供建议') => ({ kind: 'scenario', scenario: { name, explanation: '帮助别人理解问题时可以这样介绍建议的作用。', examples: [] } });
 function output() { return { ...structuredClone(DETAILS), term:'helpful', inflections:[{label:'comparative',value:'more helpful'}], sections:{...structuredClone(DETAILS.sections), usage: [] as any[], roots:[{text:'help',meaningZh:'帮助',morphology:structuredClone(morphology)}], derivatives:[{text:'helpfulness',meaningZh:'乐于助人',partOfSpeech:'noun',family:{base:'help',relation:'helpful 加 -ness 构成名词'}}] } }; }

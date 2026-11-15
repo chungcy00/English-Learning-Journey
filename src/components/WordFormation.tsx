@@ -1,7 +1,11 @@
 import { vocabularyHeadword } from '../utils/vocabularyCase';
 import { HandOutline, StudyEmptyState } from './LearningArt';
-import React, { useState } from 'react';
-import { Plus, Volume2, X } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { ChevronDown, Plus, Volume2 } from 'lucide-react';
+import { AutoTextarea } from './AutoTextarea';
+import { EntryExample } from './PhraseUsage';
+import { FamilyTreeConnections } from './FamilyTreeConnections';
+import { EditorOrderActions, moveEditorItems, recordEditorUndo } from './EditorControls';
 import type { LearningEntry, WordFormation, WordPart } from '../types';
 import { derivativeDiagramBase, familyForest, hasExactParts, hasMatchingRoot, hasTransparentDerivation, practicalFormationText, partOfSpeechAbbreviation, verifiedWordFamilyRelation, type FamilyNode } from '../utils/wordFormation';
 
@@ -12,6 +16,18 @@ export function HighlightedWord({word,parts,partOfSpeech}:{word:string;parts?:Wo
   return <span lang="en">{hasExactParts(parts,word) ? parts.map((part,index)=>{ const text = spelling.slice(offset, offset + part.text.length); offset += part.text.length; return <span key={index} className={`lexicon-word-part--${part.kind}`}>{text}</span>; }) : spelling}</span>;
 }
 type Relation = '共同词根' | '词族关联';
+
+function PartMeanings({ parts = [] }: { parts?: WordPart[] }) {
+  const filled = parts.filter(part => part.text?.trim() || part.meaningZh?.trim());
+  if (!filled.length) return null;
+  return <dl className="lexicon-part-meanings">{filled.map((part, index) => <div key={index}>
+    <dt><span className="lexicon-part-tag">{partLabels[part.kind]}</span>
+      {part.text?.trim() && <span lang="en" className={`lexicon-word-part--${part.kind}`}>{part.text}</span>}
+    </dt>
+    {part.meaningZh?.trim() && <dd>{part.meaningZh}</dd>}
+  </div>)}</dl>;
+}
+
 
 function addsFamilyInformation(entry: LearningEntry, relation: string) {
   const text = relation.trim();
@@ -24,20 +40,20 @@ function addsFamilyInformation(entry: LearningEntry, relation: string) {
 }
 
 function FamilyDetails({ entry, pronounce }: { entry: LearningEntry; pronounce: (text: string) => void }) {
-  const relation = practicalFormationText(entry.family?.relation);
-  const note = practicalFormationText(entry.note);
+  const relation = entry.family?.relation?.trim();
+  const note = entry.note?.trim();
   return <>
     <div className="lexicon-derivative-heading">
       <div>
         <strong><HighlightedWord word={entry.text} parts={entry.family?.parts} partOfSpeech={entry.partOfSpeech}/></strong>
         <p className="lexicon-family-meaning"><span className="lexicon-pos">{partOfSpeechAbbreviation(entry.partOfSpeech)}</span>{entry.meaningZh}</p>
       </div>
-      <button type="button" aria-label={`朗读：${entry.text}`} onClick={() => pronounce(entry.text)}><Volume2 size={18}/></button>
+      {entry.text.trim() && <button type="button" aria-label={`朗读：${entry.text}`} onClick={() => pronounce(entry.text)}><Volume2 size={18}/></button>}
     </div>
     {relation && addsFamilyInformation(entry, relation) && <p className="lexicon-family-relation">{relation}</p>}
     {note && <p className="lexicon-note">{note}</p>}
-    {entry.example && <p lang="en">{entry.example}</p>}
-    {entry.exampleTranslation && <p className="lexicon-muted">{entry.exampleTranslation}</p>}
+    <PartMeanings parts={entry.family?.parts}/>
+    <EntryExample entry={entry} pronounce={pronounce}/>
   </>;
 }
 
@@ -45,6 +61,7 @@ function FamilyDiagram({ base, entries, nodes, relation, pronounce }: {
   base: string; entries: LearningEntry[]; nodes: FamilyNode[]; relation: Relation; pronounce: (text: string) => void;
 }) {
   const [selectedId, setSelectedId] = useState(entries[0].id);
+  const layoutKey = JSON.stringify(entries.map(entry => [entry.id, entry.text, entry.family?.parent]));
   const selected = entries.find(entry => entry.id === selectedId) ?? entries[0];
   const renderBranches = (branches: FamilyNode[], parent: string) => <ul className="lexicon-family-branches">
     {branches.map(({ entry, children }) => {
@@ -63,6 +80,7 @@ function FamilyDiagram({ base, entries, nodes, relation, pronounce }: {
   return <div className="lexicon-family-diagram">
     <div className="lexicon-family-viewport">
       <div className="lexicon-family-tree">
+        <FamilyTreeConnections layoutKey={layoutKey}/>
         <div className="lexicon-family-base" lang="en"><HandOutline/>{vocabularyHeadword(base)}</div>
         {renderBranches(nodes, base)}
       </div>
@@ -75,7 +93,7 @@ function FamilyDiagram({ base, entries, nodes, relation, pronounce }: {
 }
 
 export function DerivativeList({ entries, term = '', inflections = [], pronounce }: {
-  entries: LearningEntry[]; term?: string; inflections?: string[]; pronounce: (text: string) => void;
+  entries: LearningEntry[]; term?: string; inflections?: string[]; pronounce: (text: string) => void; manual?: boolean;
 }) {
   const normalizedTerm = term.trim().toLowerCase();
   const hasRootless = entries.some(entry => entry.text.trim().toLowerCase() === 'rootless');
@@ -102,12 +120,19 @@ export function DerivativeList({ entries, term = '', inflections = [], pronounce
   const supported = entries.filter(entry => {
     if (excluded.has(entry.text.trim().toLowerCase())) return false;
     if (verified.has(entry.id)) return true;
+    if (entry.family?.base?.trim().toLowerCase() === base.toLowerCase() && entry.family.relation?.trim() && derivativeDiagramBase([entry], base, inflections)) return true;
     const parent = entry.family?.parent || base;
     return parent && hasTransparentDerivation(parent, entry.text, entry.family?.parts);
   });
   const candidates = supported.map(entry => {
     const family = verified.get(entry.id);
-    return family ? { ...entry, family: { ...entry.family, ...family } } : entry;
+    if (!family) return entry;
+    return { ...entry, family: {
+      ...entry.family,
+      base: entry.family?.base?.trim() || family.base,
+      parent: entry.family?.parent?.trim() || family.parent,
+      relation: entry.family?.relation?.trim() || family.relation,
+    } };
   });
   const connected = new Set([base?.toLowerCase()]);
   for (let pass = 0; pass < candidates.length; pass++) {
@@ -121,25 +146,30 @@ export function DerivativeList({ entries, term = '', inflections = [], pronounce
   </StudyEmptyState>;
 
   return <section className="lexicon-tree-card lexicon-families">
-    <FamilyDiagram base={base} entries={diagramEntries} nodes={familyForest(diagramEntries)} relation="词族关联" pronounce={pronounce}/>
+    {diagramEntries.length > 0 && <FamilyDiagram base={base} entries={diagramEntries} nodes={familyForest(diagramEntries)} relation="词族关联" pronounce={pronounce}/>}
   </section>;
 }
-export function RootAnalysisList({ entries, term, pronounce }: {
-  entries: LearningEntry[]; term: string; pronounce: (text: string) => void;
+export function RootAnalysisList({ entries, term, pronounce, manual = false }: {
+  entries: LearningEntry[]; term: string; pronounce: (text: string) => void; manual?: boolean;
 }) {
   const analyses = entries.flatMap(entry => {
-    const analysis = RootAnalysis({ entry, term, pronounce });
+    const analysis = RootAnalysis({ entry, term, pronounce, manual });
     return analysis ? [<React.Fragment key={entry.id}>{analysis}</React.Fragment>] : [];
   });
   return analyses.length ? <>{analyses}</> : <StudyEmptyState compact pose="hamster-reading">
     <p className="lexicon-empty">暂无可靠且适用的构词拆解。</p>
   </StudyEmptyState>;
 }
-export function RootAnalysis({ entry, term, pronounce }: { key?: string; entry: LearningEntry; term: string; pronounce: (text: string) => void }) {
+export function RootAnalysis({ entry, term, pronounce, manual = false }: { key?: string; entry: LearningEntry; term: string; pronounce: (text: string) => void; manual?: boolean }) {
   const m = entry.morphology;
-  const explanation = practicalFormationText(m?.explanation);
-  const mnemonic = practicalFormationText(m?.mnemonic);
-  if (!m || !hasExactParts(m.parts, term)) {
+  const displayText = (value = '') => value.trim();
+  const explanation = displayText(m?.explanation);
+  const mnemonic = displayText(m?.mnemonic);
+  const enteredParts = (m?.parts ?? []).filter(part =>
+    typeof part?.text === 'string' && (part.text.trim() || displayText(part.meaningZh).trim()),
+  );
+  const hasMorphologyContent = !!(enteredParts.length || explanation || mnemonic || m?.related?.length);
+  if (!m || !hasMorphologyContent) {
     const heading = practicalFormationText(entry.text);
     const meaning = practicalFormationText(entry.meaningZh);
     const note = practicalFormationText(entry.note);
@@ -152,30 +182,20 @@ export function RootAnalysis({ entry, term, pronounce }: { key?: string; entry: 
       {note && <p className="lexicon-muted">{note}</p>}
     </section>;
   }
-  const root = practicalFormationText(m.root);
-  const meaning = practicalFormationText(m.meaningZh);
-  const rootIndex = m.parts.findIndex(part => part.kind === 'root' && part.text.trim().toLowerCase() === root.toLowerCase());
-  const parts = m.parts.map((part, index) => {
-    const partMeaning = practicalFormationText(part.meaningZh);
-    if (index !== rootIndex || !meaning) return { ...part, meaningZh: partMeaning };
-    const glosses = [partMeaning, meaning].flatMap(gloss => gloss.split(/[，、；,;]/).map(text => text.trim()).filter(Boolean));
-    return { ...part, meaningZh: [...new Set(glosses)].join('、') };
-  });
-  const hasBreakdown = parts.some(part => part.meaningZh);
-  const hasSeparateRootMeaning = root && meaning && rootIndex < 0;
-  if (!hasSeparateRootMeaning && !hasBreakdown && !explanation && !mnemonic) return null;
+  const parts = enteredParts.map(part => ({ ...part, meaningZh: displayText(part.meaningZh) }));
+  const hasBreakdown = parts.length > 0;
+  if (!hasBreakdown && !explanation && !mnemonic && !m.related?.some(word => hasMatchingRoot(term, m.parts, word.word, word.parts))) return null;
   return <section className="lexicon-tree-card lexicon-root-map">
-    {hasSeparateRootMeaning && <h4 className="lexicon-core-root"><span lang="en">{root}</span><span>{meaning}</span></h4>}
     {(hasBreakdown || explanation) && <div className="lexicon-root-analysis">
-      {hasBreakdown && <dl className="lexicon-part-meanings">{parts.filter(part => part.meaningZh).map((part,index)=><div key={index}><dt><span className="lexicon-part-tag">{partLabels[part.kind]}</span><span lang="en" className={`lexicon-word-part--${part.kind}`}>{part.text}</span></dt><dd>{part.meaningZh}</dd></div>)}</dl>}
+      {hasBreakdown && <PartMeanings parts={parts}/>}
       {explanation&&<p className="lexicon-formation-explanation">{explanation}</p>}
     </div>}
     {mnemonic&&<div className="lexicon-memory"><h5>辅助记忆联想</h5><p>{mnemonic}</p><small>联想仅帮助记忆，不代表真实词源。</small></div>}
-    {!!m.related?.length && <RootFamily term={term} parts={m.parts} words={m.related} pronounce={pronounce}/>}
+    {!!m.related?.length && <RootFamily term={term} parts={m.parts} words={m.related} pronounce={pronounce} manual={manual}/>}
   </section>;
 }
-function RootFamily({ term, parts, words, pronounce }: {
-  term: string; parts: WordPart[]; words: WordFormation['related']; pronounce: (text: string) => void;
+function RootFamily({ term, parts, words, pronounce, manual = false }: {
+  term: string; parts: WordPart[]; words: WordFormation['related']; pronounce: (text: string) => void; manual?: boolean;
 }) {
   const matching: LearningEntry[] = [];
   const seen = new Set([term.trim().toLowerCase()]);
@@ -185,43 +205,143 @@ function RootFamily({ term, parts, words, pronounce }: {
     seen.add(key);
     const entry: LearningEntry = { id: key, text: word.word, partOfSpeech: word.partOfSpeech, meaningZh: word.meaningZh };
     if (hasMatchingRoot(term, parts, word.word, word.parts)) {
-      matching.push({ ...entry, family: { base: term, relation: practicalFormationText(word.relation), parts: word.parts } });
+      matching.push({ ...entry, family: { base: term, relation: word.relation?.trim() || '', parts: word.parts } });
     }
   }
   if (!matching.length) return null;
   return <div className="lexicon-root-related">
     <h5>同根词</h5>
-    <FamilyDiagram base={term} entries={matching} nodes={familyForest(matching)} relation="共同词根" pronounce={pronounce}/>
+    {matching.length > 0 && <FamilyDiagram base={term} entries={matching} nodes={familyForest(matching)} relation="共同词根" pronounce={pronounce}/>}
   </div>;
 }
 
 export function WordPartsEditor({parts,onChange}:{parts:WordPart[];onChange:(parts:WordPart[])=>void}) {
-  return <div className="lexicon-parts-editor">{parts.map((part,index)=><div className="lexicon-formation-editor-row" key={index}>
-    <label>前缀、词根或后缀<select value={part.kind} onChange={event=>onChange(parts.map((v,i)=>i===index?{...v,kind:event.target.value as WordPart['kind']}:v))}>{Object.entries(partLabels).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
-    {(['text','meaningZh'] as const).map(key=><label key={key}>{key==='text'?'在单词中的拼写':'这部分的中文含义'}<input maxLength={3000} value={part[key]} onChange={event=>onChange(parts.map((v,i)=>i===index?{...v,[key]:event.target.value}:v))}/></label>)}
-    <button type="button" aria-label={`删除构词部分 ${index+1}`} onClick={()=>onChange(parts.filter((_,i)=>i!==index))}><X size={16}/></button>
-  </div>)}<button type="button" className="lexicon-link" onClick={()=>onChange([...parts,{kind:'root',text:'',meaningZh:''}])}><Plus size={16}/>添加构词部分</button></div>;
+  const currentParts = useRef(parts);
+  const currentOnChange = useRef(onChange);
+  currentParts.current = parts;
+  currentOnChange.current = onChange;
+  const movePart = (index: number, direction: number) => {
+    const target = index + direction;
+    if (target < 0 || target >= parts.length) return;
+    onChange(moveEditorItems(parts,index,direction));
+  };
+  const removePart = (index: number) => {
+    const removed = parts[index];
+    onChange(parts.filter((_,i)=>i!==index));
+    recordEditorUndo(() => {
+      const latest = currentParts.current;
+      if (latest.includes(removed)) return;
+      const at = Math.min(index, latest.length);
+      currentOnChange.current([...latest.slice(0, at), removed, ...latest.slice(at)]);
+    }, '构词部分已删除');
+  };
+  return <div className="lexicon-parts-editor">
+    <div className="lexicon-editor-subsection-heading">
+      <span>构词部分 <small>({parts.length})</small></span>
+      <div className="lexicon-editor-subsection-actions">
+        <button type="button" className="lexicon-link lexicon-inline-add" onClick={()=>onChange([...parts,{kind:'root',text:'',meaningZh:''}])}><Plus size={16}/>添加</button>
+      </div>
+    </div>
+    <div className="lexicon-editor-subitem-list">{parts.map((part,index)=>{
+      const label=`${partLabels[part.kind]} ${index+1}`;
+      return <article className="lexicon-editor-subitem" key={index}>
+        <div className="lexicon-editor-subitem__heading">
+          <span className="lexicon-editor-part-title"><strong>{part.text.trim()||label}</strong><small>{part.meaningZh||partLabels[part.kind]}</small></span>
+          <div className="lexicon-editor-subitem__controls">
+            <EditorOrderActions className="lexicon-editor-order-actions" label={label} first={index===0} last={index===parts.length-1} onMove={direction=>movePart(index,direction)} onRemove={()=>removePart(index)}/>
+          </div>
+        </div>
+        <div className="lexicon-editor-fields">
+          <label>前缀、词根或后缀<select value={part.kind} onChange={event=>onChange(parts.map((v,i)=>i===index?{...v,kind:event.target.value as WordPart['kind']}:v))}>{Object.entries(partLabels).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
+          {(['text','meaningZh'] as const).map(key=><label key={key}>{key==='text'?'在单词中的拼写':'这部分的中文含义'}<input maxLength={3000} value={part[key]} onChange={event=>onChange(parts.map((v,i)=>i===index?{...v,[key]:event.target.value}:v))}/></label>)}
+        </div>
+      </article>;
+    })}</div>
+  </div>;
 }
 export function DerivativeFamilyEditor({entry,onChange}:{entry:LearningEntry;onChange:(family:NonNullable<LearningEntry['family']>)=>void}) {
   const family=entry.family || {base:'',relation:''};
-  return <details className="lexicon-editor-optional"><summary>派生关系与构词（选填）</summary>
-    <div className="lexicon-formation-editor">
-      {([['base','词族的基础词','例如 considerate'],['parent','直接派生自哪个词','例如 considerate；不确定可留空'],['relation','构词说明','例如加 -ly 变成副词']] as const).map(([key,label,placeholder])=><label key={key}>{label}<input placeholder={placeholder} maxLength={3000} value={family[key]||''} onChange={event=>onChange({...family,[key]:event.target.value})}/></label>)}
-      <WordPartsEditor parts={family.parts||[]} onChange={parts=>onChange({...family,parts})}/>
-    </div>
-  </details>;
+  const filled=!!(family.base?.trim()||family.parent?.trim()||family.relation?.trim()||family.parts?.length);
+  return <div className="lexicon-formation-editor">
+    <h4 className="lexicon-editor-inline-heading">派生关系与构词{filled&&<span className="usage-filled-indicator">已填写</span>}</h4>
+    {([['base','词族的基础词','例如 considerate'],['parent','直接派生自哪个词','例如 considerate；不确定可留空'],['relation','构词说明','例如加 -ly 变成副词']] as const).map(([key,label,placeholder])=><label key={key}>{label}<input placeholder={placeholder} maxLength={3000} value={family[key]||''} onChange={event=>onChange({...family,[key]:event.target.value})}/></label>)}
+    <WordPartsEditor parts={family.parts||[]} onChange={parts=>onChange({...family,parts})}/>
+  </div>;
 }
 export function WordFormationEditor({ entry, onChange }: { entry: LearningEntry; onChange: (entry: LearningEntry) => void }) {
-  const m: WordFormation = { root: '', meaningZh: '', explanation: '', mnemonic: '', ...entry.morphology, parts: entry.morphology?.parts ?? [], related: entry.morphology?.related ?? [] };
+  const [openRelated, setOpenRelated] = useState<Set<number>>(() => new Set());
+  const m: WordFormation = { explanation: '', mnemonic: '', ...entry.morphology, parts: entry.morphology?.parts ?? [], related: entry.morphology?.related ?? [] };
   const patch = (value: Partial<WordFormation>) => onChange({ ...entry, morphology: { ...m, ...value } });
+  const relatedFilled = m.related.some(word => word.word.trim() || word.meaningZh?.trim() || word.relation?.trim());
+  const rootMoreFilled = !!(m.explanation.trim() || m.mnemonic.trim());
+  const currentRelated = useRef(m.related);
+  const currentPatch = useRef(patch);
+  currentRelated.current = m.related;
+  currentPatch.current = patch;
+  const moveRelated = (index: number, direction: number) => {
+    const target = index + direction;
+    if (target < 0 || target >= m.related.length) return;
+    const nextOpen = new Set<number>();
+    openRelated.forEach(openIndex => {
+      nextOpen.add(openIndex === index ? target : openIndex === target ? index : openIndex);
+    });
+    patch({ related: moveEditorItems(m.related, index, direction) });
+    setOpenRelated(nextOpen);
+  };
+  const removeRelated = (index: number) => {
+    const removed = m.related[index];
+    const nextOpen = new Set<number>();
+    openRelated.forEach(openIndex => {
+      if (openIndex < index) nextOpen.add(openIndex);
+      else if (openIndex > index) nextOpen.add(openIndex - 1);
+    });
+    patch({ related: m.related.filter((_, i) => i !== index) });
+    setOpenRelated(nextOpen);
+    recordEditorUndo(() => {
+      const latest = currentRelated.current;
+      if (latest.includes(removed)) return;
+      const at = Math.min(index, latest.length);
+      currentPatch.current({ related: [...latest.slice(0, at), removed, ...latest.slice(at)] });
+      setOpenRelated(previous => {
+        const next = new Set<number>();
+        previous.forEach(openIndex => next.add(openIndex >= at ? openIndex + 1 : openIndex));
+        next.add(at);
+        return next;
+      });
+    }, '同根词已删除');
+  };
   return <div className="lexicon-formation-editor">
-    {([['root', '核心词根的拼写（选填）'], ['meaningZh', '词根的中文含义（选填）'], ['explanation', '各部分怎样组成词义（选填）'], ['mnemonic', '助记联想（选填）']] as const).map(([key, label]) => <label key={key}>{label}<textarea rows={2} maxLength={3000} value={m[key]} onChange={event => patch({ [key]: event.target.value })}/></label>)}
-    <h4>构词部分（按原词顺序）</h4>
-    <p className="lexicon-muted">按拼写顺序添加各部分，合起来应是完整单词。</p>
     <WordPartsEditor parts={m.parts} onChange={parts => patch({ parts })}/>
-    <details className="lexicon-editor-optional"><summary>同根词（选填）</summary>
-    {m.related.map((word,index) => <div className="lexicon-formation-editor-row" key={index}>{(['word','partOfSpeech','meaningZh','relation'] as const).map((key,i) => <label key={key}>{['英文单词','词性','中文含义','同根构词关系（不确定可留空）'][i]}<input maxLength={3000} value={word[key] || ''} onChange={event => patch({ related: m.related.map((v,j) => j === index ? { ...v, [key]: event.target.value } : v) })}/></label>)}<WordPartsEditor parts={word.parts || []} onChange={parts => patch({ related: m.related.map((v,j) => j === index ? { ...v, parts } : v) })}/><button type="button" aria-label={`删除同根词 ${index + 1}`} onClick={() => patch({ related: m.related.filter((_,i) => i !== index) })}><X size={16}/></button></div>)}
-    <button type="button" className="lexicon-link" onClick={() => patch({ related: [...m.related, { word:'', partOfSpeech:'', meaningZh:'' }] })}><Plus size={16}/>添加同根词</button>
+    <details className="lexicon-editor-optional"><summary>更多构词说明（选填）{rootMoreFilled&&<span className="usage-filled-indicator">已填写</span>}</summary>
+      <div className="lexicon-editor-fields">{([['explanation', '各部分怎样组成词义'], ['mnemonic', '助记联想']] as const).map(([key, label]) => <label key={key}>{label}<AutoTextarea maxLength={3000} value={m[key]} onChange={value => patch({ [key]: value })}/></label>)}</div>
+    </details>
+    <details className="lexicon-editor-optional"><summary>同根词（选填）{relatedFilled&&<span className="usage-filled-indicator">已填写</span>}</summary>
+      <div className="lexicon-editor-subsection-heading">
+        <span>同根词 <small>({m.related.length})</small></span>
+        <div className="lexicon-editor-subsection-actions">
+          {m.related.length > 1 && <>
+            <button type="button" className="lexicon-link" disabled={openRelated.size===m.related.length} onClick={()=>setOpenRelated(new Set(m.related.map((_,index)=>index)))}>展开同根词</button>
+            <button type="button" className="lexicon-link" disabled={!openRelated.size} onClick={()=>setOpenRelated(new Set())}>收起同根词</button>
+          </>}
+          <button type="button" className="lexicon-link lexicon-inline-add" onClick={() => { const next=[...m.related,{word:'',partOfSpeech:'',meaningZh:''}]; patch({related:next}); setOpenRelated(previous=>new Set(previous).add(next.length-1)); }}><Plus size={16}/>添加</button>
+        </div>
+      </div>
+      <div className="lexicon-editor-subitem-list">{m.related.map((word,index) => {
+        const canFoldRelated = m.related.length > 1;
+        const open=!canFoldRelated || openRelated.has(index);
+        return <article className="lexicon-editor-subitem" key={index}>
+          <div className="lexicon-editor-subitem__heading">
+            {canFoldRelated ? <button type="button" className="lexicon-editor-subitem__toggle" aria-expanded={open} onClick={()=>setOpenRelated(previous=>{const next=new Set(previous);if(next.has(index))next.delete(index);else next.add(index);return next;})}>
+              <span><strong lang="en">{word.word.trim()||`同根词 ${index+1}`}</strong>{word.meaningZh&&<small>{word.meaningZh}</small>}</span>
+              <ChevronDown className="usage-disclosure-chevron lexicon-editor-subitem__chevron" size={18} aria-hidden="true"/>
+            </button> : <span className="lexicon-editor-part-title"><strong lang="en">{word.word.trim()||`同根词 ${index+1}`}</strong>{word.meaningZh&&<small>{word.meaningZh}</small>}</span>}
+            <div className="lexicon-editor-subitem__controls">
+              <EditorOrderActions className="lexicon-editor-order-actions" label={`同根词 ${index+1}`} first={index===0} last={index===m.related.length-1} onMove={direction=>moveRelated(index,direction)} onRemove={()=>removeRelated(index)}/>
+            </div>
+          </div>
+          {open&&<div className="lexicon-editor-fields">{(['word','partOfSpeech','meaningZh','relation'] as const).map((key,i)=><label key={key}>{['英文单词','词性','中文含义','同根构词关系（不确定可留空）'][i]}<input maxLength={3000} value={word[key] || ''} onChange={event => patch({ related: m.related.map((v,j) => j === index ? { ...v, [key]: event.target.value } : v) })}/></label>)}<WordPartsEditor parts={word.parts || []} onChange={parts => patch({ related: m.related.map((v,j) => j === index ? { ...v, parts } : v) })}/></div>}
+        </article>;
+      })}</div>
     </details>
   </div>;
 }

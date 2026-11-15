@@ -11,7 +11,7 @@ const helpParts = (word: string): NonNullable<LearningEntry['family']>['parts'] 
  {kind:'root',text:'help',meaningZh:'帮助'},
  ...({ helpful:['ful'], helpless:['less'], helpfulness:['ful','ness'] }[word] || []).map(text => ({kind:'suffix' as const,text,meaningZh:text})),
 ];
-const entry: LearningEntry={id:'root',text:'help',meaningZh:'帮助',morphology:{root:'help',meaningZh:'帮助',parts:[{kind:'root',text:'help',meaningZh:'帮助'},{kind:'suffix',text:'ful',meaningZh:'具有……性质的'}],explanation:'构成有帮助的含义。',mnemonic:'记住一个乐于帮助的人。',related:[{word:'helpless',partOfSpeech:'adjective',meaningZh:'无助的',parts:helpParts('helpless')}]}};
+const entry: LearningEntry={id:'root',text:'help',meaningZh:'帮助',morphology:{parts:[{kind:'root',text:'help',meaningZh:'帮助'},{kind:'suffix',text:'ful',meaningZh:'具有……性质的'}],explanation:'构成有帮助的含义。',mnemonic:'记住一个乐于帮助的人。',related:[{word:'helpless',partOfSpeech:'adjective',meaningZh:'无助的',parts:helpParts('helpless')}]}};
 test('root rendering separates true formation from memory and exposes labels, color hooks and same-root speech',()=>{
  const html=renderToStaticMarkup(<RootAnalysis entry={entry} term="helpful" pronounce={()=>{}}/>);
  for(const text of ['辅助记忆联想','词根','后缀','同根词','lexicon-word-part--root','朗读：helpless'])assert.ok(html.includes(text));
@@ -63,7 +63,7 @@ test('inflections use a fixed noun-first display order without mutating legacy o
  assert.deepEqual(forms,before);
 });
 
-test('diagram uses explicit family evidence and omits unknown and cyclic entries', () => {
+test('diagram uses explicit family evidence and hides disconnected saved entries', () => {
  const make = (text:string,parent?:string):LearningEntry => ({id:text,text,meaningZh:'释义',family:{base:'help',relation:'已有关系',parent,parts:helpParts(text)}});
  const entries = [make('helpful','help'),make('helpfulness','helpful'),make('helpless')];
  assert.equal(derivativeDiagramBase(entries,'help',[]),'help');
@@ -80,23 +80,45 @@ test('diagram uses explicit family evidence and omits unknown and cyclic entries
  }
 });
 
-test('historical-only related words and explanations are hidden', () => {
- const morphology = { ...entry.morphology!, root:'hesit', parts:[{kind:'root' as const,text:'hesit',meaningZh:'犹豫'},{kind:'suffix' as const,text:'ate',meaningZh:'动词后缀'}],
+test('saved root explanations remain readable and uncertain related records stay hidden', () => {
+ const morphology = { ...entry.morphology!, parts:[{kind:'root' as const,text:'hesit',meaningZh:'犹豫'},{kind:'suffix' as const,text:'ate',meaningZh:'动词后缀'}],
   explanation:'表示做事前有所犹豫。这个词源于拉丁语。',
   related:['adhere','inherent','inherit'].map(word => ({word,partOfSpeech:'verb',meaningZh:'示例',relation:'未经核实的旧说明'})),
  };
  const html = renderToStaticMarkup(<RootAnalysis entry={{...entry,morphology}} term="hesitate" pronounce={()=>{}}/>);
  assert.match(html,/做事前有所犹豫/);
- assert.doesNotMatch(html,/adhere|inherent|inherit|历史同源词|拉丁语|lexicon-family-diagram/);
+ assert.doesNotMatch(html,/adhere|inherent|inherit|历史同源词|lexicon-family-diagram/);
+ assert.match(html,/拉丁语/);
  const historicalExplanation = {...morphology, explanation:'这个词源于拉丁语。'};
  const restored = renderToStaticMarkup(<RootAnalysis entry={{...entry,morphology:historicalExplanation}} term="hesitate" pronounce={()=>{}}/>);
  assert.match(restored,/lexicon-part-meanings/);
  assert.doesNotMatch(restored,/真实构词分析/);
  assert.match(restored,/辅助记忆联想/);
- assert.doesNotMatch(restored,/拉丁语|历史同源词/);
+ assert.match(restored,/拉丁语/);
+ assert.doesNotMatch(restored,/历史同源词/);
  const historicalOnly = {...historicalExplanation, meaningZh:'拉丁语词根', mnemonic:'',
    parts:morphology.parts.map(part => ({...part, meaningZh:'拉丁语构词'}))};
- assert.equal(renderToStaticMarkup(<RootAnalysis entry={{...entry,morphology:historicalOnly}} term="hesitate" pronounce={()=>{}}/>),'');
+ const historicalOnlyHtml = renderToStaticMarkup(<RootAnalysis entry={{...entry,morphology:historicalOnly}} term="hesitate" pronounce={()=>{}}/>);
+ assert.match(historicalOnlyHtml,/hesit/);
+ assert.match(historicalOnlyHtml,/ate/);
+ assert.match(historicalOnlyHtml,/拉丁语构词/);
+});
+
+test('filled root parts remain visible when spelling is incomplete or does not exactly match the headword', () => {
+ const partial = { ...entry.morphology!, parts: [
+  { kind: 'prefix' as const, text: 're-', meaningZh: '' },
+  { kind: 'root' as const, text: 'hesit', meaningZh: '犹豫' },
+ ] };
+ const partialHtml = renderToStaticMarkup(<RootAnalysis entry={{ ...entry, text: '', meaningZh: '', morphology: partial }} term="hesitate" pronounce={() => {}}/>);
+ assert.match(partialHtml, /re-/);
+ assert.match(partialHtml, /hesit/);
+ assert.match(partialHtml, /犹豫/);
+ assert.doesNotMatch(partialHtml, /lexicon-root-legacy/);
+
+ const spellingOnly = { ...entry.morphology!, parts: [{ kind: 'root' as const, text: 'hesit', meaningZh: '' }] };
+ const spellingHtml = renderToStaticMarkup(<RootAnalysis entry={{ ...entry, text: '', meaningZh: '', morphology: spellingOnly }} term="hesitate" pronounce={() => {}}/>);
+ assert.match(spellingHtml, /hesit/);
+ assert.match(spellingHtml, /词根/);
 });
 
 test('cached rooted derivatives use the root tree even with a single entry and no family metadata', () => {
@@ -111,13 +133,14 @@ test('cached rooted derivatives use the root tree even with a single entry and n
  }
 });
 
-test('root summary with extra glosses is merged into the breakdown instead of repeated above it', () => {
- const morphology = { ...entry.morphology!, root: 'vast', meaningZh: '巨大的，空旷的', related: [],
+test('root breakdown displays each part meaning without restoring removed root summary fields', () => {
+ const morphology = { ...entry.morphology!, related: [],
   parts: [{kind: 'root' as const, text: 'vast', meaningZh: '巨大的'}, {kind: 'suffix' as const, text: 'ness', meaningZh: '表示性质'}],
  };
  const html = renderToStaticMarkup(<RootAnalysis entry={{...entry,morphology}} term="vastness" pronounce={()=>{}}/>);
  assert.doesNotMatch(html, /lexicon-core-root/);
- assert.match(html, /<dd>巨大的、空旷的<\/dd>/);
+ assert.match(html, /<dd>巨大的<\/dd>/);
+ assert.match(html, /<dd>表示性质<\/dd>/);
 });
 
 test('one supported derivative still forms a tree when another old entry has no construction data', () => {
@@ -153,4 +176,15 @@ test('a family card suppresses a repeated gloss and keeps a construction explana
   parts:[{kind:'root',text:'vast',meaningZh:'巨大'},{kind:'suffix',text:'ly',meaningZh:'构成副词'}],
  }};
  assert.match(renderToStaticMarkup(<DerivativeList entries={[vastly]} term="vast" pronounce={()=>{}}/>), /形容词加 -ly 变为副词/);
+});
+
+test('saved derivative learning fields remain visible for a clear family relationship', () => {
+ const manual: LearningEntry = { id: 'manual', text: 'helpfulness', meaningZh: '迟疑', partOfSpeech: 'noun', note: '手动补充说明', example: 'She showed hesitancy.', exampleTranslation: '她表现得很迟疑。', family: { base: 'helpful', parent: 'helpful', relation: '用户填写的构词说明', parts: [{kind:'suffix',text:'ancy',meaningZh:'名词后缀'}] } };
+ const html = renderToStaticMarkup(<DerivativeList entries={[manual]} term="helpful" pronounce={()=>{}} manual/>);
+ for (const value of ['helpfulness','迟疑','手动补充说明','She showed hesitancy.','她表现得很迟疑。','用户填写的构词说明','名词后缀']) assert.ok(html.includes(value), value);
+});
+
+test('same-root records without a clear relationship stay hidden even after manual edits', () => {
+ const html = renderToStaticMarkup(<RootAnalysis term="hesitate" pronounce={()=>{}} manual entry={{id:'r',text:'',meaningZh:'',morphology:{parts:[],explanation:'',mnemonic:'',related:[{word:'hesitant',meaningZh:'迟疑的',partOfSpeech:'adjective',relation:'手动填写关系'}]}}}/>);
+ assert.doesNotMatch(html,/hesitant|迟疑的|手动填写关系/);
 });

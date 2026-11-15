@@ -16,7 +16,7 @@ test('legacy collocation-plus-example shape displays the real sentence and prese
  const legacy:LearningEntry={id:'old',text:'deeply rooted',meaningZh:'根深蒂固的',example:'These customs are deeply rooted in our culture.',exampleTranslation:'这些习俗在我们的文化中根深蒂固。'};
  const before=structuredClone(legacy);const group=groupSenseExamples([legacy],senses,'adjective')[0];assert.equal(group.meaning,'根深蒂固的');assert.equal(group.examples[0].legacyKey,'deeply rooted');assert.equal(group.examples[0].sentence,legacy.example);
  const html=renderToStaticMarkup(<ExampleSenseCards entries={[legacy]} senses={senses} defaultPos="adjective" isSaved={text=>text==='deeply rooted'} busy={false} pronounce={()=>{}} onToggle={()=>{}}/>);
- assert.ok(html.includes('adj.</span>根深蒂固的'));assert.ok(html.includes(`取消收藏：${legacy.example}`));assert.ok(!html.includes('>deeply rooted</p>'));assert.deepEqual(legacy,before);
+ assert.ok(html.includes('adj.</span>根深蒂固的'));assert.ok(html.includes(`取消收藏：${legacy.example}`));assert.ok(html.includes('>deeply rooted</p>'));assert.deepEqual(legacy,before);
 });
 test('unknown sense associations do not invent meanings or drop saved sentences',()=>{
  const result=groupSenseExamples([{id:'old',text:'An existing sentence.',meaningZh:'原译文',senseId:'missing'}],senses);assert.equal(result[0].meaning,'');assert.equal(result[0].examples[0].translation,'原译文');

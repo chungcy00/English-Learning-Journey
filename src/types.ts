@@ -25,8 +25,6 @@ export const USAGE_HEADINGS = {
 export type DetailSection = typeof DETAIL_SECTIONS[number];
 export interface WordPart { kind: 'prefix' | 'root' | 'suffix'; text: string; meaningZh: string }
 export interface WordFormation {
-  root: string;
-  meaningZh: string;
   parts: WordPart[];
   explanation: string;
   mnemonic: string;

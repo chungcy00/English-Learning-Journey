@@ -16,12 +16,67 @@ export function emptyUsageCategory(kind: UsageKind) {
   }
 }
 
-/** Local conversion preserves mapped learning fields and drops obsolete archives. */
+type LegacyUsageFields = { title?: string; explanation?: string; note?: string; examples?: UsageExample[] };
+
+export function compatibilityHasContent(usage: StructuredUsage): boolean {
+  const legacy = usage.compatibility;
+  return !!legacy && [legacy.title, legacy.explanation, legacy.note, legacy.extra].some(value => !!value?.trim())
+    || !!legacy?.examples.some(example => !!example.english.trim() || !!example.chinese.trim());
+}
+
+/** Migrate fields that have an unambiguous destination, then discard the old archive. */
 function normalizeUsage(usage: StructuredUsage): StructuredUsage {
-  if (usage.compatibility) {
-    usage.compatibility.extra = '';
-    // Drop obsolete unknown-field archives after the learner requested cleanup.
-    usage.compatibility.original = {};
+  const examplePairs = (examples: UsageExample[] = []) => examples.map(example => ({
+    ...example, english: text(example.english), chinese: text(example.chinese),
+  }));
+  // Older saved structured records can omit optional strings or example arrays.
+  // Fill display defaults without changing any authored text.
+  if (usage.scenario) usage.scenario = {
+    ...usage.scenario, name: text(usage.scenario.name), explanation: text(usage.scenario.explanation),
+    tip: text(usage.scenario.tip), examples: examplePairs(usage.scenario.examples ?? []),
+  };
+  if (usage.grammar) usage.grammar = {
+    ...usage.grammar, name: text(usage.grammar.name), explanation: text(usage.grammar.explanation),
+    correct: text(usage.grammar.correct), restriction: text(usage.grammar.restriction),
+    note: text(usage.grammar.note), examples: examplePairs(usage.grammar.examples ?? []),
+  };
+  if (usage.comparison) usage.comparison = {
+    ...usage.comparison, context: text(usage.comparison.context), difference: text(usage.comparison.difference),
+    note: text(usage.comparison.note), expressions: (usage.comparison.expressions ?? []).map(expression => ({
+      ...expression, expression: text(expression.expression), examples: examplePairs(expression.examples ?? []),
+    })),
+  };
+  if (usage.error) usage.error = {
+    ...usage.error, name: text(usage.error.name), incorrect: text(usage.error.incorrect),
+    correct: text(usage.error.correct), reason: text(usage.error.reason),
+    note: text(usage.error.note), examples: examplePairs(usage.error.examples ?? []),
+  };
+  const old = (usage as StructuredUsage & { compatibility?: LegacyUsageFields }).compatibility;
+  if (old && usage.kind === 'scenario' && usage.scenario) {
+    usage.scenario.name ||= text(old.title);
+    usage.scenario.explanation ||= text(old.explanation);
+    usage.scenario.tip ||= text(old.note);
+    if (!usage.scenario.examples.length) usage.scenario.examples = old.examples || [];
+  }
+  if (old && usage.kind === 'grammar' && usage.grammar) {
+    usage.grammar.name ||= text(old.title);
+    usage.grammar.explanation ||= text(old.explanation);
+    usage.grammar.note ||= text(old.note);
+    if (!usage.grammar.examples.length) usage.grammar.examples = old.examples || [];
+  }
+  if (old && usage.kind === 'comparison' && usage.comparison) {
+    usage.comparison.context ||= text(old.title);
+    usage.comparison.difference ||= text(old.explanation);
+    usage.comparison.note ||= text(old.note);
+    if (!usage.comparison.expressions.length && old.examples?.length) {
+      usage.comparison.expressions = [{ id: crypto.randomUUID(), expression: '', explanation: '', examples: old.examples }];
+    }
+  }
+  if (old && usage.kind === 'error' && usage.error) {
+    usage.error.name ||= text(old.title);
+    usage.error.reason ||= text(old.explanation);
+    usage.error.note ||= text(old.note);
+    if (!usage.error.examples.length) usage.error.examples = old.examples || [];
   }
   if (usage.comparison) usage.comparison.expressions = usage.comparison.expressions.map(item => {
     const old = item as unknown as Record<string, unknown>;
@@ -31,15 +86,19 @@ function normalizeUsage(usage: StructuredUsage): StructuredUsage {
     return { id: item.id, expression: item.expression, explanation: descriptions.map((value, index) =>
       index < descriptions.length - 1 && !/[。！？.!?]$/.test(value) ? `${value}。` : value).join(''), examples: item.examples };
   });
-  // Scenario, comparison, and grammar entries no longer show generic legacy leftovers.
-  if (usage.kind === 'scenario' || usage.kind === 'comparison' || usage.kind === 'grammar') delete usage.compatibility;
-  // Grammar entries now use the dedicated rule fields; legacy generic leftovers are discarded.
-  if (usage.kind === 'grammar') delete usage.compatibility;
+  delete (usage as StructuredUsage & { compatibility?: LegacyUsageFields }).compatibility;
   return usage;
 }
 
 export function structuredUsage(entry: LearningEntry): StructuredUsage {
-  if (entry.usage?.version === 2) return normalizeUsage(structuredClone(entry.usage));
+  if (entry.usage?.version === 2) {
+    const usage = structuredClone(entry.usage);
+    if (!isUsageKind(usage.kind)) {
+      const categories = usageKinds.filter(kind => usage[kind]);
+      usage.kind = isUsageKind(entry.usageKind) ? entry.usageKind : categories.length === 1 ? categories[0] : undefined;
+    }
+    return normalizeUsage(usage);
+  }
   const kind = isUsageKind(entry.usageKind) ? entry.usageKind : undefined;
   const examples: UsageExample[] = entry.example && entry.exampleTranslation
     ? [{ id: `${entry.id}-example`, english: entry.example, chinese: entry.exampleTranslation }] : [];
@@ -51,15 +110,19 @@ export function structuredUsage(entry: LearningEntry): StructuredUsage {
   if (kind === 'error') result.error = { name: '', severity: 'incorrect', incorrect: text(entry.contrast?.incorrect), correct: text(entry.contrast?.correct), reason: explanation, examples, note: text(entry.note) };
   const oldTitle = text(entry.text);
   const hasTitle = oldTitle.trim() && !Object.values(USAGE_HEADINGS).includes(oldTitle as typeof USAGE_HEADINGS[UsageKind]);
-  const mappedExamples = kind && kind !== 'comparison' && examples.length > 0;
-  const leftoverExamples = !mappedExamples && (entry.example || entry.exampleTranslation)
-    ? [{ id: `${entry.id}-original-example`, english: text(entry.example), chinese: text(entry.exampleTranslation) }] : [];
-  result.compatibility = {
-    title: hasTitle ? oldTitle : '', explanation: kind ? '' : explanation,
-    note: kind ? '' : text(entry.note), examples: leftoverExamples,
-    extra: '',
-    original: {},
-  };
+  if (result.scenario && hasTitle) result.scenario.name = oldTitle;
+  if (result.grammar && hasTitle) result.grammar.name = oldTitle;
+  if (result.comparison && hasTitle) result.comparison.context = oldTitle;
+  if (result.error && hasTitle) result.error.name = oldTitle;
+  if (result.scenario && entry.note) result.scenario.tip = entry.note;
+  if (result.grammar && entry.note) result.grammar.note = entry.note;
+  if (result.comparison && entry.note) result.comparison.note = entry.note;
+  if (result.error && entry.note) result.error.note = entry.note;
+  if (kind && kind !== 'comparison' && examples.length) {
+    if (kind === 'scenario' && result.scenario) result.scenario.examples = examples;
+    if (kind === 'grammar' && result.grammar) result.grammar.examples = examples;
+    if (kind === 'error' && result.error) result.error.examples = examples;
+  }
   return normalizeUsage(result);
 }
 
@@ -68,42 +131,36 @@ export function usageEntry(id: string, usage: StructuredUsage): LearningEntry {
 }
 export function upgradeUsageDetails(details: VocabularyDetails): VocabularyDetails {
   return { ...details, sections: { ...details.sections,
-    usage: (details.sections.usage || []).map(entry => usageEntry(entry.id, structuredUsage(entry))),
+    usage: (details.sections.usage || []).map(entry => usageEntry(entry.id, structuredUsage(entry))).filter(entry => isUsageKind(entry.usageKind)),
   } };
 }
 
 /** Validate editable pairs together. Incomplete historical pairs remain in compatibility. */
 export function usageValidationError(usage: StructuredUsage, generated = false): string | undefined {
-  const historical = !!usage.compatibility && !generated;
   const required = (value: unknown) => typeof value === 'string' && !!value.trim();
   const pairs = (examples: UsageExample[] | undefined) => Array.isArray(examples) && examples.every(example =>
     required(example.english) && required(example.chinese));
-  if (!isUsageKind(usage.kind)) return usage.compatibility && !generated ? undefined : '请选择用法类别。';
+  if (!isUsageKind(usage.kind)) return '请选择用法类别。';
   switch (usage.kind) {
     case 'scenario':
-      if (!usage.scenario || (!historical && (!required(usage.scenario.name) || !required(usage.scenario.explanation)))) return '请填写场景名称和中文用法说明。';
+      if (!usage.scenario || (!generated && (!required(usage.scenario.name) || !required(usage.scenario.explanation)))) return '请填写场景名称和中文用法说明。';
       if (!pairs(usage.scenario.examples)) return '请为每条例句同时填写英文和中文译文，或移除空例句。';
       break;
     case 'grammar':
-      if (!usage.grammar || (!historical && (!required(usage.grammar.name) || !required(usage.grammar.explanation)))) return '请填写搭配规则名称和中文规则说明。';
+      if (!usage.grammar || (!generated && (!required(usage.grammar.name) || !required(usage.grammar.explanation)))) return '请填写搭配规则名称和中文规则说明。';
       if (!pairs(usage.grammar.examples)) return '请为每条例句同时填写英文和中文译文，或移除空例句。';
       break;
     case 'comparison':
-      if (!usage.comparison || (!historical && (!required(usage.comparison.context) || !required(usage.comparison.difference)))) return '请填写比较情境和核心区别。';
-      if ((!historical && usage.comparison.expressions.length < 2) || usage.comparison.expressions.some(item => !required(item.expression) || !required(item.explanation))) return '请为对比表达填写单词或词组和中文语义说明。';
+      if (!usage.comparison || (!generated && (!required(usage.comparison.context) || !required(usage.comparison.difference)))) return '请填写比较情境和核心区别。';
+      if ((!generated && usage.comparison.expressions.length < 2) || usage.comparison.expressions.some(item => !required(item.expression) || !required(item.explanation))) return '请为对比表达填写单词或词组和中文语义说明。';
       if (usage.comparison.expressions.some(item => !pairs(item.examples))) return '请为每条对比例句同时填写英文和中文译文。';
       break;
     case 'error':
-      if (!usage.error || (!historical && (!required(usage.error.name) || !required(usage.error.incorrect) || !required(usage.error.correct) || !required(usage.error.reason)))) return '请填写错误类型、错误表达、正确表达和错误原因。';
+      if (!usage.error || (!generated && (!required(usage.error.name) || !required(usage.error.incorrect) || !required(usage.error.correct) || !required(usage.error.reason)))) return '请填写错误类型、错误表达、正确表达和错误原因。';
       if (!['incorrect', 'unnatural'].includes(usage.error.severity)) return '请选择表达问题的性质。';
       if (!pairs(usage.error.examples)) return '请为每条修正例句同时填写英文和中文译文。';
       break;
   }
-}
-
-export function compatibilityHasContent(usage: StructuredUsage) {
-  const old = usage.compatibility;
-  return !!old && !!(old.title.trim() || old.explanation.trim() || old.note.trim() || old.extra.trim() || old.examples.length);
 }
 
 export function usageHasContent(usage: StructuredUsage): boolean {
@@ -114,5 +171,5 @@ export function usageHasContent(usage: StructuredUsage): boolean {
     if (value && typeof value === 'object') return Object.entries(value).some(([key, item]) => key !== 'id' && key !== 'severity' && hasText(item));
     return false;
   };
-  return hasText(content) || compatibilityHasContent(usage);
+  return hasText(content);
 }
