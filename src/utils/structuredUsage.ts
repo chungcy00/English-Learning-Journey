@@ -31,7 +31,6 @@ function normalizeUsage(usage: StructuredUsage): StructuredUsage {
     return { id: item.id, expression: item.expression, explanation: descriptions.map((value, index) =>
       index < descriptions.length - 1 && !/[。！？.!?]$/.test(value) ? `${value}。` : value).join(''), examples: item.examples };
   });
-  if (usage.scenario) usage.scenario.tip = '';
   // Scenario, comparison, and grammar entries no longer show generic legacy leftovers.
   if (usage.kind === 'scenario' || usage.kind === 'comparison' || usage.kind === 'grammar') delete usage.compatibility;
   // Grammar entries now use the dedicated rule fields; legacy generic leftovers are discarded.

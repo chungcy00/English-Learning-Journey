@@ -28,18 +28,30 @@ test('unknown categories and partial or unattributed historical examples remain 
   assert.deepEqual(comparison.comparison?.expressions,[]);
   assert.equal(comparison.compatibility,undefined);
   const html=renderToStaticMarkup(<UsageEditor entries={[usageEntry(raw.id,converted)]} onChange={()=>{}}/>);
-  assert.match(html,/历史说明/); assert.match(html,/完整旧说明/);
+  assert.match(html,/未整理的历史资料/);
+  assert.match(html,/完整旧说明/);
+  assert.doesNotMatch(html,/历史说明/);
+  assert.doesNotMatch(html,/<details class="usage-history-editor" open/);
   assert.doesNotMatch(html,/语体差异（旧版）|自然表达（旧版）/);
 });
-test('old scenario tips are removed while scenario meaning and paired examples remain',()=>{
+test('scenario tips remain available for editing alongside scenario meaning and paired examples',()=>{
  const usage=emptyUsage('scenario');usage.scenario={name:'接触危险物质',explanation:'说明某人因工作而接触危险物质。',tip:'用于表达“使接触”的情境',examples:[{id:'a',english:'The workers were exposed to harmful chemicals.',chinese:'工人们接触到了有害化学物质。'}]};
  const entry=usageEntry('scene',usage);entry.text='用于表达“使接触”的情境';entry.usage={...usage,compatibility:{title:entry.text,explanation:'旧版通用说明',note:'',examples:[],extra:'',original:{}}};const converted=structuredUsage(entry);
- assert.equal(converted.scenario?.tip,'');assert.equal(converted.scenario?.explanation,usage.scenario.explanation);assert.equal(converted.scenario?.examples[0].english,usage.scenario.examples[0].english);
+ assert.equal(converted.scenario?.tip,usage.scenario.tip);assert.equal(converted.scenario?.explanation,usage.scenario.explanation);assert.equal(converted.scenario?.examples[0].english,usage.scenario.examples[0].english);
  assert.equal(converted.compatibility,undefined);
  const editor=renderToStaticMarkup(<UsageEditor entries={[entry]} onChange={()=>{}}/>);
  const html=renderToStaticMarkup(<UsageList entries={[entry]} pronounce={()=>{}}/>);
  assert.doesNotMatch(editor,/使用提示/);assert.doesNotMatch(html,/用于表达“使接触”的情境/);
  assert.match(html,/工人们接触到了有害化学物质/);
+});
+test('usage editor starts compact, keeps empty categories form-free, and presents grouped actions',()=>{
+ const grammar=emptyUsage('grammar');grammar.grammar={name:'interfere with',explanation:'表示妨碍某个过程。',correct:'',restriction:'',note:'',examples:[]};
+ const html=renderToStaticMarkup(<UsageEditor entries={[usageEntry('rule',grammar)]} onChange={()=>{}}/>);
+ assert.match(html,/class="usage-category-toggle" aria-expanded="false"/);
+ assert.doesNotMatch(html,/usage-item-toggle|aria-label="展开常见搭配限制 1"/);
+ assert.doesNotMatch(html,/此类别还没有内容|搭配规则名称|中文规则说明/);
+ assert.equal((html.match(/class="usage-category-toggle" aria-expanded="false"/g)||[]).length,4);
+ assert.match(html,/usage-editor-group art-anchor/);
 });
 test('new paired examples validate together and inactive categories survive serialization', () => {
   const usage=emptyUsage('scenario');
@@ -56,8 +68,7 @@ test('grammar category has one disclosure for all rules while optional rule fiel
  assert.equal(usageValidationError(usage),undefined);
  const entry=usageEntry('g',usage);
  const editor=renderToStaticMarkup(<UsageEditor entries={[entry]} onChange={()=>{}}/>);
- assert.match(editor,/<details class="usage-more-options">/);assert.doesNotMatch(editor,/<details class="usage-more-options" open/);
- assert.match(editor,/正确搭配（选填）/);assert.match(editor,/常见错误或限制（选填）/);
+ assert.doesNotMatch(editor,/<details class="usage-more-options" open/);
  const html=renderToStaticMarkup(<UsageList entries={[entry,usageEntry('g2',{...usage,grammar:{...usage.grammar!,name:'interfere with',correct:'',examples:[]}})]} pronounce={()=>{}}/>);
  assert.equal((html.match(/class="usage-point usage-point--grammar"/g)||[]).length,2);
  assert.equal((html.match(/class="usage-category-disclosure" open=""/g)||[]).length,1);
@@ -65,8 +76,9 @@ test('grammar category has one disclosure for all rules while optional rule fiel
  assert.doesNotMatch(html,/搭配规则<\/h5><span class="usage-disclosure-triangle"/);
  assert.equal((html.match(/朗读例句：/g)||[]).length,2);
  assert.doesNotMatch(html,/正确搭配/);assert.match(html,/更多说明/);assert.match(html,/常见错误或限制/);
- assert.match(editor,/class="usage-category-disclosure-editor" open=""/);assert.match(editor,/搭配规则名称/);
- assert.equal((editor.match(/class="usage-disclosure-triangle"/g)||[]).length,1);
+ assert.match(editor,/常见搭配限制<\/strong><span class="usage-category-count">1/);
+ assert.doesNotMatch(editor,/interfere in/);
+ assert.doesNotMatch(editor,/搭配规则名称|中文规则说明|正确搭配（选填）/);
 });
 test('grammar display keeps correct construction as unlabelled auxiliary text and hides it when empty',()=>{
  const usage=emptyUsage('grammar');usage.grammar={name:'interfere in',explanation:'表示主动干涉他人的事务。',correct:'interfere in someone’s affairs',restriction:'',note:'',examples:[{id:'a',english:'Do not interfere in their affairs.',chinese:'不要干涉他们的事务。'}]};
@@ -114,7 +126,8 @@ test('comparison merges old meaning and emphasis into one explanation and remove
  assert.equal((html.match(/usage-semantic-explanation/g)||[]).length,1);
  assert.doesNotMatch(html,/旧标题|旧说明|其他历史资料/);
  const editor=renderToStaticMarkup(<UsageEditor entries={[normalized]} onChange={()=>{}}/>);
- assert.match(editor,/中文语义说明/);assert.doesNotMatch(editor,/中文意思|语义侧重点|保留的历史内容/);
+ assert.match(editor,/容易混淆的近义词<\/strong><span class="usage-category-count">1/);
+ assert.doesNotMatch(editor,/朋友争执|中文意思|语义侧重点|保留的历史内容|中文语义说明/);
  assert.match(html,/朗读：interfere in/);
 });
 test('comparison normalization removes only exact repeated information and preserves manual explanations',()=>{

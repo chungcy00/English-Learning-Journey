@@ -66,6 +66,16 @@ test('typography uses the requested mobile-first scale and one desktop breakpoin
   assert.match(css, /\.type-translation[^}]*font-size: var\(--type-translation\);[^}]*line-height: 1\.6;/);
 });
 
+test('usage editor summaries stay compact on tablet and phone without shrinking touch targets', () => {
+  assert.match(css, /--type-usage-summary: 0\.625rem/);
+  assert.match(css, /\.usage-item-copy strong[\s\S]*?font-size: var\(--type-label\)[\s\S]*?-webkit-line-clamp: 2/);
+  assert.match(css, /\.usage-item-copy > span[\s\S]*?text-overflow: ellipsis/);
+  assert.match(css, /\.usage-item-copy > span[\s\S]*?white-space: nowrap/);
+  assert.match(css, /\.usage-order-actions button \{ flex-basis: 32px; min-height: 40px/);
+  assert.match(css, /@media \(max-width: 1023px\)[\s\S]*?\.usage-editor-group \{ margin-block: 2px 8px/);
+  assert.match(css, /\.usage-example-editor \{ gap: 6px; padding-block: 6px/);
+});
+
 test('application components do not bypass typography tokens with literal size utilities', () => {
   const visit = (dir: string) => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
