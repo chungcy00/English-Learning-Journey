@@ -1,14 +1,15 @@
 import { vocabularyHeadword } from '../utils/vocabularyCase';
 import { HandOutline, StudyEmptyState } from './LearningArt';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { ChevronDown, Plus, Volume2 } from 'lucide-react';
 import { AutoTextarea } from './AutoTextarea';
 import { EntryExample } from './PhraseUsage';
 import { FamilyTreeConnections } from './FamilyTreeConnections';
-import { EditorOrderActions, moveEditorItems, recordEditorUndo } from './EditorControls';
+import { EditorOrderActions, moveEditorItems, useEditorUndo } from './EditorControls';
 import type { LearningEntry, WordFormation, WordPart } from '../types';
 import { derivativeDiagramBase, familyForest, hasExactParts, hasMatchingRoot, hasTransparentDerivation, practicalFormationText, partOfSpeechAbbreviation, verifiedWordFamilyRelation, type FamilyNode } from '../utils/wordFormation';
 
+type ValueUpdate<T> = T | ((current: T) => T);
 const partLabels = { prefix: '前缀', root: '词根', suffix: '后缀' };
 export function HighlightedWord({word,parts,partOfSpeech}:{word:string;parts?:WordPart[];partOfSpeech?:string}) {
   const spelling = vocabularyHeadword(word, partOfSpeech);
@@ -215,11 +216,8 @@ function RootFamily({ term, parts, words, pronounce, manual = false }: {
   </div>;
 }
 
-export function WordPartsEditor({parts,onChange}:{parts:WordPart[];onChange:(parts:WordPart[])=>void}) {
-  const currentParts = useRef(parts);
-  const currentOnChange = useRef(onChange);
-  currentParts.current = parts;
-  currentOnChange.current = onChange;
+export function WordPartsEditor({parts,onChange}:{parts:WordPart[];onChange:(parts:ValueUpdate<WordPart[]>)=>void}) {
+  const recordEditorUndo = useEditorUndo();
   const movePart = (index: number, direction: number) => {
     const target = index + direction;
     if (target < 0 || target >= parts.length) return;
@@ -229,10 +227,11 @@ export function WordPartsEditor({parts,onChange}:{parts:WordPart[];onChange:(par
     const removed = parts[index];
     onChange(parts.filter((_,i)=>i!==index));
     recordEditorUndo(() => {
-      const latest = currentParts.current;
-      if (latest.includes(removed)) return;
-      const at = Math.min(index, latest.length);
-      currentOnChange.current([...latest.slice(0, at), removed, ...latest.slice(at)]);
+      onChange(latest => {
+        if (latest.includes(removed)) return latest;
+        const at = Math.min(index, latest.length);
+        return [...latest.slice(0, at), removed, ...latest.slice(at)];
+      });
     }, '构词部分已删除');
   };
   return <div className="lexicon-parts-editor">
@@ -245,39 +244,36 @@ export function WordPartsEditor({parts,onChange}:{parts:WordPart[];onChange:(par
     <div className="lexicon-editor-subitem-list">{parts.map((part,index)=>{
       const label=`${partLabels[part.kind]} ${index+1}`;
       return <article className="lexicon-editor-subitem" key={index}>
-        <div className="lexicon-editor-subitem__heading">
-          <span className="lexicon-editor-part-title"><strong>{part.text.trim()||label}</strong><small>{part.meaningZh||partLabels[part.kind]}</small></span>
-          <div className="lexicon-editor-subitem__controls">
-            <EditorOrderActions className="lexicon-editor-order-actions" label={label} first={index===0} last={index===parts.length-1} onMove={direction=>movePart(index,direction)} onRemove={()=>removePart(index)}/>
-          </div>
-        </div>
-        <div className="lexicon-editor-fields">
-          <label>前缀、词根或后缀<select value={part.kind} onChange={event=>onChange(parts.map((v,i)=>i===index?{...v,kind:event.target.value as WordPart['kind']}:v))}>{Object.entries(partLabels).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
-          {(['text','meaningZh'] as const).map(key=><label key={key}>{key==='text'?'在单词中的拼写':'这部分的中文含义'}<input maxLength={3000} value={part[key]} onChange={event=>onChange(parts.map((v,i)=>i===index?{...v,[key]:event.target.value}:v))}/></label>)}
+        <div className="lexicon-editor-fields lexicon-part-editor-fields">
+          <label>构词类型<select value={part.kind} onChange={event=>onChange(parts.map((v,i)=>i===index?{...v,kind:event.target.value as WordPart['kind']}:v))}>{Object.entries(partLabels).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
+          <label>在单词中的拼写<input maxLength={3000} value={part.text} onChange={event=>onChange(parts.map((value,i)=>i===index?{...value,text:event.target.value}:value))}/></label>
+          <label>这部分的中文含义<AutoTextarea maxLength={3000} value={part.meaningZh} onChange={meaningZh=>onChange(parts.map((value,i)=>i===index?{...value,meaningZh}:value))}/></label>
+          <EditorOrderActions className="lexicon-editor-order-actions" label={label} first={index===0} last={index===parts.length-1} onMove={direction=>movePart(index,direction)} onRemove={()=>removePart(index)}/>
         </div>
       </article>;
     })}</div>
   </div>;
 }
-export function DerivativeFamilyEditor({entry,onChange}:{entry:LearningEntry;onChange:(family:NonNullable<LearningEntry['family']>)=>void}) {
+export function DerivativeFamilyEditor({entry,onChange,candidates=[]}:{entry:LearningEntry;onChange:(family:ValueUpdate<NonNullable<LearningEntry['family']>>)=>void;candidates?:string[]}) {
   const family=entry.family || {base:'',relation:''};
-  const filled=!!(family.base?.trim()||family.parent?.trim()||family.relation?.trim()||family.parts?.length);
+  const choices=[...new Set([family.base, family.parent, ...candidates].filter(word=>word?.trim() && word!==entry.text))];
+  const listId=`family-parents-${entry.id}`;
   return <div className="lexicon-formation-editor">
-    <h4 className="lexicon-editor-inline-heading">派生关系与构词{filled&&<span className="usage-filled-indicator">已填写</span>}</h4>
-    {([['base','词族的基础词','例如 considerate'],['parent','直接派生自哪个词','例如 considerate；不确定可留空'],['relation','构词说明','例如加 -ly 变成副词']] as const).map(([key,label,placeholder])=><label key={key}>{label}<input placeholder={placeholder} maxLength={3000} value={family[key]||''} onChange={event=>onChange({...family,[key]:event.target.value})}/></label>)}
-    <WordPartsEditor parts={family.parts||[]} onChange={parts=>onChange({...family,parts})}/>
+    <label>直接派生自（选填）<input list={listId} placeholder="选择直接构成这个词的词语" maxLength={3000} value={family.parent||''} onChange={event=>onChange({...family,parent:event.target.value})}/><datalist id={listId}>{choices.map(word=><option key={word} value={word}/>)}</datalist></label>
+    <label>构词说明<AutoTextarea placeholder="例如 helpful 加 -ness 构成名词" maxLength={3000} value={family.relation||''} onChange={relation=>onChange({...family,relation})}/></label>
+    <details className="lexicon-editor-optional"><summary>构词拆解（选填）{family.parts?.some(part => part.text.trim() || part.meaningZh.trim()) ? <span className="usage-filled-indicator">已填写</span> : null}</summary><WordPartsEditor parts={family.parts||[]} onChange={update=>onChange(current=>({...current,parts:typeof update === 'function' ? update(current.parts || []) : update}))}/></details>
   </div>;
 }
-export function WordFormationEditor({ entry, onChange }: { entry: LearningEntry; onChange: (entry: LearningEntry) => void }) {
+export function WordFormationEditor({ entry, onChange, term = '' }: { entry: LearningEntry; onChange: (entry: ValueUpdate<LearningEntry>) => void; term?: string }) {
+  const recordEditorUndo = useEditorUndo();
   const [openRelated, setOpenRelated] = useState<Set<number>>(() => new Set());
+  const [foldRelated, setFoldRelated] = useState((entry.morphology?.related.length || 0) > 1);
   const m: WordFormation = { explanation: '', mnemonic: '', ...entry.morphology, parts: entry.morphology?.parts ?? [], related: entry.morphology?.related ?? [] };
-  const patch = (value: Partial<WordFormation>) => onChange({ ...entry, morphology: { ...m, ...value } });
-  const relatedFilled = m.related.some(word => word.word.trim() || word.meaningZh?.trim() || word.relation?.trim());
-  const rootMoreFilled = !!(m.explanation.trim() || m.mnemonic.trim());
-  const currentRelated = useRef(m.related);
-  const currentPatch = useRef(patch);
-  currentRelated.current = m.related;
-  currentPatch.current = patch;
+  const patch = (value: Partial<WordFormation> | ((current: WordFormation) => Partial<WordFormation>)) => onChange(current => {
+    const morphology: WordFormation = { parts: [], explanation: '', mnemonic: '', related: [], ...current.morphology };
+    return { ...current, morphology: { ...morphology, ...(typeof value === 'function' ? value(morphology) : value) } };
+  });
+  const relatedFilled = m.related.some(word => word.word.trim() || word.meaningZh?.trim() || word.relation?.trim() || word.partOfSpeech?.trim() || word.parts?.some(part => part.text.trim() || part.meaningZh.trim()));
   const moveRelated = (index: number, direction: number) => {
     const target = index + direction;
     if (target < 0 || target >= m.related.length) return;
@@ -298,36 +294,35 @@ export function WordFormationEditor({ entry, onChange }: { entry: LearningEntry;
     patch({ related: m.related.filter((_, i) => i !== index) });
     setOpenRelated(nextOpen);
     recordEditorUndo(() => {
-      const latest = currentRelated.current;
-      if (latest.includes(removed)) return;
-      const at = Math.min(index, latest.length);
-      currentPatch.current({ related: [...latest.slice(0, at), removed, ...latest.slice(at)] });
+      patch(current => {
+        if (current.related.includes(removed)) return {};
+        const at = Math.min(index, current.related.length);
+        return { related: [...current.related.slice(0, at), removed, ...current.related.slice(at)] };
+      });
       setOpenRelated(previous => {
         const next = new Set<number>();
-        previous.forEach(openIndex => next.add(openIndex >= at ? openIndex + 1 : openIndex));
-        next.add(at);
+        previous.forEach(openIndex => next.add(openIndex >= index ? openIndex + 1 : openIndex));
+        next.add(index);
         return next;
       });
     }, '同根词已删除');
   };
   return <div className="lexicon-formation-editor">
-    <WordPartsEditor parts={m.parts} onChange={parts => patch({ parts })}/>
-    <details className="lexicon-editor-optional"><summary>更多构词说明（选填）{rootMoreFilled&&<span className="usage-filled-indicator">已填写</span>}</summary>
-      <div className="lexicon-editor-fields">{([['explanation', '各部分怎样组成词义'], ['mnemonic', '助记联想']] as const).map(([key, label]) => <label key={key}>{label}<AutoTextarea maxLength={3000} value={m[key]} onChange={value => patch({ [key]: value })}/></label>)}</div>
-    </details>
-    <details className="lexicon-editor-optional"><summary>同根词（选填）{relatedFilled&&<span className="usage-filled-indicator">已填写</span>}</summary>
+    <WordPartsEditor parts={m.parts} onChange={update => patch(current => ({ parts: typeof update === 'function' ? update(current.parts) : update }))}/>
+    <label>构词说明（选填）<AutoTextarea maxLength={3000} value={m.explanation} onChange={explanation=>patch({explanation})}/></label>
+    <details className="lexicon-editor-optional"><summary>辅助记忆（选填）{m.mnemonic.trim()&&<span className="usage-filled-indicator">已填写</span>}</summary><AutoTextarea aria-label="助记联想" maxLength={3000} value={m.mnemonic} onChange={mnemonic=>patch({mnemonic})}/></details>
+    <details className="lexicon-editor-optional"><summary>同根词 <small>({m.related.length})</small>{relatedFilled&&<span className="usage-filled-indicator">已填写</span>}</summary>
       <div className="lexicon-editor-subsection-heading">
-        <span>同根词 <small>({m.related.length})</small></span>
         <div className="lexicon-editor-subsection-actions">
           {m.related.length > 1 && <>
             <button type="button" className="lexicon-link" disabled={openRelated.size===m.related.length} onClick={()=>setOpenRelated(new Set(m.related.map((_,index)=>index)))}>展开同根词</button>
             <button type="button" className="lexicon-link" disabled={!openRelated.size} onClick={()=>setOpenRelated(new Set())}>收起同根词</button>
           </>}
-          <button type="button" className="lexicon-link lexicon-inline-add" onClick={() => { const next=[...m.related,{word:'',partOfSpeech:'',meaningZh:''}]; patch({related:next}); setOpenRelated(previous=>new Set(previous).add(next.length-1)); }}><Plus size={16}/>添加</button>
+          <button type="button" className="lexicon-link lexicon-inline-add" onClick={() => { if (m.related.length) setFoldRelated(true); const next=[...m.related,{word:'',partOfSpeech:'',meaningZh:''}]; patch({related:next}); setOpenRelated(previous=>new Set(previous).add(next.length-1)); }}><Plus size={16}/>添加</button>
         </div>
       </div>
       <div className="lexicon-editor-subitem-list">{m.related.map((word,index) => {
-        const canFoldRelated = m.related.length > 1;
+        const canFoldRelated = foldRelated;
         const open=!canFoldRelated || openRelated.has(index);
         return <article className="lexicon-editor-subitem" key={index}>
           <div className="lexicon-editor-subitem__heading">
@@ -339,7 +334,7 @@ export function WordFormationEditor({ entry, onChange }: { entry: LearningEntry;
               <EditorOrderActions className="lexicon-editor-order-actions" label={`同根词 ${index+1}`} first={index===0} last={index===m.related.length-1} onMove={direction=>moveRelated(index,direction)} onRemove={()=>removeRelated(index)}/>
             </div>
           </div>
-          {open&&<div className="lexicon-editor-fields">{(['word','partOfSpeech','meaningZh','relation'] as const).map((key,i)=><label key={key}>{['英文单词','词性','中文含义','同根构词关系（不确定可留空）'][i]}<input maxLength={3000} value={word[key] || ''} onChange={event => patch({ related: m.related.map((v,j) => j === index ? { ...v, [key]: event.target.value } : v) })}/></label>)}<WordPartsEditor parts={word.parts || []} onChange={parts => patch({ related: m.related.map((v,j) => j === index ? { ...v, parts } : v) })}/></div>}
+          {open&&<div className="lexicon-editor-fields">{(['word','partOfSpeech','meaningZh','relation'] as const).map((key,i)=><label key={key}>{['英文单词','词性','中文含义','同根构词关系（不确定可留空）'][i]}{key === 'word' || key === 'partOfSpeech' ? <input maxLength={3000} value={word[key] || ''} onChange={event => patch({ related: m.related.map((v,j) => j === index ? { ...v, [key]: event.target.value } : v) })}/> : <AutoTextarea maxLength={3000} value={word[key] || ''} onChange={value => patch({ related: m.related.map((item,j) => j === index ? { ...item, [key]: value } : item) })}/> }</label>)}{word.word.trim() && !hasMatchingRoot(term,m.parts,word.word,word.parts) && <p className="lexicon-editor-status">关系资料待完善，暂不展示在词卡。请补充能对应共同词根的构词拆解。</p>}<WordPartsEditor parts={word.parts || []} onChange={update => patch(current => ({ related: current.related.map((value,j) => j === index ? { ...value, parts: typeof update === 'function' ? update(value.parts || []) : update } : value) }))}/></div>}
         </article>;
       })}</div>
     </details>

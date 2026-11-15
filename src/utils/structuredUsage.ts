@@ -152,11 +152,12 @@ export function usageValidationError(usage: StructuredUsage, generated = false):
       break;
     case 'comparison':
       if (!usage.comparison || (!generated && (!required(usage.comparison.context) || !required(usage.comparison.difference)))) return '请填写比较情境和核心区别。';
-      if ((!generated && usage.comparison.expressions.length < 2) || usage.comparison.expressions.some(item => !required(item.expression) || !required(item.explanation))) return '请为对比表达填写单词或词组和中文语义说明。';
+      if (!generated && usage.comparison.expressions.length < 2) return '近义词比较至少需要两个对比表达，请添加表达后再保存。';
+      if (usage.comparison.expressions.some(item => !required(item.expression) || !required(item.explanation))) return '请为对比表达填写单词或词组和中文语义说明。';
       if (usage.comparison.expressions.some(item => !pairs(item.examples))) return '请为每条对比例句同时填写英文和中文译文。';
       break;
     case 'error':
-      if (!usage.error || (!generated && (!required(usage.error.name) || !required(usage.error.incorrect) || !required(usage.error.correct) || !required(usage.error.reason)))) return '请填写错误类型、错误表达、正确表达和错误原因。';
+      if (!usage.error || (!generated && (!required(usage.error.name) || !required(usage.error.incorrect) || !required(usage.error.correct) || !required(usage.error.reason)))) return usage.error?.severity === 'unnatural' ? '请填写问题名称、原表达、更自然的表达和改进原因。' : '请填写问题名称、错误表达、正确表达和错误原因。';
       if (!['incorrect', 'unnatural'].includes(usage.error.severity)) return '请选择表达问题的性质。';
       if (!pairs(usage.error.examples)) return '请为每条修正例句同时填写英文和中文译文。';
       break;

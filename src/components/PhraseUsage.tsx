@@ -1,10 +1,14 @@
 import { HandOutline } from './LearningArt';
 import React from 'react';
 import { Bookmark, Volume2 } from 'lucide-react';
+import { entryExamples } from '../utils/vocabularyEditor';
 import type { LearningEntry } from '../types';
 
 export function EntryExample({entry,pronounce}:{entry:LearningEntry;pronounce:(text:string)=>void}) {
-  return entry.example || entry.exampleTranslation ? <div className="lexicon-example">{entry.example && <button type="button" aria-label={`朗读例句：${entry.example}`} onClick={()=>pronounce(entry.example!)}><Volume2 size={16}/></button>}<div><p lang="en">{entry.example}</p>{entry.exampleTranslation&&<p className="lexicon-muted">{entry.exampleTranslation}</p>}</div></div> : null;
+  return <>{entryExamples(entry).map(example => <div className="lexicon-example" key={example.id}>
+    {example.english && <button type="button" aria-label={`朗读例句：${example.english}`} onClick={()=>pronounce(example.english)}><Volume2 size={16}/></button>}
+    <div>{example.english && <p lang="en">{example.english}</p>}{example.chinese&&<p className="lexicon-muted">{example.chinese}</p>}</div>
+  </div>)}</>;
 }
 export function PhraseList({entries,isSaved,busy,pronounce,onToggle}:{entries:LearningEntry[];isSaved:(text:string)=>boolean;busy:boolean;pronounce:(text:string)=>void;onToggle:(entry:LearningEntry)=>void}) {
   return <ul className="lexicon-phrase-list">{entries.map(entry=><li key={entry.id} className="lexicon-phrase-card"><HandOutline/>

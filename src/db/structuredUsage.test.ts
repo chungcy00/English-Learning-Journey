@@ -63,3 +63,44 @@ test('all six sections preserve editable learning fields through save and reopen
  const reopened = await readVocabularyDetails(word);
  assert.deepEqual(reopened.sections, details.sections);
 });
+
+test('every editor section atomically rejects a stale save and preserves newer content', async () => {
+ const { editorSnapshot } = await import('../utils/vocabularyEditor');
+ const word = basicVocabulary('hesitate');
+ const baseline = legacyDetails(word);
+ await saveVocabularyDetails(baseline);
+ for (const section of ['examples','roots','derivatives','phrases','definitions','usage','basic'] as const) {
+   const initial = await readVocabularyDetails(word);
+   const first = structuredClone(initial);
+   const stale = structuredClone(initial);
+   if (section === 'basic') { first.phoneticUK = 'first'; stale.phoneticUK = 'stale'; }
+   else if (section === 'usage') {
+     const usage = emptyUsage('scenario');
+     usage.scenario!.name = 'first';
+     first.sections.usage = [usageEntry('first', usage)];
+     stale.sections.usage = [];
+   } else { first.sections[section] = [{id:'first',text:'first',meaningZh:''}]; stale.sections[section] = []; }
+   const guard = { section, baseline: editorSnapshot(initial, section) };
+   await saveVocabularyDetails(first, undefined, guard);
+   await assert.rejects(saveVocabularyDetails(stale, undefined, guard), /其他窗口更新/);
+   assert.equal(editorSnapshot(await readVocabularyDetails(word), section), editorSnapshot(first, section));
+ }
+});
+
+test('concurrent edits to different sections merge without overwriting each other', async () => {
+ const { editorSnapshot } = await import('../utils/vocabularyEditor');
+ const word = basicVocabulary('hesitate');
+ const baseline = legacyDetails(word);
+ await saveVocabularyDetails(baseline);
+ const phrases = structuredClone(baseline);
+ phrases.sections.phrases = [{id:'p',text:'hesitate to ask',meaningZh:'犹豫是否询问', examples:[{id:'e',english:'I hesitated.',chinese:'我犹豫了。'}]}];
+ const definitions = structuredClone(baseline);
+ definitions.sections.definitions = [{id:'d',text:'To pause before acting.',meaningZh:''}];
+ await Promise.all([
+   saveVocabularyDetails(phrases, undefined, {section:'phrases',baseline:editorSnapshot(baseline,'phrases')}),
+   saveVocabularyDetails(definitions, undefined, {section:'definitions',baseline:editorSnapshot(baseline,'definitions')})
+ ]);
+ const saved = await readVocabularyDetails(word);
+ assert.deepEqual(saved.sections.phrases, phrases.sections.phrases);
+ assert.deepEqual(saved.sections.definitions, definitions.sections.definitions);
+});

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react';
 
 export function moveEditorItems<T>(items: T[], index: number, direction: number): T[] {
@@ -10,26 +10,34 @@ export function moveEditorItems<T>(items: T[], index: number, direction: number)
 }
 
 type EditorUndoDetail = { undo: () => void; message: string };
-const EDITOR_UNDO_EVENT = 'lexicon-editor-undo';
+const UndoContext = createContext({
+  record: (_undo: () => void, _message?: string) => {}, clear: () => {},
+  pending: null as EditorUndoDetail | null,
+});
 
-export function recordEditorUndo(undo: () => void, message = '已删除') {
-  window.dispatchEvent(new CustomEvent<EditorUndoDetail>(EDITOR_UNDO_EVENT, { detail: { undo, message } }));
+export function EditorUndoProvider({ children }: { children: React.ReactNode }) {
+  const [pending, setPending] = useState<EditorUndoDetail | null>(null);
+  const generation = useRef(0);
+  const clear = useCallback(() => { generation.current++; setPending(null); }, []);
+  const record = useCallback((undo: () => void, message = '已删除') => {
+    const current = generation.current;
+    setPending({ message, undo: () => { if (generation.current === current) undo(); } });
+  }, []);
+  useEffect(() => {
+    if (!pending) return;
+    const timer = setTimeout(() => setPending(null), 6000);
+    return () => clearTimeout(timer);
+  }, [pending]);
+  return <UndoContext.Provider value={{ record, clear, pending }}>{children}</UndoContext.Provider>;
 }
 
+export const useEditorUndo = () => useContext(UndoContext).record;
+export const useClearEditorUndo = () => useContext(UndoContext).clear;
+
 export function EditorUndoNotice() {
-  const [pending, setPending] = useState<EditorUndoDetail | null>(null);
-  const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    const receive = (event: Event) => {
-      if (timeout.current) clearTimeout(timeout.current);
-      setPending((event as CustomEvent<EditorUndoDetail>).detail);
-      timeout.current = setTimeout(() => setPending(null), 6000);
-    };
-    window.addEventListener(EDITOR_UNDO_EVENT, receive);
-    return () => { window.removeEventListener(EDITOR_UNDO_EVENT, receive); if (timeout.current) clearTimeout(timeout.current); };
-  }, []);
+  const { pending, clear } = useContext(UndoContext);
   if (!pending) return null;
-  return <div className="editor-undo-toast" role="status"><span>{pending.message}</span><button type="button" onClick={() => { pending.undo(); if (timeout.current) clearTimeout(timeout.current); timeout.current = null; setPending(null); }}>撤销</button></div>;
+  return <div className="editor-undo-toast" role="status"><span>{pending.message}</span><button type="button" onClick={() => { pending.undo(); clear(); }}>撤销</button></div>;
 }
 
 export function EditorOrderActions({ label, first, last, onMove, onRemove, className = '' }: {

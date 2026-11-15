@@ -89,6 +89,9 @@ export interface StructuredUsage {
   compatibility?: UsageCompatibility;
 }
 export interface LearningEntry {
+  associatedExpression?: string;
+  associatedMeaningZh?: string;
+  examples?: UsageExample[];
   usage?: StructuredUsage;
   id: string;
   text: string;

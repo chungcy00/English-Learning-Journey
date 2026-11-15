@@ -17,7 +17,7 @@ export function groupSenseExamples(entries: LearningEntry[], senses: LearningEnt
     const key = `${linked?.id || ''}:${pos}:${meaning}`;
     if (!groups.has(key)) groups.set(key,{key,meaning,pos,examples:[]});
     const list=groups.get(key)!.examples;
-    list.push({source,sentence:legacy?source.example!:source.text,translation:source.example ? (source.exampleTranslation || '') : source.meaningZh,legacyKey:legacy?source.text:undefined,expression:legacy && source.text !== source.example ? source.text : undefined,expressionMeaning:legacy && source.meaningZh !== meaning ? source.meaningZh : undefined});
+    list.push({source,sentence:legacy?source.example!:source.text,translation:source.example ? (source.exampleTranslation || '') : source.meaningZh,legacyKey:legacy?source.text:undefined,expression:source.associatedExpression || (legacy && source.text !== source.example ? source.text : undefined),expressionMeaning:source.associatedMeaningZh && source.associatedMeaningZh !== meaning ? source.associatedMeaningZh : legacy && source.meaningZh !== meaning ? source.meaningZh : undefined});
   }
   return [...groups.values()];
 }

@@ -60,7 +60,9 @@ test('typography uses the requested mobile-first scale and one desktop breakpoin
   assert.match(css, /\.type-page[^}]*font-weight: 700/);
   assert.match(css, /\.type-term[^}]*font-weight: 500/);
   assert.match(css, /--text-ink: #2C3E35/);
-  assert.doesNotMatch(css, /font-size:\s*(?!var\(--type-)[\d.]/);
+  const reviewTermOverride = '.review-page .review-lexicon-heading .practice-vocabulary-card__term { font-size: 1.25rem; }';
+  assert.ok(css.includes(reviewTermOverride));
+  assert.doesNotMatch(css.replace(reviewTermOverride, ''), /font-size:\s*(?!var\(--type-)[\d.]/);
   assert.match(css, /\.type-reading[^}]*line-height: var\(--type-reading-leading\);/);
   assert.match(css, /--type-reading-leading: 1\.65;/);
   assert.match(css, /\.type-translation[^}]*font-size: var\(--type-translation\);[^}]*line-height: 1\.6;/);
@@ -68,7 +70,7 @@ test('typography uses the requested mobile-first scale and one desktop breakpoin
 
 test('usage editor summaries stay compact on tablet and phone without shrinking touch targets', () => {
   assert.match(css, /--type-usage-summary: 0\.625rem/);
-  assert.match(css, /\.usage-item-copy strong[\s\S]*?font-size: var\(--type-label\)[\s\S]*?-webkit-line-clamp: 2/);
+  assert.match(css, /\.usage-item-copy strong[\s\S]*?font-size: var\(--type-label\)[^}]*?white-space: nowrap/);
   assert.match(css, /\.usage-item-copy > span[\s\S]*?text-overflow: ellipsis/);
   assert.match(css, /\.usage-item-copy > span[\s\S]*?white-space: nowrap/);
   assert.match(css, /\.usage-order-actions button \{ flex-basis: 32px; min-height: 40px/);

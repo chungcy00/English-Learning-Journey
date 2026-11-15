@@ -1,3 +1,4 @@
+import { editorSnapshot, type EditorSection } from '../utils/vocabularyEditor';
 import { upgradeUsageDetails } from '../utils/structuredUsage';
 import { db } from '../db/dexie';
 import type { DetailSection, VocabularyDetails, VocabularyItem, SavedMaterial, LearningEntry } from '../types';
@@ -14,9 +15,22 @@ export async function readVocabularyDetails(vocab: VocabularyItem) {
     return baseline;
   });
 }
-export async function saveVocabularyDetails(value: VocabularyDetails, expectedUsage?: LearningEntry[]) {
-  const details = upgradeUsageDetails(value);
+export async function saveVocabularyDetails(value: VocabularyDetails, expectedUsage?: LearningEntry[], guard?: { section: EditorSection; baseline: string }) {
+  let details = upgradeUsageDetails(value);
   await db.transaction('rw', db.vocabularyDetails, db.vocabulary, async () => {
+    if (guard) {
+      const stored = await db.vocabularyDetails.get(details.key);
+      if (stored) {
+        const latest = upgradeUsageDetails(stored);
+        if (editorSnapshot(latest, guard.section) !== guard.baseline) {
+          throw new Error('本栏已在其他窗口更新，当前草稿已保留，请核对最新资料后再保存。');
+        }
+        const provenance = { ...latest.provenance, [guard.section]: details.provenance[guard.section] };
+        details = guard.section === 'basic'
+          ? { ...latest, phoneticUK: details.phoneticUK, phoneticUS: details.phoneticUS, senses: details.senses, inflections: details.inflections, provenance, updatedAt: details.updatedAt }
+          : { ...latest, sections: { ...latest.sections, [guard.section]: details.sections[guard.section] }, provenance, updatedAt: details.updatedAt };
+      }
+    }
     if (expectedUsage) {
       const stored = await db.vocabularyDetails.get(details.key);
       if (stored && JSON.stringify(upgradeUsageDetails(stored).sections.usage) !== JSON.stringify(expectedUsage)) {
@@ -34,6 +48,7 @@ export async function saveVocabularyDetails(value: VocabularyDetails, expectedUs
     }
   });
   notifyVocabularyChange();
+  return details;
 }
 const pending = new Map<string, Promise<VocabularyDetails>>();
 export async function generateVocabularyDetails(vocab: VocabularyItem, section?: DetailSection, replaceEdited = false) {
