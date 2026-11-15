@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, ChevronDown, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from 'lucide-react';
 import { HandOutline } from './LearningArt';
 import { USAGE_HEADINGS, type LearningEntry, type StructuredUsage, type UsageExample, type UsageKind } from '../types';
-import { compatibilityHasContent, emptyUsage, emptyUsageCategory, structuredUsage, usageEntry, usageKinds } from '../utils/structuredUsage';
+import { compatibilityHasContent, emptyUsage, structuredUsage, usageEntry, usageKinds } from '../utils/structuredUsage';
 
 type FieldProps = { label: string; value: string; onChange: (value: string) => void; multiline?: boolean; optional?: boolean; placeholder?: string };
 function Field({ label, value, onChange, multiline = false, optional = false, placeholder }: FieldProps) {
@@ -120,11 +120,16 @@ function ExpressionListEditor({ expressions, onChange, openIds, setOpenIds }: {
             <span className="usage-item-copy"><strong lang="en">{expression.expression.trim() || `对比表达 ${index + 1}`}</strong>
               {expression.explanation.trim() && <span>{summarize(expression.explanation, 72)}</span>}
               <small>{expression.examples.length} 组例句</small>
-            </span><ChevronDown className="usage-disclosure-chevron" size={18} aria-hidden="true"/>
+            </span>
           </button>
-          <OrderActions label={`对比表达 ${index + 1}`} first={index === 0} last={index === expressions.length - 1}
-            onMove={direction => onChange(move(expressions, index, direction))}
-            onRemove={() => onChange(expressions.filter((_, i) => i !== index))}/>
+          <div className="usage-item-controls">
+            <OrderActions label={`对比表达 ${index + 1}`} first={index === 0} last={index === expressions.length - 1}
+              onMove={direction => onChange(move(expressions, index, direction))}
+              onRemove={() => onChange(expressions.filter((_, i) => i !== index))}/>
+            <button type="button" className="usage-item-disclosure" aria-label={`${open ? '收起' : '展开'}对比表达 ${index + 1}`} aria-expanded={open} onClick={() => changeOpen(expression.id)}>
+              <ChevronDown className="usage-disclosure-chevron" size={18} aria-hidden="true"/>
+            </button>
+          </div>
         </div>
         {open && <div className="usage-expression-editor__content">
           <Field label="单词或词组" value={expression.expression} placeholder="输入英文表达" onChange={value => setExpression(expression.id, { expression: value })}/>
@@ -248,16 +253,11 @@ export function UsageEditor({ entries, onChange }: { entries: LearningEntry[]; o
     setOpenExpressions(new Set());
     setOpenHistory(false);
   };
-  const changeKind = (id: string, usage: StructuredUsage, kind: UsageKind) => {
-    update(id, { ...usage, kind, [kind]: usage[kind] || emptyUsageCategory(kind) });
-    setOpenCategories(previous => new Set(previous).add(kind));
-  };
   const renderItem = (entry: LearningEntry, index: number, group: LearningEntry[], kind: UsageKind | undefined) => {
     const usage = structuredUsage(entry);
     const title = usageTitle(usage);
     const summary = usageSummary(usage);
     const open = openItems.has(entry.id);
-    const inactive = usageKinds.filter(key => key !== usage.kind && usage[key]);
     const old = usage.compatibility;
     const label = `${kind ? USAGE_HEADINGS[kind] : '历史内容'} ${index + 1}`;
     return <article key={entry.id} className="usage-item-editor">
@@ -265,26 +265,21 @@ export function UsageEditor({ entries, onChange }: { entries: LearningEntry[]; o
         <button type="button" className="usage-item-toggle" aria-expanded={open} aria-label={`${open ? '收起' : '展开'}${label}`} onClick={() => toggleItem(entry.id)}>
           <span className="usage-item-copy"><strong>{title}</strong>{summary && <span>{summary}</span>}<small>{usageCounts(usage)}</small></span>
         </button>
-        <OrderActions label={label} first={index === 0} last={index === group.length - 1}
-          onRemove={() => { onChange(entries.filter(item => item.id !== entry.id)); setOpenItems(previous => { const next = new Set(previous); next.delete(entry.id); return next; }); }}
-          onMove={direction => {
-            const other = group[index + direction];
-            if (!other) return;
-            const next = [...entries];
-            const a = next.findIndex(item => item.id === entry.id), b = next.findIndex(item => item.id === other.id);
-            [next[a], next[b]] = [next[b], next[a]];
-            onChange(next);
-          }}/>
-        <details className="usage-item-more">
-          <summary aria-label={`更多操作：${label}`}><MoreHorizontal size={18}/></summary>
-          <label className="usage-field">移动到类别<select value={usage.kind || ''} onChange={event => changeKind(entry.id, usage, event.target.value as UsageKind)}>
-            {usageKinds.map(key => <option key={key} value={key}>{USAGE_HEADINGS[key]}</option>)}
-          </select></label>
-          {inactive.length > 0 && <p className="usage-retained" role="status">{inactive.map(key => `「${USAGE_HEADINGS[key]}」`).join('、')}的原有资料已保留，可切回查看。</p>}
-        </details>
-        <button type="button" className="usage-item-disclosure" aria-label={`${open ? '收起' : '展开'}${label}`} aria-expanded={open} onClick={() => toggleItem(entry.id)}>
-          <ChevronDown className="usage-disclosure-chevron" size={18} aria-hidden="true"/>
-        </button>
+        <div className="usage-item-controls">
+          <OrderActions label={label} first={index === 0} last={index === group.length - 1}
+            onRemove={() => { onChange(entries.filter(item => item.id !== entry.id)); setOpenItems(previous => { const next = new Set(previous); next.delete(entry.id); return next; }); }}
+            onMove={direction => {
+              const other = group[index + direction];
+              if (!other) return;
+              const next = [...entries];
+              const a = next.findIndex(item => item.id === entry.id), b = next.findIndex(item => item.id === other.id);
+              [next[a], next[b]] = [next[b], next[a]];
+              onChange(next);
+            }}/>
+          <button type="button" className="usage-item-disclosure" aria-label={`${open ? '收起' : '展开'}${label}`} aria-expanded={open} onClick={() => toggleItem(entry.id)}>
+            <ChevronDown className="usage-disclosure-chevron" size={18} aria-hidden="true"/>
+          </button>
+        </div>
       </div>
       {open && <div className="usage-item-editor__content">
         <CategoryFields usage={usage} onChange={next => update(entry.id, next)} openExpressionIds={openExpressions} setOpenExpressionIds={setOpenExpressions}/>
