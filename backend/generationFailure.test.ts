@@ -31,7 +31,7 @@ test('generation repairs malformed JSON, rejects incomplete results and shares o
   let mode = 'repair'; let calls = 0; let now = realNow();
   globalThis.fetch = (async (url: any) => {
     calls++;
-    if (mode === 'deadline') now += 46000;
+    if (mode === 'deadline') now += 56000;
     const output = mode === 'repair' && calls === 1 ? '{broken' : JSON.stringify(mode === 'repair' ? good : {...good,vocabulary:[]});
     return new Response(JSON.stringify({candidates:[{content:{parts:[{text:output}],role:'model'},finishReason:'STOP'}]}), {headers:{'Content-Type':'application/json'}});
   }) as typeof fetch;

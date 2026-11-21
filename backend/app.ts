@@ -95,6 +95,10 @@ function readingProblem(parsed: any, level: string, count: number, validatePract
   const problem = vocabularyProblem(parsed, level, count, validatePractice);
   if (problem || !isReading) return problem;
   const blocks = parsed.readingType === 'dialogue' ? parseDialogueTurns(parsed.reading).map(turn => turn.speech) : parsed.reading.split(/\n\s*\n/).filter((block: string) => block.trim());
+  // Long passages often make the model re-type a source slightly differently. When the count is right, the source is ours to restore.
+  if (Array.isArray(parsed.paragraphTranslations) && parsed.paragraphTranslations.length === blocks.length) {
+    blocks.forEach((block: string, i: number) => { if (parsed.paragraphTranslations[i] && typeof parsed.paragraphTranslations[i].translation === 'string') parsed.paragraphTranslations[i].source = block; });
+  }
   if (!Array.isArray(parsed.paragraphTranslations) || parsed.paragraphTranslations.length !== blocks.length || blocks.some((block: string, i: number) => parsed.paragraphTranslations[i]?.source !== block || !parsed.paragraphTranslations[i]?.translation?.trim())) {
     return 'Return exactly one paragraphTranslations item for every paragraph (or dialogue turn speech without speaker prefix), in order, with source copied verbatim and a complete Chinese translation.';
   }
@@ -112,7 +116,7 @@ async function enforceReadingLength(parsed: any, options: GenerateWithRetryOptio
   const original = checkReadingLength(parsed.reading, isDialogue, lengthKey);
   if (original.lengthStatus === 'within') return { ...parsed, ...original };
   try {
-    if (deadline && Date.now() >= deadline) throw new AiDeadlineError();
+    if (deadline && deadline - Date.now() < 12000) throw new AiDeadlineError();
     const response = await callGeminiWithFallback({
       ...options, budget: { remaining: 1 },
       ...(deadline ? { deadlineMs: deadline - Date.now() } : {}),
@@ -151,10 +155,12 @@ async function generateWithVocabularyPolicy(options: GenerateWithRetryOptions, l
     try { parsed = safeParseJson(response.text); }
     catch (error) {
       if (!(error instanceof SyntaxError)) throw error;
+      console.warn(`[${options.operationName}] attempt ${attempt + 1} rejected: invalid JSON`);
       problem = 'Return complete valid JSON matching the schema, without markdown.';
       continue;
     }
     problem = readingProblem(parsed, level, count, !isReading, isReading) || '';
+    if (problem) console.warn(`[${options.operationName}] attempt ${attempt + 1} rejected: ${problem.slice(0, 120)}`);
     if (!problem) return isReading && lengthKey ? enforceReadingLength(parsed, options, lengthKey, level, count, deadline) : parsed;
   }
   throw new GenerationContractError();
@@ -328,7 +334,7 @@ Please generate the complete structured JSON response adhering strictly to the s
       preferredModel: 'gemini-3.1-flash-lite',
       contents: prompt,
       operationName: 'Reading Generation',
-      deadlineMs: 45000,
+      deadlineMs: 55000,
       config: {
         systemInstruction,
         responseMimeType: 'application/json',
