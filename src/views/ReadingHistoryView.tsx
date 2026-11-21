@@ -21,7 +21,7 @@ interface ReadingHistoryViewProps {
   active?: boolean;
 }
 const types = { story: '故事', dialogue: '对话', 'non-story': '说明', random: '随机' };
-const lengths = { short: '短 · 80–120 词', medium: '中 · 150–200 词', long: '长 · 250–350 词' };
+const lengths = { short: '短 · 80–120 词', medium: '中 · 150–200 词', long: '长 · 300–400 词' };
 function ReadingDate({ value }: { value: number }) {
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return <span>日期未知</span>;

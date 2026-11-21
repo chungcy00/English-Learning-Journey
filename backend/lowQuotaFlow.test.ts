@@ -12,7 +12,8 @@ test('new reading and paragraph translations share one provider call; vocabulary
   globalThis.fetch = (async (url: any, init: any) => {
     calls++; const request = JSON.parse(init.body);
     if (scenario === 'budget' && calls === 1) return new Response('{"error":{"message":"UNAVAILABLE","code":503,"status":"UNAVAILABLE"}}', { status: 503 });
-    const reading = { title: 'A Conflict', reading: 'We resolve a conflict. We listen.', readingType: 'story', cefrLevel: 'B1', vocabulary: [{ term: 'conflict', type: 'word', cefrLevel: 'B1', partOfSpeech: 'noun', meaningZh: '冲突', definitionEn: 'A disagreement.', example: 'We resolve a conflict.' }], paragraphTranslations: [{ source: 'We resolve a conflict. We listen.', translation: '我们解决冲突。我们倾听。' }] };
+    const body = Array.from({ length: 38 }, (_, i) => `We resolve conflict ${i}.`).join(' ') + ' We listen.';
+    const reading = { title: 'A Conflict', reading: body, readingType: 'story', cefrLevel: 'B1', vocabulary: [{ term: 'conflict', type: 'word', cefrLevel: 'B1', partOfSpeech: 'noun', meaningZh: '冲突', definitionEn: 'A disagreement.', example: 'We resolve a conflict.' }], paragraphTranslations: [{ source: body, translation: '我们解决冲突。我们倾听。' }] };
     if (scenario === 'reading') {
       assert.ok(request.generationConfig.responseSchema.required.includes('paragraphTranslations'));
       assert.ok(!request.generationConfig.responseSchema.properties.rewritePractice);

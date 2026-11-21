@@ -10,6 +10,7 @@ import { validateApiBody } from './requestValidation.js';
 import { geminiKeys, configuredGeminiKeys, providerStatus, sendGeminiError } from './geminiKeys.js';
 import { vocabularyInstruction, vocabularyProblem } from './vocabularyPolicy.js';
 import { isEnglishTermQuery } from '../src/utils/englishSearch.js';
+import { checkReadingLength, isBetterLength, lengthCorrectionInstruction, wordRangeLabel } from './readingLength.js';
 
 dotenv.config();
 
@@ -90,10 +91,55 @@ function safeParseJson<T = any>(rawText: string | undefined): T {
   return JSON.parse(cleaned.trim());
 }
 
-async function generateWithVocabularyPolicy(options: GenerateWithRetryOptions, level: string, count: number) {
+function readingProblem(parsed: any, level: string, count: number, validatePractice: boolean, isReading: boolean): string | null {
+  const problem = vocabularyProblem(parsed, level, count, validatePractice);
+  if (problem || !isReading) return problem;
+  const blocks = parsed.readingType === 'dialogue' ? parseDialogueTurns(parsed.reading).map(turn => turn.speech) : parsed.reading.split(/\n\s*\n/).filter((block: string) => block.trim());
+  if (!Array.isArray(parsed.paragraphTranslations) || parsed.paragraphTranslations.length !== blocks.length || blocks.some((block: string, i: number) => parsed.paragraphTranslations[i]?.source !== block || !parsed.paragraphTranslations[i]?.translation?.trim())) {
+    return 'Return exactly one paragraphTranslations item for every paragraph (or dialogue turn speech without speaker prefix), in order, with source copied verbatim and a complete Chinese translation.';
+  }
+  return null;
+}
+
+const normalizedTerms = (result: any) => (result?.vocabulary || []).map((item: any) => String(item?.term || '').trim().toLowerCase()).sort().join('|');
+
+/**
+ * At most ONE targeted length revision, sharing the original call budget and deadline.
+ * Any failure keeps the already-valid result and honestly records its word count.
+ */
+async function enforceReadingLength(parsed: any, options: GenerateWithRetryOptions, lengthKey: string, level: string, count: number, deadline?: number) {
+  const isDialogue = parsed.readingType === 'dialogue';
+  const original = checkReadingLength(parsed.reading, isDialogue, lengthKey);
+  if (original.lengthStatus === 'within') return { ...parsed, ...original };
+  try {
+    if (deadline && Date.now() >= deadline) throw new AiDeadlineError();
+    const response = await callGeminiWithFallback({
+      ...options, budget: { remaining: 1 },
+      ...(deadline ? { deadlineMs: deadline - Date.now() } : {}),
+      contents: `${options.contents}\n${lengthCorrectionInstruction(original, parsed, isDialogue)}`,
+    });
+    const revised = safeParseJson(response.text);
+    const check = checkReadingLength(String(revised?.reading || ''), revised?.readingType === 'dialogue', lengthKey, true);
+    const valid = !readingProblem(revised, level, count, false, true)
+      && revised.readingType === parsed.readingType
+      && normalizedTerms(revised) === normalizedTerms(parsed)
+      && isBetterLength(check, original);
+    if (valid) {
+      if (check.lengthStatus !== 'within') console.warn(`[Reading length] corrected result still ${check.lengthStatus} target by ${Math.abs(check.lengthDeviation)} words`);
+      return { ...revised, ...check };
+    }
+  } catch (error) {
+    console.warn('[Reading length] correction failed; keeping original result', { name: (error as any)?.name });
+  }
+  console.warn(`[Reading length] ${original.lengthStatus} target by ${Math.abs(original.lengthDeviation)} words; kept original`);
+  return { ...parsed, ...original };
+}
+
+async function generateWithVocabularyPolicy(options: GenerateWithRetryOptions, level: string, count: number, lengthKey?: string) {
   let problem = '';
   const budget = { remaining: Math.max(2, geminiKeys.size) };
   const deadline = options.deadlineMs === undefined ? undefined : Date.now() + options.deadlineMs;
+  const isReading = options.operationName === 'Reading Generation';
   for (let attempt = 0; attempt < 2; attempt++) {
     if (deadline && Date.now() >= deadline) throw new AiDeadlineError();
     const response = await callGeminiWithFallback({
@@ -108,17 +154,8 @@ async function generateWithVocabularyPolicy(options: GenerateWithRetryOptions, l
       problem = 'Return complete valid JSON matching the schema, without markdown.';
       continue;
     }
-    problem = vocabularyProblem(parsed, level, count, options.operationName !== 'Reading Generation') || '';
-    if (!problem) {
-      if (options.operationName === 'Reading Generation') {
-        const blocks = parsed.readingType === 'dialogue' ? parseDialogueTurns(parsed.reading).map(turn => turn.speech) : parsed.reading.split(/\n\s*\n/).filter((block: string) => block.trim());
-        if (!Array.isArray(parsed.paragraphTranslations) || parsed.paragraphTranslations.length !== blocks.length || blocks.some((block: string, i: number) => parsed.paragraphTranslations[i]?.source !== block || !parsed.paragraphTranslations[i]?.translation?.trim())) {
-          problem = 'Return exactly one paragraphTranslations item for every paragraph (or dialogue turn speech without speaker prefix), in order, with source copied verbatim and a complete Chinese translation.';
-          continue;
-        }
-      }
-      return parsed;
-    }
+    problem = readingProblem(parsed, level, count, !isReading, isReading) || '';
+    if (!problem) return isReading && lengthKey ? enforceReadingLength(parsed, options, lengthKey, level, count, deadline) : parsed;
   }
   throw new GenerationContractError();
 }
@@ -240,11 +277,7 @@ app.post('/api/reading/generate', async (req, res) => {
 
     const targetLangName = 'Chinese (Simplified)';
 
-    const wordCountGuide = {
-      short: '80-120 words',
-      medium: '150-200 words',
-      long: '250-350 words'
-    }[length as 'short' | 'medium' | 'long'] || '150-200 words';
+    const wordCountGuide = `${wordRangeLabel(length)} (hard requirement for the English reading body only; dialogue speaker names, the title and translations are not counted)`;
 
     const chosenType = readingType === 'random' ? (['story', 'non-story', 'dialogue'][Math.floor(Math.random() * 3)]) : readingType;
 
@@ -345,7 +378,7 @@ Please generate the complete structured JSON response adhering strictly to the s
           required: ['title', 'readingType', 'cefrLevel', 'humanised', 'reading', 'vocabulary', 'paragraphTranslations']
         }
       }
-    }, cefrLevel, vocabularyCount);
+    }, cefrLevel, vocabularyCount, length);
 
     return res.json(enforceDialogueCast(parsed, chosenType === 'dialogue'));
   } catch (error: any) {

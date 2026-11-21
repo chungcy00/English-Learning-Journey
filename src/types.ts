@@ -232,6 +232,8 @@ export interface ReadingRecord {
   vocabularyCount?: number;
   rewritePractice: RewritePracticeItem[];
   humanised: boolean;
+  /** Server-measured English word count vs. the target range; deviation is recorded honestly. */
+  lengthCheck?: { wordCount: number; targetWordRange: { min: number; max: number }; lengthStatus: 'within' | 'below' | 'above'; lengthDeviation: number; lengthCorrected: boolean };
   translations?: Record<string, ReadingTranslation>;
   createdAt: number;
   updatedAt: number;

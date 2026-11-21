@@ -265,6 +265,9 @@ export async function generateReadingWithPipeline(
     rewritePractice: [],
     paragraphTranslations: resultData.paragraphTranslations,
     humanised: true,
+    ...(typeof resultData.wordCount === 'number' && resultData.targetWordRange && ['within', 'below', 'above'].includes(resultData.lengthStatus) ? {
+      lengthCheck: { wordCount: resultData.wordCount, targetWordRange: resultData.targetWordRange, lengthStatus: resultData.lengthStatus, lengthDeviation: Number(resultData.lengthDeviation) || 0, lengthCorrected: resultData.lengthCorrected === true },
+    } : {}),
     createdAt: now,
     updatedAt: now
   };
